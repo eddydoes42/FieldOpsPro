@@ -60,8 +60,8 @@ export default function ManagerDashboard() {
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-              <p className="text-gray-600">You don't have permission to access this page.</p>
+              <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+              <p className="text-muted-foreground">You don't have permission to access this page.</p>
             </div>
           </CardContent>
         </Card>
@@ -113,8 +113,7 @@ export default function ManagerDashboard() {
           
           <Button 
             onClick={() => window.location.href = "/reports/team"}
-            variant="secondary" 
-            className="p-6 h-auto text-left"
+            className="bg-purple-600 hover:bg-purple-700 text-white p-6 h-auto text-left"
           >
             <div className="flex items-center">
               <div className="p-3 bg-purple-100 rounded-lg mr-4">
@@ -122,7 +121,7 @@ export default function ManagerDashboard() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg">Team Reports</h3>
-                <p className="text-gray-600 text-sm">View team performance metrics</p>
+                <p className="text-purple-100 text-sm">View team performance metrics</p>
               </div>
             </div>
           </Button>
