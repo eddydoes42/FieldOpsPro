@@ -56,6 +56,8 @@ export default function WorkOrders() {
   const queryClient = useQueryClient();
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [newWorkOrder, setNewWorkOrder] = useState<NewWorkOrderData>({
@@ -379,6 +381,128 @@ export default function WorkOrders() {
           )}
         </div>
 
+        {/* View Work Order Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Work Order Details</DialogTitle>
+            </DialogHeader>
+            {selectedWorkOrder && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Title:</span>
+                          <p className="text-gray-900">{selectedWorkOrder.title}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Description:</span>
+                          <p className="text-gray-900">{selectedWorkOrder.description}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Location:</span>
+                          <p className="text-gray-900">{selectedWorkOrder.location || 'Not specified'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Assignment & Status</h3>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Status:</span>
+                          <Badge className={`ml-2 ${getStatusColor(selectedWorkOrder.status)}`}>
+                            {selectedWorkOrder.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Priority:</span>
+                          <Badge className={`ml-2 ${getPriorityColor(selectedWorkOrder.priority)}`}>
+                            {selectedWorkOrder.priority.toUpperCase()}
+                          </Badge>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Assigned To:</span>
+                          <p className="text-gray-900">{getAgentName(selectedWorkOrder.assigneeId)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Schedule & Timing</h3>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Estimated Hours:</span>
+                          <p className="text-gray-900">{selectedWorkOrder.estimatedHours ? `${selectedWorkOrder.estimatedHours}h` : 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Due Date:</span>
+                          <p className="text-gray-900">
+                            {selectedWorkOrder.dueDate 
+                              ? new Date(selectedWorkOrder.dueDate).toLocaleDateString()
+                              : 'No due date'
+                            }
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Created:</span>
+                          <p className="text-gray-900">
+                            {selectedWorkOrder.createdAt 
+                              ? new Date(selectedWorkOrder.createdAt).toLocaleDateString()
+                              : 'Unknown'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Contact Information</h3>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Point of Contact:</span>
+                        <p className="text-gray-900">{selectedWorkOrder.pointOfContact || 'Not specified'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Scope of Work</h3>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-gray-900">{selectedWorkOrder.scopeOfWork || 'No scope details provided'}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Required Tools & Equipment</h3>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-gray-900">{selectedWorkOrder.requiredTools || 'No tools specified'}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-4 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                    Close
+                  </Button>
+                  {canCreateWorkOrders && (
+                    <Button>
+                      <i className="fas fa-edit mr-2"></i>
+                      Edit Work Order
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="p-4">
@@ -474,7 +598,14 @@ export default function WorkOrders() {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedWorkOrder(order);
+                              setIsViewDialogOpen(true);
+                            }}
+                          >
                             <i className="fas fa-eye mr-1"></i>
                             View
                           </Button>
