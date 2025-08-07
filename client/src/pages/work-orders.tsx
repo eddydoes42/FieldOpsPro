@@ -71,6 +71,12 @@ interface NewTaskData {
   category: string;
 }
 
+interface Task {
+  title: string;
+  description: string;
+  category: 'pre_visit' | 'on_site' | 'post_site';
+}
+
 export default function WorkOrders() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
@@ -99,6 +105,14 @@ export default function WorkOrders() {
     title: "",
     description: "",
     category: "pre_visit"
+  });
+
+  // Task creation state for the work order form
+  const [formTasks, setFormTasks] = useState<Task[]>([]);
+  const [newFormTask, setNewFormTask] = useState<Task>({
+    title: '',
+    description: '',
+    category: 'pre_visit'
   });
 
   // Redirect to home if not authenticated
@@ -143,8 +157,21 @@ export default function WorkOrders() {
         createdAt: new Date(),
       };
       
-      const response = await apiRequest('POST', '/api/work-orders', workOrderData);
-      return await response.json();
+      const response = await apiRequest("POST", "/api/work-orders", workOrderData);
+      const createdWorkOrder = await response.json();
+      
+      // Create tasks for the work order
+      if (formTasks.length > 0) {
+        for (let i = 0; i < formTasks.length; i++) {
+          const task = formTasks[i];
+          await apiRequest("POST", `/api/work-orders/${createdWorkOrder.id}/tasks`, {
+            ...task,
+            orderIndex: i
+          });
+        }
+      }
+      
+      return createdWorkOrder;
     },
     onSuccess: () => {
       toast({
@@ -152,6 +179,7 @@ export default function WorkOrders() {
         description: "Work order created successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
+      setFormTasks([]);
       setIsCreateDialogOpen(false);
       setNewWorkOrder({
         title: "",
@@ -321,29 +349,52 @@ export default function WorkOrders() {
     }));
   };
 
-  const handleTaskInputChange = (field: keyof NewTaskData, value: string) => {
-    setNewTask(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Task management helper functions
+  const handleAddFormTask = () => {
+    if (!newFormTask.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Task title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFormTasks([...formTasks, newFormTask]);
+    setNewFormTask({ title: '', description: '', category: 'pre_visit' });
+    toast({
+      title: "Task Added",
+      description: "Task has been added to the work order",
+    });
+  };
+
+  const handleRemoveFormTask = (index: number) => {
+    setFormTasks(formTasks.filter((_, i) => i !== index));
   };
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
-      case 'pre_visit': return 'Pre-Visit';
-      case 'on_site': return 'On-Site';
-      case 'post_site': return 'Post-Site';
+      case 'pre_visit': return '🚗 Pre-Site';
+      case 'on_site': return '🔧 On-Site';
+      case 'post_site': return '📋 Post-Site';
       default: return category;
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'pre_visit': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
-      case 'on_site': return 'bg-orange-100 text-orange-800 dark:bg-orange-800/20 dark:text-orange-300';
-      case 'post_site': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
+      case 'pre_visit': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'on_site': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      case 'post_site': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
+  };
+
+  const handleTaskInputChange = (field: keyof NewTaskData, value: string) => {
+    setNewTask(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const groupedTasks = workOrderTasks?.reduce((acc, task) => {
@@ -565,6 +616,122 @@ export default function WorkOrders() {
                       onChange={(e) => handleInputChange('pointOfContact', e.target.value)}
                       placeholder="Client contact information"
                     />
+                  </div>
+
+                  {/* Task Creation Section */}
+                  <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
+                      <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+                        {formTasks.length} tasks ready
+                      </Badge>
+                    </div>
+                    
+                    {/* Add Task Form */}
+                    <Card className="mb-4 border-dashed border-2 border-blue-300 dark:border-blue-700">
+                      <CardContent className="pt-4">
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">Category</Label>
+                              <Select 
+                                value={newFormTask.category} 
+                                onValueChange={(value) => setNewFormTask({ ...newFormTask, category: value as any })}
+                              >
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pre_visit">🚗 Pre-Site</SelectItem>
+                                  <SelectItem value="on_site">🔧 On-Site</SelectItem>
+                                  <SelectItem value="post_site">📋 Post-Site</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="md:col-span-2">
+                              <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">Task Title</Label>
+                              <Input
+                                value={newFormTask.title}
+                                onChange={(e) => setNewFormTask({ ...newFormTask, title: e.target.value })}
+                                placeholder="Enter task title"
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">Description (Optional)</Label>
+                            <Textarea
+                              value={newFormTask.description}
+                              onChange={(e) => setNewFormTask({ ...newFormTask, description: e.target.value })}
+                              placeholder="Enter task description"
+                              rows={2}
+                              className="mt-1"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={handleAddFormTask}
+                            size="sm"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <i className="fas fa-plus mr-2"></i>
+                            Add Task to Work Order
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Tasks List */}
+                    {formTasks.length > 0 && (
+                      <div className="space-y-2">
+                        {['pre_visit', 'on_site', 'post_site'].map(category => {
+                          const categoryTasks = formTasks.filter(task => task.category === category);
+                          if (categoryTasks.length === 0) return null;
+                          
+                          return (
+                            <div key={category}>
+                              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                                {getCategoryLabel(category)} ({categoryTasks.length})
+                              </h4>
+                              <div className="space-y-1">
+                                {categoryTasks.map((task, index) => {
+                                  const globalIndex = formTasks.findIndex(t => t === task);
+                                  return (
+                                    <div
+                                      key={globalIndex}
+                                      className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <Badge className={getCategoryColor(task.category)} variant="secondary">
+                                            {getCategoryLabel(task.category)}
+                                          </Badge>
+                                          <span className="font-medium text-sm">{task.title}</span>
+                                        </div>
+                                        {task.description && (
+                                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            {task.description}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRemoveFormTask(globalIndex)}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      >
+                                        <i className="fas fa-trash text-sm"></i>
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end space-x-4 pt-4">
