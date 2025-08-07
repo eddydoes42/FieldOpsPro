@@ -20,7 +20,7 @@ export default function Navigation({ userRole }: NavigationProps) {
   });
 
   const currentUserId = (user as any)?.id;
-  const unreadCount = messages?.filter((msg: any) => 
+  const unreadCount = (messages as any[])?.filter((msg: any) => 
     !msg.isRead && msg.recipientId === currentUserId
   ).length || 0;
 

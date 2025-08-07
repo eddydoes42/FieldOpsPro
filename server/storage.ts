@@ -134,7 +134,28 @@ export class DatabaseStorage implements IStorage {
 
   // Work Order operations
   async createWorkOrder(workOrderData: InsertWorkOrder): Promise<WorkOrder> {
-    const [workOrder] = await db.insert(workOrders).values(workOrderData).returning();
+    // Generate 6-digit work order ID
+    const allOrders = await db.select({ id: workOrders.id }).from(workOrders).orderBy(workOrders.id);
+    let nextNumber = 1;
+    
+    if (allOrders.length > 0) {
+      // Extract numbers from existing IDs and find the highest
+      const numbers = allOrders
+        .map(order => parseInt(order.id))
+        .filter(num => !isNaN(num))
+        .sort((a, b) => b - a);
+      
+      if (numbers.length > 0) {
+        nextNumber = numbers[0] + 1;
+      }
+    }
+    
+    const workOrderId = nextNumber.toString().padStart(6, '0');
+    
+    const [workOrder] = await db.insert(workOrders).values({
+      ...workOrderData,
+      id: workOrderId
+    }).returning();
     return workOrder;
   }
 

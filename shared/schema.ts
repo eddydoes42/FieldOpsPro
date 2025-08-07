@@ -98,7 +98,7 @@ export const messages = pgTable("messages", {
   content: text("content").notNull(),
   priority: varchar("priority").default("normal"), // normal, high, urgent
   isRead: boolean("is_read").default(false),
-  readAt: timestamp("read_at"), // timestamp when message was read
+  readAt: timestamp("readAt"), // timestamp when message was read
   messageType: varchar("message_type").default("direct"), // direct, broadcast, work_order
   createdAt: timestamp("created_at").defaultNow(),
 });
