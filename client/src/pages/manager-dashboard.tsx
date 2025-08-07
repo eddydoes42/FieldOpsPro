@@ -8,12 +8,14 @@ import UserOnboardingForm from "@/components/user-onboarding-form";
 import WorkOrderForm from "@/components/work-order-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 export default function ManagerDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWorkOrderForm, setShowWorkOrderForm] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -148,19 +150,21 @@ export default function ManagerDashboard() {
                     .filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress'))
                     .slice(0, 4)
                     .map((order: any) => (
-                      <div key={order.id} className="border-l-4 border-red-500 bg-red-900/20 p-4 rounded-r-lg border border-red-800/30">
+                      <div 
+                        key={order.id} 
+                        className="border-l-4 border-red-500 bg-red-900/20 p-4 rounded-r-lg border border-red-800/30 cursor-pointer hover:bg-red-900/30 transition-colors"
+                        onClick={() => setLocation('/work-orders')}
+                      >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="font-medium text-foreground">{order.title}</h4>
+                            <h4 className="font-medium text-foreground hover:text-red-300">{order.title}</h4>
                             <p className="text-sm text-muted-foreground mt-1">{order.location || 'No location'}</p>
                             <div className="flex items-center mt-2 space-x-4">
                               <span className="text-xs text-muted-foreground">
-                                <i className="fas fa-user mr-1"></i>
-                                {getAgentName(order.assigneeId) || 'Unassigned'}
+                                👤 {getAgentName(order.assigneeId) || 'Unassigned'}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                <i className="fas fa-clock mr-1"></i>
-                                {order.estimatedHours || 'TBD'} hrs
+                                🕐 {order.estimatedHours || 'TBD'} hrs
                               </span>
                             </div>
                           </div>
@@ -183,9 +187,8 @@ export default function ManagerDashboard() {
                   </div>
                 )}
                 
-                <Button variant="outline" className="w-full mt-4" onClick={() => window.location.href = "/work-orders"}>
-                  <i className="fas fa-exclamation-triangle mr-2"></i>
-                  View All Priority Tasks
+                <Button variant="outline" className="w-full mt-4" onClick={() => setLocation('/work-orders')}>
+                  📋 View All Work Orders
                 </Button>
               </div>
             </CardContent>
