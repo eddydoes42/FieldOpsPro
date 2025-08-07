@@ -283,20 +283,20 @@ export default function WorkOrders() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
   };
 
@@ -368,14 +368,14 @@ export default function WorkOrders() {
   const canCreateWorkOrders = (user as any)?.role === 'administrator' || (user as any)?.role === 'manager';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Work Orders</h1>
-            <p className="text-gray-600">Manage and track field operation work orders</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Work Orders</h1>
+            <p className="text-gray-600 dark:text-gray-300">Manage and track field operation work orders</p>
           </div>
           {canCreateWorkOrders && (
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -846,7 +846,7 @@ export default function WorkOrders() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-300">
                 Showing {filteredWorkOrders.length} of {workOrders?.length || 0} work orders
               </div>
             </div>
@@ -857,8 +857,8 @@ export default function WorkOrders() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <i className="fas fa-clipboard-list mr-2 text-blue-600"></i>
-              Work Orders
+              <i className="fas fa-clipboard-list mr-2 text-blue-600 dark:text-blue-400"></i>
+              <span className="text-foreground">Work Orders</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -880,8 +880,8 @@ export default function WorkOrders() {
                     <TableRow key={order.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium text-gray-900">{order.title}</div>
-                          <div className="text-sm text-gray-600 truncate max-w-xs">
+                          <div className="font-medium text-gray-900 dark:text-white">{order.title}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">
                             {order.description}
                           </div>
                         </div>
@@ -896,9 +896,9 @@ export default function WorkOrders() {
                           {order.priority.toUpperCase()}
                         </Badge>
                       </TableCell>
-                      <TableCell>{getAgentName(order.assigneeId)}</TableCell>
-                      <TableCell>{order.estimatedHours ? `${order.estimatedHours}h` : 'N/A'}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-foreground">{getAgentName(order.assigneeId)}</TableCell>
+                      <TableCell className="text-foreground">{order.estimatedHours ? `${order.estimatedHours}h` : 'N/A'}</TableCell>
+                      <TableCell className="text-foreground">
                         {order.dueDate 
                           ? new Date(order.dueDate).toLocaleDateString()
                           : 'No due date'

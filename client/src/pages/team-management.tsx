@@ -96,20 +96,20 @@ export default function TeamManagement() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
   };
 
@@ -138,13 +138,13 @@ export default function TeamManagement() {
   const agentWorkloads = getAgentWorkload();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Team Management</h1>
-          <p className="text-gray-600">Manage your field agents and monitor their workload and performance</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Team Management</h1>
+          <p className="text-gray-600 dark:text-gray-300">Manage your field agents and monitor their workload and performance</p>
         </div>
 
         {/* Team Overview Cards */}
@@ -153,10 +153,10 @@ export default function TeamManagement() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Team Members</p>
-                  <p className="text-2xl font-bold text-gray-900">{teamMembers?.length || 0}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Team Members</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{teamMembers?.length || 0}</p>
                 </div>
-                <i className="fas fa-users text-2xl text-blue-600"></i>
+                <i className="fas fa-users text-2xl text-blue-600 dark:text-blue-400"></i>
               </div>
             </CardContent>
           </Card>
@@ -165,14 +165,14 @@ export default function TeamManagement() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active Work Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Work Orders</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {workOrders?.filter(order => 
                       order.status === 'pending' || order.status === 'in_progress'
                     ).length || 0}
                   </p>
                 </div>
-                <i className="fas fa-clipboard-list text-2xl text-green-600"></i>
+                <i className="fas fa-clipboard-list text-2xl text-green-600 dark:text-green-400"></i>
               </div>
             </CardContent>
           </Card>
@@ -181,15 +181,15 @@ export default function TeamManagement() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Completion Rate</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {workOrders && workOrders.length > 0 
                       ? ((workOrders.filter(order => order.status === 'completed').length / workOrders.length) * 100).toFixed(1)
                       : '0'
                     }%
                   </p>
                 </div>
-                <i className="fas fa-chart-line text-2xl text-purple-600"></i>
+                <i className="fas fa-chart-line text-2xl text-purple-600 dark:text-purple-400"></i>
               </div>
             </CardContent>
           </Card>
@@ -200,8 +200,8 @@ export default function TeamManagement() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
-                <i className="fas fa-users mr-2 text-blue-600"></i>
-                Team Members & Workload
+                <i className="fas fa-users mr-2 text-blue-600 dark:text-blue-400"></i>
+                <span className="text-foreground">Team Members & Workload</span>
               </div>
               <Button variant="outline" size="sm">
                 <i className="fas fa-user-plus mr-2"></i>
@@ -236,7 +236,7 @@ export default function TeamManagement() {
                             />
                           )}
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-gray-900 dark:text-white">
                               {agent.firstName} {agent.lastName}
                             </div>
                             <Badge variant="outline" className="text-xs">
@@ -245,22 +245,22 @@ export default function TeamManagement() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-600">{agent.email}</TableCell>
+                      <TableCell className="text-gray-600 dark:text-gray-300">{agent.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{agent.totalAssigned}</Badge>
+                        <Badge variant="outline" className="text-foreground">{agent.totalAssigned}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className="bg-blue-100 text-blue-800">{agent.activeOrders}</Badge>
+                        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300">{agent.activeOrders}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className="bg-green-100 text-green-800">{agent.completedOrders}</Badge>
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300">{agent.completedOrders}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">{agent.completionRate}%</span>
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <span className="text-sm font-medium text-foreground">{agent.completionRate}%</span>
+                          <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div 
-                              className="bg-green-600 h-2 rounded-full" 
+                              className="bg-green-600 dark:bg-green-500 h-2 rounded-full" 
                               style={{ width: `${agent.completionRate}%` }}
                             ></div>
                           </div>
@@ -290,8 +290,8 @@ export default function TeamManagement() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <i className="fas fa-clock mr-2 text-green-600"></i>
-              Recent Work Order Activity
+              <i className="fas fa-clock mr-2 text-green-600 dark:text-green-400"></i>
+              <span className="text-foreground">Recent Work Order Activity</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -299,7 +299,7 @@ export default function TeamManagement() {
               {workOrders?.slice(0, 5).map((order) => {
                 const assignedAgent = teamMembers?.find(member => member.id === order.assignedTo);
                 return (
-                  <div key={order.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div key={order.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
                         <Badge className={getStatusColor(order.status)}>
@@ -307,8 +307,8 @@ export default function TeamManagement() {
                         </Badge>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">{order.title}</h4>
-                        <p className="text-sm text-gray-600">
+                        <h4 className="font-medium text-gray-900 dark:text-white">{order.title}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
                           Assigned to: {assignedAgent ? `${assignedAgent.firstName} ${assignedAgent.lastName}` : 'Unassigned'}
                         </p>
                       </div>
@@ -317,7 +317,7 @@ export default function TeamManagement() {
                       <Badge className={getPriorityColor(order.priority)}>
                         {order.priority.toUpperCase()}
                       </Badge>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
                     </div>
