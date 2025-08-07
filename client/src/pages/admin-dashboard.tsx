@@ -300,7 +300,16 @@ export default function AdminDashboard() {
                           <i className="fas fa-user text-primary"></i>
                         </div>
                         <div>
-                          <div className="flex items-center space-x-2">
+                          <h4 className="font-medium text-foreground">
+                            {userData.firstName && userData.lastName 
+                              ? `${userData.firstName} ${userData.lastName}`
+                              : userData.email || 'Unknown User'
+                            }
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {userData.email || 'No email'}
+                          </p>
+                          <div className="flex items-center space-x-2 mt-1">
                             <Badge 
                               variant="secondary" 
                               className={
@@ -315,19 +324,10 @@ export default function AdminDashboard() {
                                userData.role === 'administrator' ? 'Admin' :
                                userData.role === 'manager' ? 'Manager' : 'Unknown'}
                             </Badge>
-                            <h4 className="font-medium text-foreground">
-                              {userData.firstName && userData.lastName 
-                                ? `${userData.firstName} ${userData.lastName}`
-                                : userData.email || 'Unknown User'
-                              }
-                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              Created: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {userData.email || 'No email'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Created: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}
-                          </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
