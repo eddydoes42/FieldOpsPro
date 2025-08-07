@@ -585,11 +585,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/tasks/:taskId', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
-        return res.status(403).json({ message: "Only administrators and managers can update tasks" });
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get the task to check work order assignment
+      const task = await storage.getWorkOrderTask(req.params.taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      // Get the work order to check assignment
+      const workOrder = await storage.getWorkOrder(task.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check permissions: admins/managers can update any task, field agents can only update tasks for their assigned work orders
+      const canUpdate = currentUser.role === 'administrator' || 
+                       currentUser.role === 'manager' || 
+                       workOrder.assigneeId === currentUser.id;
+
+      if (!canUpdate) {
+        return res.status(403).json({ message: "Not authorized to update this task" });
       }
 
       const updates = req.body;
+      
+      // If it's a completion update by a field agent, add completedById
+      if (updates.isCompleted && currentUser.role === 'field_agent') {
+        updates.completedById = currentUser.id;
+        updates.completedAt = new Date();
+      }
+
       const updatedTask = await storage.updateWorkOrderTask(req.params.taskId, updates);
       res.json(updatedTask);
     } catch (error) {

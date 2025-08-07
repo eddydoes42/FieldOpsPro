@@ -79,6 +79,7 @@ export interface IStorage {
   }>;
 
   // Work Order Task operations
+  getWorkOrderTask(id: string): Promise<WorkOrderTask | undefined>;
   getWorkOrderTasks(workOrderId: string): Promise<WorkOrderTask[]>;
   createWorkOrderTask(task: InsertWorkOrderTask): Promise<WorkOrderTask>;
   updateWorkOrderTask(id: string, updates: Partial<InsertWorkOrderTask>): Promise<WorkOrderTask>;
@@ -425,6 +426,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Work Order Task operations
+  async getWorkOrderTask(id: string): Promise<WorkOrderTask | undefined> {
+    const [task] = await db.select().from(workOrderTasks).where(eq(workOrderTasks.id, id));
+    return task;
+  }
+
   async createWorkOrderTask(taskData: InsertWorkOrderTask): Promise<WorkOrderTask> {
     const [task] = await db.insert(workOrderTasks).values(taskData).returning();
     return task;
