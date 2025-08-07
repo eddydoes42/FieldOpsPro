@@ -11,6 +11,8 @@ import AgentDashboard from "@/pages/agent-dashboard";
 import TeamReports from "@/pages/team-reports";
 import TeamManagement from "@/pages/team-management";
 import Onboarding from "@/pages/onboarding";
+import WorkOrders from "@/pages/work-orders";
+import Messages from "@/pages/messages";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -50,6 +52,14 @@ function Router() {
             {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <Onboarding />}
             {(user as any)?.role === 'field_agent' && <AgentDashboard />}
             {!(user as any)?.role && <Landing />}
+          </Route>
+          <Route path="/work-orders">
+            {isAuthenticated && <WorkOrders />}
+            {!isAuthenticated && <Landing />}
+          </Route>
+          <Route path="/messages">
+            {isAuthenticated && <Messages />}
+            {!isAuthenticated && <Landing />}
           </Route>
         </>
       )}

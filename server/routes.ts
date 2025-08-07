@@ -135,10 +135,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
-      const workOrderData = insertWorkOrderSchema.parse({
+      // Transform the data to match schema expectations
+      const workOrderData = {
         ...req.body,
         createdById: currentUser.id,
-      });
+        estimatedHours: req.body.estimatedHours ? req.body.estimatedHours.toString() : null,
+        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+      };
       const workOrder = await storage.createWorkOrder(workOrderData);
       res.json(workOrder);
     } catch (error) {
@@ -205,6 +208,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating work order:", error);
       res.status(500).json({ message: "Failed to update work order" });
+    }
+  });
+
+  // Messages routes
+  app.post('/api/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const messageData = {
+        ...req.body,
+        senderId: currentUser.id,
+        id: `msg-${Date.now()}`,
+        createdAt: new Date(),
+        isRead: false,
+      };
+
+      const message = await storage.createMessage(messageData);
+      res.json(message);
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  app.get('/api/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const messages = await storage.getUserMessages(currentUser.id);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.patch('/api/messages/:id/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const message = await storage.getMessage(req.params.id);
+      if (!message || message.recipientId !== currentUser.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedMessage = await storage.markMessageAsRead(req.params.id);
+      res.json(updatedMessage);
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      res.status(500).json({ message: "Failed to update message" });
     }
   });
 

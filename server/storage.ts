@@ -49,6 +49,8 @@ export interface IStorage {
   getMessagesForWorkOrder(workOrderId: string): Promise<Message[]>;
   markMessageAsRead(id: string): Promise<Message>;
   getAllMessages(): Promise<Message[]>;
+  getUserMessages(userId: string): Promise<Message[]>;
+  getMessage(id: string): Promise<Message | undefined>;
 
   // Dashboard statistics
   getDashboardStats(): Promise<{
@@ -248,6 +250,19 @@ export class DatabaseStorage implements IStorage {
 
   async getAllMessages(): Promise<Message[]> {
     return await db.select().from(messages).orderBy(desc(messages.createdAt));
+  }
+
+  async getUserMessages(userId: string): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(or(eq(messages.senderId, userId), eq(messages.recipientId, userId)))
+      .orderBy(desc(messages.createdAt));
+  }
+
+  async getMessage(id: string): Promise<Message | undefined> {
+    const [message] = await db.select().from(messages).where(eq(messages.id, id));
+    return message;
   }
 
   async getDashboardStats() {
