@@ -134,9 +134,24 @@ export default function TeamPage() {
               <div className="space-y-4">
                 {allUsers && (allUsers as any[]).map((userData: any) => (
                   <div key={userData.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
-                    <div className="flex items-center space-x-4 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <i className="fas fa-user text-primary"></i>
+                    <div className="flex items-start space-x-4 min-w-0 flex-1">
+                      <div className="flex flex-col items-center space-y-2 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <i className="fas fa-user text-primary"></i>
+                        </div>
+                        <Badge 
+                          variant="secondary" 
+                          className={`${
+                            userData.role === 'administrator' 
+                              ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
+                              : userData.role === 'manager'
+                              ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
+                              : 'bg-green-900/30 text-green-300 border-green-800/50'
+                          } text-xs flex-shrink-0`}
+                        >
+                          {userData.role === 'field_agent' ? 'Field_agent' : 
+                           userData.role?.charAt(0).toUpperCase() + userData.role?.slice(1) || 'Unknown'}
+                        </Badge>
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium text-foreground truncate">
@@ -148,24 +163,9 @@ export default function TeamPage() {
                         <p className="text-sm text-muted-foreground truncate">
                           {userData.email || 'No email'}
                         </p>
-                        <div className="flex items-center space-x-2 mt-1 flex-wrap">
-                          <Badge 
-                            variant="secondary" 
-                            className={`${
-                              userData.role === 'administrator' 
-                                ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
-                                : userData.role === 'manager'
-                                ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
-                                : 'bg-green-900/30 text-green-300 border-green-800/50'
-                            } flex-shrink-0`}
-                          >
-                            {userData.role === 'field_agent' ? 'Field_agent' : 
-                             userData.role?.charAt(0).toUpperCase() + userData.role?.slice(1) || 'Unknown'}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground truncate">
-                            Created: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}
-                          </p>
-                        </div>
+                        <p className="text-xs text-muted-foreground truncate mt-1">
+                          Created: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 flex-shrink-0">
@@ -175,11 +175,11 @@ export default function TeamPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10 whitespace-nowrap"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2 py-1 text-xs"
                               disabled={deleteUserMutation.isPending}
                             >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete User
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
