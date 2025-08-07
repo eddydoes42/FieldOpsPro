@@ -135,21 +135,7 @@ export default function WorkOrders() {
     category: 'pre_visit'
   });
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
+  // Queries - these must be declared before any conditional returns
   const { data: workOrders, isLoading: ordersLoading, error: ordersError } = useQuery<WorkOrder[]>({
     queryKey: ["/api/work-orders"],
     retry: false,
@@ -337,6 +323,54 @@ export default function WorkOrders() {
     },
   });
 
+  const updateWorkOrderMutation = useMutation({
+    mutationFn: async (data: NewWorkOrderData) => {
+      if (!selectedWorkOrder) throw new Error("No work order selected");
+      return await apiRequest("PUT", `/api/work-orders/${selectedWorkOrder.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      setIsEditDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Work order updated successfully!",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update work order. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
   // Handle unauthorized errors from queries
   useEffect(() => {
     if (ordersError && isUnauthorizedError(ordersError as Error)) {
@@ -486,39 +520,6 @@ export default function WorkOrders() {
     setSelectedWorkOrder(workOrder);
     setIsEditDialogOpen(true);
   };
-
-  const updateWorkOrderMutation = useMutation({
-    mutationFn: async (data: NewWorkOrderData) => {
-      if (!selectedWorkOrder) throw new Error("No work order selected");
-      return await apiRequest("PUT", `/api/work-orders/${selectedWorkOrder.id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
-      setIsEditDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "Work order updated successfully!",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error as Error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to update work order. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
