@@ -244,23 +244,14 @@ export default function Messages() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Messages
-              {unreadCount > 0 && (
-                <Badge className="ml-3 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
-                  {unreadCount} unread
-                </Badge>
-              )}
             </h1>
             <p className="text-gray-600 dark:text-gray-300">Team communication and work order discussions</p>
           </div>
-          <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700">
-                <i className="fas fa-plus mr-2"></i>
-                Compose Message
-              </Button>
-            </DialogTrigger>
+        </div>
+
+        <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>
             <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <DialogHeader>
                 <DialogTitle className="text-gray-900 dark:text-white">Compose New Message</DialogTitle>
@@ -366,8 +357,7 @@ export default function Messages() {
                 </div>
               </form>
             </DialogContent>
-          </Dialog>
-        </div>
+        </Dialog>
 
         {/* Message Tabs */}
         <div className="mb-6">
@@ -415,14 +405,21 @@ export default function Messages() {
           {/* Inbox */}
           <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center text-gray-900 dark:text-white">
-                <i className="fas fa-inbox mr-2 text-blue-600 dark:text-blue-400"></i>
-                Inbox
-                {activeTab === "unread" && unreadCount > 0 && (
-                  <Badge className="ml-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
-                    {unreadCount} unread
-                  </Badge>
-                )}
+              <CardTitle className="flex items-center justify-between text-gray-900 dark:text-white">
+                <div className="flex items-center">
+                  <i className="fas fa-inbox mr-2 text-blue-600 dark:text-blue-400"></i>
+                  Inbox
+                  {activeTab === "unread" && unreadCount > 0 && (
+                    <Badge className="ml-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                      {unreadCount} unread
+                    </Badge>
+                  )}
+                </div>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700">
+                    <i className="fas fa-plus"></i>
+                  </Button>
+                </DialogTrigger>
               </CardTitle>
             </CardHeader>
             <CardContent>

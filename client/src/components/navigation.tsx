@@ -13,16 +13,7 @@ export default function Navigation({ userRole }: NavigationProps) {
   const { user } = useAuth();
   const [location] = useLocation();
 
-  // Fetch unread message count
-  const { data: messages } = useQuery({
-    queryKey: ["/api/messages"],
-    retry: false,
-  });
 
-  const currentUserId = (user as any)?.id;
-  const unreadCount = (messages as any[])?.filter((msg: any) => 
-    !msg.isRead && msg.recipientId === currentUserId
-  ).length || 0;
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -67,7 +58,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/reports/team', label: 'Team Reports', icon: 'fas fa-chart-bar' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
-            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments' },
           ]
         };
       default:
@@ -77,7 +68,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/work-orders', label: 'My Orders', icon: 'fas fa-clipboard-list' },
             { path: '/time-tracking', label: 'Time Tracking', icon: 'fas fa-clock' },
-            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments' },
           ]
         };
     }
@@ -158,11 +149,7 @@ export default function Navigation({ userRole }: NavigationProps) {
                             <i className={`${link.icon} mr-3 w-4`}></i>
                             {link.label}
                           </div>
-                          {(link as any).showUnreadCount && unreadCount > 0 && (
-                            <Badge className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 min-w-[20px] h-5 flex items-center justify-center rounded-full">
-                              {unreadCount}
-                            </Badge>
-                          )}
+
                         </div>
                       </Link>
                     ))}
