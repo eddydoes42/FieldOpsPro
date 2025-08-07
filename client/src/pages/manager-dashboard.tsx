@@ -40,6 +40,12 @@ export default function ManagerDashboard() {
     enabled: !!user && ((user as any).role === 'manager' || (user as any).role === 'administrator'),
   });
 
+  const getAgentName = (assigneeId: string | null) => {
+    if (!assigneeId) return 'Unassigned';
+    const agent = (fieldAgents as any)?.find((a: any) => a.id === assigneeId);
+    return agent ? `${agent.firstName} ${agent.lastName}` : assigneeId;
+  };
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -124,58 +130,75 @@ export default function ManagerDashboard() {
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* My Team */}
+          {/* Priority Tasks */}
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                My Team ({(fieldAgents as any)?.length || 0} Agents)
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Priority Tasks</h3>
+                <span className="bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full">
+                  {(workOrders as any)?.filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress')).length || 0}
+                </span>
+              </div>
               <div className="space-y-4">
-                {fieldAgents && (fieldAgents as any).length > 0 ? (
-                  (fieldAgents as any).slice(0, 5).map((agent: any) => (
-                    <div key={agent.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {agent.profileImageUrl ? (
-                          <img className="h-10 w-10 rounded-full object-cover" src={agent.profileImageUrl} alt="Team Member" />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <i className="fas fa-user text-gray-600"></i>
+                {workOrdersLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : workOrders && (workOrders as any).length > 0 ? (
+                  (workOrders as any)
+                    .filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress'))
+                    .slice(0, 4)
+                    .map((order: any) => (
+                      <div key={order.id} className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{order.title}</h4>
+                            <p className="text-sm text-gray-600 mt-1">{order.location || 'No location'}</p>
+                            <div className="flex items-center mt-2 space-x-4">
+                              <span className="text-xs text-gray-500">
+                                <i className="fas fa-user mr-1"></i>
+                                {getAgentName(order.assigneeId) || 'Unassigned'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                <i className="fas fa-clock mr-1"></i>
+                                {order.estimatedHours || 'TBD'} hrs
+                              </span>
+                            </div>
                           </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900">{agent.firstName} {agent.lastName}</p>
-                          <p className="text-sm text-gray-600">Field Technician</p>
+                          <div className="ml-4 flex flex-col items-end">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              HIGH
+                            </span>
+                            {order.dueDate && (
+                              <span className="text-xs text-gray-500 mt-1">
+                                Due: {new Date(order.dueDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <i className="fas fa-circle text-xs mr-1"></i>Active
-                        </span>
-                      </div>
-                    </div>
-                  ))
+                    ))
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    No team members found
+                    No high priority tasks
                   </div>
                 )}
                 
-                {fieldAgents && (fieldAgents as any).length > 5 && (
-                  <Button variant="outline" className="w-full mt-4">
-                    View All Team Members
-                  </Button>
-                )}
+                <Button variant="outline" className="w-full mt-4" onClick={() => window.location.href = "/work-orders"}>
+                  <i className="fas fa-exclamation-triangle mr-2"></i>
+                  View All Priority Tasks
+                </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Active Work Orders */}
+          {/* Active Issues/Problems */}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Active Work Orders</h3>
-                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                  {(workOrders as any)?.filter((order: any) => order.status === 'pending' || order.status === 'in_progress').length || 0}
+                <h3 className="text-lg font-semibold text-gray-900">Active Issues</h3>
+                <span className="bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">
+                  {(workOrders as any)?.filter((order: any) => (order.status === 'in_progress' || order.status === 'pending') && (order.title.toLowerCase().includes('issue') || order.title.toLowerCase().includes('problem') || order.title.toLowerCase().includes('outage') || order.title.toLowerCase().includes('down') || order.title.toLowerCase().includes('failure'))).length || 0}
                 </span>
               </div>
               
@@ -186,46 +209,52 @@ export default function ManagerDashboard() {
                   </div>
                 ) : workOrders && (workOrders as any).length > 0 ? (
                   (workOrders as any)
-                    .filter((order: any) => order.status === 'pending' || order.status === 'in_progress')
-                    .slice(0, 3)
+                    .filter((order: any) => (order.status === 'in_progress' || order.status === 'pending') && 
+                      (order.title.toLowerCase().includes('issue') || 
+                       order.title.toLowerCase().includes('problem') || 
+                       order.title.toLowerCase().includes('outage') || 
+                       order.title.toLowerCase().includes('down') || 
+                       order.title.toLowerCase().includes('failure') ||
+                       order.title.toLowerCase().includes('repair') ||
+                       order.title.toLowerCase().includes('fix')))
+                    .slice(0, 4)
                     .map((order: any) => (
-                      <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={order.id} className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h4 className="font-medium text-gray-900">{order.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {order.assigneeId ? `Assigned to ${order.assigneeId}` : 'Unassigned'}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-2">
-                              Created: {new Date(order.createdAt).toLocaleString()}
-                            </p>
+                            <p className="text-sm text-gray-600 mt-1">{order.description}</p>
+                            <div className="flex items-center mt-2 space-x-4">
+                              <span className="text-xs text-gray-500">
+                                <i className="fas fa-map-marker-alt mr-1"></i>
+                                {order.location || 'No location'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                <i className="fas fa-user mr-1"></i>
+                                {getAgentName(order.assigneeId) || 'Unassigned'}
+                              </span>
+                            </div>
                           </div>
-                          <div className="ml-4">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                              {order.status?.replace('_', ' ').replace(/\b\w/g, (l: any) => l.toUpperCase())}
+                          <div className="ml-4 flex flex-col items-end">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(order.priority)}`}>
+                              {order.priority.toUpperCase()}
                             </span>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="flex items-center text-xs text-gray-500">
-                            <i className="fas fa-map-marker-alt mr-1"></i>
-                            <span>{order.location}</span>
-                          </div>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <i className="fas fa-clock mr-1"></i>
-                            <span>Est. {order.estimatedHours || 'TBD'} hours</span>
+                            <span className="text-xs text-gray-500 mt-1">
+                              {order.status === 'in_progress' ? 'Working' : 'Pending'}
+                            </span>
                           </div>
                         </div>
                       </div>
                     ))
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    No active work orders
+                    No active issues reported
                   </div>
                 )}
                 
-                <Button variant="outline" className="w-full mt-4">
-                  View All Work Orders
+                <Button variant="outline" className="w-full mt-4" onClick={() => window.location.href = "/work-orders"}>
+                  <i className="fas fa-exclamation-circle mr-2"></i>
+                  View All Issues
                 </Button>
               </div>
             </CardContent>
@@ -272,3 +301,14 @@ function getStatusColor(status: string) {
     default: return 'bg-gray-100 text-gray-800';
   }
 }
+
+function getPriorityColor(priority: string) {
+  switch (priority) {
+    case 'high': return 'bg-red-100 text-red-800';
+    case 'medium': return 'bg-yellow-100 text-yellow-800';
+    case 'low': return 'bg-green-100 text-green-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+
