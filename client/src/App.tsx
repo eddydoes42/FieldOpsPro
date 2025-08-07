@@ -9,7 +9,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import ManagerDashboard from "@/pages/manager-dashboard";
 import AgentDashboard from "@/pages/agent-dashboard";
 import TeamReports from "@/pages/team-reports";
-import TeamManagement from "@/pages/team-management";
+import TeamPage from "@/pages/team";
 import Onboarding from "@/pages/onboarding";
 import WorkOrders from "@/pages/work-orders";
 import Messages from "@/pages/messages";
@@ -44,7 +44,7 @@ function Router() {
             {!(user as any)?.role && <Landing />}
           </Route>
           <Route path="/team">
-            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamManagement />}
+            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamPage />}
             {(user as any)?.role === 'field_agent' && <AgentDashboard />}
             {!(user as any)?.role && <Landing />}
           </Route>

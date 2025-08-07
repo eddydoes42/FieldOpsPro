@@ -144,6 +144,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
   // Work Order operations
   async createWorkOrder(workOrderData: InsertWorkOrder): Promise<WorkOrder> {
     // Generate 6-digit work order ID

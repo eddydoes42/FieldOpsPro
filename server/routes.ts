@@ -111,6 +111,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user route - restricted to administrators and managers
+  app.delete('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Only administrators and managers can delete users" });
+      }
+
+      const userIdToDelete = req.params.id;
+      
+      // Prevent deleting oneself
+      if (userIdToDelete === currentUser.id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+
+      // Check if user exists
+      const userToDelete = await storage.getUser(userIdToDelete);
+      if (!userToDelete) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Only administrators can delete other administrators
+      if (userToDelete.role === 'administrator' && currentUser.role !== 'administrator') {
+        return res.status(403).json({ message: "Only administrators can delete other administrators" });
+      }
+
+      await storage.deleteUser(userIdToDelete);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
