@@ -559,15 +559,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Get the task first
+      const task = await storage.getWorkOrderTask(req.params.taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
       // Allow assigned agent or managers to mark tasks complete
       if (currentUser.role !== 'administrator' && currentUser.role !== 'manager') {
         // Check if user is assigned to the work order
-        const tasks = await storage.getWorkOrderTasks(req.body.workOrderId);
-        const task = tasks.find(t => t.id === req.params.taskId);
-        if (!task) {
-          return res.status(404).json({ message: "Task not found" });
-        }
-
         const workOrder = await storage.getWorkOrder(task.workOrderId);
         if (!workOrder || workOrder.assigneeId !== currentUser.id) {
           return res.status(403).json({ message: "Only assigned agents and managers can complete tasks" });
