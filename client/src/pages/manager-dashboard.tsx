@@ -195,8 +195,11 @@ export default function ManagerDashboard() {
                             </div>
                           </div>
                           <div className="flex-shrink-0 flex flex-col items-end">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50 whitespace-nowrap">
-                              HIGH
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50 whitespace-nowrap mb-1">
+                              {order.priority.toUpperCase()}
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(order.status)}`}>
+                              {order.status?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                             </span>
                             {order.dueDate && (
                               <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
@@ -264,12 +267,17 @@ export default function ManagerDashboard() {
                             </div>
                           </div>
                           <div className="flex-shrink-0 flex flex-col items-end">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${getPriorityColor(order.priority)}`}>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap mb-1 ${getPriorityColor(order.priority)}`}>
                               {order.priority.toUpperCase()}
                             </span>
-                            <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
-                              {order.status === 'in_progress' ? 'Working' : 'Pending'}
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(order.status)}`}>
+                              {order.status?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                             </span>
+                            {order.dueDate && (
+                              <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
+                                {new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
