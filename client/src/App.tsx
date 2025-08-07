@@ -28,10 +28,10 @@ function Router() {
       ) : (
         <>
           <Route path="/">
-            {user?.role === 'administrator' && <AdminDashboard />}
-            {user?.role === 'manager' && <ManagerDashboard />}
-            {user?.role === 'field_agent' && <AgentDashboard />}
-            {!user?.role && <Landing />}
+            {(user as any)?.role === 'administrator' && <AdminDashboard />}
+            {(user as any)?.role === 'manager' && <ManagerDashboard />}
+            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+            {!(user as any)?.role && <Landing />}
           </Route>
         </>
       )}

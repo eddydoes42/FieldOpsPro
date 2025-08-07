@@ -28,7 +28,7 @@ export default function AdminDashboard() {
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
-    enabled: !!user && user.role === 'administrator',
+    enabled: !!user && (user as any).role === 'administrator',
   });
 
   const { data: workOrders, isLoading: workOrdersLoading } = useQuery({
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (user.role !== 'administrator') {
+  if ((user as any).role !== 'administrator') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation userRole={user.role} />
+      <Navigation userRole={(user as any).role} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Dashboard Header */}
@@ -81,7 +81,7 @@ export default function AdminDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Users</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {statsLoading ? '...' : stats?.totalUsers || 0}
+                    {statsLoading ? '...' : (stats as any)?.totalUsers || 0}
                   </p>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Active Work Orders</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {statsLoading ? '...' : stats?.activeOrders || 0}
+                    {statsLoading ? '...' : (stats as any)?.activeOrders || 0}
                   </p>
                 </div>
               </div>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Completed Orders</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {statsLoading ? '...' : stats?.completedOrders || 0}
+                    {statsLoading ? '...' : (stats as any)?.completedOrders || 0}
                   </p>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Completion Rate</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {statsLoading ? '...' : stats?.totalOrders > 0 ? Math.round((stats?.completedOrders / stats?.totalOrders) * 100) + '%' : '0%'}
+                    {statsLoading ? '...' : (stats as any)?.totalOrders > 0 ? Math.round(((stats as any)?.completedOrders / (stats as any)?.totalOrders) * 100) + '%' : '0%'}
                   </p>
                 </div>
               </div>
@@ -153,8 +153,8 @@ export default function AdminDashboard() {
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     </div>
-                  ) : workOrders && workOrders.length > 0 ? (
-                    workOrders.slice(0, 5).map((order: any) => (
+                  ) : workOrders && (workOrders as any).length > 0 ? (
+                    (workOrders as any).slice(0, 5).map((order: any) => (
                       <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center space-x-4">
                           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -215,19 +215,19 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600">Administrators</span>
                     <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded">
-                      {stats?.adminCount || 0}
+                      {(stats as any)?.adminCount || 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600">Managers</span>
                     <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
-                      {stats?.managerCount || 0}
+                      {(stats as any)?.managerCount || 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600">Field Agents</span>
                     <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
-                      {stats?.agentCount || 0}
+                      {(stats as any)?.agentCount || 0}
                     </span>
                   </div>
                 </div>

@@ -67,14 +67,14 @@ export default function Navigation({ userRole }: NavigationProps) {
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               {config.links.map((link) => (
                 <Link key={link.path} href={link.path}>
-                  <a className={`${
+                  <span className={`${
                     location === link.path 
                       ? 'border-primary text-primary' 
                       : 'border-transparent text-gray-500 hover:text-gray-700'
-                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium cursor-pointer`}>
                     <i className={`${link.icon} mr-2`}></i>
                     {link.label}
-                  </a>
+                  </span>
                 </Link>
               ))}
             </div>
@@ -95,15 +95,15 @@ export default function Navigation({ userRole }: NavigationProps) {
             
             {/* User Menu */}
             <div className="flex items-center">
-              {user?.profileImageUrl && (
+              {(user as any)?.profileImageUrl && (
                 <img 
                   className="h-8 w-8 rounded-full object-cover" 
-                  src={user.profileImageUrl} 
+                  src={(user as any).profileImageUrl} 
                   alt="Profile"
                 />
               )}
               <span className="ml-2 text-gray-700 font-medium">
-                {user?.firstName} {user?.lastName}
+                {(user as any)?.firstName} {(user as any)?.lastName}
               </span>
             </div>
             

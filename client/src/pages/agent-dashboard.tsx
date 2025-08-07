@@ -92,7 +92,7 @@ export default function AgentDashboard() {
     );
   }
 
-  if (user.role !== 'field_agent') {
+  if ((user as any).role !== 'field_agent') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
@@ -107,7 +107,7 @@ export default function AgentDashboard() {
     );
   }
 
-  const todayOrders = workOrders?.filter((order: any) => {
+  const todayOrders = (workOrders as any)?.filter((order: any) => {
     const today = new Date().toDateString();
     const orderDate = new Date(order.createdAt).toDateString();
     return orderDate === today || order.status === 'in_progress';
@@ -115,7 +115,7 @@ export default function AgentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation userRole={user.role} />
+      <Navigation userRole={(user as any).role} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
@@ -150,7 +150,7 @@ export default function AgentDashboard() {
                         <p className="text-sm text-gray-600 mt-1">{order.description}</p>
                       </div>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2 ${getStatusColor(order.status)}`}>
-                        {order.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {order.status?.replace('_', ' ').replace(/\b\w/g, (l: any) => l.toUpperCase())}
                       </span>
                     </div>
                     

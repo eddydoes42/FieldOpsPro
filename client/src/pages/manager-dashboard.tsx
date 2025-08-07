@@ -37,7 +37,7 @@ export default function ManagerDashboard() {
 
   const { data: fieldAgents } = useQuery({
     queryKey: ["/api/users/role/field_agent"],
-    enabled: !!user && (user.role === 'manager' || user.role === 'administrator'),
+    enabled: !!user && ((user as any).role === 'manager' || (user as any).role === 'administrator'),
   });
 
   if (isLoading || !user) {
@@ -48,7 +48,7 @@ export default function ManagerDashboard() {
     );
   }
 
-  if (user.role !== 'manager' && user.role !== 'administrator') {
+  if ((user as any).role !== 'manager' && (user as any).role !== 'administrator') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
@@ -65,7 +65,7 @@ export default function ManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation userRole={user.role} />
+      <Navigation userRole={(user as any).role} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -124,11 +124,11 @@ export default function ManagerDashboard() {
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                My Team ({fieldAgents?.length || 0} Agents)
+                My Team ({(fieldAgents as any)?.length || 0} Agents)
               </h3>
               <div className="space-y-4">
-                {fieldAgents && fieldAgents.length > 0 ? (
-                  fieldAgents.slice(0, 5).map((agent: any) => (
+                {fieldAgents && (fieldAgents as any).length > 0 ? (
+                  (fieldAgents as any).slice(0, 5).map((agent: any) => (
                     <div key={agent.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                       <div className="flex items-center space-x-3">
                         {agent.profileImageUrl ? (
@@ -156,7 +156,7 @@ export default function ManagerDashboard() {
                   </div>
                 )}
                 
-                {fieldAgents && fieldAgents.length > 5 && (
+                {fieldAgents && (fieldAgents as any).length > 5 && (
                   <Button variant="outline" className="w-full mt-4">
                     View All Team Members
                   </Button>
@@ -171,7 +171,7 @@ export default function ManagerDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Active Work Orders</h3>
                 <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                  {workOrders?.filter((order: any) => order.status === 'pending' || order.status === 'in_progress').length || 0}
+                  {(workOrders as any)?.filter((order: any) => order.status === 'pending' || order.status === 'in_progress').length || 0}
                 </span>
               </div>
               
@@ -180,8 +180,8 @@ export default function ManagerDashboard() {
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   </div>
-                ) : workOrders && workOrders.length > 0 ? (
-                  workOrders
+                ) : workOrders && (workOrders as any).length > 0 ? (
+                  (workOrders as any)
                     .filter((order: any) => order.status === 'pending' || order.status === 'in_progress')
                     .slice(0, 3)
                     .map((order: any) => (
@@ -198,7 +198,7 @@ export default function ManagerDashboard() {
                           </div>
                           <div className="ml-4">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                              {order.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {order.status?.replace('_', ' ').replace(/\b\w/g, (l: any) => l.toUpperCase())}
                             </span>
                           </div>
                         </div>
