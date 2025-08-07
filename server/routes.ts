@@ -137,10 +137,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Transform the data to match schema expectations
       const workOrderData = {
-        ...req.body,
+        id: `wo-${Date.now()}`, // Generate unique ID
+        title: req.body.title,
+        description: req.body.description,
+        location: req.body.location || '',
+        priority: req.body.priority || 'medium',
+        status: 'pending',
+        assigneeId: req.body.assignedTo || req.body.assigneeId || null,
         createdById: currentUser.id,
-        estimatedHours: req.body.estimatedHours ? req.body.estimatedHours.toString() : null,
+        estimatedHours: req.body.estimatedHours ? parseFloat(req.body.estimatedHours) : null,
         dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+        scopeOfWork: req.body.scopeOfWork || null,
+        requiredTools: req.body.requiredTools || null,
+        pointOfContact: req.body.pointOfContact || null,
       };
       const workOrder = await storage.createWorkOrder(workOrderData);
       res.json(workOrder);

@@ -21,7 +21,7 @@ interface WorkOrder {
   description: string;
   status: string;
   priority: string;
-  assignedTo: string | null;
+  assigneeId: string | null;
   estimatedHours: number | null;
   createdAt: string;
   dueDate: string | null;
@@ -201,7 +201,7 @@ export default function WorkOrders() {
 
   const filteredWorkOrders = workOrders?.filter(order => {
     if (filterStatus !== 'all' && order.status !== filterStatus) return false;
-    if (filterAssignee !== 'all' && order.assignedTo !== filterAssignee) return false;
+    if (filterAssignee !== 'all' && order.assigneeId !== filterAssignee) return false;
     return true;
   }) || [];
 
@@ -464,7 +464,7 @@ export default function WorkOrders() {
                           {order.priority.toUpperCase()}
                         </Badge>
                       </TableCell>
-                      <TableCell>{getAgentName(order.assignedTo)}</TableCell>
+                      <TableCell>{getAgentName(order.assigneeId)}</TableCell>
                       <TableCell>{order.estimatedHours ? `${order.estimatedHours}h` : 'N/A'}</TableCell>
                       <TableCell>
                         {order.dueDate 
