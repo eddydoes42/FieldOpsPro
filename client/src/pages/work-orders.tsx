@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
+import WorkOrderTasks from "@/components/work-order-tasks";
 import { useEffect, useState } from "react";
 
 interface WorkOrder {
@@ -1085,77 +1086,10 @@ export default function WorkOrders() {
                 </Card>
 
                 {/* Tasks Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="text-lg">Tasks</span>
-                      {canCreateWorkOrders && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => {
-                            setSelectedWorkOrderForTask(selectedWorkOrder.id);
-                            setIsTaskDialogOpen(true);
-                          }}
-                        >
-                          <i className="fas fa-plus mr-2"></i>
-                          Add Task
-                        </Button>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {tasksLoading ? (
-                      <div className="text-center py-4">
-                        <i className="fas fa-spinner fa-spin mr-2"></i>
-                        Loading tasks...
-                      </div>
-                    ) : workOrderTasks && workOrderTasks.length > 0 ? (
-                      <div className="space-y-6">
-                        {['pre_visit', 'on_site', 'post_site'].map(category => {
-                          const categoryTasks = workOrderTasks.filter(task => task.category === category);
-                          if (categoryTasks.length === 0) return null;
-                          
-                          return (
-                            <div key={category}>
-                              <h4 className="font-semibold text-foreground mb-3">
-                                {getCategoryLabel(category)} ({categoryTasks.filter(t => t.isCompleted).length}/{categoryTasks.length} completed)
-                              </h4>
-                              <div className="space-y-2">
-                                {categoryTasks.map(task => (
-                                  <TaskItem
-                                    key={task.id}
-                                    task={task}
-                                    canComplete={canCompleteTask((user as any)?.role)}
-                                    onComplete={completeTaskMutation.mutate}
-                                    isCompleting={completeTaskMutation.isPending}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <i className="fas fa-tasks text-3xl mb-2"></i>
-                        <p>No tasks assigned yet</p>
-                        {canCreateWorkOrders && (
-                          <Button 
-                            variant="outline" 
-                            className="mt-2"
-                            onClick={() => {
-                              setSelectedWorkOrderForTask(selectedWorkOrder.id);
-                              setIsTaskDialogOpen(true);
-                            }}
-                          >
-                            <i className="fas fa-plus mr-2"></i>
-                            Add First Task
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <WorkOrderTasks 
+                  workOrderId={selectedWorkOrder.id} 
+                  userRole={(user as any)?.role} 
+                />
               </div>
             )}
           </DialogContent>

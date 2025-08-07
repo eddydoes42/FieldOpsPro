@@ -76,10 +76,10 @@ export interface IStorage {
   }>;
 
   // Work Order Task operations
-  createWorkOrderTask(task: InsertWorkOrderTask): Promise<WorkOrderTask>;
   getWorkOrderTasks(workOrderId: string): Promise<WorkOrderTask[]>;
+  createWorkOrderTask(task: InsertWorkOrderTask): Promise<WorkOrderTask>;
   updateWorkOrderTask(id: string, updates: Partial<InsertWorkOrderTask>): Promise<WorkOrderTask>;
-  markTaskComplete(id: string, completedById: string): Promise<WorkOrderTask>;
+  deleteWorkOrderTask(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -412,18 +412,8 @@ export class DatabaseStorage implements IStorage {
     return task;
   }
 
-  async markTaskComplete(id: string, completedById: string): Promise<WorkOrderTask> {
-    const [task] = await db
-      .update(workOrderTasks)
-      .set({
-        isCompleted: true,
-        completedById,
-        completedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(workOrderTasks.id, id))
-      .returning();
-    return task;
+  async deleteWorkOrderTask(id: string): Promise<void> {
+    await db.delete(workOrderTasks).where(eq(workOrderTasks.id, id));
   }
 }
 

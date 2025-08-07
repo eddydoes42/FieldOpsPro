@@ -503,6 +503,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Work Order Tasks Management
+  app.get("/api/work-orders/:workOrderId/tasks", isAuthenticated, async (req: any, res) => {
+    try {
+      const { workOrderId } = req.params;
+      const tasks = await storage.getWorkOrderTasks(workOrderId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching work order tasks:", error);
+      res.status(500).json({ message: "Failed to fetch work order tasks" });
+    }
+  });
+
+  app.post("/api/work-orders/:workOrderId/tasks", isAuthenticated, async (req: any, res) => {
+    try {
+      const { workOrderId } = req.params;
+      const taskData = { 
+        ...req.body, 
+        workOrderId,
+        id: `task-${Date.now()}`,
+      };
+      
+      const task = await storage.createWorkOrderTask(taskData);
+      res.status(201).json(task);
+    } catch (error) {
+      console.error("Error creating work order task:", error);
+      res.status(500).json({ message: "Failed to create work order task" });
+    }
+  });
+
+  app.patch("/api/work-order-tasks/:taskId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { taskId } = req.params;
+      const userId = req.user?.claims?.sub;
+      
+      const updateData = {
+        ...req.body,
+        completedById: req.body.isCompleted ? userId : null,
+        completedAt: req.body.isCompleted ? new Date() : null,
+      };
+      
+      const task = await storage.updateWorkOrderTask(taskId, updateData);
+      res.json(task);
+    } catch (error) {
+      console.error("Error updating work order task:", error);
+      res.status(500).json({ message: "Failed to update work order task" });
+    }
+  });
+
+  app.delete("/api/work-order-tasks/:taskId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { taskId } = req.params;
+      await storage.deleteWorkOrderTask(taskId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting work order task:", error);
+      res.status(500).json({ message: "Failed to delete work order task" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
