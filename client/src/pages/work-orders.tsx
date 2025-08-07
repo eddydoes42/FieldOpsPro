@@ -79,6 +79,7 @@ export default function WorkOrders() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [selectedWorkOrderForTask, setSelectedWorkOrderForTask] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [newWorkOrder, setNewWorkOrder] = useState<NewWorkOrderData>({
@@ -366,6 +367,73 @@ export default function WorkOrders() {
   };
 
   const canCreateWorkOrders = (user as any)?.role === 'administrator' || (user as any)?.role === 'manager';
+
+  const canCompleteTask = (userRole: string) => {
+    return userRole === 'administrator' || userRole === 'manager' || userRole === 'field_agent';
+  };
+
+
+
+  const TaskItem = ({ task, canComplete, onComplete, isCompleting }: {
+    task: WorkOrderTask;
+    canComplete: boolean;
+    onComplete: (taskId: string) => void;
+    isCompleting: boolean;
+  }) => (
+    <div className={`flex items-center justify-between p-3 border rounded-lg ${
+      task.isCompleted 
+        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+    }`}>
+      <div className="flex items-center space-x-3">
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+          task.isCompleted 
+            ? 'bg-green-500 text-white' 
+            : 'bg-gray-200 dark:bg-gray-600'
+        }`}>
+          {task.isCompleted && <i className="fas fa-check text-xs"></i>}
+        </div>
+        <div>
+          <h5 className={`font-medium ${
+            task.isCompleted 
+              ? 'text-green-800 dark:text-green-300 line-through' 
+              : 'text-foreground'
+          }`}>
+            {task.title}
+          </h5>
+          {task.description && (
+            <p className={`text-sm mt-1 ${
+              task.isCompleted 
+                ? 'text-green-600 dark:text-green-400' 
+                : 'text-gray-600 dark:text-gray-300'
+            }`}>
+              {task.description}
+            </p>
+          )}
+          {task.isCompleted && task.completedAt && (
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+              Completed {new Date(task.completedAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+      </div>
+      {!task.isCompleted && canComplete && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onComplete(task.id)}
+          disabled={isCompleting}
+        >
+          {isCompleting ? (
+            <i className="fas fa-spinner fa-spin mr-1"></i>
+          ) : (
+            <i className="fas fa-check mr-1"></i>
+          )}
+          Complete
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -932,6 +1000,167 @@ export default function WorkOrders() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Work Order View Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <i className="fas fa-clipboard-list mr-2 text-blue-600 dark:text-blue-400"></i>
+                Work Order Details: {selectedWorkOrder?.title}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedWorkOrder && (
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Basic Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="font-semibold">Title</Label>
+                        <p className="text-foreground">{selectedWorkOrder.title}</p>
+                      </div>
+                      <div>
+                        <Label className="font-semibold">Status</Label>
+                        <div className="mt-1">
+                          <Badge className={getStatusColor(selectedWorkOrder.status)}>
+                            {selectedWorkOrder.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="font-semibold">Priority</Label>
+                        <div className="mt-1">
+                          <Badge className={getPriorityColor(selectedWorkOrder.priority)}>
+                            {selectedWorkOrder.priority.toUpperCase()}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="font-semibold">Assigned To</Label>
+                        <p className="text-foreground">{getAgentName(selectedWorkOrder.assigneeId)}</p>
+                      </div>
+                      <div>
+                        <Label className="font-semibold">Estimated Hours</Label>
+                        <p className="text-foreground">{selectedWorkOrder.estimatedHours ? `${selectedWorkOrder.estimatedHours}h` : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="font-semibold">Due Date</Label>
+                        <p className="text-foreground">
+                          {selectedWorkOrder.dueDate 
+                            ? new Date(selectedWorkOrder.dueDate).toLocaleDateString()
+                            : 'No due date'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Description</Label>
+                      <p className="text-foreground mt-1">{selectedWorkOrder.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Work Details */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Work Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="font-semibold">Scope of Work</Label>
+                      <p className="text-foreground mt-1">{selectedWorkOrder.scopeOfWork || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Required Tools</Label>
+                      <p className="text-foreground mt-1">{selectedWorkOrder.requiredTools || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Point of Contact</Label>
+                      <p className="text-foreground mt-1">{selectedWorkOrder.pointOfContact || 'Not specified'}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Tasks Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="text-lg">Tasks</span>
+                      {canCreateWorkOrders && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            setSelectedWorkOrderForTask(selectedWorkOrder.id);
+                            setIsTaskDialogOpen(true);
+                          }}
+                        >
+                          <i className="fas fa-plus mr-2"></i>
+                          Add Task
+                        </Button>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {tasksLoading ? (
+                      <div className="text-center py-4">
+                        <i className="fas fa-spinner fa-spin mr-2"></i>
+                        Loading tasks...
+                      </div>
+                    ) : workOrderTasks && workOrderTasks.length > 0 ? (
+                      <div className="space-y-6">
+                        {['pre_visit', 'on_site', 'post_site'].map(category => {
+                          const categoryTasks = workOrderTasks.filter(task => task.category === category);
+                          if (categoryTasks.length === 0) return null;
+                          
+                          return (
+                            <div key={category}>
+                              <h4 className="font-semibold text-foreground mb-3">
+                                {getCategoryLabel(category)} ({categoryTasks.filter(t => t.isCompleted).length}/{categoryTasks.length} completed)
+                              </h4>
+                              <div className="space-y-2">
+                                {categoryTasks.map(task => (
+                                  <TaskItem
+                                    key={task.id}
+                                    task={task}
+                                    canComplete={canCompleteTask((user as any)?.role)}
+                                    onComplete={completeTaskMutation.mutate}
+                                    isCompleting={completeTaskMutation.isPending}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <i className="fas fa-tasks text-3xl mb-2"></i>
+                        <p>No tasks assigned yet</p>
+                        {canCreateWorkOrders && (
+                          <Button 
+                            variant="outline" 
+                            className="mt-2"
+                            onClick={() => {
+                              setSelectedWorkOrderForTask(selectedWorkOrder.id);
+                              setIsTaskDialogOpen(true);
+                            }}
+                          >
+                            <i className="fas fa-plus mr-2"></i>
+                            Add First Task
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
