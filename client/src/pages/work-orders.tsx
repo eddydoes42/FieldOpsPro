@@ -929,69 +929,70 @@ export default function WorkOrders() {
               <span className="text-foreground">Work Orders</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="w-full overflow-x-auto">
-              <Table className="min-w-full">
+          <CardContent>
+            <div className="w-full">
+              <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[200px] w-[25%] px-4 py-3">Title</TableHead>
-                    <TableHead className="min-w-[100px] w-[12%] px-4 py-3">Status</TableHead>
-                    <TableHead className="min-w-[100px] w-[12%] px-4 py-3">Priority</TableHead>
-                    <TableHead className="min-w-[120px] w-[15%] px-4 py-3">Assigned To</TableHead>
-                    <TableHead className="min-w-[80px] w-[10%] px-4 py-3">Est. Hours</TableHead>
-                    <TableHead className="min-w-[100px] w-[12%] px-4 py-3">Due Date</TableHead>
-                    <TableHead className="min-w-[120px] w-[14%] px-4 py-3">Actions</TableHead>
+                    <TableHead className="w-[30%]">Title</TableHead>
+                    <TableHead className="w-[10%]">Status</TableHead>
+                    <TableHead className="w-[10%]">Priority</TableHead>
+                    <TableHead className="w-[15%]">Assigned</TableHead>
+                    <TableHead className="w-[8%]">Hours</TableHead>
+                    <TableHead className="w-[12%]">Due Date</TableHead>
+                    <TableHead className="w-[15%]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredWorkOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="px-4 py-3">
-                        <div className="max-w-[200px]">
-                          <div className="font-medium text-gray-900 dark:text-white truncate">{order.title}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                      <TableCell>
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white text-sm truncate">{order.title}</div>
+                          <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
                             {order.description}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status.replace('_', ' ').toUpperCase()}
+                        <Badge className={`${getStatusColor(order.status)} text-xs`}>
+                          {order.status === 'in_progress' ? 'Active' : order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getPriorityColor(order.priority)}>
-                          {order.priority.toUpperCase()}
+                        <Badge className={`${getPriorityColor(order.priority)} text-xs`}>
+                          {order.priority.charAt(0).toUpperCase() + order.priority.slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-foreground">
-                        <div className="truncate">{getAgentName(order.assigneeId)}</div>
+                        <div className="truncate text-sm">{getAgentName(order.assigneeId)}</div>
                       </TableCell>
-                      <TableCell className="text-foreground">{order.estimatedHours ? `${order.estimatedHours}h` : 'N/A'}</TableCell>
+                      <TableCell className="text-foreground text-sm">{order.estimatedHours ? `${order.estimatedHours}h` : 'N/A'}</TableCell>
                       <TableCell className="text-foreground">
-                        <div className="truncate">
+                        <div className="truncate text-sm">
                           {order.dueDate 
-                            ? new Date(order.dueDate).toLocaleDateString()
-                            : 'No due date'
+                            ? new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : 'None'
                           }
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex space-x-1">
+                        <div className="flex gap-1">
                           <Button 
                             variant="outline" 
                             size="sm"
+                            className="text-xs px-2 py-1"
                             onClick={() => {
                               console.log('View button clicked for order:', order.id);
                               setSelectedWorkOrder(order);
                               setIsViewDialogOpen(true);
                             }}
                           >
-                            👁️ View
+                            View
                           </Button>
                           {canCreateWorkOrders && (
-                            <Button variant="outline" size="sm">
-                              ✏️ Edit
+                            <Button variant="outline" size="sm" className="text-xs px-2 py-1">
+                              Edit
                             </Button>
                           )}
                         </div>
