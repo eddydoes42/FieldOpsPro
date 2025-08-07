@@ -934,25 +934,20 @@ export default function WorkOrders() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[30%]">Title</TableHead>
-                    <TableHead className="w-[10%]">Status</TableHead>
-                    <TableHead className="w-[10%]">Priority</TableHead>
-                    <TableHead className="w-[15%]">Assigned</TableHead>
+                    <TableHead className="w-[25%]">Title</TableHead>
+                    <TableHead className="w-[12%]">Status</TableHead>
+                    <TableHead className="w-[12%]">Priority</TableHead>
+                    <TableHead className="w-[18%]">Assigned</TableHead>
                     <TableHead className="w-[8%]">Hours</TableHead>
                     <TableHead className="w-[12%]">Due Date</TableHead>
-                    <TableHead className="w-[15%]">Actions</TableHead>
+                    <TableHead className="w-[13%]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredWorkOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-white text-sm truncate">{order.title}</div>
-                          <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
-                            {order.description}
-                          </div>
-                        </div>
+                        <div className="font-medium text-gray-900 dark:text-white text-sm truncate">{order.title}</div>
                       </TableCell>
                       <TableCell>
                         <Badge className={`${getStatusColor(order.status)} text-xs`}>
