@@ -2,6 +2,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 interface NavigationProps {
   userRole: string;
@@ -10,6 +12,17 @@ interface NavigationProps {
 export default function Navigation({ userRole }: NavigationProps) {
   const { user } = useAuth();
   const [location] = useLocation();
+
+  // Fetch unread message count
+  const { data: messages } = useQuery({
+    queryKey: ["/api/messages"],
+    retry: false,
+  });
+
+  const currentUserId = (user as any)?.id;
+  const unreadCount = messages?.filter((msg: any) => 
+    !msg.isRead && msg.recipientId === currentUserId
+  ).length || 0;
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -54,7 +67,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/reports/team', label: 'Team Reports', icon: 'fas fa-chart-bar' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
-            { path: '/messages', label: 'Messages', icon: 'fas fa-comments' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
       default:
@@ -64,7 +77,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/work-orders', label: 'My Orders', icon: 'fas fa-clipboard-list' },
             { path: '/time-tracking', label: 'Time Tracking', icon: 'fas fa-clock' },
-            { path: '/messages', label: 'Messages', icon: 'fas fa-comments' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
     }
@@ -136,13 +149,20 @@ export default function Navigation({ userRole }: NavigationProps) {
                     {config.links.map((link) => (
                       <Link key={link.path} href={link.path}>
                         <div 
-                          className={`flex items-center px-4 py-2 text-sm hover:bg-secondary/50 cursor-pointer ${
+                          className={`flex items-center justify-between px-4 py-2 text-sm hover:bg-secondary/50 cursor-pointer ${
                             location === link.path ? 'bg-primary/10 text-primary' : 'text-foreground'
                           }`}
                           onClick={() => setDropdownOpen(false)}
                         >
-                          <i className={`${link.icon} mr-3 w-4`}></i>
-                          {link.label}
+                          <div className="flex items-center">
+                            <i className={`${link.icon} mr-3 w-4`}></i>
+                            {link.label}
+                          </div>
+                          {(link as any).showUnreadCount && unreadCount > 0 && (
+                            <Badge className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 min-w-[20px] h-5 flex items-center justify-center rounded-full">
+                              {unreadCount}
+                            </Badge>
+                          )}
                         </div>
                       </Link>
                     ))}
