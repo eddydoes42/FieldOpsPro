@@ -252,16 +252,18 @@ export default function TeamReports() {
               <CardContent>
                 <div className="space-y-4">
                   {reportsData?.workOrderStats.map((stat) => (
-                    <div key={stat.status} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <Badge className={getStatusColor(stat.status)}>
-                          {stat.status.replace('_', ' ').toUpperCase()}
-                        </Badge>
-                        <span className="font-medium text-foreground">{stat.count} orders</span>
+                    <div key={stat.status} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <Badge className={getStatusColor(stat.status)}>
+                            {stat.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                          <span className="font-medium text-foreground truncate">{stat.count} orders</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col text-right text-xs text-gray-600 dark:text-gray-300 min-w-[70px] ml-2">
-                        <div className="whitespace-nowrap">Est: {formatHours(stat.avgEstimatedHours)}</div>
-                        <div className="whitespace-nowrap">Act: {formatHours(stat.avgActualHours)}</div>
+                      <div className="flex justify-between items-center mt-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span>Est: {formatHours(stat.avgEstimatedHours)}</span>
+                        <span>Act: {formatHours(stat.avgActualHours)}</span>
                       </div>
                     </div>
                   ))}
@@ -288,31 +290,31 @@ export default function TeamReports() {
                     return (
                       <div key={agent.agentId} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
                         <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white">{agent.agentName}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">{agent.email}</p>
+                          <div className="flex-1 min-w-0 pr-2">
+                            <h4 className="font-semibold text-gray-900 dark:text-white truncate">{agent.agentName}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{agent.email}</p>
                           </div>
-                          <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                          <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 whitespace-nowrap flex-shrink-0">
                             {completionRate}% Complete
                           </Badge>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-300">Assigned:</span>
-                            <span className="ml-2 font-medium text-foreground">{agent.totalAssigned}</span>
+                            <span className="font-medium text-foreground">{agent.totalAssigned}</span>
                           </div>
-                          <div>
+                          <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-300">Completed:</span>
-                            <span className="ml-2 font-medium text-foreground">{agent.completedOrders}</span>
+                            <span className="font-medium text-foreground">{agent.completedOrders}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-300">Estimated:</span>
-                            <span className="ml-2 font-medium text-foreground">{formatHours(agent.avgEstimatedHours)}</span>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-300">Est Hours:</span>
+                            <span className="font-medium text-foreground">{formatHours(agent.avgEstimatedHours)}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-300">Actual:</span>
-                            <span className="ml-2 font-medium text-foreground">{formatHours(agent.avgActualHours)}</span>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-300">Act Hours:</span>
+                            <span className="font-medium text-foreground">{formatHours(agent.avgActualHours)}</span>
                           </div>
                         </div>
                         
