@@ -1644,10 +1644,23 @@ export default function WorkOrders() {
                       </div>
                       <div>
                         <Label className="font-semibold">Status</Label>
-                        <div className="mt-1">
+                        <div className="mt-1 flex items-center gap-3">
                           <Badge className={getStatusColor(selectedWorkOrder.status)}>
                             {selectedWorkOrder.status.replace('_', ' ').toUpperCase()}
                           </Badge>
+                          {(((user as any)?.role === 'field_agent' && selectedWorkOrder.assigneeId === (user as any)?.id) || 
+                           (user as any)?.role === 'administrator' || 
+                           (user as any)?.role === 'manager') && (
+                            <Button
+                              onClick={() => handleStatusUpdate(selectedWorkOrder.id, getNextStatus(selectedWorkOrder))}
+                              disabled={isStatusButtonDisabled(selectedWorkOrder) || updateStatusMutation.isPending}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(selectedWorkOrder)}
+                            </Button>
+                          )}
                         </div>
                       </div>
                       <div>
