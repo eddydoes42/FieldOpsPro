@@ -203,7 +203,7 @@ export default function AgentDashboard() {
                 ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  No assignments for today
+                  No assignments scheduled for today
                 </div>
               )}
             </div>

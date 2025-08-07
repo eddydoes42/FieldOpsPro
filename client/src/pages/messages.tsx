@@ -184,6 +184,13 @@ export default function Messages() {
     return workOrder ? workOrder.title : 'Unknown Work Order';
   };
 
+  const formatRole = (role: string) => {
+    return role
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const currentUserId = (user as any)?.id;
   const userMessages = messages?.filter(msg => 
     msg.senderId === currentUserId || msg.recipientId === currentUserId
@@ -261,7 +268,7 @@ export default function Messages() {
                       <SelectContent>
                         {users?.filter(u => u.id !== currentUserId).map(user => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.firstName} {user.lastName} ({user.role})
+                            {user.firstName} {user.lastName} ({formatRole(user.role)})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -274,7 +281,7 @@ export default function Messages() {
                         <SelectValue placeholder="Select work order (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">No work order</SelectItem>
+                        <SelectItem value="none">General message</SelectItem>
                         {workOrders?.map(order => (
                           <SelectItem key={order.id} value={order.id}>
                             {order.title}

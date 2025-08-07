@@ -240,7 +240,8 @@ export default function TeamManagement() {
                               {agent.firstName} {agent.lastName}
                             </div>
                             <Badge variant="outline" className="text-xs">
-                              {agent.role === 'field_agent' ? 'Field Agent' : agent.role}
+                              {agent.role === 'field_agent' ? 'Field Agent' : 
+                               agent.role === 'administrator' ? 'Administrator' : 'Manager'}
                             </Badge>
                           </div>
                         </div>

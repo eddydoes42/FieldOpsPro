@@ -191,19 +191,6 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* DEBUG: Task Creation Test */}
-              <div className="bg-red-100 p-4 mb-4 rounded">
-                <h2 className="text-xl font-bold text-red-800 mb-2">🔧 TASK CREATION AVAILABLE HERE!</h2>
-                <p className="text-red-700">If you can see this red box, task creation is working below.</p>
-                <Button
-                  type="button"
-                  onClick={() => alert(`Tasks: ${tasks.length}`)}
-                  className="mt-2 bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Test Task Counter ({tasks.length})
-                </Button>
-              </div>
-
               {/* Work Order Details */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Work Order Details</h3>

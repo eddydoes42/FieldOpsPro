@@ -51,7 +51,7 @@ export default function AdminDashboard() {
           <CardContent className="pt-6">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
-              <p className="text-muted-foreground">You don't have permission to access this page.</p>
+              <p className="text-muted-foreground">You do not have permission to access this page.</p>
             </div>
           </CardContent>
         </Card>
