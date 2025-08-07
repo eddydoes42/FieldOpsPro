@@ -38,15 +38,15 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['/api/work-orders', workOrderId, 'tasks'],
-    queryFn: () => apiRequest(`/api/work-orders/${workOrderId}/tasks`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/work-orders/${workOrderId}/tasks`);
+      return await response.json();
+    },
   });
 
   const createTaskMutation = useMutation({
     mutationFn: (taskData: any) => 
-      apiRequest(`/api/work-orders/${workOrderId}/tasks`, {
-        method: 'POST',
-        body: JSON.stringify(taskData),
-      }),
+      apiRequest('POST', `/api/work-orders/${workOrderId}/tasks`, taskData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders', workOrderId, 'tasks'] });
       setNewTask({ title: '', description: '', category: 'pre_visit' });
@@ -65,12 +65,11 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
     },
   });
 
-  const updateTaskMutation = useMutation({
-    mutationFn: ({ taskId, updates }: { taskId: string; updates: any }) =>
-      apiRequest(`/api/work-order-tasks/${taskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updates),
-      }),
+  const completeTaskMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const response = await apiRequest('PATCH', `/api/tasks/${taskId}/complete`, {});
+      return await response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders', workOrderId, 'tasks'] });
       toast({
@@ -89,9 +88,7 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
 
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId: string) =>
-      apiRequest(`/api/work-order-tasks/${taskId}`, {
-        method: 'DELETE',
-      }),
+      apiRequest('DELETE', `/api/work-order-tasks/${taskId}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders', workOrderId, 'tasks'] });
       toast({
@@ -125,12 +122,9 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
   };
 
   const handleToggleComplete = (task: Task) => {
-    updateTaskMutation.mutate({
-      taskId: task.id,
-      updates: {
-        isCompleted: !task.isCompleted,
-      },
-    });
+    if (!task.isCompleted) {
+      completeTaskMutation.mutate(task.id);
+    }
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -162,7 +156,7 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
   };
 
   const canManageTasks = userRole === 'administrator' || userRole === 'manager';
-  const canCompleTeTasks = userRole === 'administrator' || userRole === 'manager' || userRole === 'field_agent';
+  const canCompleteTasks = userRole === 'administrator' || userRole === 'manager' || userRole === 'field_agent';
 
   if (isLoading) {
     return (
@@ -282,7 +276,7 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        {canCompleTeTasks && (
+                        {canCompleteTasks && (
                           <Checkbox
                             checked={task.isCompleted}
                             onCheckedChange={() => handleToggleComplete(task)}
