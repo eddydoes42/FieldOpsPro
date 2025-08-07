@@ -177,7 +177,7 @@ export default function TeamReports() {
           <TabsList className="grid w-full grid-cols-3 gap-1 p-1">
             <TabsTrigger value="overview" className="text-xs px-1 py-2">Overview</TabsTrigger>
             <TabsTrigger value="workorders" className="text-xs px-1 py-2">Work Orders</TabsTrigger>
-            <TabsTrigger value="team" className="text-xs px-0.5 py-2">Team Performance</TabsTrigger>
+            <TabsTrigger value="team" className="text-xs px-1 py-2">Performance</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-6">
