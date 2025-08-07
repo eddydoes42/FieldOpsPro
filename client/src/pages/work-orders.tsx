@@ -1322,11 +1322,11 @@ export default function WorkOrders() {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="flex-1 text-xs"
+                      className="text-xs px-3 whitespace-nowrap"
                       onClick={() => {
                         setSelectedWorkOrder(order);
                         setIsViewDialogOpen(true);
@@ -1349,7 +1349,7 @@ export default function WorkOrders() {
                     {(order.assigneeId === (user as any)?.id || canCreateWorkOrders) && (
                       <Button
                         size="sm"
-                        className={`text-xs px-3 ${
+                        className={`text-xs px-2 py-1 whitespace-nowrap min-w-0 flex-shrink-0 ${
                           (order as any).workStatus === 'completed'
                             ? 'bg-green-600 hover:bg-green-700'
                             : 'bg-blue-600 hover:bg-blue-700'
