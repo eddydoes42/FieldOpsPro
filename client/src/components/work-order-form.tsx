@@ -361,49 +361,22 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                 </div>
               </div>
 
-              {/* Assignment */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment</h3>
-                <FormField
-                  control={form.control}
-                  name="assigneeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assign to Agent</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select field agent" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {(fieldAgents as any)?.map((agent: any) => (
-                            <SelectItem key={agent.id} value={agent.id}>
-                              {agent.firstName} {agent.lastName} - {agent.role?.replace('_', ' ')}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               {/* Tasks Section */}
-              <div>
+              <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Tasks</h3>
-                  <Badge variant="secondary">{tasks.length} tasks added</Badge>
+                  <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
+                  <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+                    {tasks.length} tasks ready
+                  </Badge>
                 </div>
                 
                 {/* Add Task Form */}
-                <Card className="mb-4 border-dashed border-2">
+                <Card className="mb-4 border-dashed border-2 border-blue-300 dark:border-blue-700">
                   <CardContent className="pt-4">
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
-                          <label className="text-sm font-medium">Category</label>
+                          <label className="text-sm font-medium text-blue-900 dark:text-blue-100">Category</label>
                           <Select 
                             value={newTask.category} 
                             onValueChange={(value) => setNewTask({ ...newTask, category: value as any })}
@@ -419,7 +392,7 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                           </Select>
                         </div>
                         <div className="md:col-span-2">
-                          <label className="text-sm font-medium">Task Title</label>
+                          <label className="text-sm font-medium text-blue-900 dark:text-blue-100">Task Title</label>
                           <Input
                             value={newTask.title}
                             onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
@@ -429,7 +402,7 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                         </div>
                       </div>
                       <div>
-                        <label className="text-sm font-medium">Description (Optional)</label>
+                        <label className="text-sm font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
                         <Textarea
                           value={newTask.description}
                           onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
@@ -442,10 +415,10 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                         type="button"
                         onClick={handleAddTask}
                         size="sm"
-                        className="w-full"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         <Plus className="h-4 w-4 mr-2" />
-                        Add Task
+                        Add Task to Work Order
                       </Button>
                     </div>
                   </CardContent>
@@ -460,7 +433,7 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                       
                       return (
                         <div key={category}>
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
                             {getCategoryLabel(category)} ({categoryTasks.length})
                           </h4>
                           <div className="space-y-1">
@@ -469,7 +442,7 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                               return (
                                 <div
                                   key={globalIndex}
-                                  className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded border"
+                                  className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
                                 >
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
@@ -503,6 +476,36 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                   </div>
                 )}
               </div>
+
+              {/* Assignment */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment</h3>
+                <FormField
+                  control={form.control}
+                  name="assigneeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign to Agent</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select field agent" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(fieldAgents as any)?.map((agent: any) => (
+                            <SelectItem key={agent.id} value={agent.id}>
+                              {agent.firstName} {agent.lastName} - {agent.role?.replace('_', ' ')}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
 
               {/* Action Buttons */}
               <div className="flex space-x-4 pt-6 border-t border-gray-200">
