@@ -925,31 +925,31 @@ export default function WorkOrders() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <i className="fas fa-clipboard-list mr-2 text-blue-600 dark:text-blue-400"></i>
+              <span className="mr-2 text-blue-600 dark:text-blue-400">📋</span>
               <span className="text-foreground">Work Orders</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
+          <CardContent className="p-0">
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Est. Hours</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="min-w-[200px] w-[25%] px-4 py-3">Title</TableHead>
+                    <TableHead className="min-w-[100px] w-[12%] px-4 py-3">Status</TableHead>
+                    <TableHead className="min-w-[100px] w-[12%] px-4 py-3">Priority</TableHead>
+                    <TableHead className="min-w-[120px] w-[15%] px-4 py-3">Assigned To</TableHead>
+                    <TableHead className="min-w-[80px] w-[10%] px-4 py-3">Est. Hours</TableHead>
+                    <TableHead className="min-w-[100px] w-[12%] px-4 py-3">Due Date</TableHead>
+                    <TableHead className="min-w-[120px] w-[14%] px-4 py-3">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredWorkOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-white">{order.title}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">
+                      <TableCell className="px-4 py-3">
+                        <div className="max-w-[200px]">
+                          <div className="font-medium text-gray-900 dark:text-white truncate">{order.title}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-300 truncate">
                             {order.description}
                           </div>
                         </div>
@@ -964,16 +964,20 @@ export default function WorkOrders() {
                           {order.priority.toUpperCase()}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-foreground">{getAgentName(order.assigneeId)}</TableCell>
+                      <TableCell className="text-foreground">
+                        <div className="truncate">{getAgentName(order.assigneeId)}</div>
+                      </TableCell>
                       <TableCell className="text-foreground">{order.estimatedHours ? `${order.estimatedHours}h` : 'N/A'}</TableCell>
                       <TableCell className="text-foreground">
-                        {order.dueDate 
-                          ? new Date(order.dueDate).toLocaleDateString()
-                          : 'No due date'
-                        }
+                        <div className="truncate">
+                          {order.dueDate 
+                            ? new Date(order.dueDate).toLocaleDateString()
+                            : 'No due date'
+                          }
+                        </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-1">
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -987,8 +991,7 @@ export default function WorkOrders() {
                           </Button>
                           {canCreateWorkOrders && (
                             <Button variant="outline" size="sm">
-                              <i className="fas fa-edit mr-1"></i>
-                              Edit
+                              ✏️ Edit
                             </Button>
                           )}
                         </div>
