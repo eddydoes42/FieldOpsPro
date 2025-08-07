@@ -337,17 +337,19 @@ export default function WorkOrders() {
     },
   });
 
-  if (ordersError && isUnauthorizedError(ordersError as Error)) {
-    toast({
-      title: "Unauthorized",
-      description: "You are logged out. Logging in again...",
-      variant: "destructive",
-    });
-    setTimeout(() => {
-      window.location.href = "/api/login";
-    }, 500);
-    return null;
-  }
+  // Handle unauthorized errors from queries
+  useEffect(() => {
+    if (ordersError && isUnauthorizedError(ordersError as Error)) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+    }
+  }, [ordersError, toast]);
 
   if (isLoading || ordersLoading || agentsLoading) {
     return (
