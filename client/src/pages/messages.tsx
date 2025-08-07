@@ -93,11 +93,11 @@ export default function Messages() {
   const sendMessageMutation = useMutation({
     mutationFn: async (data: NewMessageData) => {
       const messageData = {
-        ...data,
-        id: `msg-${Date.now()}`,
-        fromUserId: (user as any)?.id,
-        createdAt: new Date(),
-        isRead: false,
+        recipientId: data.recipientId || null,
+        workOrderId: data.workOrderId === 'none' ? null : data.workOrderId,
+        subject: data.subject,
+        content: data.content,
+        messageType: data.recipientId ? 'direct' : 'broadcast',
       };
       
       const response = await apiRequest('POST', '/api/messages', messageData);
@@ -274,7 +274,7 @@ export default function Messages() {
                         <SelectValue placeholder="Select work order (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No work order</SelectItem>
+                        <SelectItem value="none">No work order</SelectItem>
                         {workOrders?.map(order => (
                           <SelectItem key={order.id} value={order.id}>
                             {order.title}
