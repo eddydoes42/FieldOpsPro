@@ -109,12 +109,12 @@ export default function Onboarding() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
         <Navigation userRole={(user as any)?.role || 'manager'} />
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+            <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
       </div>
@@ -145,19 +145,19 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Team Member Onboarding</h1>
-          <p className="text-gray-600">Add new field agents and team members to your organization</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Team Member Onboarding</h1>
+          <p className="text-gray-600 dark:text-gray-300">Add new field agents and team members to your organization</p>
         </div>
 
-        <Card>
+        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <i className="fas fa-user-plus mr-2 text-blue-600"></i>
+            <CardTitle className="flex items-center text-gray-900 dark:text-white">
+              <i className="fas fa-user-plus mr-2 text-blue-600 dark:text-blue-400"></i>
               New Team Member Information
             </CardTitle>
           </CardHeader>
@@ -242,8 +242,8 @@ export default function Onboarding() {
 
               {/* Emergency Contact */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <i className="fas fa-phone mr-2 text-red-600"></i>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <i className="fas fa-phone mr-2 text-red-600 dark:text-red-400"></i>
                   Emergency Contact Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -272,8 +272,8 @@ export default function Onboarding() {
 
               {/* Skills and Certifications */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <i className="fas fa-certificate mr-2 text-green-600"></i>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <i className="fas fa-certificate mr-2 text-green-600 dark:text-green-400"></i>
                   Skills & Qualifications
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -313,10 +313,11 @@ export default function Onboarding() {
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end space-x-4 pt-6 border-t">
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button" 
                   variant="outline"
+                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => setFormData({
                     firstName: "",
                     lastName: "",
@@ -336,7 +337,7 @@ export default function Onboarding() {
                 <Button 
                   type="submit" 
                   disabled={onboardingMutation.isPending}
-                  className="min-w-[120px]"
+                  className="min-w-[120px] bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
                 >
                   {onboardingMutation.isPending ? (
                     <div className="flex items-center">
@@ -357,36 +358,36 @@ export default function Onboarding() {
 
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-6 text-center">
-              <i className="fas fa-file-download text-3xl text-blue-600 mb-4"></i>
-              <h3 className="font-semibold text-gray-900 mb-2">Download Forms</h3>
-              <p className="text-sm text-gray-600 mb-4">Get printable onboarding forms and checklists</p>
-              <Button variant="outline" size="sm">
+              <i className="fas fa-file-download text-3xl text-blue-600 dark:text-blue-400 mb-4"></i>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Download Forms</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Get printable onboarding forms and checklists</p>
+              <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <i className="fas fa-download mr-2"></i>
                 Download
               </Button>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-6 text-center">
-              <i className="fas fa-users text-3xl text-green-600 mb-4"></i>
-              <h3 className="font-semibold text-gray-900 mb-2">View Team</h3>
-              <p className="text-sm text-gray-600 mb-4">See all current team members and their status</p>
-              <Button variant="outline" size="sm">
+              <i className="fas fa-users text-3xl text-green-600 dark:text-green-400 mb-4"></i>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">View Team</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">See all current team members and their status</p>
+              <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <i className="fas fa-eye mr-2"></i>
                 View Team
               </Button>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="p-6 text-center">
-              <i className="fas fa-chart-bar text-3xl text-purple-600 mb-4"></i>
-              <h3 className="font-semibold text-gray-900 mb-2">Training Progress</h3>
-              <p className="text-sm text-gray-600 mb-4">Track onboarding and training completion</p>
-              <Button variant="outline" size="sm">
+              <i className="fas fa-chart-bar text-3xl text-purple-600 dark:text-purple-400 mb-4"></i>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Training Progress</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Track onboarding and training completion</p>
+              <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <i className="fas fa-chart-bar mr-2"></i>
                 View Progress
               </Button>
