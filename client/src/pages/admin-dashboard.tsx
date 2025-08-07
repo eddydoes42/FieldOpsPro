@@ -294,37 +294,37 @@ export default function AdminDashboard() {
               ) : (
                 <div className="space-y-4">
                   {allUsers && (allUsers as any[]).map((userData) => (
-                    <div key={userData.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div key={userData.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
+                      <div className="flex items-center space-x-4 min-w-0 flex-1">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <i className="fas fa-user text-primary"></i>
                         </div>
-                        <div>
-                          <h4 className="font-medium text-foreground">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium text-foreground truncate">
                             {userData.firstName && userData.lastName 
                               ? `${userData.firstName} ${userData.lastName}`
                               : userData.email || 'Unknown User'
                             }
                           </h4>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground truncate">
                             {userData.email || 'No email'}
                           </p>
-                          <div className="flex items-center space-x-2 mt-1">
+                          <div className="flex items-center space-x-2 mt-1 flex-wrap">
                             <Badge 
                               variant="secondary" 
-                              className={
+                              className={`${
                                 userData.role === 'administrator' 
                                   ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
                                   : userData.role === 'manager'
                                   ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
                                   : 'bg-green-900/30 text-green-300 border-green-800/50'
-                              }
+                              } flex-shrink-0`}
                             >
                               {userData.role === 'field_agent' ? 'FA' : 
                                userData.role === 'administrator' ? 'Admin' :
                                userData.role === 'manager' ? 'Manager' : 'Unknown'}
                             </Badge>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground truncate">
                               Created: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}
                             </p>
                           </div>
