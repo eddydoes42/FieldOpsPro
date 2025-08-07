@@ -14,7 +14,7 @@ import {
   type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, isNull, count, avg, sum, sql } from "drizzle-orm";
+import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -323,7 +323,7 @@ export class DatabaseStorage implements IStorage {
         activeEntries: sum(sql<number>`CASE WHEN ${timeEntries.isActive} = true THEN 1 ELSE 0 END`),
       })
       .from(timeEntries)
-      .where(isNull(timeEntries.endTime).not());
+      .where(isNotNull(timeEntries.endTime));
 
     // Completion Rates by Agent
     const completionRates = await db
