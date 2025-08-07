@@ -161,12 +161,12 @@ export default function Messages() {
 
   if (isLoading || messagesLoading || usersLoading || ordersLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
         <Navigation userRole={(user as any)?.role || 'manager'} />
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
+            <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
       </div>
@@ -223,32 +223,32 @@ export default function Messages() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
               Messages
               {unreadCount > 0 && (
-                <Badge className="ml-3 bg-red-100 text-red-800">
+                <Badge className="ml-3 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                   {unreadCount} unread
                 </Badge>
               )}
             </h1>
-            <p className="text-gray-600">Team communication and work order discussions</p>
+            <p className="text-gray-600 dark:text-gray-300">Team communication and work order discussions</p>
           </div>
           <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center">
+              <Button className="flex items-center bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700">
                 <i className="fas fa-plus mr-2"></i>
                 Compose Message
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <DialogHeader>
-                <DialogTitle>Compose New Message</DialogTitle>
+                <DialogTitle className="text-gray-900 dark:text-white">Compose New Message</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -309,10 +309,19 @@ export default function Messages() {
                 </div>
 
                 <div className="flex justify-end space-x-4 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsComposeDialogOpen(false)}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    onClick={() => setIsComposeDialogOpen(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={sendMessageMutation.isPending}>
+                  <Button 
+                    type="submit" 
+                    disabled={sendMessageMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                  >
                     {sendMessageMutation.isPending ? (
                       <div className="flex items-center">
                         <i className="fas fa-spinner fa-spin mr-2"></i>
@@ -334,10 +343,10 @@ export default function Messages() {
         {/* Messages List */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Inbox */}
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <i className="fas fa-inbox mr-2 text-blue-600"></i>
+              <CardTitle className="flex items-center text-gray-900 dark:text-white">
+                <i className="fas fa-inbox mr-2 text-blue-600 dark:text-blue-400"></i>
                 Inbox
               </CardTitle>
             </CardHeader>
@@ -350,26 +359,28 @@ export default function Messages() {
                   .map((message) => (
                     <div 
                       key={message.id}
-                      className={`p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                        !message.isRead ? 'bg-blue-50 border-blue-200' : ''
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        !message.isRead 
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30' 
+                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                       onClick={() => viewMessage(message)}
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-gray-900 dark:text-white">
                             {getUserName(message.senderId)}
                           </span>
                           {!message.isRead && (
-                            <Badge className="bg-blue-100 text-blue-800 text-xs">New</Badge>
+                            <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">New</Badge>
                           )}
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(message.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <h4 className="font-medium text-gray-900 mb-1">{message.subject}</h4>
-                      <p className="text-sm text-gray-600 line-clamp-2">{message.content}</p>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">{message.subject}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{message.content}</p>
                       {message.workOrderId && (
                         <div className="mt-2">
                           <Badge variant="outline" className="text-xs">
@@ -381,7 +392,7 @@ export default function Messages() {
                     </div>
                   ))}
                 {userMessages.filter(msg => msg.recipientId === currentUserId).length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <i className="fas fa-inbox text-4xl mb-4"></i>
                     <p>No messages in your inbox</p>
                   </div>
@@ -391,10 +402,10 @@ export default function Messages() {
           </Card>
 
           {/* Sent */}
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <i className="fas fa-paper-plane mr-2 text-green-600"></i>
+              <CardTitle className="flex items-center text-gray-900 dark:text-white">
+                <i className="fas fa-paper-plane mr-2 text-green-600 dark:text-green-400"></i>
                 Sent Messages
               </CardTitle>
             </CardHeader>
@@ -407,19 +418,19 @@ export default function Messages() {
                   .map((message) => (
                     <div 
                       key={message.id}
-                      className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
+                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       onClick={() => viewMessage(message)}
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-gray-900 dark:text-white">
                           To: {message.recipientId ? getUserName(message.recipientId) : 'All'}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(message.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <h4 className="font-medium text-gray-900 mb-1">{message.subject}</h4>
-                      <p className="text-sm text-gray-600 line-clamp-2">{message.content}</p>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">{message.subject}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{message.content}</p>
                       {message.workOrderId && (
                         <div className="mt-2">
                           <Badge variant="outline" className="text-xs">
@@ -431,7 +442,7 @@ export default function Messages() {
                     </div>
                   ))}
                 {userMessages.filter(msg => msg.senderId === currentUserId).length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <i className="fas fa-paper-plane text-4xl mb-4"></i>
                     <p>No sent messages</p>
                   </div>
@@ -443,44 +454,48 @@ export default function Messages() {
 
         {/* View Message Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <DialogHeader>
-              <DialogTitle>Message Details</DialogTitle>
+              <DialogTitle className="text-gray-900 dark:text-white">Message Details</DialogTitle>
             </DialogHeader>
             {selectedMessage && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <Label>From:</Label>
-                    <p className="font-medium">{getUserName(selectedMessage.senderId)}</p>
+                    <Label className="text-gray-700 dark:text-gray-300">From:</Label>
+                    <p className="font-medium text-gray-900 dark:text-white">{getUserName(selectedMessage.senderId)}</p>
                   </div>
                   <div>
-                    <Label>To:</Label>
-                    <p className="font-medium">
+                    <Label className="text-gray-700 dark:text-gray-300">To:</Label>
+                    <p className="font-medium text-gray-900 dark:text-white">
                       {selectedMessage.recipientId ? getUserName(selectedMessage.recipientId) : 'All'}
                     </p>
                   </div>
                   <div>
-                    <Label>Date:</Label>
-                    <p>{new Date(selectedMessage.createdAt).toLocaleString()}</p>
+                    <Label className="text-gray-700 dark:text-gray-300">Date:</Label>
+                    <p className="text-gray-900 dark:text-white">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
                   </div>
                   <div>
-                    <Label>Work Order:</Label>
-                    <p>{getWorkOrderTitle(selectedMessage.workOrderId)}</p>
+                    <Label className="text-gray-700 dark:text-gray-300">Work Order:</Label>
+                    <p className="text-gray-900 dark:text-white">{getWorkOrderTitle(selectedMessage.workOrderId)}</p>
                   </div>
                 </div>
                 <div>
-                  <Label>Subject:</Label>
-                  <h3 className="text-lg font-medium mt-1">{selectedMessage.subject}</h3>
+                  <Label className="text-gray-700 dark:text-gray-300">Subject:</Label>
+                  <h3 className="text-lg font-medium mt-1 text-gray-900 dark:text-white">{selectedMessage.subject}</h3>
                 </div>
                 <div>
-                  <Label>Message:</Label>
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                    <p className="whitespace-pre-wrap">{selectedMessage.content}</p>
+                  <Label className="text-gray-700 dark:text-gray-300">Message:</Label>
+                  <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <p className="whitespace-pre-wrap text-gray-900 dark:text-white">{selectedMessage.content}</p>
                   </div>
                 </div>
                 <div className="flex justify-end">
-                  <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                  <Button 
+                    variant="outline" 
+                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    onClick={() => setIsViewDialogOpen(false)}
+                  >
                     Close
                   </Button>
                 </div>
