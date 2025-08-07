@@ -49,6 +49,9 @@ export const workOrders = pgTable("work_orders", {
   title: varchar("title").notNull(),
   description: text("description").notNull(),
   location: varchar("location").notNull(),
+  scopeOfWork: text("scope_of_work"),
+  requiredTools: text("required_tools"),
+  pointOfContact: varchar("point_of_contact"),
   priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
   status: varchar("status").notNull().default("pending"), // pending, in_progress, completed, cancelled
   assigneeId: varchar("assignee_id").references(() => users.id),

@@ -1,5 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 
 interface WorkOrderCardProps {
   workOrder: any;
@@ -8,6 +10,7 @@ interface WorkOrderCardProps {
 }
 
 export default function WorkOrderCard({ workOrder, onStatusChange, showActions = true }: WorkOrderCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -61,6 +64,38 @@ export default function WorkOrderCard({ workOrder, onStatusChange, showActions =
             <span>Due: {workOrder.dueDate ? new Date(workOrder.dueDate).toLocaleDateString() : 'No due date'}</span>
           </div>
         </div>
+
+        {/* Additional Details Section */}
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full text-sm text-gray-600 hover:text-gray-900 p-1 mb-3">
+              <span className="flex items-center">
+                <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} mr-2`}></i>
+                {isOpen ? 'Hide Details' : 'Show Details'}
+              </span>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 mb-4">
+            {workOrder.scopeOfWork && (
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-1">Scope of Work</h5>
+                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{workOrder.scopeOfWork}</p>
+              </div>
+            )}
+            {workOrder.requiredTools && (
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-1">Required Tools & Equipment</h5>
+                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{workOrder.requiredTools}</p>
+              </div>
+            )}
+            {workOrder.pointOfContact && (
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-1">Point of Contact</h5>
+                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{workOrder.pointOfContact}</p>
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
         
         {showActions && (
           <div className="flex space-x-3">

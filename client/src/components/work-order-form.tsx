@@ -24,6 +24,9 @@ const workOrderFormSchema = insertWorkOrderSchema.extend({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   location: z.string().min(1, "Location is required"),
+  scopeOfWork: z.string().optional(),
+  requiredTools: z.string().optional(),
+  pointOfContact: z.string().optional(),
   priority: z.string().min(1, "Priority is required"),
   dueDate: z.string().optional(),
   estimatedHours: z.string().optional(),
@@ -48,6 +51,9 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
       title: "",
       description: "",
       location: "",
+      scopeOfWork: "",
+      requiredTools: "",
+      pointOfContact: "",
       priority: "medium",
       assigneeId: "",
       dueDate: "",
@@ -142,6 +148,63 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                           <Textarea 
                             rows={4}
                             placeholder="Describe the work to be performed" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Work Details */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Work Details</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="scopeOfWork"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Scope of Work</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            rows={3}
+                            placeholder="Detailed breakdown of tasks and responsibilities" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="requiredTools"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Required Tools & Equipment</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            rows={2}
+                            placeholder="List tools, equipment, and materials needed" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="pointOfContact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Point of Contact</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Name and contact information of client/site contact" 
                             {...field} 
                           />
                         </FormControl>
