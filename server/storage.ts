@@ -49,6 +49,17 @@ export interface IStorage {
   getMessagesForWorkOrder(workOrderId: string): Promise<Message[]>;
   markMessageAsRead(id: string): Promise<Message>;
   getAllMessages(): Promise<Message[]>;
+
+  // Dashboard statistics
+  getDashboardStats(): Promise<{
+    totalUsers: number;
+    activeOrders: number;
+    completedOrders: number;
+    totalOrders: number;
+    adminCount: number;
+    managerCount: number;
+    agentCount: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -228,6 +239,42 @@ export class DatabaseStorage implements IStorage {
 
   async getAllMessages(): Promise<Message[]> {
     return await db.select().from(messages).orderBy(desc(messages.createdAt));
+  }
+
+  async getDashboardStats() {
+    // Get total users count
+    const totalUsersResult = await db.select({ count: db.$count() }).from(users);
+    const totalUsers = totalUsersResult[0]?.count || 0;
+
+    // Get work order counts
+    const totalOrdersResult = await db.select({ count: db.$count() }).from(workOrders);
+    const totalOrders = totalOrdersResult[0]?.count || 0;
+
+    const completedOrdersResult = await db.select({ count: db.$count() }).from(workOrders).where(eq(workOrders.status, 'completed'));
+    const completedOrders = completedOrdersResult[0]?.count || 0;
+
+    const activeOrdersResult = await db.select({ count: db.$count() }).from(workOrders).where(or(eq(workOrders.status, 'pending'), eq(workOrders.status, 'in_progress')));
+    const activeOrders = activeOrdersResult[0]?.count || 0;
+
+    // Get user role counts
+    const adminCountResult = await db.select({ count: db.$count() }).from(users).where(eq(users.role, 'administrator'));
+    const adminCount = adminCountResult[0]?.count || 0;
+
+    const managerCountResult = await db.select({ count: db.$count() }).from(users).where(eq(users.role, 'manager'));
+    const managerCount = managerCountResult[0]?.count || 0;
+
+    const agentCountResult = await db.select({ count: db.$count() }).from(users).where(eq(users.role, 'field_agent'));
+    const agentCount = agentCountResult[0]?.count || 0;
+
+    return {
+      totalUsers,
+      activeOrders,
+      completedOrders,
+      totalOrders,
+      adminCount,
+      managerCount,
+      agentCount,
+    };
   }
 }
 
