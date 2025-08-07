@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface TeamReportsData {
   agentPerformance: {
@@ -49,6 +50,10 @@ interface TeamReportsData {
 export default function TeamReports() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedAgent, setSelectedAgent] = useState("all");
+  const [selectedPeriod, setSelectedPeriod] = useState("30");
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -85,6 +90,7 @@ export default function TeamReports() {
   if (isLoading || reportsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
+        <Navigation userRole={(user as any)?.role || 'manager'} />
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -123,241 +129,200 @@ export default function TeamReports() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Team Reports</h1>
           <p className="text-gray-600">Comprehensive analytics and performance metrics for your field operations team</p>
+          
+          {/* Filter Options */}
+          <div className="mt-4 flex flex-wrap gap-4">
+            <select 
+              className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="all">All Work Orders</option>
+              <option value="completed">Completed Only</option>
+              <option value="in_progress">In Progress</option>
+              <option value="pending">Pending</option>
+            </select>
+            
+            <select 
+              className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+              value={selectedAgent}
+              onChange={(e) => setSelectedAgent(e.target.value)}
+            >
+              <option value="all">All Team Members</option>
+              <option value="agent001">John Smith</option>
+              <option value="agent002">Lisa Davis</option>
+              <option value="agent003">Carlos Rodriguez</option>
+            </select>
+            
+            <select 
+              className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+            >
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="365">Last Year</option>
+              <option value="all">All Time</option>
+            </select>
+            
+            <Button variant="outline" size="sm">
+              <i className="fas fa-download mr-2"></i>
+              Export Report
+            </Button>
+          </div>
         </div>
 
-        {/* Key Metrics Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Work Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {reportsData?.workOrderStats.reduce((sum, stat) => sum + stat.count, 0) || 0}
-                  </p>
-                </div>
-                <i className="fas fa-clipboard-list text-2xl text-blue-600"></i>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Hours Worked</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatHours(reportsData?.timeTrackingStats.totalHoursWorked || 0)}
-                  </p>
-                </div>
-                <i className="fas fa-clock text-2xl text-green-600"></i>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Active Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {reportsData?.timeTrackingStats.activeEntries || 0}
-                  </p>
-                </div>
-                <i className="fas fa-play-circle text-2xl text-orange-600"></i>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Avg Session</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatHours(reportsData?.timeTrackingStats.avgSessionLength || 0)}
-                  </p>
-                </div>
-                <i className="fas fa-stopwatch text-2xl text-purple-600"></i>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Detailed Reports */}
-        <Tabs defaultValue="performance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="performance">Agent Performance</TabsTrigger>
-            <TabsTrigger value="completion">Completion Rates</TabsTrigger>
-            <TabsTrigger value="status">Work Order Status</TabsTrigger>
-            <TabsTrigger value="trends">Monthly Trends</TabsTrigger>
+        {/* Tabs for different views */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="workorders">Work Orders</TabsTrigger>
+            <TabsTrigger value="team">Team Performance</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="overview" className="space-y-6">
+            {/* Key Metrics Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Work Orders</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {reportsData?.workOrderStats.reduce((sum, stat) => sum + stat.count, 0) || 0}
+                      </p>
+                    </div>
+                    <i className="fas fa-clipboard-list text-2xl text-blue-600"></i>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Agent Performance Tab */}
-          <TabsContent value="performance" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <i className="fas fa-user-friends mr-2 text-blue-600"></i>
-                  Agent Performance Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Agent</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Assigned</TableHead>
-                      <TableHead>Completed</TableHead>
-                      <TableHead>Avg Est. Hours</TableHead>
-                      <TableHead>Avg Actual Hours</TableHead>
-                      <TableHead>Efficiency</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportsData?.agentPerformance.map((agent) => {
-                      const efficiency = agent.avgEstimatedHours && agent.avgActualHours 
-                        ? (Number(agent.avgEstimatedHours) / Number(agent.avgActualHours) * 100).toFixed(1)
-                        : 'N/A';
-                      
-                      return (
-                        <TableRow key={agent.agentId}>
-                          <TableCell className="font-medium">{agent.agentName}</TableCell>
-                          <TableCell className="text-gray-600">{agent.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{agent.totalAssigned}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
-                              {agent.completedOrders}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatHours(agent.avgEstimatedHours)}</TableCell>
-                          <TableCell>{formatHours(agent.avgActualHours)}</TableCell>
-                          <TableCell>
-                            <span className={efficiency !== 'N/A' && Number(efficiency) >= 90 ? 'text-green-600 font-medium' : 'text-gray-600'}>
-                              {efficiency}%
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Hours Worked</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatHours(reportsData?.timeTrackingStats.totalHoursWorked || 0)}
+                      </p>
+                    </div>
+                    <i className="fas fa-clock text-2xl text-green-600"></i>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Active Sessions</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {reportsData?.timeTrackingStats.activeEntries || 0}
+                      </p>
+                    </div>
+                    <i className="fas fa-play-circle text-2xl text-orange-600"></i>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Avg Session</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatHours(reportsData?.timeTrackingStats.avgSessionLength || 0)}
+                      </p>
+                    </div>
+                    <i className="fas fa-hourglass-half text-2xl text-purple-600"></i>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
-
-          {/* Completion Rates Tab */}
-          <TabsContent value="completion" className="space-y-6">
+          
+          <TabsContent value="workorders" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <i className="fas fa-chart-line mr-2 text-green-600"></i>
-                  Completion Rates by Agent
+                  <i className="fas fa-chart-pie mr-2 text-green-600"></i>
+                  Work Order Status Breakdown
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {reportsData?.completionRates.map((agent) => (
-                    <div key={agent.agentId} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{agent.agentName}</span>
-                        <span className="text-sm text-gray-600">
-                          {agent.completed}/{agent.totalAssigned} completed ({agent.completionRate}%)
-                        </span>
+                  {reportsData?.workOrderStats.map((stat) => (
+                    <div key={stat.status} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Badge className={getStatusColor(stat.status)}>
+                          {stat.status.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                        <span className="font-medium">{stat.count} orders</span>
                       </div>
-                      <Progress value={agent.completionRate} className="h-2" />
+                      <div className="text-right text-sm text-gray-600">
+                        <div>Est: {formatHours(stat.avgEstimatedHours)}</div>
+                        <div>Act: {formatHours(stat.avgActualHours)}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
-
-          {/* Work Order Status Tab */}
-          <TabsContent value="status" className="space-y-6">
+          
+          <TabsContent value="team" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <i className="fas fa-tasks mr-2 text-purple-600"></i>
-                  Work Order Statistics by Status
+                  <i className="fas fa-users mr-2 text-blue-600"></i>
+                  Agent Performance Summary
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Count</TableHead>
-                      <TableHead>Avg Estimated Hours</TableHead>
-                      <TableHead>Avg Actual Hours</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportsData?.workOrderStats.map((stat) => (
-                      <TableRow key={stat.status}>
-                        <TableCell>
-                          <Badge className={getStatusColor(stat.status)}>
-                            {stat.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                <div className="space-y-4">
+                  {reportsData?.agentPerformance.map((agent) => {
+                    const completionRate = agent.totalAssigned > 0 
+                      ? (agent.completedOrders / agent.totalAssigned * 100).toFixed(1) 
+                      : '0';
+                    
+                    return (
+                      <div key={agent.agentId} className="p-4 border border-gray-200 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{agent.agentName}</h4>
+                            <p className="text-sm text-gray-600">{agent.email}</p>
+                          </div>
+                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                            {completionRate}% Complete
                           </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{stat.count}</TableCell>
-                        <TableCell>{formatHours(stat.avgEstimatedHours)}</TableCell>
-                        <TableCell>{formatHours(stat.avgActualHours)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Monthly Trends Tab */}
-          <TabsContent value="trends" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <i className="fas fa-chart-area mr-2 text-orange-600"></i>
-                  Monthly Trends (Last 6 Months)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Month</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Completed</TableHead>
-                      <TableHead>Completion Rate</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportsData?.monthlyTrends.map((trend) => {
-                      const completionRate = trend.created > 0 ? (trend.completed / trend.created * 100).toFixed(1) : '0';
-                      return (
-                        <TableRow key={trend.month}>
-                          <TableCell className="font-medium">{trend.month}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{trend.created}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
-                              {trend.completed}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={Number(completionRate)} className="h-2 flex-1" />
-                              <span className="text-sm text-gray-600">{completionRate}%</span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Assigned:</span>
+                            <span className="ml-2 font-medium">{agent.totalAssigned}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Completed:</span>
+                            <span className="ml-2 font-medium">{agent.completedOrders}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Estimated:</span>
+                            <span className="ml-2 font-medium">{formatHours(agent.avgEstimatedHours)}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Actual:</span>
+                            <span className="ml-2 font-medium">{formatHours(agent.avgActualHours)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3">
+                          <Progress value={Number(completionRate)} className="h-2" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
