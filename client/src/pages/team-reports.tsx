@@ -89,17 +89,17 @@ export default function TeamReports() {
 
   if (isLoading || reportsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
         <Navigation userRole={(user as any)?.role || 'manager'} />
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+                <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
               ))}
             </div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
       </div>
@@ -108,11 +108,11 @@ export default function TeamReports() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
   };
 
@@ -122,18 +122,18 @@ export default function TeamReports() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Team Reports</h1>
-          <p className="text-gray-600">Comprehensive analytics and performance metrics for your field operations team</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Team Reports</h1>
+          <p className="text-gray-600 dark:text-gray-300">Comprehensive analytics and performance metrics for your field operations team</p>
           
           {/* Filter Options */}
           <div className="mt-4 flex flex-wrap gap-4">
             <select 
-              className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
             >
@@ -144,7 +144,7 @@ export default function TeamReports() {
             </select>
             
             <select 
-              className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
               value={selectedAgent}
               onChange={(e) => setSelectedAgent(e.target.value)}
             >
@@ -155,7 +155,7 @@ export default function TeamReports() {
             </select>
             
             <select 
-              className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
             >
@@ -166,8 +166,7 @@ export default function TeamReports() {
             </select>
             
             <Button variant="outline" size="sm">
-              <i className="fas fa-download mr-2"></i>
-              Export Report
+              📊 Export Report
             </Button>
           </div>
         </div>
@@ -187,12 +186,12 @@ export default function TeamReports() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Work Orders</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Work Orders</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {reportsData?.workOrderStats.reduce((sum, stat) => sum + stat.count, 0) || 0}
                       </p>
                     </div>
-                    <i className="fas fa-clipboard-list text-2xl text-blue-600"></i>
+                    <span className="text-2xl text-blue-600 dark:text-blue-400">📋</span>
                   </div>
                 </CardContent>
               </Card>
@@ -201,12 +200,12 @@ export default function TeamReports() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Hours Worked</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Hours Worked</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {formatHours(reportsData?.timeTrackingStats.totalHoursWorked || 0)}
                       </p>
                     </div>
-                    <i className="fas fa-clock text-2xl text-green-600"></i>
+                    <span className="text-2xl text-green-600 dark:text-green-400">🕐</span>
                   </div>
                 </CardContent>
               </Card>
@@ -215,12 +214,12 @@ export default function TeamReports() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Active Sessions</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Sessions</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {reportsData?.timeTrackingStats.activeEntries || 0}
                       </p>
                     </div>
-                    <i className="fas fa-play-circle text-2xl text-orange-600"></i>
+                    <span className="text-2xl text-orange-600 dark:text-orange-400">▶️</span>
                   </div>
                 </CardContent>
               </Card>
@@ -229,12 +228,12 @@ export default function TeamReports() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Avg Session</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Avg Session</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {formatHours(reportsData?.timeTrackingStats.avgSessionLength || 0)}
                       </p>
                     </div>
-                    <i className="fas fa-hourglass-half text-2xl text-purple-600"></i>
+                    <span className="text-2xl text-purple-600 dark:text-purple-400">⏳</span>
                   </div>
                 </CardContent>
               </Card>
@@ -244,22 +243,22 @@ export default function TeamReports() {
           <TabsContent value="workorders" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <i className="fas fa-chart-pie mr-2 text-green-600"></i>
+                <CardTitle className="flex items-center text-foreground">
+                  <span className="mr-2 text-green-600 dark:text-green-400">📊</span>
                   Work Order Status Breakdown
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {reportsData?.workOrderStats.map((stat) => (
-                    <div key={stat.status} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div key={stat.status} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
                       <div className="flex items-center space-x-3">
                         <Badge className={getStatusColor(stat.status)}>
                           {stat.status.replace('_', ' ').toUpperCase()}
                         </Badge>
-                        <span className="font-medium">{stat.count} orders</span>
+                        <span className="font-medium text-foreground">{stat.count} orders</span>
                       </div>
-                      <div className="text-right text-sm text-gray-600">
+                      <div className="text-right text-sm text-gray-600 dark:text-gray-300">
                         <div>Est: {formatHours(stat.avgEstimatedHours)}</div>
                         <div>Act: {formatHours(stat.avgActualHours)}</div>
                       </div>
@@ -273,8 +272,8 @@ export default function TeamReports() {
           <TabsContent value="team" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <i className="fas fa-users mr-2 text-blue-600"></i>
+                <CardTitle className="flex items-center text-foreground">
+                  <span className="mr-2 text-blue-600 dark:text-blue-400">👥</span>
                   Agent Performance Summary
                 </CardTitle>
               </CardHeader>
@@ -286,33 +285,33 @@ export default function TeamReports() {
                       : '0';
                     
                     return (
-                      <div key={agent.agentId} className="p-4 border border-gray-200 rounded-lg">
+                      <div key={agent.agentId} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h4 className="font-semibold text-gray-900">{agent.agentName}</h4>
-                            <p className="text-sm text-gray-600">{agent.email}</p>
+                            <h4 className="font-semibold text-gray-900 dark:text-white">{agent.agentName}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{agent.email}</p>
                           </div>
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                          <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
                             {completionRate}% Complete
                           </Badge>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <span className="text-gray-600">Assigned:</span>
-                            <span className="ml-2 font-medium">{agent.totalAssigned}</span>
+                            <span className="text-gray-600 dark:text-gray-300">Assigned:</span>
+                            <span className="ml-2 font-medium text-foreground">{agent.totalAssigned}</span>
                           </div>
                           <div>
-                            <span className="text-gray-600">Completed:</span>
-                            <span className="ml-2 font-medium">{agent.completedOrders}</span>
+                            <span className="text-gray-600 dark:text-gray-300">Completed:</span>
+                            <span className="ml-2 font-medium text-foreground">{agent.completedOrders}</span>
                           </div>
                           <div>
-                            <span className="text-gray-600">Estimated:</span>
-                            <span className="ml-2 font-medium">{formatHours(agent.avgEstimatedHours)}</span>
+                            <span className="text-gray-600 dark:text-gray-300">Estimated:</span>
+                            <span className="ml-2 font-medium text-foreground">{formatHours(agent.avgEstimatedHours)}</span>
                           </div>
                           <div>
-                            <span className="text-gray-600">Actual:</span>
-                            <span className="ml-2 font-medium">{formatHours(agent.avgActualHours)}</span>
+                            <span className="text-gray-600 dark:text-gray-300">Actual:</span>
+                            <span className="ml-2 font-medium text-foreground">{formatHours(agent.avgActualHours)}</span>
                           </div>
                         </div>
                         
