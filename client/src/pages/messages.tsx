@@ -252,7 +252,7 @@ export default function Messages() {
         </div>
 
         <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>
-            <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <DialogHeader>
                 <DialogTitle className="text-gray-900 dark:text-white">Compose New Message</DialogTitle>
               </DialogHeader>
@@ -415,11 +415,13 @@ export default function Messages() {
                     </Badge>
                   )}
                 </div>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700">
-                    <i className="fas fa-plus"></i>
-                  </Button>
-                </DialogTrigger>
+                <Button 
+                  size="sm" 
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                  onClick={() => setIsComposeDialogOpen(true)}
+                >
+                  <i className="fas fa-plus"></i>
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
