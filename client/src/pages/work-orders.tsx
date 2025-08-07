@@ -392,15 +392,15 @@ export default function WorkOrders() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
+                      <h3 className="font-semibold text-foreground mb-2">Basic Information</h3>
                       <div className="space-y-2">
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Title:</span>
-                          <p className="text-gray-900">{selectedWorkOrder.title}</p>
+                          <span className="text-sm font-medium text-muted-foreground">Title:</span>
+                          <p className="text-foreground">{selectedWorkOrder.title}</p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Description:</span>
-                          <p className="text-gray-900">{selectedWorkOrder.description}</p>
+                          <span className="text-sm font-medium text-muted-foreground">Description:</span>
+                          <p className="text-foreground">{selectedWorkOrder.description}</p>
                         </div>
                         <div>
                           <span className="text-sm font-medium text-gray-600">Location:</span>
@@ -410,23 +410,23 @@ export default function WorkOrders() {
                     </div>
                     
                     <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Assignment & Status</h3>
+                      <h3 className="font-semibold text-foreground mb-2">Assignment & Status</h3>
                       <div className="space-y-2">
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Status:</span>
+                          <span className="text-sm font-medium text-muted-foreground">Status:</span>
                           <Badge className={`ml-2 ${getStatusColor(selectedWorkOrder.status)}`}>
                             {selectedWorkOrder.status.replace('_', ' ').toUpperCase()}
                           </Badge>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Priority:</span>
+                          <span className="text-sm font-medium text-muted-foreground">Priority:</span>
                           <Badge className={`ml-2 ${getPriorityColor(selectedWorkOrder.priority)}`}>
                             {selectedWorkOrder.priority.toUpperCase()}
                           </Badge>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-600">Assigned To:</span>
-                          <p className="text-gray-900">{getAgentName(selectedWorkOrder.assigneeId)}</p>
+                          <span className="text-sm font-medium text-muted-foreground">Assigned To:</span>
+                          <p className="text-foreground">{getAgentName(selectedWorkOrder.assigneeId)}</p>
                         </div>
                       </div>
                     </div>
