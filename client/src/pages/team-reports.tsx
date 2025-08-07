@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import Navigation from "@/components/navigation";
 import { useEffect } from "react";
 
 interface TeamReportsData {
@@ -46,7 +47,7 @@ interface TeamReportsData {
 }
 
 export default function TeamReports() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
 
   // Redirect to home if not authenticated
@@ -116,6 +117,7 @@ export default function TeamReports() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
