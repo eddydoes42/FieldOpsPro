@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface NavigationProps {
   userRole: string;
@@ -10,11 +10,27 @@ interface NavigationProps {
 export default function Navigation({ userRole }: NavigationProps) {
   const { user } = useAuth();
   const [location] = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const getRoleConfig = () => {
     switch (userRole) {
@@ -60,91 +76,93 @@ export default function Navigation({ userRole }: NavigationProps) {
     <nav className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center min-w-0">
-            <div className="flex-shrink-0 flex items-center mr-8">
-              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center mr-3">
-                <i className="fas fa-tools text-white text-sm"></i>
-              </div>
-              <span className="text-xl font-bold text-foreground whitespace-nowrap">FieldOps Pro</span>
+          {/* Logo */}
+          <div className="flex-shrink-0 flex items-center">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center mr-3">
+              <i className="fas fa-tools text-white text-sm"></i>
             </div>
-            <div className="hidden lg:flex lg:space-x-6">
-              {config.links.map((link) => (
-                <Link key={link.path} href={link.path}>
-                  <span className={`${
-                    location === link.path 
-                      ? 'border-primary text-primary' 
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  } inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium cursor-pointer whitespace-nowrap`}>
-                    <i className={`${link.icon} mr-2`}></i>
-                    {link.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-            
-            {/* Mobile menu button */}
-            <button
-              className="lg:hidden p-2 rounded-md text-muted-foreground hover:text-foreground"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-lg`}></i>
-            </button>
+            <span className="text-xl font-bold text-foreground whitespace-nowrap">FieldOps Pro</span>
           </div>
           
-          <div className="flex items-center space-x-3">
+          {/* Right side - Navigation Menu Dropdown */}
+          <div className="flex items-center space-x-4">
             {/* Role Badge */}
             <span className={`${config.badge.color} text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap hidden sm:inline-flex`}>
               <i className={`${config.badge.icon} mr-1`}></i>
               {config.badge.text}
             </span>
             
-            {/* User Menu */}
-            <div className="flex items-center space-x-2">
-              {(user as any)?.profileImageUrl && (
-                <img 
-                  className="h-8 w-8 rounded-full object-cover" 
-                  src={(user as any).profileImageUrl} 
-                  alt="Profile"
-                />
+            {/* Navigation Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+              >
+                {(user as any)?.profileImageUrl && (
+                  <img 
+                    className="h-8 w-8 rounded-full object-cover" 
+                    src={(user as any).profileImageUrl} 
+                    alt="Profile"
+                  />
+                )}
+                <span className="text-foreground font-medium text-sm hidden md:block">
+                  {(user as any)?.firstName} {(user as any)?.lastName}
+                </span>
+                <i className={`fas fa-chevron-down text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}></i>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50">
+                  <div className="p-4 border-b border-border">
+                    <div className="flex items-center space-x-3">
+                      {(user as any)?.profileImageUrl && (
+                        <img 
+                          className="h-10 w-10 rounded-full object-cover" 
+                          src={(user as any).profileImageUrl} 
+                          alt="Profile"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {(user as any)?.firstName} {(user as any)?.lastName}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{(user as any)?.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="py-2">
+                    {config.links.map((link) => (
+                      <Link key={link.path} href={link.path}>
+                        <div 
+                          className={`flex items-center px-4 py-2 text-sm hover:bg-secondary/50 cursor-pointer ${
+                            location === link.path ? 'bg-primary/10 text-primary' : 'text-foreground'
+                          }`}
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <i className={`${link.icon} mr-3 w-4`}></i>
+                          {link.label}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t border-border py-2">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                    >
+                      <i className="fas fa-sign-out-alt mr-3 w-4"></i>
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
               )}
-              <span className="text-foreground font-medium text-sm hidden md:block">
-                {(user as any)?.firstName} {(user as any)?.lastName}
-              </span>
             </div>
-            
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleLogout}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <i className="fas fa-sign-out-alt"></i>
-            </Button>
           </div>
         </div>
-        
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-card">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {config.links.map((link) => (
-                <Link key={link.path} href={link.path}>
-                  <span 
-                    className={`${
-                      location === link.path 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                    } block px-3 py-2 rounded-md text-base font-medium cursor-pointer`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <i className={`${link.icon} mr-3`}></i>
-                    {link.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+
       </div>
     </nav>
   );
