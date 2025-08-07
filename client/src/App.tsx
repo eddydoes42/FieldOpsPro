@@ -9,6 +9,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import ManagerDashboard from "@/pages/manager-dashboard";
 import AgentDashboard from "@/pages/agent-dashboard";
 import TeamReports from "@/pages/team-reports";
+import TeamManagement from "@/pages/team-management";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -36,6 +37,11 @@ function Router() {
           </Route>
           <Route path="/reports/team">
             {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
+            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+            {!(user as any)?.role && <Landing />}
+          </Route>
+          <Route path="/team">
+            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamManagement />}
             {(user as any)?.role === 'field_agent' && <AgentDashboard />}
             {!(user as any)?.role && <Landing />}
           </Route>
