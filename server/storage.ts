@@ -35,6 +35,7 @@ export interface IStorage {
   getWorkOrdersByCreator(creatorId: string): Promise<WorkOrder[]>;
   getAllWorkOrders(): Promise<WorkOrder[]>;
   updateWorkOrder(id: string, updates: Partial<InsertWorkOrder>): Promise<WorkOrder>;
+  updateWorkOrderStatus(id: string, updateData: any): Promise<WorkOrder>;
   deleteWorkOrder(id: string): Promise<void>;
 
   // Time Entry operations
@@ -44,6 +45,8 @@ export interface IStorage {
   getTimeEntriesByWorkOrder(workOrderId: string): Promise<TimeEntry[]>;
   updateTimeEntry(id: string, updates: Partial<InsertTimeEntry>): Promise<TimeEntry>;
   endTimeEntry(id: string, endTime: Date): Promise<TimeEntry>;
+  startTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry>;
+  endActiveTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry | null>;
 
   // Message operations
   createMessage(message: InsertMessage): Promise<Message>;
