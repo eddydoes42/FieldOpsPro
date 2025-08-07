@@ -978,12 +978,12 @@ export default function WorkOrders() {
                             variant="outline" 
                             size="sm"
                             onClick={() => {
+                              console.log('View button clicked for order:', order.id);
                               setSelectedWorkOrder(order);
                               setIsViewDialogOpen(true);
                             }}
                           >
-                            <i className="fas fa-eye mr-1"></i>
-                            View
+                            👁️ View
                           </Button>
                           {canCreateWorkOrders && (
                             <Button variant="outline" size="sm">
