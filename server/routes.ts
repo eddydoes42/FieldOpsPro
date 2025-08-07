@@ -140,6 +140,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update work order status
+  app.patch("/api/work-orders/:id/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { workStatus } = req.body;
+      const userId = req.user.claims.sub;
+
+      const workOrder = await storage.getWorkOrder(id);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if user is assigned to this work order or is admin/manager
+      const userRole = req.user.claims.role || 'field_agent';
+      const canUpdate = userRole === 'administrator' || userRole === 'manager' || workOrder.assigneeId === userId;
+      
+      if (!canUpdate) {
+        return res.status(403).json({ message: "Not authorized to update this work order" });
+      }
+
+      const updateData: any = { workStatus };
+
+      // Handle time tracking based on status
+      if (workStatus === 'checked_in') {
+        updateData.checkedInAt = new Date();
+        // Start time tracking
+        await storage.startTimeEntry(userId, id);
+      } else if (workStatus === 'checked_out') {
+        updateData.checkedOutAt = new Date();
+        // End time tracking
+        await storage.endActiveTimeEntry(userId, id);
+      }
+
+      const updatedWorkOrder = await storage.updateWorkOrderStatus(id, updateData);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error updating work order status:", error);
+      res.status(500).json({ message: "Failed to update work order status" });
+    }
+  });
+
   // Work Order routes
   app.post('/api/work-orders', isAuthenticated, async (req: any, res) => {
     try {
@@ -169,6 +210,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating work order:", error);
       res.status(500).json({ message: "Failed to create work order" });
+    }
+  });
+
+  // Update work order
+  app.put('/api/work-orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const { id } = req.params;
+      const updates = {
+        title: req.body.title,
+        description: req.body.description,
+        priority: req.body.priority,
+        assigneeId: req.body.assignedTo,
+        estimatedHours: req.body.estimatedHours ? req.body.estimatedHours.toString() : null,
+        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+        scopeOfWork: req.body.scopeOfWork,
+        requiredTools: req.body.requiredTools,
+        pointOfContact: req.body.pointOfContact,
+        updatedAt: new Date(),
+      };
+
+      const updatedWorkOrder = await storage.updateWorkOrder(id, updates);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error updating work order:", error);
+      res.status(500).json({ message: "Failed to update work order" });
     }
   });
 

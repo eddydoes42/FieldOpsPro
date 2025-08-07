@@ -87,6 +87,18 @@ export default function WorkOrders() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [selectedWorkOrderForTask, setSelectedWorkOrderForTask] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editWorkOrder, setEditWorkOrder] = useState<NewWorkOrderData>({
+    title: "",
+    description: "",
+    priority: "medium",
+    assignedTo: "",
+    estimatedHours: "",
+    dueDate: "",
+    scopeOfWork: "",
+    requiredTools: "",
+    pointOfContact: ""
+  });
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [newWorkOrder, setNewWorkOrder] = useState<NewWorkOrderData>({
@@ -144,6 +156,38 @@ export default function WorkOrders() {
     queryKey: ["/api/work-orders", selectedWorkOrder?.id, "tasks"],
     enabled: !!selectedWorkOrder?.id,
     retry: false,
+  });
+
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ workOrderId, workStatus }: { workOrderId: string; workStatus: string }) => {
+      return await apiRequest("PATCH", `/api/work-orders/${workOrderId}/status`, { workStatus });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      toast({
+        title: "Status Updated",
+        description: "Work order status has been updated successfully!",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const createWorkOrderMutation = useMutation({
@@ -371,6 +415,100 @@ export default function WorkOrders() {
   const handleRemoveFormTask = (index: number) => {
     setFormTasks(formTasks.filter((_, i) => i !== index));
   };
+
+  // Status button handlers
+  const handleStatusUpdate = (workOrderId: string, newStatus: string) => {
+    updateStatusMutation.mutate({ workOrderId, workStatus: newStatus });
+  };
+
+  const getStatusButtonText = (workOrder: WorkOrder) => {
+    const status = (workOrder as any).workStatus || 'not_started';
+    switch (status) {
+      case 'not_started': return 'In Route';
+      case 'in_route': return 'Check In';
+      case 'checked_in': return 'Check Out';
+      case 'checked_out': return 'Mark Complete';
+      case 'completed': return 'Completed';
+      default: return 'In Route';
+    }
+  };
+
+  const getNextStatus = (workOrder: WorkOrder) => {
+    const status = (workOrder as any).workStatus || 'not_started';
+    switch (status) {
+      case 'not_started': return 'in_route';
+      case 'in_route': return 'checked_in';
+      case 'checked_in': return 'checked_out';
+      case 'checked_out': return 'completed';
+      default: return 'in_route';
+    }
+  };
+
+  const canMarkComplete = (workOrder: WorkOrder) => {
+    // Only allow marking complete if all tasks are done
+    if ((workOrder as any).workStatus !== 'checked_out') return false;
+    // Check if all tasks are completed (this would require task data)
+    return true; // For now, allow if checked out
+  };
+
+  const isStatusButtonDisabled = (workOrder: WorkOrder) => {
+    const status = (workOrder as any).workStatus || 'not_started';
+    if (status === 'completed') return true;
+    if (status === 'checked_out') {
+      return !canMarkComplete(workOrder);
+    }
+    return false;
+  };
+
+  // Edit functionality
+  const handleEditClick = (workOrder: WorkOrder) => {
+    setEditWorkOrder({
+      title: workOrder.title,
+      description: workOrder.description,
+      priority: workOrder.priority,
+      assignedTo: workOrder.assigneeId || "",
+      estimatedHours: workOrder.estimatedHours?.toString() || "",
+      dueDate: workOrder.dueDate ? new Date(workOrder.dueDate).toISOString().split('T')[0] : "",
+      scopeOfWork: workOrder.scopeOfWork || "",
+      requiredTools: workOrder.requiredTools || "",
+      pointOfContact: workOrder.pointOfContact || ""
+    });
+    setSelectedWorkOrder(workOrder);
+    setIsEditDialogOpen(true);
+  };
+
+  const updateWorkOrderMutation = useMutation({
+    mutationFn: async (data: NewWorkOrderData) => {
+      if (!selectedWorkOrder) throw new Error("No work order selected");
+      return await apiRequest("PUT", `/api/work-orders/${selectedWorkOrder.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      setIsEditDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Work order updated successfully!",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update work order. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
@@ -1140,7 +1278,7 @@ export default function WorkOrders() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-wrap">
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -1154,8 +1292,28 @@ export default function WorkOrders() {
                             View
                           </Button>
                           {canCreateWorkOrders && (
-                            <Button variant="outline" size="sm" className="text-xs px-2 py-1">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-xs px-2 py-1"
+                              onClick={() => handleEditClick(order)}
+                            >
                               Edit
+                            </Button>
+                          )}
+                          {/* Status tracking button */}
+                          {(order.assigneeId === (user as any)?.id || canCreateWorkOrders) && (
+                            <Button
+                              size="sm"
+                              className={`text-xs px-2 py-1 ${
+                                (order as any).workStatus === 'completed'
+                                  ? 'bg-green-600 hover:bg-green-700'
+                                  : 'bg-blue-600 hover:bg-blue-700'
+                              }`}
+                              onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
+                              disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                            >
+                              {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
                             </Button>
                           )}
                         </div>
@@ -1167,6 +1325,138 @@ export default function WorkOrders() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Work Order Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Work Order</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); updateWorkOrderMutation.mutate(editWorkOrder); }} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-title">Title *</Label>
+                  <Input
+                    id="edit-title"
+                    value={editWorkOrder.title}
+                    onChange={(e) => setEditWorkOrder(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Work order title"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-priority">Priority</Label>
+                  <Select value={editWorkOrder.priority} onValueChange={(value) => setEditWorkOrder(prev => ({ ...prev, priority: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description *</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editWorkOrder.description}
+                  onChange={(e) => setEditWorkOrder(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Detailed description of the work"
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-assignedTo">Assigned Agent</Label>
+                  <Select value={editWorkOrder.assignedTo} onValueChange={(value) => setEditWorkOrder(prev => ({ ...prev, assignedTo: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select agent" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fieldAgents?.map(agent => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.firstName} {agent.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-estimatedHours">Estimated Hours</Label>
+                  <Input
+                    id="edit-estimatedHours"
+                    type="number"
+                    value={editWorkOrder.estimatedHours}
+                    onChange={(e) => setEditWorkOrder(prev => ({ ...prev, estimatedHours: e.target.value }))}
+                    placeholder="Hours"
+                    min="0"
+                    step="0.5"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-dueDate">Due Date</Label>
+                <Input
+                  id="edit-dueDate"
+                  type="date"
+                  value={editWorkOrder.dueDate}
+                  onChange={(e) => setEditWorkOrder(prev => ({ ...prev, dueDate: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-scopeOfWork">Scope of Work</Label>
+                <Textarea
+                  id="edit-scopeOfWork"
+                  value={editWorkOrder.scopeOfWork}
+                  onChange={(e) => setEditWorkOrder(prev => ({ ...prev, scopeOfWork: e.target.value }))}
+                  placeholder="Detailed scope and requirements"
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-requiredTools">Required Tools & Equipment</Label>
+                <Textarea
+                  id="edit-requiredTools"
+                  value={editWorkOrder.requiredTools}
+                  onChange={(e) => setEditWorkOrder(prev => ({ ...prev, requiredTools: e.target.value }))}
+                  placeholder="List tools and equipment needed"
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-pointOfContact">Point of Contact</Label>
+                <Input
+                  id="edit-pointOfContact"
+                  value={editWorkOrder.pointOfContact}
+                  onChange={(e) => setEditWorkOrder(prev => ({ ...prev, pointOfContact: e.target.value }))}
+                  placeholder="Client contact information"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateWorkOrderMutation.isPending}>
+                  {updateWorkOrderMutation.isPending ? 'Updating...' : 'Update Work Order'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Work Order View Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>

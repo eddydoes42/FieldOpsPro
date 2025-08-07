@@ -60,6 +60,10 @@ export const workOrders = pgTable("work_orders", {
   actualHours: decimal("actual_hours", { precision: 5, scale: 2 }),
   dueDate: timestamp("due_date"),
   completedAt: timestamp("completed_at"),
+  // Status tracking fields
+  workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
+  checkedInAt: timestamp("checked_in_at"),
+  checkedOutAt: timestamp("checked_out_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -80,6 +80,12 @@ export interface IStorage {
   createWorkOrderTask(task: InsertWorkOrderTask): Promise<WorkOrderTask>;
   updateWorkOrderTask(id: string, updates: Partial<InsertWorkOrderTask>): Promise<WorkOrderTask>;
   deleteWorkOrderTask(id: string): Promise<void>;
+
+  // Status and time tracking operations
+  updateWorkOrderStatus(id: string, updateData: any): Promise<WorkOrder>;
+  startTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry>;
+  endActiveTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry | null>;
+  markTaskComplete(taskId: string, userId: string): Promise<WorkOrderTask>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -414,6 +420,68 @@ export class DatabaseStorage implements IStorage {
 
   async deleteWorkOrderTask(id: string): Promise<void> {
     await db.delete(workOrderTasks).where(eq(workOrderTasks.id, id));
+  }
+
+  // Status and time tracking operations
+  async updateWorkOrderStatus(id: string, updateData: any): Promise<WorkOrder> {
+    const [workOrder] = await db
+      .update(workOrders)
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+      .where(eq(workOrders.id, id))
+      .returning();
+    return workOrder;
+  }
+
+  async startTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry> {
+    // End any active time entries for this user first
+    await this.endActiveTimeEntry(userId, workOrderId);
+    
+    const timeEntryData = {
+      id: `time-${Date.now()}`,
+      userId,
+      workOrderId,
+      startTime: new Date(),
+      isActive: true,
+    };
+    
+    const [timeEntry] = await db
+      .insert(timeEntries)
+      .values(timeEntryData)
+      .returning();
+    return timeEntry;
+  }
+
+  async endActiveTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry | null> {
+    const activeEntry = await this.getActiveTimeEntry(userId);
+    if (!activeEntry) return null;
+
+    const [timeEntry] = await db
+      .update(timeEntries)
+      .set({
+        endTime: new Date(),
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(timeEntries.id, activeEntry.id), eq(timeEntries.isActive, true)))
+      .returning();
+    
+    return timeEntry || null;
+  }
+
+  async markTaskComplete(taskId: string, userId: string): Promise<WorkOrderTask> {
+    const [task] = await db
+      .update(workOrderTasks)
+      .set({
+        isCompleted: true,
+        completedById: userId,
+        completedAt: new Date(),
+      })
+      .where(eq(workOrderTasks.id, taskId))
+      .returning();
+    return task;
   }
 }
 
