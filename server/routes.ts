@@ -70,6 +70,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Onboarding route
+  app.post('/api/users/onboard', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      // Transform onboarding data to user data format
+      const onboardingData = req.body;
+      const userData = {
+        id: `agent${Date.now()}`, // Generate a unique ID
+        email: onboardingData.email,
+        firstName: onboardingData.firstName,
+        lastName: onboardingData.lastName,
+        role: onboardingData.role || 'field_agent',
+        profileImageUrl: null
+      };
+
+      const user = await storage.createUser(userData);
+      res.json(user);
+    } catch (error) {
+      console.error("Error onboarding user:", error);
+      res.status(500).json({ message: "Failed to onboard user" });
+    }
+  });
+
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
