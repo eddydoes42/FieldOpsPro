@@ -64,7 +64,7 @@ export default function Messages() {
     priority: "normal"
   });
   
-  const [activeTab, setActiveTab] = useState<"all" | "unread" | "read">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "unread" | "read" | "sent">("all");
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -397,6 +397,16 @@ export default function Messages() {
             >
               Read
             </button>
+            <button
+              onClick={() => setActiveTab("sent")}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                activeTab === "sent"
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              Sent
+            </button>
           </div>
         </div>
 
@@ -407,8 +417,8 @@ export default function Messages() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between text-gray-900 dark:text-white">
                 <div className="flex items-center">
-                  <i className="fas fa-inbox mr-2 text-blue-600 dark:text-blue-400"></i>
-                  Inbox
+                  <i className={`mr-2 ${activeTab === "sent" ? "fas fa-paper-plane text-green-600 dark:text-green-400" : "fas fa-inbox text-blue-600 dark:text-blue-400"}`}></i>
+                  {activeTab === "sent" ? "Sent Messages" : "Inbox"}
                   {activeTab === "unread" && unreadCount > 0 && (
                     <Badge className="ml-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                       {unreadCount} unread
@@ -428,6 +438,10 @@ export default function Messages() {
               <div className="space-y-3">
                 {userMessages
                   .filter(msg => {
+                    if (activeTab === "sent") {
+                      return msg.senderId === currentUserId;
+                    }
+                    
                     const isRecipient = msg.recipientId === currentUserId;
                     if (!isRecipient) return false;
                     
@@ -459,10 +473,19 @@ export default function Messages() {
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center space-x-2">
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {getUserName(message.senderId)}
+                            {activeTab === "sent" ? `To: ${message.recipientId ? getUserName(message.recipientId) : 'All'}` : getUserName(message.senderId)}
                           </span>
-                          {!message.isRead && (
-                            <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">New</Badge>
+                          {activeTab === "sent" ? (
+                            message.isRead && message.readAt && (
+                              <div className="flex items-center text-xs text-green-600 dark:text-green-400">
+                                <i className="fas fa-check-double mr-1"></i>
+                                Read
+                              </div>
+                            )
+                          ) : (
+                            !message.isRead && (
+                              <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">New</Badge>
+                            )
                           )}
                           {message.priority && message.priority !== 'normal' && (
                             <Badge className={`text-xs ${getPriorityColor(message.priority)}`}>
@@ -470,9 +493,21 @@ export default function Messages() {
                             </Badge>
                           )}
                         </div>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(message.createdAt).toLocaleDateString()}
-                        </span>
+                        <div className="text-right">
+                          {activeTab === "sent" && message.isRead && message.readAt && (
+                            <div className="text-xs text-green-600 dark:text-green-400 mb-1">
+                              Read {new Date(message.readAt).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </div>
+                          )}
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(message.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-1">{message.subject}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{message.content}</p>
@@ -488,6 +523,10 @@ export default function Messages() {
                   );
                 })}
                 {userMessages.filter(msg => {
+                  if (activeTab === "sent") {
+                    return msg.senderId === currentUserId;
+                  }
+                  
                   const isRecipient = msg.recipientId === currentUserId;
                   if (!isRecipient) return false;
                   
@@ -496,8 +535,8 @@ export default function Messages() {
                   return true;
                 }).length === 0 && (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <i className="fas fa-inbox text-4xl mb-4"></i>
-                    <p>No messages in your inbox</p>
+                    <i className={`${activeTab === "sent" ? "fas fa-paper-plane" : "fas fa-inbox"} text-4xl mb-4`}></i>
+                    <p>{activeTab === "sent" ? "No sent messages" : "No messages in your inbox"}</p>
                   </div>
                 )}
               </div>
