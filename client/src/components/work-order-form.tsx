@@ -495,7 +495,7 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                         <SelectContent>
                           {(fieldAgents as any)?.map((agent: any) => (
                             <SelectItem key={agent.id} value={agent.id}>
-                              {agent.firstName} {agent.lastName} - {agent.role?.replace('_', ' ')}
+                              {agent.firstName} {agent.lastName} - {agent.role === 'field_agent' ? 'FA' : agent.role?.replace('_', ' ')}
                             </SelectItem>
                           ))}
                         </SelectContent>

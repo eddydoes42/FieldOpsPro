@@ -72,7 +72,7 @@ export default function Navigation({ userRole }: NavigationProps) {
         };
       default:
         return {
-          badge: { text: 'Field Agent', icon: 'fas fa-wrench', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
+          badge: { text: 'FA', icon: 'fas fa-wrench', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/work-orders', label: 'My Orders', icon: 'fas fa-clipboard-list' },

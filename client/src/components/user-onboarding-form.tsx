@@ -264,7 +264,7 @@ export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardin
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="field_agent">Field Agent</SelectItem>
+                          <SelectItem value="field_agent">FA (Field Agent)</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
                           <SelectItem value="administrator">Administrator</SelectItem>
                         </SelectContent>

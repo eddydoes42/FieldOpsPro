@@ -267,7 +267,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Field Agents</span>
+                    <span className="text-sm font-medium text-muted-foreground">Field Agents (FA)</span>
                     <span className="bg-green-900/30 text-green-300 text-xs font-medium px-2 py-1 rounded border border-green-800/50">
                       {(stats as any)?.agentCount || 0}
                     </span>
@@ -301,12 +301,6 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <h4 className="font-medium text-foreground">
-                              {userData.firstName && userData.lastName 
-                                ? `${userData.firstName} ${userData.lastName}`
-                                : userData.email || 'Unknown User'
-                              }
-                            </h4>
                             <Badge 
                               variant="secondary" 
                               className={
@@ -317,8 +311,16 @@ export default function AdminDashboard() {
                                   : 'bg-green-900/30 text-green-300 border-green-800/50'
                               }
                             >
-                              {userData.role?.charAt(0).toUpperCase() + userData.role?.slice(1) || 'Unknown'}
+                              {userData.role === 'field_agent' ? 'FA' : 
+                               userData.role === 'administrator' ? 'Admin' :
+                               userData.role === 'manager' ? 'Manager' : 'Unknown'}
                             </Badge>
+                            <h4 className="font-medium text-foreground">
+                              {userData.firstName && userData.lastName 
+                                ? `${userData.firstName} ${userData.lastName}`
+                                : userData.email || 'Unknown User'
+                              }
+                            </h4>
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {userData.email || 'No email'}

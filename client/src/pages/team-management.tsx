@@ -213,7 +213,7 @@ export default function TeamManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Field Agent</TableHead>
+                    <TableHead>FA (Field Agent)</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Total Assigned</TableHead>
                     <TableHead>Active Orders</TableHead>
