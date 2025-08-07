@@ -582,12 +582,12 @@ export default function Messages() {
 
         {/* View Message Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-gray-900 dark:text-white">Message Details</DialogTitle>
             </DialogHeader>
             {selectedMessage && (
-              <div className="space-y-4">
+              <div className="flex-1 overflow-y-auto space-y-6 pr-2">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <Label className="text-gray-700 dark:text-gray-300">From:</Label>
@@ -647,16 +647,16 @@ export default function Messages() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-gray-700 dark:text-gray-300">Subject:</Label>
-                  <h3 className="text-lg font-medium mt-1 text-gray-900 dark:text-white">{selectedMessage.subject}</h3>
+                  <Label className="text-gray-700 dark:text-gray-300 text-base font-medium">Subject:</Label>
+                  <h3 className="text-xl font-semibold mt-2 text-gray-900 dark:text-white">{selectedMessage.subject}</h3>
                 </div>
                 <div>
-                  <Label className="text-gray-700 dark:text-gray-300">Message:</Label>
-                  <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <p className="whitespace-pre-wrap text-gray-900 dark:text-white">{selectedMessage.content}</p>
+                  <Label className="text-gray-700 dark:text-gray-300 text-base font-medium">Message:</Label>
+                  <div className="mt-3 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 min-h-[120px]">
+                    <p className="whitespace-pre-wrap text-gray-900 dark:text-white text-base leading-relaxed">{selectedMessage.content}</p>
                   </div>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-600">
                   <Button 
                     variant="outline" 
                     className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
