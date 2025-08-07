@@ -18,7 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
+import { useState } from "react";
 
 const workOrderFormSchema = insertWorkOrderSchema.extend({
   title: z.string().min(1, "Title is required"),
@@ -32,6 +35,12 @@ const workOrderFormSchema = insertWorkOrderSchema.extend({
   estimatedHours: z.string().optional(),
 });
 
+interface Task {
+  title: string;
+  description: string;
+  category: 'pre_visit' | 'on_site' | 'post_site';
+}
+
 interface WorkOrderFormProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -40,6 +49,12 @@ interface WorkOrderFormProps {
 export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTask, setNewTask] = useState<Task>({
+    title: '',
+    description: '',
+    category: 'pre_visit'
+  });
 
   const { data: fieldAgents } = useQuery({
     queryKey: ["/api/users/role/field_agent"],
@@ -68,10 +83,25 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
         dueDate: workOrderData.dueDate ? new Date(workOrderData.dueDate).toISOString() : null,
         estimatedHours: workOrderData.estimatedHours ? parseFloat(workOrderData.estimatedHours) : null,
       };
-      await apiRequest("POST", "/api/work-orders", data);
+      const response = await apiRequest("POST", "/api/work-orders", data);
+      const createdWorkOrder = await response.json();
+      
+      // Create tasks for the work order
+      if (tasks.length > 0) {
+        for (let i = 0; i < tasks.length; i++) {
+          const task = tasks[i];
+          await apiRequest("POST", `/api/work-orders/${createdWorkOrder.id}/tasks`, {
+            ...task,
+            orderIndex: i
+          });
+        }
+      }
+      
+      return createdWorkOrder;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      setTasks([]);
       onSuccess();
     },
     onError: (error) => {
@@ -96,6 +126,46 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
 
   const onSubmit = (data: any) => {
     createWorkOrderMutation.mutate(data);
+  };
+
+  const handleAddTask = () => {
+    if (!newTask.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Task title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTasks([...tasks, newTask]);
+    setNewTask({ title: '', description: '', category: 'pre_visit' });
+    toast({
+      title: "Task Added",
+      description: "Task has been added to the work order",
+    });
+  };
+
+  const handleRemoveTask = (index: number) => {
+    setTasks(tasks.filter((_, i) => i !== index));
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'pre_visit': return '🚗 Pre-Site';
+      case 'on_site': return '🔧 On-Site';
+      case 'post_site': return '📋 Post-Site';
+      default: return category;
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'pre_visit': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'on_site': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      case 'post_site': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
   };
 
   return (
@@ -318,6 +388,120 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
                     </FormItem>
                   )}
                 />
+              </div>
+
+              {/* Tasks Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Tasks</h3>
+                  <Badge variant="secondary">{tasks.length} tasks added</Badge>
+                </div>
+                
+                {/* Add Task Form */}
+                <Card className="mb-4 border-dashed border-2">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-sm font-medium">Category</label>
+                          <Select 
+                            value={newTask.category} 
+                            onValueChange={(value) => setNewTask({ ...newTask, category: value as any })}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pre_visit">🚗 Pre-Site</SelectItem>
+                              <SelectItem value="on_site">🔧 On-Site</SelectItem>
+                              <SelectItem value="post_site">📋 Post-Site</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium">Task Title</label>
+                          <Input
+                            value={newTask.title}
+                            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                            placeholder="Enter task title"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Description (Optional)</label>
+                        <Textarea
+                          value={newTask.description}
+                          onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                          placeholder="Enter task description"
+                          rows={2}
+                          className="mt-1"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleAddTask}
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Task
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Tasks List */}
+                {tasks.length > 0 && (
+                  <div className="space-y-2">
+                    {['pre_visit', 'on_site', 'post_site'].map(category => {
+                      const categoryTasks = tasks.filter(task => task.category === category);
+                      if (categoryTasks.length === 0) return null;
+                      
+                      return (
+                        <div key={category}>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                            {getCategoryLabel(category)} ({categoryTasks.length})
+                          </h4>
+                          <div className="space-y-1">
+                            {categoryTasks.map((task, index) => {
+                              const globalIndex = tasks.findIndex(t => t === task);
+                              return (
+                                <div
+                                  key={globalIndex}
+                                  className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded border"
+                                >
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <Badge className={getCategoryColor(task.category)} variant="secondary">
+                                        {getCategoryLabel(task.category)}
+                                      </Badge>
+                                      <span className="font-medium text-sm">{task.title}</span>
+                                    </div>
+                                    {task.description && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        {task.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveTask(globalIndex)}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
