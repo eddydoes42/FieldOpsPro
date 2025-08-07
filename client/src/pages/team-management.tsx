@@ -142,9 +142,8 @@ export default function TeamManagement() {
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Team Management</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage your field agents and monitor their workload and performance</p>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Management</h1>
         </div>
 
         {/* Team Overview Cards */}

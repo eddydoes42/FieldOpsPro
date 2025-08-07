@@ -639,9 +639,8 @@ export default function WorkOrders() {
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Work Orders</h1>
-            <p className="text-gray-600 dark:text-gray-300">Manage and track field operation work orders</p>
+          <div className="flex-1 text-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Work Orders</h1>
           </div>
           {canCreateWorkOrders && (
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

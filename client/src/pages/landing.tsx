@@ -15,7 +15,6 @@ export default function Landing() {
             <i className="fas fa-tools text-white text-2xl"></i>
           </div>
           <h1 className="text-3xl font-bold text-foreground">FieldOps Pro</h1>
-          <p className="mt-2 text-muted-foreground">IT Field Agent Management System</p>
         </div>
 
         {/* Login Card */}

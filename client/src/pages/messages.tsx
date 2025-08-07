@@ -242,13 +242,10 @@ export default function Messages() {
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Messages
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">Team communication and work order discussions</p>
-          </div>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Messages
+          </h1>
         </div>
 
         <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>

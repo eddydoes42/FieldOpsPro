@@ -99,9 +99,8 @@ export default function ManagerDashboard() {
       <Navigation userRole={(user as any).role} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
-          <p className="mt-1 text-muted-foreground">Manage your team and view work orders</p>
         </div>
 
         {/* Action Buttons Row */}

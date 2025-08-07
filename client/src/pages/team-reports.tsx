@@ -126,12 +126,13 @@ export default function TeamReports() {
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Team Reports</h1>
-          <p className="text-gray-600 dark:text-gray-300">Comprehensive analytics and performance metrics for your field operations team</p>
-          
-          {/* Filter Options */}
-          <div className="mt-4 flex flex-wrap gap-4">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Reports</h1>
+        </div>
+        
+        {/* Filter Options */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-4">
             <select 
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
               value={selectedStatus}
