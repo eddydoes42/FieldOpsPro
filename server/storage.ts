@@ -14,7 +14,7 @@ import {
   type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, isNull } from "drizzle-orm";
+import { eq, desc, and, or, isNull, count } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -243,27 +243,27 @@ export class DatabaseStorage implements IStorage {
 
   async getDashboardStats() {
     // Get total users count
-    const totalUsersResult = await db.select({ count: db.$count() }).from(users);
+    const totalUsersResult = await db.select({ count: count() }).from(users);
     const totalUsers = totalUsersResult[0]?.count || 0;
 
     // Get work order counts
-    const totalOrdersResult = await db.select({ count: db.$count() }).from(workOrders);
+    const totalOrdersResult = await db.select({ count: count() }).from(workOrders);
     const totalOrders = totalOrdersResult[0]?.count || 0;
 
-    const completedOrdersResult = await db.select({ count: db.$count() }).from(workOrders).where(eq(workOrders.status, 'completed'));
+    const completedOrdersResult = await db.select({ count: count() }).from(workOrders).where(eq(workOrders.status, 'completed'));
     const completedOrders = completedOrdersResult[0]?.count || 0;
 
-    const activeOrdersResult = await db.select({ count: db.$count() }).from(workOrders).where(or(eq(workOrders.status, 'pending'), eq(workOrders.status, 'in_progress')));
+    const activeOrdersResult = await db.select({ count: count() }).from(workOrders).where(or(eq(workOrders.status, 'pending'), eq(workOrders.status, 'in_progress')));
     const activeOrders = activeOrdersResult[0]?.count || 0;
 
     // Get user role counts
-    const adminCountResult = await db.select({ count: db.$count() }).from(users).where(eq(users.role, 'administrator'));
+    const adminCountResult = await db.select({ count: count() }).from(users).where(eq(users.role, 'administrator'));
     const adminCount = adminCountResult[0]?.count || 0;
 
-    const managerCountResult = await db.select({ count: db.$count() }).from(users).where(eq(users.role, 'manager'));
+    const managerCountResult = await db.select({ count: count() }).from(users).where(eq(users.role, 'manager'));
     const managerCount = managerCountResult[0]?.count || 0;
 
-    const agentCountResult = await db.select({ count: db.$count() }).from(users).where(eq(users.role, 'field_agent'));
+    const agentCountResult = await db.select({ count: count() }).from(users).where(eq(users.role, 'field_agent'));
     const agentCount = agentCountResult[0]?.count || 0;
 
     return {
