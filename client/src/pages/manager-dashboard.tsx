@@ -9,12 +9,16 @@ import WorkOrderForm from "@/components/work-order-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 export default function ManagerDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWorkOrderForm, setShowWorkOrderForm] = useState(false);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [, setLocation] = useLocation();
 
   // Redirect to home if not authenticated
@@ -46,6 +50,25 @@ export default function ManagerDashboard() {
     if (!assigneeId) return 'Unassigned';
     const agent = (fieldAgents as any)?.find((a: any) => a.id === assigneeId);
     return agent ? `${agent.firstName} ${agent.lastName}` : assigneeId;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
+    }
   };
 
   if (isLoading || !user) {
@@ -153,7 +176,10 @@ export default function ManagerDashboard() {
                       <div 
                         key={order.id} 
                         className="border-l-4 border-red-500 bg-red-900/20 p-4 rounded-r-lg border border-red-800/30 cursor-pointer hover:bg-red-900/30 transition-colors"
-                        onClick={() => setLocation('/work-orders')}
+                        onClick={() => {
+                          setSelectedWorkOrder(order);
+                          setIsViewDialogOpen(true);
+                        }}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -290,6 +316,107 @@ export default function ManagerDashboard() {
           }}
         />
       )}
+
+      {/* Work Order Detail Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              📋 Work Order Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedWorkOrder && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">{(selectedWorkOrder as any).title}</h2>
+                  <p className="text-sm text-muted-foreground">ID: {(selectedWorkOrder as any).id}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className={getStatusColor((selectedWorkOrder as any).status)}>
+                    {(selectedWorkOrder as any).status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                  <Badge className={getPriorityColor((selectedWorkOrder as any).priority)}>
+                    {(selectedWorkOrder as any).priority.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Description</label>
+                    <p className="mt-1 text-foreground">{(selectedWorkOrder as any).description || 'No description provided'}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Location</label>
+                    <p className="mt-1 text-foreground">{(selectedWorkOrder as any).location || 'No location specified'}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Assigned Agent</label>
+                    <p className="mt-1 text-foreground">{getAgentName((selectedWorkOrder as any).assigneeId)}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Estimated Hours</label>
+                    <p className="mt-1 text-foreground">{(selectedWorkOrder as any).estimatedHours ? `${(selectedWorkOrder as any).estimatedHours} hours` : 'Not specified'}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Due Date</label>
+                    <p className="mt-1 text-foreground">
+                      {(selectedWorkOrder as any).dueDate 
+                        ? new Date((selectedWorkOrder as any).dueDate).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })
+                        : 'No due date set'
+                      }
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Created</label>
+                    <p className="mt-1 text-foreground">
+                      {(selectedWorkOrder as any).createdAt 
+                        ? new Date((selectedWorkOrder as any).createdAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : 'Unknown'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                  Close
+                </Button>
+                <Button onClick={() => {
+                  setIsViewDialogOpen(false);
+                  setLocation('/work-orders');
+                }}>
+                  📋 View All Work Orders
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
