@@ -34,6 +34,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/onboarding', label: 'Onboarding', icon: 'fas fa-user-plus' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/reports/team', label: 'Team Reports', icon: 'fas fa-chart-bar' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments' },
           ]

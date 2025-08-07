@@ -14,7 +14,7 @@ import {
   type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, isNull, count } from "drizzle-orm";
+import { eq, desc, and, or, isNull, count, avg, sum, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -59,6 +59,15 @@ export interface IStorage {
     adminCount: number;
     managerCount: number;
     agentCount: number;
+  }>;
+
+  // Team reports
+  getTeamReports(): Promise<{
+    agentPerformance: any[];
+    workOrderStats: any;
+    timeTrackingStats: any;
+    completionRates: any[];
+    monthlyTrends: any[];
   }>;
 }
 
@@ -274,6 +283,85 @@ export class DatabaseStorage implements IStorage {
       adminCount,
       managerCount,
       agentCount,
+    };
+  }
+
+  async getTeamReports() {
+    // Agent Performance - work orders completed, average time, efficiency
+    const agentPerformance = await db
+      .select({
+        agentId: users.id,
+        agentName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        email: users.email,
+        totalAssigned: count(workOrders.id),
+        completedOrders: sum(sql<number>`CASE WHEN ${workOrders.status} = 'completed' THEN 1 ELSE 0 END`),
+        avgEstimatedHours: avg(workOrders.estimatedHours),
+        avgActualHours: avg(workOrders.actualHours),
+      })
+      .from(users)
+      .leftJoin(workOrders, eq(users.id, workOrders.assigneeId))
+      .where(eq(users.role, 'field_agent'))
+      .groupBy(users.id, users.firstName, users.lastName, users.email);
+
+    // Work Order Statistics by Status
+    const workOrderStats = await db
+      .select({
+        status: workOrders.status,
+        count: count(),
+        avgEstimatedHours: avg(workOrders.estimatedHours),
+        avgActualHours: avg(workOrders.actualHours),
+      })
+      .from(workOrders)
+      .groupBy(workOrders.status);
+
+    // Time Tracking Statistics
+    const timeTrackingStats = await db
+      .select({
+        totalEntries: count(),
+        totalHoursWorked: sum(sql<number>`EXTRACT(EPOCH FROM (${timeEntries.endTime} - ${timeEntries.startTime}))/3600`),
+        avgSessionLength: avg(sql<number>`EXTRACT(EPOCH FROM (${timeEntries.endTime} - ${timeEntries.startTime}))/3600`),
+        activeEntries: sum(sql<number>`CASE WHEN ${timeEntries.isActive} = true THEN 1 ELSE 0 END`),
+      })
+      .from(timeEntries)
+      .where(isNull(timeEntries.endTime).not());
+
+    // Completion Rates by Agent
+    const completionRates = await db
+      .select({
+        agentId: users.id,
+        agentName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        totalAssigned: count(workOrders.id),
+        completed: sum(sql<number>`CASE WHEN ${workOrders.status} = 'completed' THEN 1 ELSE 0 END`),
+        completionRate: sql<number>`ROUND(COALESCE(SUM(CASE WHEN ${workOrders.status} = 'completed' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(${workOrders.id}), 0), 0), 2)`,
+      })
+      .from(users)
+      .leftJoin(workOrders, eq(users.id, workOrders.assigneeId))
+      .where(eq(users.role, 'field_agent'))
+      .groupBy(users.id, users.firstName, users.lastName);
+
+    // Monthly Trends (last 6 months)
+    const monthlyTrends = await db
+      .select({
+        month: sql<string>`TO_CHAR(${workOrders.createdAt}, 'YYYY-MM')`,
+        created: count(),
+        completed: sum(sql<number>`CASE WHEN ${workOrders.status} = 'completed' THEN 1 ELSE 0 END`),
+      })
+      .from(workOrders)
+      .where(sql`${workOrders.createdAt} >= CURRENT_DATE - INTERVAL '6 months'`)
+      .groupBy(sql`TO_CHAR(${workOrders.createdAt}, 'YYYY-MM')`)
+      .orderBy(sql`TO_CHAR(${workOrders.createdAt}, 'YYYY-MM')`);
+
+    return {
+      agentPerformance,
+      workOrderStats,
+      timeTrackingStats: timeTrackingStats[0] || {
+        totalEntries: 0,
+        totalHoursWorked: 0,
+        avgSessionLength: 0,
+        activeEntries: 0,
+      },
+      completionRates,
+      monthlyTrends,
     };
   }
 }
