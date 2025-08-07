@@ -50,6 +50,26 @@ interface NewWorkOrderData {
   pointOfContact: string;
 }
 
+interface WorkOrderTask {
+  id: string;
+  workOrderId: string;
+  title: string;
+  description: string | null;
+  category: string; // pre_visit, on_site, post_site
+  isCompleted: boolean;
+  completedById: string | null;
+  completedAt: string | null;
+  orderIndex: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface NewTaskData {
+  title: string;
+  description: string;
+  category: string;
+}
+
 export default function WorkOrders() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
@@ -58,6 +78,7 @@ export default function WorkOrders() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [newWorkOrder, setNewWorkOrder] = useState<NewWorkOrderData>({
@@ -70,6 +91,12 @@ export default function WorkOrders() {
     scopeOfWork: "",
     requiredTools: "",
     pointOfContact: ""
+  });
+
+  const [newTask, setNewTask] = useState<NewTaskData>({
+    title: "",
+    description: "",
+    category: "pre_visit"
   });
 
   // Redirect to home if not authenticated
@@ -94,6 +121,12 @@ export default function WorkOrders() {
 
   const { data: fieldAgents, isLoading: agentsLoading } = useQuery<User[]>({
     queryKey: ["/api/users/role/field_agent"],
+    retry: false,
+  });
+
+  const { data: workOrderTasks, isLoading: tasksLoading } = useQuery<WorkOrderTask[]>({
+    queryKey: ["/api/work-orders", selectedWorkOrder?.id, "tasks"],
+    enabled: !!selectedWorkOrder?.id,
     retry: false,
   });
 
@@ -145,6 +178,78 @@ export default function WorkOrders() {
       toast({
         title: "Error",
         description: "Failed to create work order. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (data: NewTaskData) => {
+      if (!selectedWorkOrder) throw new Error("No work order selected");
+      
+      const response = await apiRequest('POST', `/api/work-orders/${selectedWorkOrder.id}/tasks`, data);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Task created successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders", selectedWorkOrder?.id, "tasks"] });
+      setIsTaskDialogOpen(false);
+      setNewTask({
+        title: "",
+        description: "",
+        category: "pre_visit"
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const completeTaskMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const response = await apiRequest('PATCH', `/api/tasks/${taskId}/complete`, {});
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Task marked as complete!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders", selectedWorkOrder?.id, "tasks"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to complete task. Please try again.",
         variant: "destructive",
       });
     },
@@ -213,6 +318,39 @@ export default function WorkOrders() {
       [field]: value
     }));
   };
+
+  const handleTaskInputChange = (field: keyof NewTaskData, value: string) => {
+    setNewTask(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'pre_visit': return 'Pre-Visit';
+      case 'on_site': return 'On-Site';
+      case 'post_site': return 'Post-Site';
+      default: return category;
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'pre_visit': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
+      case 'on_site': return 'bg-orange-100 text-orange-800 dark:bg-orange-800/20 dark:text-orange-300';
+      case 'post_site': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
+    }
+  };
+
+  const groupedTasks = workOrderTasks?.reduce((acc, task) => {
+    if (!acc[task.category]) {
+      acc[task.category] = [];
+    }
+    acc[task.category].push(task);
+    return acc;
+  }, {} as Record<string, WorkOrderTask[]>) || {};
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -486,6 +624,100 @@ export default function WorkOrders() {
                     </div>
                   </div>
                 </div>
+
+                {/* Task Management Section */}
+                <div className="space-y-4 border-t pt-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-foreground">Tasks</h3>
+                    {canCreateWorkOrders && (
+                      <Button 
+                        onClick={() => setIsTaskDialogOpen(true)}
+                        size="sm"
+                        className="flex items-center"
+                      >
+                        Add Task
+                      </Button>
+                    )}
+                  </div>
+
+                  {tasksLoading ? (
+                    <div className="animate-pulse space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-20 bg-gray-200 rounded"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {['pre_visit', 'on_site', 'post_site'].map(category => (
+                        <div key={category} className="space-y-3">
+                          <h4 className="font-medium text-foreground flex items-center">
+                            <Badge className={`mr-2 ${getCategoryColor(category)}`}>
+                              {getCategoryLabel(category)}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
+                              ({groupedTasks[category]?.length || 0} tasks)
+                            </span>
+                          </h4>
+                          
+                          {groupedTasks[category]?.length ? (
+                            <div className="space-y-2">
+                              {groupedTasks[category].map(task => (
+                                <div 
+                                  key={task.id} 
+                                  className="flex items-start justify-between p-3 border rounded-lg bg-background"
+                                >
+                                  <div className="flex-1">
+                                    <div className="flex items-center">
+                                      <div 
+                                        className={`w-4 h-4 rounded border-2 mr-3 flex items-center justify-center ${
+                                          task.isCompleted 
+                                            ? 'bg-green-500 border-green-500' 
+                                            : 'border-gray-300 dark:border-gray-600'
+                                        }`}
+                                      >
+                                        {task.isCompleted && (
+                                          <span className="text-white text-xs">✓</span>
+                                        )}
+                                      </div>
+                                      <h5 className={`font-medium ${task.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                                        {task.title}
+                                      </h5>
+                                    </div>
+                                    {task.description && (
+                                      <p className="text-sm text-muted-foreground mt-1 ml-7">
+                                        {task.description}
+                                      </p>
+                                    )}
+                                    {task.isCompleted && task.completedAt && (
+                                      <p className="text-xs text-muted-foreground mt-1 ml-7">
+                                        Completed on {new Date(task.completedAt).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                  
+                                  {!task.isCompleted && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => completeTaskMutation.mutate(task.id)}
+                                      disabled={completeTaskMutation.isPending}
+                                      className="ml-3"
+                                    >
+                                      {completeTaskMutation.isPending ? "Completing..." : "Complete"}
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-muted-foreground border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                              No {getCategoryLabel(category).toLowerCase()} tasks yet
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 
                 <div className="flex justify-end space-x-4 pt-4 border-t">
                   <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
@@ -500,6 +732,82 @@ export default function WorkOrders() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Task Dialog */}
+        <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Task</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newTask.title) {
+                toast({
+                  title: "Validation Error",
+                  description: "Please enter a task title.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              createTaskMutation.mutate(newTask);
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="taskTitle">Task Title *</Label>
+                <Input
+                  id="taskTitle"
+                  value={newTask.title}
+                  onChange={(e) => handleTaskInputChange('title', e.target.value)}
+                  placeholder="Enter task title"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="taskDescription">Description</Label>
+                <Textarea
+                  id="taskDescription"
+                  value={newTask.description}
+                  onChange={(e) => handleTaskInputChange('description', e.target.value)}
+                  placeholder="Optional task description"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="taskCategory">Category *</Label>
+                <Select 
+                  value={newTask.category} 
+                  onValueChange={(value) => handleTaskInputChange('category', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select task category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pre_visit">Pre-Visit Tasks</SelectItem>
+                    <SelectItem value="on_site">On-Site Tasks</SelectItem>
+                    <SelectItem value="post_site">Post-Site Tasks</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsTaskDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createTaskMutation.isPending}>
+                  {createTaskMutation.isPending ? (
+                    <div className="flex items-center">
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Creating...
+                    </div>
+                  ) : (
+                    "Create Task"
+                  )}
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
 

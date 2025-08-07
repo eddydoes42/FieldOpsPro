@@ -50,6 +50,9 @@ export default function TeamManagement() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Check if user has permission for role assignment (only administrators)
+  const canAssignRoles = user && (user as any).role === 'administrator';
+
   const { data: teamMembers, isLoading: teamLoading, error: teamError } = useQuery<TeamMember[]>({
     queryKey: ["/api/users/role/field_agent"],
     retry: false,

@@ -3,6 +3,7 @@ import {
   workOrders,
   timeEntries,
   messages,
+  workOrderTasks,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -12,6 +13,8 @@ import {
   type InsertTimeEntry,
   type Message,
   type InsertMessage,
+  type WorkOrderTask,
+  type InsertWorkOrderTask,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -71,6 +74,12 @@ export interface IStorage {
     completionRates: any[];
     monthlyTrends: any[];
   }>;
+
+  // Work Order Task operations
+  createWorkOrderTask(task: InsertWorkOrderTask): Promise<WorkOrderTask>;
+  getWorkOrderTasks(workOrderId: string): Promise<WorkOrderTask[]>;
+  updateWorkOrderTask(id: string, updates: Partial<InsertWorkOrderTask>): Promise<WorkOrderTask>;
+  markTaskComplete(id: string, completedById: string): Promise<WorkOrderTask>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -378,6 +387,43 @@ export class DatabaseStorage implements IStorage {
       completionRates,
       monthlyTrends,
     };
+  }
+
+  // Work Order Task operations
+  async createWorkOrderTask(taskData: InsertWorkOrderTask): Promise<WorkOrderTask> {
+    const [task] = await db.insert(workOrderTasks).values(taskData).returning();
+    return task;
+  }
+
+  async getWorkOrderTasks(workOrderId: string): Promise<WorkOrderTask[]> {
+    return await db
+      .select()
+      .from(workOrderTasks)
+      .where(eq(workOrderTasks.workOrderId, workOrderId))
+      .orderBy(workOrderTasks.category, workOrderTasks.orderIndex);
+  }
+
+  async updateWorkOrderTask(id: string, updates: Partial<InsertWorkOrderTask>): Promise<WorkOrderTask> {
+    const [task] = await db
+      .update(workOrderTasks)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(workOrderTasks.id, id))
+      .returning();
+    return task;
+  }
+
+  async markTaskComplete(id: string, completedById: string): Promise<WorkOrderTask> {
+    const [task] = await db
+      .update(workOrderTasks)
+      .set({
+        isCompleted: true,
+        completedById,
+        completedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(workOrderTasks.id, id))
+      .returning();
+    return task;
   }
 }
 

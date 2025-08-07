@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema } from "@shared/schema";
+import { insertUserSchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -53,12 +53,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User management routes
+  // User management routes - restricted to administrators only for role assignment
   app.post('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
-        return res.status(403).json({ message: "Insufficient permissions" });
+      if (!currentUser || currentUser.role !== 'administrator') {
+        return res.status(403).json({ message: "Only administrators can create users and assign roles" });
       }
 
       const userData = insertUserSchema.parse(req.body);
@@ -70,12 +70,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Onboarding route
+  // Onboarding route - restricted to administrators only for role assignment
   app.post('/api/users/onboard', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
-        return res.status(403).json({ message: "Insufficient permissions" });
+      if (!currentUser || currentUser.role !== 'administrator') {
+        return res.status(403).json({ message: "Only administrators can onboard users and assign roles" });
       }
 
       // Transform onboarding data to user data format
@@ -158,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'pending',
         assigneeId: req.body.assignedTo || req.body.assigneeId || null,
         createdById: currentUser.id,
-        estimatedHours: req.body.estimatedHours ? parseFloat(req.body.estimatedHours) : null,
+        estimatedHours: req.body.estimatedHours ? req.body.estimatedHours.toString() : null,
         dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
         scopeOfWork: req.body.scopeOfWork || null,
         requiredTools: req.body.requiredTools || null,
@@ -418,6 +418,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Work Order Task routes
+  app.post('/api/work-orders/:workOrderId/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Only administrators and managers can create tasks" });
+      }
+
+      const taskData = insertWorkOrderTaskSchema.parse({
+        ...req.body,
+        workOrderId: req.params.workOrderId,
+      });
+
+      const task = await storage.createWorkOrderTask(taskData);
+      res.json(task);
+    } catch (error) {
+      console.error("Error creating work order task:", error);
+      res.status(500).json({ message: "Failed to create task" });
+    }
+  });
+
+  app.get('/api/work-orders/:workOrderId/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const tasks = await storage.getWorkOrderTasks(req.params.workOrderId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching work order tasks:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  app.patch('/api/tasks/:taskId/complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Allow assigned agent or managers to mark tasks complete
+      if (currentUser.role !== 'administrator' && currentUser.role !== 'manager') {
+        // Check if user is assigned to the work order
+        const tasks = await storage.getWorkOrderTasks(req.body.workOrderId);
+        const task = tasks.find(t => t.id === req.params.taskId);
+        if (!task) {
+          return res.status(404).json({ message: "Task not found" });
+        }
+
+        const workOrder = await storage.getWorkOrder(task.workOrderId);
+        if (!workOrder || workOrder.assigneeId !== currentUser.id) {
+          return res.status(403).json({ message: "Only assigned agents and managers can complete tasks" });
+        }
+      }
+
+      const completedTask = await storage.markTaskComplete(req.params.taskId, currentUser.id);
+      res.json(completedTask);
+    } catch (error) {
+      console.error("Error completing task:", error);
+      res.status(500).json({ message: "Failed to complete task" });
+    }
+  });
+
+  app.patch('/api/tasks/:taskId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Only administrators and managers can update tasks" });
+      }
+
+      const updates = req.body;
+      const updatedTask = await storage.updateWorkOrderTask(req.params.taskId, updates);
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error updating task:", error);
+      res.status(500).json({ message: "Failed to update task" });
     }
   });
 

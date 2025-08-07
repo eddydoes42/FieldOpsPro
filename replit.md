@@ -7,10 +7,16 @@ FieldOps Pro is a full-stack web application designed for managing IT field oper
 ## Current Status (January 2025)
 
 The application is fully operational with comprehensive demo data and modern dark theme:
-- ✓ Complete role-based authentication and authorization system
+- ✓ Complete role-based authentication and authorization system with administrator-only role assignment
 - ✓ Administrator dashboard with real-time statistics and full system access
 - ✓ Manager dashboard for team and work order management with priority tasks and active issues sections
 - ✓ Field agent dashboard for assigned work and time tracking
+- ✓ **Task Management System**: Pre-visit, on-site, and post-site task tracking for work orders
+  - Administrators and managers can create and assign tasks
+  - Field agents and managers can mark tasks as complete
+  - Tasks organized by phase with visual progress indicators
+  - Complete task lifecycle management with timestamps
+- ✓ **Role-based permissions**: Only administrators can assign user roles and create users
 - ✓ Sample data: 6 users (1 admin, 1 manager, 4 field agents)
 - ✓ 6 work orders with various statuses and assignments
 - ✓ Time tracking entries including active sessions
@@ -32,10 +38,10 @@ The client-side application is built with React and TypeScript, utilizing a comp
 The server is implemented using Express.js with TypeScript, following a RESTful API design pattern. The backend includes dedicated modules for authentication (Replit OAuth), data storage operations, and route handling. The server implements role-based access control to ensure appropriate permissions for different user types and includes comprehensive error handling and logging middleware.
 
 ### Database Design
-The application uses PostgreSQL as the primary database with Drizzle ORM for type-safe database operations. The schema includes tables for users, work orders, time entries, messages, and sessions. The database design supports hierarchical user roles and maintains referential integrity between related entities like work orders and their assigned agents.
+The application uses PostgreSQL as the primary database with Drizzle ORM for type-safe database operations. The schema includes tables for users, work orders, work order tasks, time entries, messages, and sessions. The database design supports hierarchical user roles, task management with phase categorization (pre-visit, on-site, post-site), and maintains referential integrity between related entities like work orders and their assigned agents.
 
 ### Authentication & Authorization
-Authentication is handled through Replit's OAuth system with session-based management using connect-pg-simple for PostgreSQL session storage. The system implements role-based authorization with three distinct user types: administrators (full system access), managers (team and work order management), and field agents (assigned work and time tracking). Middleware functions protect API endpoints based on user roles and authentication status.
+Authentication is handled through Replit's OAuth system with session-based management using connect-pg-simple for PostgreSQL session storage. The system implements role-based authorization with three distinct user types: administrators (full system access including role assignment), managers (team and work order management, task creation), and field agents (assigned work and time tracking, task completion). Middleware functions protect API endpoints based on user roles and authentication status, with strict role assignment restrictions limiting user creation to administrators only.
 
 ### State Management
 The frontend uses TanStack Query for server state management, providing automatic caching, background updates, and optimistic updates. Form state is managed using React Hook Form with Zod validation schemas shared between frontend and backend for consistent data validation.
