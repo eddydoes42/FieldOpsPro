@@ -253,15 +253,15 @@ export default function TeamReports() {
                 <div className="space-y-4">
                   {reportsData?.workOrderStats.map((stat) => (
                     <div key={stat.status} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Badge className={getStatusColor(stat.status)}>
                           {stat.status.replace('_', ' ').toUpperCase()}
                         </Badge>
                         <span className="font-medium text-foreground">{stat.count} orders</span>
                       </div>
-                      <div className="text-right text-sm text-gray-600 dark:text-gray-300">
-                        <div>Est: {formatHours(stat.avgEstimatedHours)}</div>
-                        <div>Act: {formatHours(stat.avgActualHours)}</div>
+                      <div className="flex flex-col text-right text-xs text-gray-600 dark:text-gray-300 min-w-[70px] ml-2">
+                        <div className="whitespace-nowrap">Est: {formatHours(stat.avgEstimatedHours)}</div>
+                        <div className="whitespace-nowrap">Act: {formatHours(stat.avgActualHours)}</div>
                       </div>
                     </div>
                   ))}
