@@ -293,7 +293,7 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {allUsers && (allUsers as any[]).map((userData) => (
+                  {allUsers && (allUsers as any[]).map((userData: any) => (
                     <div key={userData.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
                       <div className="flex items-center space-x-4 min-w-0 flex-1">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -330,14 +330,14 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         {userData.id !== (user as any)?.id && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 whitespace-nowrap"
                                 disabled={deleteUserMutation.isPending}
                               >
                                 <Trash2 className="h-4 w-4 mr-1" />
