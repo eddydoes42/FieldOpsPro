@@ -200,7 +200,7 @@ export default function TeamManagement() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
-                <i className="fas fa-users mr-2 text-blue-600 dark:text-blue-400"></i>
+                <i className="fas fa-users mr-3 text-blue-600 dark:text-blue-400"></i>
                 <span className="text-foreground">Team Members</span>
               </div>
               <Button variant="outline" size="sm">
