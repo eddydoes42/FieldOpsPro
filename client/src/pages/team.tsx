@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,8 +8,9 @@ import Navigation from "@/components/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, ArrowLeft } from "lucide-react";
+import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function TeamPage() {
@@ -17,6 +18,8 @@ export default function TeamPage() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -134,7 +137,13 @@ export default function TeamPage() {
               <div className="space-y-4">
                 {allUsers && (allUsers as any[]).map((userData: any) => (
                   <div key={userData.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
-                    <div className="flex items-start space-x-4 min-w-0 flex-1">
+                    <div 
+                      className="flex items-start space-x-4 min-w-0 flex-1 cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
+                      onClick={() => {
+                        setSelectedUser(userData);
+                        setIsDialogOpen(true);
+                      }}
+                    >
                       <div className="flex flex-col items-center space-y-2 flex-shrink-0">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <i className="fas fa-user text-primary"></i>
@@ -236,6 +245,104 @@ export default function TeamPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* User Details Modal */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <i className="fas fa-user text-primary text-sm"></i>
+              </div>
+              <span>
+                {selectedUser?.firstName && selectedUser?.lastName 
+                  ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                  : selectedUser?.email || 'Unknown User'
+                }
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="space-y-4">
+              {/* Contact Information */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-foreground">Contact Information</h4>
+                
+                <div className="flex items-center space-x-3 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Email:</span>
+                  <span className="text-foreground">{selectedUser.email || 'Not provided'}</span>
+                </div>
+                
+                <div className="flex items-center space-x-3 text-sm">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Phone:</span>
+                  <span className="text-foreground">{selectedUser.phone || 'Not provided'}</span>
+                </div>
+                
+                <div className="flex items-start space-x-3 text-sm">
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <span className="text-muted-foreground">Address:</span>
+                  <div className="text-foreground">
+                    {selectedUser.address || 'Not provided'}
+                    {selectedUser.city && (
+                      <div className="text-xs text-muted-foreground">
+                        {selectedUser.city}
+                        {selectedUser.state && `, ${selectedUser.state}`}
+                        {selectedUser.zipCode && ` ${selectedUser.zipCode}`}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-foreground">Status</h4>
+                <Badge 
+                  variant={selectedUser.isActive ? "default" : "destructive"}
+                  className={selectedUser.isActive ? "bg-green-900/30 text-green-300" : ""}
+                >
+                  {selectedUser.isActive ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+
+              {/* Role */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-foreground">Role</h4>
+                <Badge 
+                  variant="secondary" 
+                  className={`${
+                    selectedUser.role === 'administrator' 
+                      ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
+                      : selectedUser.role === 'manager'
+                      ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
+                      : 'bg-green-900/30 text-green-300 border-green-800/50'
+                  }`}
+                >
+                  {selectedUser.role === 'field_agent' ? 'Field Agent' : 
+                   selectedUser.role?.charAt(0).toUpperCase() + selectedUser.role?.slice(1) || 'Unknown'}
+                </Badge>
+              </div>
+
+              {/* Work Orders Button */}
+              <div className="pt-4">
+                <Button 
+                  className="w-full" 
+                  onClick={() => {
+                    setLocation(`/work-orders?user=${selectedUser.id}`);
+                    setIsDialogOpen(false);
+                  }}
+                >
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  View Work Orders
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
