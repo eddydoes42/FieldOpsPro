@@ -79,8 +79,8 @@ export default function AdminDashboard() {
                   <i className="fas fa-users text-blue-600"></i>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {statsLoading ? '...' : (stats as any)?.totalUsers || 0}
                   </p>
                 </div>
@@ -95,8 +95,8 @@ export default function AdminDashboard() {
                   <i className="fas fa-clipboard-check text-green-600"></i>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Work Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-muted-foreground">Active Work Orders</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {statsLoading ? '...' : (stats as any)?.activeOrders || 0}
                   </p>
                 </div>
@@ -111,8 +111,8 @@ export default function AdminDashboard() {
                   <i className="fas fa-check-circle text-yellow-600"></i>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completed Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-muted-foreground">Completed Orders</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {statsLoading ? '...' : (stats as any)?.completedOrders || 0}
                   </p>
                 </div>
@@ -127,8 +127,8 @@ export default function AdminDashboard() {
                   <i className="fas fa-percentage text-purple-600"></i>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {statsLoading ? '...' : (stats as any)?.totalOrders > 0 ? Math.round(((stats as any)?.completedOrders / (stats as any)?.totalOrders) * 100) + '%' : '0%'}
                   </p>
                 </div>
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Recent Work Orders</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Recent Work Orders</h3>
                   <Button variant="outline" size="sm">View All</Button>
                 </div>
                 
@@ -155,14 +155,14 @@ export default function AdminDashboard() {
                     </div>
                   ) : workOrders && (workOrders as any).length > 0 ? (
                     (workOrders as any).slice(0, 5).map((order: any) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div key={order.id} className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
                         <div className="flex items-center space-x-4">
                           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                             <i className={`fas ${getPriorityIcon(order.priority)} text-blue-600`}></i>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{order.title}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="font-medium text-foreground">{order.title}</p>
+                            <p className="text-sm text-muted-foreground">
                               {order.assigneeId ? `Assigned to ${order.assigneeId}` : 'Unassigned'}
                             </p>
                           </div>
@@ -171,14 +171,14 @@ export default function AdminDashboard() {
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                           </span>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             Due: {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : 'No due date'}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-muted-foreground">
                       No work orders found
                     </div>
                   )}
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
             {/* Quick Actions */}
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   <Button className="w-full justify-center">
                     <i className="fas fa-user-plus mr-2"></i>Add New User
@@ -210,23 +210,23 @@ export default function AdminDashboard() {
             {/* Team Overview */}
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Team Overview</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Team Overview</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Administrators</span>
-                    <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded">
+                    <span className="text-sm font-medium text-muted-foreground">Administrators</span>
+                    <span className="bg-purple-900/30 text-purple-300 text-xs font-medium px-2 py-1 rounded border border-purple-800/50">
                       {(stats as any)?.adminCount || 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Managers</span>
-                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                    <span className="text-sm font-medium text-muted-foreground">Managers</span>
+                    <span className="bg-blue-900/30 text-blue-300 text-xs font-medium px-2 py-1 rounded border border-blue-800/50">
                       {(stats as any)?.managerCount || 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Field Agents</span>
-                    <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
+                    <span className="text-sm font-medium text-muted-foreground">Field Agents</span>
+                    <span className="bg-green-900/30 text-green-300 text-xs font-medium px-2 py-1 rounded border border-green-800/50">
                       {(stats as any)?.agentCount || 0}
                     </span>
                   </div>
@@ -252,10 +252,10 @@ function getPriorityIcon(priority: string) {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'pending': return 'bg-yellow-100 text-yellow-800';
-    case 'in_progress': return 'bg-blue-100 text-blue-800';
-    case 'completed': return 'bg-green-100 text-green-800';
-    case 'cancelled': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'pending': return 'bg-yellow-900/30 text-yellow-300 border border-yellow-800/50';
+    case 'in_progress': return 'bg-blue-900/30 text-blue-300 border border-blue-800/50';
+    case 'completed': return 'bg-green-900/30 text-green-300 border border-green-800/50';
+    case 'cancelled': return 'bg-red-900/30 text-red-300 border border-red-800/50';
+    default: return 'bg-secondary/30 text-muted-foreground border border-border';
   }
 }

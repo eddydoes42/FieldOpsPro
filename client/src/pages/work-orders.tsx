@@ -404,7 +404,7 @@ export default function WorkOrders() {
                         </div>
                         <div>
                           <span className="text-sm font-medium text-gray-600">Location:</span>
-                          <p className="text-gray-900">{selectedWorkOrder.location || 'Not specified'}</p>
+                          <p className="text-foreground">{'Not specified'}</p>
                         </div>
                       </div>
                     </div>

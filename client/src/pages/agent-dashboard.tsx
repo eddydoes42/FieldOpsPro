@@ -98,8 +98,8 @@ export default function AgentDashboard() {
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-              <p className="text-gray-600">You don't have permission to access this page.</p>
+              <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+              <p className="text-muted-foreground">You don't have permission to access this page.</p>
             </div>
           </CardContent>
         </Card>
@@ -114,13 +114,13 @@ export default function AgentDashboard() {
   }) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation userRole={(user as any).role} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Field Agent Dashboard</h1>
-          <p className="mt-1 text-gray-600">Complete your assigned work orders</p>
+          <h1 className="text-2xl font-bold text-foreground">Field Agent Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">Complete your assigned work orders</p>
         </div>
 
         {/* Time Tracking Card */}
@@ -130,8 +130,8 @@ export default function AgentDashboard() {
         <Card className="mb-6">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Today's Assignments</h3>
-              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+              <h3 className="text-lg font-semibold text-foreground">Today's Assignments</h3>
+              <span className="bg-blue-900/30 text-blue-300 text-sm font-medium px-3 py-1 rounded-full border border-blue-800/50">
                 {todayOrders.length}
               </span>
             </div>
@@ -143,11 +143,11 @@ export default function AgentDashboard() {
                 </div>
               ) : todayOrders.length > 0 ? (
                 todayOrders.map((order: any) => (
-                  <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={order.id} className="border border-border rounded-lg p-4 bg-card">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{order.title}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{order.description}</p>
+                        <h4 className="font-medium text-foreground">{order.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">{order.description}</p>
                       </div>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2 ${getStatusColor(order.status)}`}>
                         {order.status?.replace('_', ' ').replace(/\b\w/g, (l: any) => l.toUpperCase())}
@@ -155,20 +155,20 @@ export default function AgentDashboard() {
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <i className="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                      <div className="flex items-center text-muted-foreground">
+                        <i className="fas fa-map-marker-alt mr-2 text-muted-foreground/70"></i>
                         <span>{order.location}</span>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <i className="fas fa-clock mr-2 text-gray-400"></i>
+                      <div className="flex items-center text-muted-foreground">
+                        <i className="fas fa-clock mr-2 text-muted-foreground/70"></i>
                         <span>Est. {order.estimatedHours || 'TBD'} hours</span>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <i className="fas fa-exclamation-circle mr-2 text-gray-400"></i>
+                      <div className="flex items-center text-muted-foreground">
+                        <i className="fas fa-exclamation-circle mr-2 text-muted-foreground/70"></i>
                         <span>{order.priority} Priority</span>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <i className="fas fa-calendar mr-2 text-gray-400"></i>
+                      <div className="flex items-center text-muted-foreground">
+                        <i className="fas fa-calendar mr-2 text-muted-foreground/70"></i>
                         <span>Due: {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : 'No due date'}</span>
                       </div>
                     </div>
@@ -202,7 +202,7 @@ export default function AgentDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No assignments for today
                 </div>
               )}
@@ -233,10 +233,10 @@ export default function AgentDashboard() {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'pending': return 'bg-yellow-100 text-yellow-800';
-    case 'in_progress': return 'bg-blue-100 text-blue-800';
-    case 'completed': return 'bg-green-100 text-green-800';
-    case 'cancelled': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'pending': return 'bg-yellow-900/30 text-yellow-300 border border-yellow-800/50';
+    case 'in_progress': return 'bg-blue-900/30 text-blue-300 border border-blue-800/50';
+    case 'completed': return 'bg-green-900/30 text-green-300 border border-green-800/50';
+    case 'cancelled': return 'bg-red-900/30 text-red-300 border border-red-800/50';
+    default: return 'bg-secondary/30 text-muted-foreground border border-border';
   }
 }
