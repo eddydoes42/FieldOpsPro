@@ -170,7 +170,7 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-2xl w-full max-h-screen overflow-y-auto">
+      <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold text-gray-900">
