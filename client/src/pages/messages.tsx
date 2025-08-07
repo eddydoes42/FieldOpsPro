@@ -21,8 +21,10 @@ interface Message {
   workOrderId: string | null;
   subject: string;
   content: string;
-  createdAt: string;
+  priority: string;
   isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
 }
 
 interface User {
@@ -43,6 +45,7 @@ interface NewMessageData {
   workOrderId: string;
   subject: string;
   content: string;
+  priority: string;
 }
 
 export default function Messages() {
@@ -57,8 +60,11 @@ export default function Messages() {
     recipientId: "",
     workOrderId: "",
     subject: "",
-    content: ""
+    content: "",
+    priority: "normal"
   });
+  
+  const [activeTab, setActiveTab] = useState<"all" | "unread" | "read">("all");
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -97,6 +103,7 @@ export default function Messages() {
         workOrderId: data.workOrderId === 'none' ? null : data.workOrderId,
         subject: data.subject,
         content: data.content,
+        priority: data.priority,
         messageType: data.recipientId ? 'direct' : 'broadcast',
       };
       
@@ -114,7 +121,8 @@ export default function Messages() {
         recipientId: "",
         workOrderId: "",
         subject: "",
-        content: ""
+        content: "",
+        priority: "normal"
       });
     },
     onError: (error) => {
@@ -304,6 +312,20 @@ export default function Messages() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="priority">Priority Level</Label>
+                  <Select value={newMessage.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="high">High Priority</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="content">Message *</Label>
                   <Textarea
                     id="content"
@@ -347,6 +369,47 @@ export default function Messages() {
           </Dialog>
         </div>
 
+        {/* Message Tabs */}
+        <div className="mb-6">
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                activeTab === "all"
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              All Messages
+            </button>
+            <button
+              onClick={() => setActiveTab("unread")}
+              className={`px-4 py-2 rounded-md transition-colors flex items-center ${
+                activeTab === "unread"
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              Unread
+              {unreadCount > 0 && (
+                <Badge className="ml-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("read")}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                activeTab === "read"
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              Read
+            </button>
+          </div>
+        </div>
+
         {/* Messages List */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Inbox */}
@@ -355,15 +418,36 @@ export default function Messages() {
               <CardTitle className="flex items-center text-gray-900 dark:text-white">
                 <i className="fas fa-inbox mr-2 text-blue-600 dark:text-blue-400"></i>
                 Inbox
+                {activeTab === "unread" && unreadCount > 0 && (
+                  <Badge className="ml-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                    {unreadCount} unread
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {userMessages
-                  .filter(msg => msg.recipientId === currentUserId)
+                  .filter(msg => {
+                    const isRecipient = msg.recipientId === currentUserId;
+                    if (!isRecipient) return false;
+                    
+                    if (activeTab === "unread") return !msg.isRead;
+                    if (activeTab === "read") return msg.isRead;
+                    return true; // "all" tab
+                  })
                   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                   .slice(0, 10)
-                  .map((message) => (
+                  .map((message) => {
+                    const getPriorityColor = (priority: string) => {
+                      switch (priority) {
+                        case 'urgent': return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700';
+                        case 'high': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-700';
+                        default: return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700';
+                      }
+                    };
+
+                    return (
                     <div 
                       key={message.id}
                       className={`p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -381,6 +465,11 @@ export default function Messages() {
                           {!message.isRead && (
                             <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">New</Badge>
                           )}
+                          {message.priority && message.priority !== 'normal' && (
+                            <Badge className={`text-xs ${getPriorityColor(message.priority)}`}>
+                              {message.priority === 'urgent' ? '🚨 URGENT' : '⚠️ HIGH'}
+                            </Badge>
+                          )}
                         </div>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(message.createdAt).toLocaleDateString()}
@@ -397,8 +486,16 @@ export default function Messages() {
                         </div>
                       )}
                     </div>
-                  ))}
-                {userMessages.filter(msg => msg.recipientId === currentUserId).length === 0 && (
+                  );
+                })}
+                {userMessages.filter(msg => {
+                  const isRecipient = msg.recipientId === currentUserId;
+                  if (!isRecipient) return false;
+                  
+                  if (activeTab === "unread") return !msg.isRead;
+                  if (activeTab === "read") return msg.isRead;
+                  return true;
+                }).length === 0 && (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <i className="fas fa-inbox text-4xl mb-4"></i>
                     <p>No messages in your inbox</p>
@@ -429,12 +526,36 @@ export default function Messages() {
                       onClick={() => viewMessage(message)}
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          To: {message.recipientId ? getUserName(message.recipientId) : 'All'}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(message.createdAt).toLocaleDateString()}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            To: {message.recipientId ? getUserName(message.recipientId) : 'All'}
+                          </span>
+                          {message.priority && message.priority !== 'normal' && (
+                            <Badge className={`text-xs ${
+                              message.priority === 'urgent' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
+                              message.priority === 'high' ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200' :
+                              'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                            }`}>
+                              {message.priority === 'urgent' ? '🚨 URGENT' : '⚠️ HIGH'}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {message.isRead && message.readAt && (
+                            <div className="flex items-center text-xs text-green-600 dark:text-green-400">
+                              <i className="fas fa-check-double mr-1"></i>
+                              Read {new Date(message.readAt).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </div>
+                          )}
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(message.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-1">{message.subject}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{message.content}</p>
@@ -485,6 +606,44 @@ export default function Messages() {
                   <div>
                     <Label className="text-gray-700 dark:text-gray-300">Work Order:</Label>
                     <p className="text-gray-900 dark:text-white">{getWorkOrderTitle(selectedMessage.workOrderId)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 dark:text-gray-300">Priority:</Label>
+                    <div className="flex items-center mt-1">
+                      <Badge className={`text-xs ${
+                        selectedMessage.priority === 'urgent' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
+                        selectedMessage.priority === 'high' ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200' :
+                        'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                      }`}>
+                        {selectedMessage.priority === 'urgent' ? '🚨 URGENT' : 
+                         selectedMessage.priority === 'high' ? '⚠️ HIGH' : '📝 NORMAL'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 dark:text-gray-300">Read Status:</Label>
+                    <div className="flex items-center mt-1">
+                      {selectedMessage.isRead ? (
+                        <div className="flex items-center text-green-600 dark:text-green-400">
+                          <i className="fas fa-check-double mr-2"></i>
+                          <span className="text-sm">
+                            Read {selectedMessage.readAt ? 
+                              new Date(selectedMessage.readAt).toLocaleString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              }) : 'recently'
+                            }
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-gray-500 dark:text-gray-400">
+                          <i className="fas fa-envelope mr-2"></i>
+                          <span className="text-sm">Unread</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div>

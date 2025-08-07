@@ -333,7 +333,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         workOrderId: req.body.workOrderId || null,
         subject: req.body.subject || '',
         content: req.body.content,
+        priority: req.body.priority || 'normal',
         isRead: false,
+        readAt: null,
         messageType: req.body.messageType || 'direct',
         createdAt: new Date(),
       };

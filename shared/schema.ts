@@ -96,7 +96,9 @@ export const messages = pgTable("messages", {
   workOrderId: varchar("work_order_id").references(() => workOrders.id),
   subject: varchar("subject"),
   content: text("content").notNull(),
+  priority: varchar("priority").default("normal"), // normal, high, urgent
   isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"), // timestamp when message was read
   messageType: varchar("message_type").default("direct"), // direct, broadcast, work_order
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -204,6 +206,7 @@ export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   createdAt: true,
+  readAt: true,
 });
 
 export const insertWorkOrderTaskSchema = createInsertSchema(workOrderTasks).omit({

@@ -257,9 +257,17 @@ export class DatabaseStorage implements IStorage {
   async markMessageAsRead(id: string): Promise<Message> {
     const [message] = await db
       .update(messages)
-      .set({ isRead: true })
+      .set({ isRead: true, readAt: new Date() })
       .where(eq(messages.id, id))
       .returning();
+    return message;
+  }
+
+  async getMessage(id: string): Promise<Message | undefined> {
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, id));
     return message;
   }
 
@@ -275,10 +283,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(messages.createdAt));
   }
 
-  async getMessage(id: string): Promise<Message | undefined> {
-    const [message] = await db.select().from(messages).where(eq(messages.id, id));
-    return message;
-  }
+
 
   async getDashboardStats() {
     // Get total users count
