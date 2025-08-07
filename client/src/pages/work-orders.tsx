@@ -82,13 +82,22 @@ export default function WorkOrders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Dialog states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const [selectedWorkOrderForTask, setSelectedWorkOrderForTask] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editWorkOrder, setEditWorkOrder] = useState<NewWorkOrderData>({
+  
+  // Selected items
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
+  const [selectedWorkOrderForTask, setSelectedWorkOrderForTask] = useState<string | null>(null);
+  
+  // Filter states
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterAssignee, setFilterAssignee] = useState("all");
+  
+  // Form states
+  const [newWorkOrder, setNewWorkOrder] = useState<NewWorkOrderData>({
     title: "",
     description: "",
     priority: "medium",
@@ -99,9 +108,8 @@ export default function WorkOrders() {
     requiredTools: "",
     pointOfContact: ""
   });
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterAssignee, setFilterAssignee] = useState("all");
-  const [newWorkOrder, setNewWorkOrder] = useState<NewWorkOrderData>({
+
+  const [editWorkOrder, setEditWorkOrder] = useState<NewWorkOrderData>({
     title: "",
     description: "",
     priority: "medium",
