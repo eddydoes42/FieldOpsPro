@@ -1235,104 +1235,153 @@ export default function WorkOrders() {
           </CardContent>
         </Card>
 
-        {/* Work Orders Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
+        {/* Work Orders Cards */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
               <span className="mr-2 text-blue-600 dark:text-blue-400">📋</span>
-              <span className="text-foreground">Work Orders</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="w-full">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[25%]">Title</TableHead>
-                    <TableHead className="w-[12%]">Status</TableHead>
-                    <TableHead className="w-[12%]">Priority</TableHead>
-                    <TableHead className="w-[18%]">Field Agent</TableHead>
-                    <TableHead className="w-[8%]">Hours</TableHead>
-                    <TableHead className="w-[12%]">Due Date</TableHead>
-                    <TableHead className="w-[13%]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredWorkOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>
-                        <div className="font-medium text-gray-900 dark:text-white text-sm truncate">{order.title}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`${getStatusColor(order.status)} text-xs`}>
-                          {order.status === 'in_progress' ? 'Active' : order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`${getPriorityColor(order.priority)} text-xs`}>
-                          {order.priority.charAt(0).toUpperCase() + order.priority.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        <div className="truncate text-sm">{getAgentName(order.assigneeId)}</div>
-                      </TableCell>
-                      <TableCell className="text-foreground text-sm">{order.estimatedHours ? `${order.estimatedHours}h` : 'N/A'}</TableCell>
-                      <TableCell className="text-foreground">
-                        <div className="truncate text-sm">
-                          {order.dueDate 
-                            ? new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                            : 'None'
-                          }
+              Work Orders
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredWorkOrders.map((order) => (
+              <Card key={order.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                        {order.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                        {order.description}
+                      </p>
+                    </div>
+                    <div className="ml-3 flex flex-col items-end space-y-2">
+                      <Badge className={`${getPriorityColor(order.priority)} text-xs font-medium`}>
+                        {order.priority.charAt(0).toUpperCase() + order.priority.slice(1)}
+                      </Badge>
+                      <Badge className={`${getStatusColor(order.status)} text-xs font-medium`}>
+                        {order.status === 'in_progress' ? 'Active' : order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </Badge>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {order.dueDate 
+                          ? new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                          : 'No due date'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="pt-0 space-y-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Assigned To:</span>
+                      <p className="text-gray-900 dark:text-white mt-1 font-medium">
+                        {getAgentName(order.assigneeId)}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Estimated Hours:</span>
+                      <p className="text-gray-900 dark:text-white mt-1 font-medium">
+                        {order.estimatedHours ? `${order.estimatedHours}h` : 'Not specified'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(order.scopeOfWork || order.requiredTools) && (
+                    <div className="space-y-2">
+                      {order.scopeOfWork && (
+                        <div>
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Scope:</span>
+                          <p className="text-sm text-gray-900 dark:text-white mt-1 line-clamp-2">
+                            {order.scopeOfWork}
+                          </p>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs px-2 py-1"
-                            onClick={() => {
-                              console.log('View button clicked for order:', order.id);
-                              setSelectedWorkOrder(order);
-                              setIsViewDialogOpen(true);
-                            }}
-                          >
-                            View
-                          </Button>
-                          {canCreateWorkOrders && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-xs px-2 py-1"
-                              onClick={() => handleEditClick(order)}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                          {/* Status tracking button */}
-                          {(order.assigneeId === (user as any)?.id || canCreateWorkOrders) && (
-                            <Button
-                              size="sm"
-                              className={`text-xs px-2 py-1 ${
-                                (order as any).workStatus === 'completed'
-                                  ? 'bg-green-600 hover:bg-green-700'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                              }`}
-                              onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
-                              disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
-                            >
-                              {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
-                            </Button>
-                          )}
+                      )}
+                      {order.requiredTools && (
+                        <div>
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tools:</span>
+                          <p className="text-sm text-gray-900 dark:text-white mt-1 line-clamp-2">
+                            {order.requiredTools}
+                          </p>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      )}
+                    </div>
+                  )}
+
+                  {order.pointOfContact && (
+                    <div>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Contact:</span>
+                      <p className="text-sm text-gray-900 dark:text-white mt-1">
+                        {order.pointOfContact}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 text-xs"
+                      onClick={() => {
+                        setSelectedWorkOrder(order);
+                        setIsViewDialogOpen(true);
+                      }}
+                    >
+                      <i className="fas fa-eye mr-1"></i>
+                      View Details
+                    </Button>
+                    {canCreateWorkOrders && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs px-3"
+                        onClick={() => handleEditClick(order)}
+                      >
+                        <i className="fas fa-edit mr-1"></i>
+                        Edit
+                      </Button>
+                    )}
+                    {(order.assigneeId === (user as any)?.id || canCreateWorkOrders) && (
+                      <Button
+                        size="sm"
+                        className={`text-xs px-3 ${
+                          (order as any).workStatus === 'completed'
+                            ? 'bg-green-600 hover:bg-green-700'
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
+                        onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
+                        disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                      >
+                        {updateStatusMutation.isPending ? (
+                          <i className="fas fa-spinner fa-spin mr-1"></i>
+                        ) : (
+                          <i className="fas fa-play mr-1"></i>
+                        )}
+                        {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {filteredWorkOrders.length === 0 && (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <i className="fas fa-clipboard-list text-4xl text-gray-400 dark:text-gray-500 mb-4"></i>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No work orders found</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                {workOrders?.length === 0 
+                  ? "No work orders have been created yet."
+                  : "No work orders match the current filters."
+                }
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
         {/* Work Order Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
