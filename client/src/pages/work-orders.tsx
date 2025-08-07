@@ -152,6 +152,37 @@ export default function WorkOrders() {
     retry: false,
   });
 
+  // Query to fetch tasks for all work orders to check completion status
+  const { data: allWorkOrderTasks } = useQuery<{ [workOrderId: string]: WorkOrderTask[] }>({
+    queryKey: ["/api/work-orders/tasks/all"],
+    queryFn: async () => {
+      if (!workOrders) return {};
+      
+      const tasksData: { [workOrderId: string]: WorkOrderTask[] } = {};
+      
+      // Fetch tasks for each work order
+      for (const workOrder of workOrders) {
+        try {
+          const response = await fetch(`/api/work-orders/${workOrder.id}/tasks`);
+          if (response.ok) {
+            tasksData[workOrder.id] = await response.json();
+          } else {
+            tasksData[workOrder.id] = [];
+          }
+        } catch (error) {
+          tasksData[workOrder.id] = [];
+        }
+      }
+      
+      return tasksData;
+    },
+    enabled: !!workOrders && workOrders.length > 0,
+    retry: false,
+  });
+
+  // Alias for easier reference
+  const tasksData = allWorkOrderTasks;
+
   // Status update mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ workOrderId, workStatus }: { workOrderId: string; workStatus: string }) => {
@@ -491,8 +522,15 @@ export default function WorkOrders() {
   const canMarkComplete = (workOrder: WorkOrder) => {
     // Only allow marking complete if all tasks are done
     if ((workOrder as any).workStatus !== 'checked_out') return false;
-    // Check if all tasks are completed (this would require task data)
-    return true; // For now, allow if checked out
+    
+    // Get tasks for this work order
+    const workOrderTasks = tasksData?.[workOrder.id] || [];
+    
+    // If no tasks exist, allow completion
+    if (workOrderTasks.length === 0) return true;
+    
+    // Check if all tasks are completed
+    return workOrderTasks.every(task => task.isCompleted);
   };
 
   const isStatusButtonDisabled = (workOrder: WorkOrder) => {
