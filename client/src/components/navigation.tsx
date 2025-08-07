@@ -108,7 +108,7 @@ export default function Navigation({ userRole }: NavigationProps) {
                 <span className="text-foreground font-medium text-sm hidden md:block">
                   {(user as any)?.firstName} {(user as any)?.lastName}
                 </span>
-                <i className={`fas fa-chevron-down text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}></i>
+                <i className="fas fa-bars text-muted-foreground"></i>
               </button>
               
               {/* Dropdown Menu */}
