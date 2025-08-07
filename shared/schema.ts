@@ -59,13 +59,14 @@ export const workOrders = pgTable("work_orders", {
   requiredTools: text("required_tools"),
   pointOfContact: varchar("point_of_contact"),
   priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
-  status: varchar("status").notNull().default("pending"), // pending, in_progress, completed, cancelled
+  status: varchar("status").notNull().default("scheduled"), // scheduled, confirmed, in_progress, pending, completed, cancelled
   assigneeId: varchar("assignee_id").references(() => users.id),
   createdById: varchar("created_by_id").references(() => users.id),
   estimatedHours: decimal("estimated_hours", { precision: 5, scale: 2 }),
   actualHours: decimal("actual_hours", { precision: 5, scale: 2 }),
   dueDate: timestamp("due_date"),
   completedAt: timestamp("completed_at"),
+  confirmedAt: timestamp("confirmed_at"), // when agent confirms the work order
   // Status tracking fields
   workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
   checkedInAt: timestamp("checked_in_at"),
@@ -131,6 +132,20 @@ export const workOrderIssues = pgTable("work_order_issues", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Notifications table for work order confirmations
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  workOrderId: varchar("work_order_id").references(() => workOrders.id),
+  type: varchar("type").notNull().default("work_order_confirmation"), // work_order_confirmation, general
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  isConfirmed: boolean("is_confirmed").default(false),
+  confirmedAt: timestamp("confirmed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
@@ -138,6 +153,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   timeEntries: many(timeEntries),
   sentMessages: many(messages, { relationName: "senderMessages" }),
   receivedMessages: many(messages, { relationName: "recipientMessages" }),
+  notifications: many(notifications),
 }));
 
 export const workOrdersRelations = relations(workOrders, ({ one, many }) => ({
@@ -155,6 +171,7 @@ export const workOrdersRelations = relations(workOrders, ({ one, many }) => ({
   messages: many(messages),
   tasks: many(workOrderTasks),
   issues: many(workOrderIssues),
+  notifications: many(notifications),
 }));
 
 export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
@@ -207,6 +224,17 @@ export const workOrderIssuesRelations = relations(workOrderIssues, ({ one }) => 
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  workOrder: one(workOrders, {
+    fields: [notifications.workOrderId],
+    references: [workOrders.id],
+  }),
+}));
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -248,6 +276,12 @@ export const insertWorkOrderIssueSchema = createInsertSchema(workOrderIssues).om
   resolvedAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+  confirmedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
@@ -267,3 +301,6 @@ export type InsertWorkOrderTask = z.infer<typeof insertWorkOrderTaskSchema>;
 
 export type WorkOrderIssue = typeof workOrderIssues.$inferSelect;
 export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

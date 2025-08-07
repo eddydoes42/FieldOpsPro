@@ -5,6 +5,7 @@ import {
   messages,
   workOrderTasks,
   workOrderIssues,
+  notifications,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -18,6 +19,8 @@ import {
   type InsertWorkOrderTask,
   type WorkOrderIssue,
   type InsertWorkOrderIssue,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -98,6 +101,13 @@ export interface IStorage {
   startTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry>;
   endActiveTimeEntry(userId: string, workOrderId: string): Promise<TimeEntry | null>;
   markTaskComplete(taskId: string, userId: string): Promise<WorkOrderTask>;
+
+  // Notification operations
+  createNotification(notificationData: InsertNotification): Promise<Notification>;
+  getNotificationsByUser(userId: string): Promise<Notification[]>;
+  getUnreadNotificationsByUser(userId: string): Promise<Notification[]>;
+  updateNotification(id: string, updates: Partial<InsertNotification>): Promise<Notification>;
+  confirmWorkOrderNotification(notificationId: string, workOrderId: string): Promise<WorkOrder>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -170,8 +180,28 @@ export class DatabaseStorage implements IStorage {
     
     const [workOrder] = await db.insert(workOrders).values({
       ...workOrderData,
-      id: workOrderId
+      id: workOrderId,
+      status: 'scheduled' // Always start with scheduled status
     }).returning();
+
+    // Create a notification for 24 hours before the due date (if there's an assignee and due date)
+    if (workOrderData.assigneeId && workOrderData.dueDate) {
+      const notificationTime = new Date(workOrderData.dueDate);
+      notificationTime.setHours(notificationTime.getHours() - 24);
+      
+      // Only create notification if it's in the future
+      if (notificationTime > new Date()) {
+        await this.createNotification({
+          userId: workOrderData.assigneeId,
+          workOrderId: workOrder.id,
+          type: 'work_order_confirmation',
+          title: 'Work Order Confirmation Required',
+          message: `Please confirm work order "${workOrderData.title}" scheduled for ${workOrderData.dueDate ? new Date(workOrderData.dueDate).toLocaleDateString() : 'tomorrow'}.`,
+          isRead: false,
+          isConfirmed: false,
+        });
+      }
+    }
     return workOrder;
   }
 
@@ -553,6 +583,62 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(workOrderIssues)
       .orderBy(desc(workOrderIssues.createdAt));
+  }
+
+  // Notification operations
+  async createNotification(notificationData: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(notificationData).returning();
+    return notification;
+  }
+
+  async getNotificationsByUser(userId: string): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async getUnreadNotificationsByUser(userId: string): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async updateNotification(id: string, updates: Partial<InsertNotification>): Promise<Notification> {
+    const [notification] = await db
+      .update(notifications)
+      .set(updates)
+      .where(eq(notifications.id, id))
+      .returning();
+    return notification;
+  }
+
+  async confirmWorkOrderNotification(notificationId: string, workOrderId: string): Promise<WorkOrder> {
+    // Mark notification as confirmed and read
+    await db
+      .update(notifications)
+      .set({
+        isConfirmed: true,
+        isRead: true,
+        confirmedAt: new Date(),
+      })
+      .where(eq(notifications.id, notificationId));
+
+    // Update work order status to confirmed
+    const [workOrder] = await db
+      .update(workOrders)
+      .set({
+        status: 'confirmed',
+        confirmedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(workOrders.id, workOrderId))
+      .returning();
+
+    return workOrder;
   }
 }
 

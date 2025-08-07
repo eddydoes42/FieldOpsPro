@@ -540,7 +540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const stats = {
         totalUsers: allUsers.length,
-        activeOrders: allWorkOrders.filter(order => order.status === 'in_progress' || order.status === 'pending').length,
+        activeOrders: allWorkOrders.filter(order => order.status === 'in_progress' || order.status === 'confirmed' || order.status === 'scheduled').length,
         completedOrders: allWorkOrders.filter(order => order.status === 'completed').length,
         totalOrders: allWorkOrders.length,
         adminCount: allUsers.filter(user => user.role === 'administrator').length,
@@ -760,6 +760,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting work order task:", error);
       res.status(500).json({ message: "Failed to delete work order task" });
+    }
+  });
+
+  // Notification routes
+  app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifications = await storage.getNotificationsByUser(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/unread", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifications = await storage.getUnreadNotificationsByUser(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching unread notifications:", error);
+      res.status(500).json({ message: "Failed to fetch unread notifications" });
+    }
+  });
+
+  app.post("/api/notifications/:id/confirm", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { workOrderId } = req.body;
+      
+      const workOrder = await storage.confirmWorkOrderNotification(id, workOrderId);
+      res.json(workOrder);
+    } catch (error) {
+      console.error("Error confirming work order:", error);
+      res.status(500).json({ message: "Failed to confirm work order" });
+    }
+  });
+
+  app.patch("/api/notifications/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const notification = await storage.updateNotification(id, updates);
+      res.json(notification);
+    } catch (error) {
+      console.error("Error updating notification:", error);
+      res.status(500).json({ message: "Failed to update notification" });
     }
   });
 

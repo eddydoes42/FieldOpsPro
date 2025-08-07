@@ -233,8 +233,10 @@ export default function AgentDashboard() {
 
 function getStatusColor(status: string) {
   switch (status) {
+    case 'scheduled': return 'bg-purple-900/30 text-purple-300 border border-purple-800/50';
+    case 'confirmed': return 'bg-blue-900/30 text-blue-300 border border-blue-800/50';
+    case 'in_progress': return 'bg-orange-900/30 text-orange-300 border border-orange-800/50';
     case 'pending': return 'bg-yellow-900/30 text-yellow-300 border border-yellow-800/50';
-    case 'in_progress': return 'bg-blue-900/30 text-blue-300 border border-blue-800/50';
     case 'completed': return 'bg-green-900/30 text-green-300 border border-green-800/50';
     case 'cancelled': return 'bg-red-900/30 text-red-300 border border-red-800/50';
     default: return 'bg-secondary/30 text-muted-foreground border border-border';

@@ -242,7 +242,7 @@ export default function WorkOrders() {
       const workOrderData = {
         ...data,
         id: `wo-${Date.now()}`,
-        status: 'pending',
+        status: 'scheduled',
         estimatedHours: data.estimatedHours ? parseInt(data.estimatedHours) : null,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
         createdAt: new Date(),
@@ -488,9 +488,11 @@ export default function WorkOrders() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
+      case 'scheduled': return 'bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-300';
+      case 'confirmed': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
+      case 'in_progress': return 'bg-orange-100 text-orange-800 dark:bg-orange-800/20 dark:text-orange-300';
       case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300';
       case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
@@ -549,16 +551,32 @@ export default function WorkOrders() {
 
   // Status button handlers
   const handleStatusUpdate = (workOrderId: string, newStatus: string) => {
-    updateStatusMutation.mutate({ workOrderId, workStatus: newStatus });
+    const workOrder = workOrders?.find(wo => wo.id === workOrderId);
+    if (!workOrder) return;
+    
+    // Handle status confirmation for scheduled orders
+    if (workOrder.status === 'scheduled' && newStatus === 'confirmed') {
+      updateStatusMutation.mutate({ 
+        workOrderId, 
+        status: 'confirmed',
+        confirmedAt: new Date().toISOString()
+      });
+    } else {
+      // Handle work status updates for confirmed orders
+      updateStatusMutation.mutate({ workOrderId, workStatus: newStatus });
+    }
   };
 
   const confirmStatusUpdate = (workOrder: WorkOrder) => {
-    const currentStatus = (workOrder as any).workStatus || 'not_started';
+    const currentStatus = workOrder.status;
+    const workStatus = (workOrder as any).workStatus || 'not_started';
     const nextStatus = getNextStatus(workOrder);
     
-    if (currentStatus === 'checked_out' && nextStatus === 'completed') {
+    if (currentStatus === 'scheduled' && nextStatus === 'confirmed') {
+      return 'Are you sure you want to confirm this work order? This acknowledges that you will complete the work as scheduled.';
+    } else if (workStatus === 'checked_out' && nextStatus === 'completed') {
       return 'Are you sure you want to mark this work order as complete? This will finalize the work order and mark it as finished.';
-    } else if (currentStatus === 'completed' && nextStatus === 'checked_out') {
+    } else if (workStatus === 'completed' && nextStatus === 'checked_out') {
       return 'Are you sure you want to mark this work order as incomplete? This will reopen the work order and set it back to checked out status.';
     }
     
@@ -566,8 +584,15 @@ export default function WorkOrders() {
   };
 
   const getStatusButtonText = (workOrder: WorkOrder) => {
-    const status = (workOrder as any).workStatus || 'not_started';
-    switch (status) {
+    const status = workOrder.status;
+    const workStatus = (workOrder as any).workStatus || 'not_started';
+    
+    // Handle main status flow first
+    if (status === 'scheduled') return 'Confirm Work Order';
+    if (status === 'confirmed' && workStatus === 'not_started') return 'In Route';
+    
+    // Handle work status flow for confirmed orders
+    switch (workStatus) {
       case 'not_started': return 'In Route';
       case 'in_route': return 'Check In';
       case 'checked_in': return 'Check Out';
@@ -578,8 +603,15 @@ export default function WorkOrders() {
   };
 
   const getNextStatus = (workOrder: WorkOrder) => {
-    const status = (workOrder as any).workStatus || 'not_started';
-    switch (status) {
+    const status = workOrder.status;
+    const workStatus = (workOrder as any).workStatus || 'not_started';
+    
+    // Handle main status flow first
+    if (status === 'scheduled') return 'confirmed';
+    if (status === 'confirmed' && workStatus === 'not_started') return 'in_route';
+    
+    // Handle work status flow for confirmed orders
+    switch (workStatus) {
       case 'not_started': return 'in_route';
       case 'in_route': return 'checked_in';
       case 'checked_in': return 'checked_out';
@@ -604,11 +636,23 @@ export default function WorkOrders() {
   };
 
   const isStatusButtonDisabled = (workOrder: WorkOrder) => {
-    const status = (workOrder as any).workStatus || 'not_started';
-    if (status === 'checked_out') {
+    const status = workOrder.status;
+    const workStatus = (workOrder as any).workStatus || 'not_started';
+    
+    // Only allow field agents to confirm their own work orders
+    if (status === 'scheduled' && (user as any)?.role === 'field_agent') {
+      return workOrder.assigneeId !== (user as any)?.id;
+    }
+    
+    // Prevent status changes if work order isn't confirmed yet
+    if (status === 'scheduled' && (user as any)?.role !== 'field_agent') {
+      return true; // Only assigned agents can confirm
+    }
+    
+    if (workStatus === 'checked_out') {
       return !canMarkComplete(workOrder);
     }
-    return false; // Allow all status changes including from completed
+    return false; // Allow all other status changes
   };
 
   // Edit functionality
@@ -1324,8 +1368,10 @@ export default function WorkOrders() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
@@ -1381,7 +1427,10 @@ export default function WorkOrders() {
                         {order.priority.charAt(0).toUpperCase() + order.priority.slice(1)}
                       </Badge>
                       <Badge className={`${getStatusColor(order.status)} text-xs font-medium`}>
-                        {order.status === 'in_progress' ? 'Active' : order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        {order.status === 'in_progress' ? 'Active' : 
+                         order.status === 'scheduled' ? 'Scheduled' :
+                         order.status === 'confirmed' ? 'Confirmed' :
+                         order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </Badge>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {order.dueDate 
