@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -551,6 +552,19 @@ export default function WorkOrders() {
     updateStatusMutation.mutate({ workOrderId, workStatus: newStatus });
   };
 
+  const confirmStatusUpdate = (workOrder: WorkOrder) => {
+    const currentStatus = (workOrder as any).workStatus || 'not_started';
+    const nextStatus = getNextStatus(workOrder);
+    
+    if (currentStatus === 'checked_out' && nextStatus === 'completed') {
+      return 'Are you sure you want to mark this work order as complete? This will finalize the work order and mark it as finished.';
+    } else if (currentStatus === 'completed' && nextStatus === 'checked_out') {
+      return 'Are you sure you want to mark this work order as incomplete? This will reopen the work order and set it back to checked out status.';
+    }
+    
+    return null; // No confirmation needed for other status changes
+  };
+
   const getStatusButtonText = (workOrder: WorkOrder) => {
     const status = (workOrder as any).workStatus || 'not_started';
     switch (status) {
@@ -558,7 +572,7 @@ export default function WorkOrders() {
       case 'in_route': return 'Check In';
       case 'checked_in': return 'Check Out';
       case 'checked_out': return 'Mark Complete';
-      case 'completed': return 'Completed';
+      case 'completed': return 'Mark Incomplete';
       default: return 'In Route';
     }
   };
@@ -570,6 +584,7 @@ export default function WorkOrders() {
       case 'in_route': return 'checked_in';
       case 'checked_in': return 'checked_out';
       case 'checked_out': return 'completed';
+      case 'completed': return 'checked_out'; // Allow going back from completed
       default: return 'in_route';
     }
   };
@@ -590,11 +605,10 @@ export default function WorkOrders() {
 
   const isStatusButtonDisabled = (workOrder: WorkOrder) => {
     const status = (workOrder as any).workStatus || 'not_started';
-    if (status === 'completed') return true;
     if (status === 'checked_out') {
       return !canMarkComplete(workOrder);
     }
-    return false;
+    return false; // Allow all status changes including from completed
   };
 
   // Edit functionality
@@ -1450,23 +1464,62 @@ export default function WorkOrders() {
                       </Button>
                     )}
                     {(order.assigneeId === (user as any)?.id || canCreateWorkOrders) && (
-                      <Button
-                        size="sm"
-                        className={`text-xs px-2 py-1 whitespace-nowrap min-w-0 flex-shrink-0 ${
-                          (order as any).workStatus === 'completed'
-                            ? 'bg-green-600 hover:bg-green-700'
-                            : 'bg-blue-600 hover:bg-blue-700'
-                        }`}
-                        onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
-                        disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
-                      >
-                        {updateStatusMutation.isPending ? (
-                          <i className="fas fa-spinner fa-spin mr-1"></i>
-                        ) : (
-                          <i className="fas fa-play mr-1"></i>
-                        )}
-                        {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
-                      </Button>
+                      confirmStatusUpdate(order) ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              className={`text-xs px-2 py-1 whitespace-nowrap min-w-0 flex-shrink-0 ${
+                                (order as any).workStatus === 'completed'
+                                  ? 'bg-green-600 hover:bg-green-700'
+                                  : 'bg-blue-600 hover:bg-blue-700'
+                              }`}
+                              disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                            >
+                              {updateStatusMutation.isPending ? (
+                                <i className="fas fa-spinner fa-spin mr-1"></i>
+                              ) : (
+                                <i className="fas fa-play mr-1"></i>
+                              )}
+                              {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {confirmStatusUpdate(order)}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
+                              >
+                                Confirm
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className={`text-xs px-2 py-1 whitespace-nowrap min-w-0 flex-shrink-0 ${
+                            (order as any).workStatus === 'completed'
+                              ? 'bg-green-600 hover:bg-green-700'
+                              : 'bg-blue-600 hover:bg-blue-700'
+                          }`}
+                          onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
+                          disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                        >
+                          {updateStatusMutation.isPending ? (
+                            <i className="fas fa-spinner fa-spin mr-1"></i>
+                          ) : (
+                            <i className="fas fa-play mr-1"></i>
+                          )}
+                          {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
+                        </Button>
+                      )
                     )}
                   </div>
                 </CardContent>
@@ -1651,15 +1704,46 @@ export default function WorkOrders() {
                           {(((user as any)?.role === 'field_agent' && selectedWorkOrder.assigneeId === (user as any)?.id) || 
                            (user as any)?.role === 'administrator' || 
                            (user as any)?.role === 'manager') && (
-                            <Button
-                              onClick={() => handleStatusUpdate(selectedWorkOrder.id, getNextStatus(selectedWorkOrder))}
-                              disabled={isStatusButtonDisabled(selectedWorkOrder) || updateStatusMutation.isPending}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(selectedWorkOrder)}
-                            </Button>
+                            confirmStatusUpdate(selectedWorkOrder) ? (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    disabled={isStatusButtonDisabled(selectedWorkOrder) || updateStatusMutation.isPending}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(selectedWorkOrder)}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {confirmStatusUpdate(selectedWorkOrder)}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleStatusUpdate(selectedWorkOrder.id, getNextStatus(selectedWorkOrder))}
+                                    >
+                                      Confirm
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            ) : (
+                              <Button
+                                onClick={() => handleStatusUpdate(selectedWorkOrder.id, getNextStatus(selectedWorkOrder))}
+                                disabled={isStatusButtonDisabled(selectedWorkOrder) || updateStatusMutation.isPending}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(selectedWorkOrder)}
+                              </Button>
+                            )
                           )}
                         </div>
                       </div>
