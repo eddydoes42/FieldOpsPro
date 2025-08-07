@@ -1,0 +1,274 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2 84% 4.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2 84% 4.9%);
+  --primary: hsl(207.3 90% 54.1%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(210 40% 98%);
+  --secondary-foreground: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 98%);
+  --accent-foreground: hsl(222.2 84% 4.9%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(207.3 90% 54.1%);
+  --chart-1: hsl(207.3 90% 54.1%);
+  --chart-2: hsl(142.1 76.2% 36.3%);
+  --chart-3: hsl(38 92% 50%);
+  --chart-4: hsl(140 76.2% 42.2%);
+  --chart-5: hsl(340 75% 50%);
+  --sidebar: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(222.2 84% 4.9%);
+  --sidebar-primary: hsl(207.3 90% 54.1%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(210 40% 98%);
+  --sidebar-accent-foreground: hsl(222.2 84% 4.9%);
+  --sidebar-border: hsl(214.3 31.8% 91.4%);
+  --sidebar-ring: hsl(207.3 90% 54.1%);
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: hsl(222.2 84% 4.9%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(222.2 84% 4.9%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(222.2 84% 4.9%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(207.3 90% 54.1%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(217.2 32.6% 17.5%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --muted: hsl(217.2 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  --accent: hsl(217.2 32.6% 17.5%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(217.2 32.6% 17.5%);
+  --input: hsl(217.2 32.6% 17.5%);
+  --ring: hsl(207.3 90% 54.1%);
+  --chart-1: hsl(207.3 90% 54.1%);
+  --chart-2: hsl(142.1 70% 45.3%);
+  --chart-3: hsl(38 92% 50%);
+  --chart-4: hsl(140 76.2% 42.2%);
+  --chart-5: hsl(340 75% 50%);
+  --sidebar: hsl(222.2 84% 4.9%);
+  --sidebar-foreground: hsl(210 40% 98%);
+  --sidebar-primary: hsl(207.3 90% 54.1%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(217.2 32.6% 17.5%);
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-border: hsl(217.2 32.6% 17.5%);
+  --sidebar-ring: hsl(207.3 90% 54.1%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom styles for FieldOps Pro */
+@layer components {
+  .gradient-bg {
+    background: linear-gradient(135deg, hsl(210 100% 97%) 0%, hsl(220 100% 95%) 100%);
+  }
+  
+  .status-pending {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .status-in-progress {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  .status-completed {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .status-cancelled {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .priority-low {
+    @apply text-green-600;
+  }
+  
+  .priority-medium {
+    @apply text-yellow-600;
+  }
+  
+  .priority-high {
+    @apply text-orange-600;
+  }
+  
+  .priority-urgent {
+    @apply text-red-600;
+  }
+  
+  .role-badge-admin {
+    @apply bg-purple-100 text-purple-800;
+  }
+  
+  .role-badge-manager {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  .role-badge-agent {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .nav-link-active {
+    @apply border-primary text-primary;
+  }
+  
+  .nav-link-inactive {
+    @apply border-transparent text-gray-500 hover:text-gray-700;
+  }
+  
+  .time-tracker-active {
+    @apply animate-pulse;
+  }
+  
+  .work-order-card {
+    @apply bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200;
+  }
+  
+  .stats-card {
+    @apply bg-white p-6 rounded-xl shadow-sm border border-gray-200;
+  }
+  
+  .action-button-primary {
+    @apply bg-primary hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200;
+  }
+  
+  .action-button-success {
+    @apply bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200;
+  }
+  
+  .action-button-warning {
+    @apply bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200;
+  }
+  
+  .action-button-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200;
+  }
+  
+  .form-section {
+    @apply space-y-6;
+  }
+  
+  .form-section-title {
+    @apply text-lg font-semibold text-gray-900 mb-4;
+  }
+  
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
+  }
+  
+  .dashboard-header {
+    @apply mb-8;
+  }
+  
+  .dashboard-title {
+    @apply text-2xl font-bold text-gray-900;
+  }
+  
+  .dashboard-subtitle {
+    @apply mt-1 text-gray-600;
+  }
+}
+
+/* FontAwesome icons support */
+.fas,
+.far,
+.fab {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands";
+}
+
+/* Animation utilities */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    @apply hidden;
+  }
+  
+  .mobile-full-width {
+    @apply w-full;
+  }
+  
+  .mobile-stack {
+    @apply flex-col space-y-3 space-x-0;
+  }
+}
+
+/* Focus states for accessibility */
+@layer base {
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: hsl(0 0% 20%);
+    --input: hsl(0 0% 20%);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
