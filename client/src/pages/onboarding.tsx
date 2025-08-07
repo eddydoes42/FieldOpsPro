@@ -25,6 +25,11 @@ interface OnboardingFormData {
   skills: string;
   certifications: string;
   notes: string;
+  // Manual login credentials
+  username: string;
+  password: string;
+  confirmPassword: string;
+  temporaryPassword: boolean;
 }
 
 export default function Onboarding() {
@@ -43,7 +48,12 @@ export default function Onboarding() {
     emergencyPhone: "",
     skills: "",
     certifications: "",
-    notes: ""
+    notes: "",
+    // Manual login credentials
+    username: "",
+    password: "",
+    confirmPassword: "",
+    temporaryPassword: true
   });
 
   // Redirect to home if not authenticated
@@ -84,7 +94,11 @@ export default function Onboarding() {
         emergencyPhone: "",
         skills: "",
         certifications: "",
-        notes: ""
+        notes: "",
+        username: "",
+        password: "",
+        confirmPassword: "",
+        temporaryPassword: true
       });
     },
     onError: (error) => {
@@ -121,10 +135,10 @@ export default function Onboarding() {
     );
   }
 
-  const handleInputChange = (field: keyof OnboardingFormData, value: string) => {
+  const handleInputChange = (field: keyof OnboardingFormData, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: field === 'temporaryPassword' ? value : value
     }));
   };
 
@@ -139,6 +153,26 @@ export default function Onboarding() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Credential validation
+    if (formData.username && formData.password) {
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Validation Error",
+          description: "Password and confirm password do not match.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (formData.password.length < 8) {
+        toast({
+          title: "Validation Error",
+          description: "Password must be at least 8 characters long.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     onboardingMutation.mutate(formData);
@@ -240,6 +274,65 @@ export default function Onboarding() {
                 </div>
               </div>
 
+              {/* Login Credentials */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <i className="fas fa-key mr-2 text-green-600 dark:text-green-400"></i>
+                  Login Credentials (Optional)
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Create manual login credentials for users who cannot use single sign-on. Leave blank if user will access through OAuth.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange('username', e.target.value)}
+                      placeholder="Enter unique username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      placeholder="Enter password (min 8 characters)"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      placeholder="Confirm password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="temporaryPassword"
+                        checked={formData.temporaryPassword}
+                        onChange={(e) => handleInputChange('temporaryPassword', e.target.checked)}
+                        className="rounded border-gray-300 dark:border-gray-600"
+                      />
+                      <Label htmlFor="temporaryPassword" className="text-sm">
+                        Require password change on first login
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Emergency Contact */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
@@ -329,7 +422,11 @@ export default function Onboarding() {
                     emergencyPhone: "",
                     skills: "",
                     certifications: "",
-                    notes: ""
+                    notes: "",
+                    username: "",
+                    password: "",
+                    confirmPassword: "",
+                    temporaryPassword: true
                   })}
                 >
                   Clear Form

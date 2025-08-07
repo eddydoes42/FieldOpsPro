@@ -80,14 +80,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Transform onboarding data to user data format
       const onboardingData = req.body;
-      const userData = {
+      const userData: any = {
         id: `agent${Date.now()}`, // Generate a unique ID
         email: onboardingData.email,
         firstName: onboardingData.firstName,
         lastName: onboardingData.lastName,
         role: onboardingData.role || 'field_agent',
+        phone: onboardingData.phone || null,
         profileImageUrl: null
       };
+
+      // Add manual login credentials if provided
+      if (onboardingData.username && onboardingData.password) {
+        // Hash password with bcrypt (need to install bcrypt)
+        const bcrypt = require('bcrypt');
+        const saltRounds = 12;
+        const passwordHash = await bcrypt.hash(onboardingData.password, saltRounds);
+        
+        userData.username = onboardingData.username;
+        userData.passwordHash = passwordHash;
+        userData.temporaryPassword = onboardingData.temporaryPassword || false;
+        userData.mustChangePassword = onboardingData.temporaryPassword || false;
+      }
 
       const user = await storage.createUser(userData);
       res.json(user);

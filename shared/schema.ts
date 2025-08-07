@@ -38,6 +38,12 @@ export const users = pgTable("users", {
   zipCode: varchar("zip_code"),
   role: varchar("role").notNull().default("field_agent"), // administrator, manager, field_agent
   profileImageUrl: varchar("profile_image_url"),
+  // Manual login credentials for non-OAuth users
+  username: varchar("username").unique(),
+  passwordHash: varchar("password_hash"),
+  temporaryPassword: boolean("temporary_password").default(false),
+  mustChangePassword: boolean("must_change_password").default(false),
+  lastLoginAt: timestamp("last_login_at"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
