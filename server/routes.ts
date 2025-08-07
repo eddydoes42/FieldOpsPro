@@ -300,9 +300,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/time-entries', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      
+      // Convert startTime from ISO string to Date object
+      const startTime = req.body.startTime ? new Date(req.body.startTime) : new Date();
+      
       const timeEntryData = insertTimeEntrySchema.parse({
         ...req.body,
         userId,
+        startTime,
       });
 
       // End any active time entry first
