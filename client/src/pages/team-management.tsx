@@ -214,7 +214,7 @@ export default function TeamManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Agent</TableHead>
+                    <TableHead>Field Agent</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Total Assigned</TableHead>
                     <TableHead>Active Orders</TableHead>
@@ -239,10 +239,6 @@ export default function TeamManagement() {
                             <div className="font-medium text-gray-900 dark:text-white">
                               {agent.firstName} {agent.lastName}
                             </div>
-                            <Badge variant="outline" className="text-xs">
-                              {agent.role === 'field_agent' ? 'Field Agent' : 
-                               agent.role === 'administrator' ? 'Administrator' : 'Manager'}
-                            </Badge>
                           </div>
                         </div>
                       </TableCell>

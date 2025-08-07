@@ -1251,7 +1251,7 @@ export default function WorkOrders() {
                     <TableHead className="w-[25%]">Title</TableHead>
                     <TableHead className="w-[12%]">Status</TableHead>
                     <TableHead className="w-[12%]">Priority</TableHead>
-                    <TableHead className="w-[18%]">Assigned</TableHead>
+                    <TableHead className="w-[18%]">Field Agent</TableHead>
                     <TableHead className="w-[8%]">Hours</TableHead>
                     <TableHead className="w-[12%]">Due Date</TableHead>
                     <TableHead className="w-[13%]">Actions</TableHead>
@@ -1383,10 +1383,10 @@ export default function WorkOrders() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-assignedTo">Assigned Agent</Label>
+                  <Label htmlFor="edit-assignedTo">Assigned Field Agent</Label>
                   <Select value={editWorkOrder.assignedTo} onValueChange={(value) => setEditWorkOrder(prev => ({ ...prev, assignedTo: value }))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select agent" />
+                      <SelectValue placeholder="Select field agent" />
                     </SelectTrigger>
                     <SelectContent>
                       {fieldAgents?.map(agent => (
