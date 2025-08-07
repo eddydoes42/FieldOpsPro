@@ -161,14 +161,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { workStatus } = req.body;
       const userId = req.user.claims.sub;
 
+      // Get current user and work order
+      const currentUser = await storage.getUser(userId);
       const workOrder = await storage.getWorkOrder(id);
+      
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
       if (!workOrder) {
         return res.status(404).json({ message: "Work order not found" });
       }
 
       // Check if user is assigned to this work order or is admin/manager
-      const userRole = req.user.claims.role || 'field_agent';
-      const canUpdate = userRole === 'administrator' || userRole === 'manager' || workOrder.assigneeId === userId;
+      const canUpdate = currentUser.role === 'administrator' || 
+                       currentUser.role === 'manager' || 
+                       workOrder.assigneeId === userId;
       
       if (!canUpdate) {
         return res.status(403).json({ message: "Not authorized to update this work order" });

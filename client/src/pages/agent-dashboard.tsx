@@ -30,7 +30,7 @@ export default function AgentDashboard() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: workOrders, isLoading: workOrdersLoading } = useQuery({
-    queryKey: ["/api/work-orders/assigned"],
+    queryKey: ["/api/work-orders"],
     enabled: !!user,
   });
 
@@ -39,12 +39,13 @@ export default function AgentDashboard() {
     enabled: !!user,
   });
 
-  const updateWorkOrderMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
-      await apiRequest("PATCH", `/api/work-orders/${id}`, updates);
+  const updateWorkOrderStatusMutation = useMutation({
+    mutationFn: async ({ id, workStatus }: { id: string; workStatus: string }) => {
+      await apiRequest("PATCH", `/api/work-orders/${id}/status`, { workStatus });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders/assigned"] });
       toast({
         title: "Success",
         description: "Work order updated successfully.",
@@ -71,16 +72,16 @@ export default function AgentDashboard() {
   });
 
   const startWorkOrder = (orderId: string) => {
-    updateWorkOrderMutation.mutate({
+    updateWorkOrderStatusMutation.mutate({
       id: orderId,
-      updates: { status: 'in_progress' }
+      workStatus: 'in_progress'
     });
   };
 
   const completeWorkOrder = (orderId: string) => {
-    updateWorkOrderMutation.mutate({
+    updateWorkOrderStatusMutation.mutate({
       id: orderId,
-      updates: { status: 'completed', completedAt: new Date().toISOString() }
+      workStatus: 'completed'
     });
   };
 
@@ -176,7 +177,7 @@ export default function AgentDashboard() {
                       {order.status === 'pending' ? (
                         <Button 
                           onClick={() => startWorkOrder(order.id)}
-                          disabled={updateWorkOrderMutation.isPending}
+                          disabled={updateWorkOrderStatusMutation.isPending}
                           className="flex-1 text-sm"
                         >
                           <i className="fas fa-play mr-2"></i>Start Work
@@ -184,7 +185,7 @@ export default function AgentDashboard() {
                       ) : order.status === 'in_progress' ? (
                         <Button 
                           onClick={() => completeWorkOrder(order.id)}
-                          disabled={updateWorkOrderMutation.isPending}
+                          disabled={updateWorkOrderStatusMutation.isPending}
                           className="flex-1 bg-green-600 hover:bg-green-700 text-sm"
                         >
                           <i className="fas fa-check mr-2"></i>Complete
