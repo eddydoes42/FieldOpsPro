@@ -155,24 +155,24 @@ export default function AdminDashboard() {
                     </div>
                   ) : workOrders && (workOrders as any).length > 0 ? (
                     (workOrders as any).slice(0, 5).map((order: any) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i className={`fas ${getPriorityIcon(order.priority)} text-blue-600`}></i>
+                      <div key={order.id} className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg overflow-hidden">
+                        <div className="flex items-center space-x-4 flex-1 min-w-0">
+                          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i className={`fas ${getPriorityIcon(order.priority)} text-blue-600 dark:text-blue-400`}></i>
                           </div>
-                          <div>
-                            <p className="font-medium text-foreground">{order.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {order.assigneeId ? `Assigned to ${order.assigneeId}` : 'Unassigned'}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground truncate">{order.title}</p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {order.assigneeId ? `Assigned to: ${order.assigneeId}` : 'Unassigned'}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                        <div className="text-right flex-shrink-0 ml-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                           </span>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Due: {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : 'No due date'}
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
+                            {order.dueDate ? new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No due date'}
                           </p>
                         </div>
                       </div>
