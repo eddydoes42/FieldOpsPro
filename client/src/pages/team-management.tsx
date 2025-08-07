@@ -203,7 +203,7 @@ export default function TeamManagement() {
                 <i className="fas fa-users mr-4 text-blue-600 dark:text-blue-400"></i>
                 <span className="text-foreground">Team Members</span>
               </div>
-              <Button variant="outline" size="xs" className="text-xs px-3 py-1.5 -mt-1 ml-2">
+              <Button variant="outline" size="sm" className="text-xs px-3 py-1.5 -mt-1 ml-2 h-7">
                 <i className="fas fa-user-plus mr-1.5 text-xs"></i>
                 Add Member
               </Button>

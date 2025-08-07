@@ -181,12 +181,12 @@ export default function ManagerDashboard() {
                           setIsViewDialogOpen(true);
                         }}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-foreground hover:text-red-300">{order.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{order.location || 'No location'}</p>
+                        <div className="flex items-start justify-between overflow-hidden">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <h4 className="font-medium text-foreground hover:text-red-300 truncate">{order.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1 truncate">{order.location || 'No location'}</p>
                             <div className="flex items-center mt-2 space-x-4">
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground truncate">
                                 👤 {getAgentName(order.assigneeId) || 'Unassigned'}
                               </span>
                               <span className="text-xs text-muted-foreground">
@@ -194,13 +194,13 @@ export default function ManagerDashboard() {
                               </span>
                             </div>
                           </div>
-                          <div className="ml-4 flex flex-col items-end">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50">
+                          <div className="flex-shrink-0 flex flex-col items-end">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50 whitespace-nowrap">
                               HIGH
                             </span>
                             {order.dueDate && (
-                              <span className="text-xs text-muted-foreground mt-1">
-                                Due: {new Date(order.dueDate).toLocaleDateString()}
+                              <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
+                                {new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                               </span>
                             )}
                           </div>
@@ -248,26 +248,26 @@ export default function ManagerDashboard() {
                     .slice(0, 4)
                     .map((order: any) => (
                       <div key={order.id} className="border-l-4 border-orange-500 bg-orange-900/20 p-4 rounded-r-lg border border-orange-800/30">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-foreground">{order.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{order.description}</p>
+                        <div className="flex items-start justify-between overflow-hidden">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <h4 className="font-medium text-foreground truncate">{order.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1 truncate">{order.description}</p>
                             <div className="flex items-center mt-2 space-x-4">
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground truncate">
                                 <i className="fas fa-map-marker-alt mr-1"></i>
                                 {order.location || 'No location'}
                               </span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground truncate">
                                 <i className="fas fa-user mr-1"></i>
                                 {getAgentName(order.assigneeId) || 'Unassigned'}
                               </span>
                             </div>
                           </div>
-                          <div className="ml-4 flex flex-col items-end">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(order.priority)}`}>
+                          <div className="flex-shrink-0 flex flex-col items-end">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${getPriorityColor(order.priority)}`}>
                               {order.priority.toUpperCase()}
                             </span>
-                            <span className="text-xs text-muted-foreground mt-1">
+                            <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
                               {order.status === 'in_progress' ? 'Working' : 'Pending'}
                             </span>
                           </div>
