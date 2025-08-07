@@ -50,8 +50,8 @@ export default function AdminDashboard() {
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-              <p className="text-gray-600">You don't have permission to access this page.</p>
+              <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+              <p className="text-muted-foreground">You don't have permission to access this page.</p>
             </div>
           </CardContent>
         </Card>
@@ -60,14 +60,14 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation userRole={(user as any).role} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Dashboard Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Administrator Dashboard</h1>
-          <p className="mt-1 text-gray-600">Complete system overview and management</p>
+          <h1 className="text-2xl font-bold text-foreground">Administrator Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">Complete system overview and management</p>
         </div>
 
         {/* Stats Grid */}
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="text-right">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {order.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {order.status?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                           </span>
                           <p className="text-xs text-gray-500 mt-1">
                             Due: {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : 'No due date'}

@@ -70,13 +70,13 @@ export default function ManagerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation userRole={(user as any).role} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Manager Dashboard</h1>
-          <p className="mt-1 text-gray-600">Manage your team and view work orders</p>
+          <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">Manage your team and view work orders</p>
         </div>
 
         {/* Action Buttons Row */}
@@ -134,8 +134,8 @@ export default function ManagerDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Priority Tasks</h3>
-                <span className="bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full">
+                <h3 className="text-lg font-semibold text-foreground">Priority Tasks</h3>
+                <span className="bg-red-900/30 text-red-300 text-sm font-medium px-3 py-1 rounded-full border border-red-800/50">
                   {(workOrders as any)?.filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress')).length || 0}
                 </span>
               </div>
@@ -149,28 +149,28 @@ export default function ManagerDashboard() {
                     .filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress'))
                     .slice(0, 4)
                     .map((order: any) => (
-                      <div key={order.id} className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                      <div key={order.id} className="border-l-4 border-red-500 bg-red-900/20 p-4 rounded-r-lg border border-red-800/30">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{order.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{order.location || 'No location'}</p>
+                            <h4 className="font-medium text-foreground">{order.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">{order.location || 'No location'}</p>
                             <div className="flex items-center mt-2 space-x-4">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground">
                                 <i className="fas fa-user mr-1"></i>
                                 {getAgentName(order.assigneeId) || 'Unassigned'}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground">
                                 <i className="fas fa-clock mr-1"></i>
                                 {order.estimatedHours || 'TBD'} hrs
                               </span>
                             </div>
                           </div>
                           <div className="ml-4 flex flex-col items-end">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50">
                               HIGH
                             </span>
                             {order.dueDate && (
-                              <span className="text-xs text-gray-500 mt-1">
+                              <span className="text-xs text-muted-foreground mt-1">
                                 Due: {new Date(order.dueDate).toLocaleDateString()}
                               </span>
                             )}
@@ -179,7 +179,7 @@ export default function ManagerDashboard() {
                       </div>
                     ))
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     No high priority tasks
                   </div>
                 )}
@@ -196,8 +196,8 @@ export default function ManagerDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Active Issues</h3>
-                <span className="bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">
+                <h3 className="text-lg font-semibold text-foreground">Active Issues</h3>
+                <span className="bg-orange-900/30 text-orange-300 text-sm font-medium px-3 py-1 rounded-full border border-orange-800/50">
                   {(workOrders as any)?.filter((order: any) => (order.status === 'in_progress' || order.status === 'pending') && (order.title.toLowerCase().includes('issue') || order.title.toLowerCase().includes('problem') || order.title.toLowerCase().includes('outage') || order.title.toLowerCase().includes('down') || order.title.toLowerCase().includes('failure'))).length || 0}
                 </span>
               </div>
@@ -219,27 +219,27 @@ export default function ManagerDashboard() {
                        order.title.toLowerCase().includes('fix')))
                     .slice(0, 4)
                     .map((order: any) => (
-                      <div key={order.id} className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                      <div key={order.id} className="border-l-4 border-orange-500 bg-orange-900/20 p-4 rounded-r-lg border border-orange-800/30">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{order.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{order.description}</p>
+                            <h4 className="font-medium text-foreground">{order.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">{order.description}</p>
                             <div className="flex items-center mt-2 space-x-4">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground">
                                 <i className="fas fa-map-marker-alt mr-1"></i>
                                 {order.location || 'No location'}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground">
                                 <i className="fas fa-user mr-1"></i>
                                 {getAgentName(order.assigneeId) || 'Unassigned'}
                               </span>
                             </div>
                           </div>
                           <div className="ml-4 flex flex-col items-end">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(order.priority)}`}>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(order.priority)}`}>
                               {order.priority.toUpperCase()}
                             </span>
-                            <span className="text-xs text-gray-500 mt-1">
+                            <span className="text-xs text-muted-foreground mt-1">
                               {order.status === 'in_progress' ? 'Working' : 'Pending'}
                             </span>
                           </div>
@@ -247,7 +247,7 @@ export default function ManagerDashboard() {
                       </div>
                     ))
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     No active issues reported
                   </div>
                 )}
@@ -294,20 +294,20 @@ export default function ManagerDashboard() {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'pending': return 'bg-yellow-100 text-yellow-800';
-    case 'in_progress': return 'bg-blue-100 text-blue-800';
-    case 'completed': return 'bg-green-100 text-green-800';
-    case 'cancelled': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'pending': return 'bg-yellow-900/30 text-yellow-300 border-yellow-800/50';
+    case 'in_progress': return 'bg-blue-900/30 text-blue-300 border-blue-800/50';
+    case 'completed': return 'bg-green-900/30 text-green-300 border-green-800/50';
+    case 'cancelled': return 'bg-red-900/30 text-red-300 border-red-800/50';
+    default: return 'bg-gray-900/30 text-gray-300 border-gray-800/50';
   }
 }
 
 function getPriorityColor(priority: string) {
   switch (priority) {
-    case 'high': return 'bg-red-100 text-red-800';
-    case 'medium': return 'bg-yellow-100 text-yellow-800';
-    case 'low': return 'bg-green-100 text-green-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'high': return 'bg-red-900/30 text-red-300 border-red-800/50';
+    case 'medium': return 'bg-yellow-900/30 text-yellow-300 border-yellow-800/50';
+    case 'low': return 'bg-green-900/30 text-green-300 border-green-800/50';
+    default: return 'bg-gray-900/30 text-gray-300 border-gray-800/50';
   }
 }
 

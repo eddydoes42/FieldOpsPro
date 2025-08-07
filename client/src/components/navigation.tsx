@@ -20,7 +20,7 @@ export default function Navigation({ userRole }: NavigationProps) {
     switch (userRole) {
       case 'administrator':
         return {
-          badge: { text: 'Administrator', icon: 'fas fa-crown', color: 'bg-purple-100 text-purple-800' },
+          badge: { text: 'Administrator', icon: 'fas fa-crown', color: 'bg-purple-900/30 text-purple-300 border-purple-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/users', label: 'Users', icon: 'fas fa-users' },
@@ -31,7 +31,7 @@ export default function Navigation({ userRole }: NavigationProps) {
         };
       case 'manager':
         return {
-          badge: { text: 'Manager', icon: 'fas fa-users-cog', color: 'bg-blue-100 text-blue-800' },
+          badge: { text: 'Manager', icon: 'fas fa-users-cog', color: 'bg-blue-900/30 text-blue-300 border-blue-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/onboarding', label: 'Onboarding', icon: 'fas fa-user-plus' },
@@ -43,7 +43,7 @@ export default function Navigation({ userRole }: NavigationProps) {
         };
       default:
         return {
-          badge: { text: 'Field Agent', icon: 'fas fa-wrench', color: 'bg-green-100 text-green-800' },
+          badge: { text: 'Field Agent', icon: 'fas fa-wrench', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/work-orders', label: 'My Orders', icon: 'fas fa-clipboard-list' },
@@ -57,7 +57,7 @@ export default function Navigation({ userRole }: NavigationProps) {
   const config = getRoleConfig();
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center min-w-0">
@@ -65,7 +65,7 @@ export default function Navigation({ userRole }: NavigationProps) {
               <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center mr-3">
                 <i className="fas fa-tools text-white text-sm"></i>
               </div>
-              <span className="text-xl font-bold text-gray-900 whitespace-nowrap">FieldOps Pro</span>
+              <span className="text-xl font-bold text-foreground whitespace-nowrap">FieldOps Pro</span>
             </div>
             <div className="hidden lg:flex lg:space-x-6">
               {config.links.map((link) => (
@@ -73,7 +73,7 @@ export default function Navigation({ userRole }: NavigationProps) {
                   <span className={`${
                     location === link.path 
                       ? 'border-primary text-primary' 
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
                   } inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium cursor-pointer whitespace-nowrap`}>
                     <i className={`${link.icon} mr-2`}></i>
                     {link.label}
@@ -84,7 +84,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500"
+              className="lg:hidden p-2 rounded-md text-muted-foreground hover:text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-lg`}></i>
@@ -107,7 +107,7 @@ export default function Navigation({ userRole }: NavigationProps) {
                   alt="Profile"
                 />
               )}
-              <span className="text-gray-700 font-medium text-sm hidden md:block">
+              <span className="text-foreground font-medium text-sm hidden md:block">
                 {(user as any)?.firstName} {(user as any)?.lastName}
               </span>
             </div>
@@ -116,7 +116,7 @@ export default function Navigation({ userRole }: NavigationProps) {
               variant="ghost" 
               size="sm"
               onClick={handleLogout}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-muted-foreground hover:text-foreground"
             >
               <i className="fas fa-sign-out-alt"></i>
             </Button>
@@ -125,15 +125,15 @@ export default function Navigation({ userRole }: NavigationProps) {
         
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 bg-white">
+          <div className="lg:hidden border-t border-border bg-card">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {config.links.map((link) => (
                 <Link key={link.path} href={link.path}>
                   <span 
                     className={`${
                       location === link.path 
-                        ? 'bg-primary text-white' 
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                     } block px-3 py-2 rounded-md text-base font-medium cursor-pointer`}
                     onClick={() => setMobileMenuOpen(false)}
                   >

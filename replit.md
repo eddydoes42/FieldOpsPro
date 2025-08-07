@@ -6,16 +6,18 @@ FieldOps Pro is a full-stack web application designed for managing IT field oper
 
 ## Current Status (January 2025)
 
-The application is fully operational with comprehensive demo data:
+The application is fully operational with comprehensive demo data and modern dark theme:
 - ✓ Complete role-based authentication and authorization system
 - ✓ Administrator dashboard with real-time statistics and full system access
-- ✓ Manager dashboard for team and work order management
+- ✓ Manager dashboard for team and work order management with priority tasks and active issues sections
 - ✓ Field agent dashboard for assigned work and time tracking
 - ✓ Sample data: 6 users (1 admin, 1 manager, 4 field agents)
 - ✓ 6 work orders with various statuses and assignments
 - ✓ Time tracking entries including active sessions
 - ✓ Team messaging system with conversation history
 - ✓ Dashboard statistics showing live data from PostgreSQL database
+- ✓ **Dark theme implementation** with professional blue-grey color scheme across all components
+- ✓ Enhanced manager dashboard with priority tasks (high-priority work orders) and active issues sections
 
 ## User Preferences
 

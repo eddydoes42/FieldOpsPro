@@ -7,15 +7,15 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary px-4">
       <div className="max-w-md w-full space-y-8">
         {/* Company Logo and Branding */}
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-primary rounded-xl flex items-center justify-center mb-4">
             <i className="fas fa-tools text-white text-2xl"></i>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">FieldOps Pro</h1>
-          <p className="mt-2 text-gray-600">IT Field Agent Management System</p>
+          <h1 className="text-3xl font-bold text-foreground">FieldOps Pro</h1>
+          <p className="mt-2 text-muted-foreground">IT Field Agent Management System</p>
         </div>
 
         {/* Login Card */}
@@ -23,10 +23,10 @@ export default function Landing() {
           <CardContent className="py-8 px-6">
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                <h2 className="text-xl font-semibold text-foreground mb-2">
                   Welcome to FieldOps Pro
                 </h2>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Manage your field operations with ease
                 </p>
               </div>
@@ -39,7 +39,7 @@ export default function Landing() {
               </Button>
 
               <div className="text-center">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Secure authentication powered by Replit
                 </p>
               </div>

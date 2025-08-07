@@ -3,38 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222.2 84% 4.9%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222.2 84% 4.9%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222.2 84% 4.9%);
-  --primary: hsl(207.3 90% 54.1%);
+  --background: hsl(224 21% 11%);
+  --foreground: hsl(213 31% 91%);
+  --card: hsl(224 19% 14%);
+  --card-foreground: hsl(213 31% 91%);
+  --popover: hsl(224 19% 14%);
+  --popover-foreground: hsl(213 31% 91%);
+  --primary: hsl(206 84% 64%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(210 40% 98%);
-  --secondary-foreground: hsl(222.2 84% 4.9%);
-  --muted: hsl(210 40% 96%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
-  --accent: hsl(210 40% 98%);
-  --accent-foreground: hsl(222.2 84% 4.9%);
-  --destructive: hsl(0 84.2% 60.2%);
+  --secondary: hsl(215 25% 27%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --muted: hsl(215 25% 27%);
+  --muted-foreground: hsl(217.9 10.6% 64.9%);
+  --accent: hsl(215 25% 27%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 72% 51%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(214.3 31.8% 91.4%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(207.3 90% 54.1%);
-  --chart-1: hsl(207.3 90% 54.1%);
-  --chart-2: hsl(142.1 76.2% 36.3%);
+  --border: hsl(215 27.9% 16.9%);
+  --input: hsl(215 27.9% 16.9%);
+  --ring: hsl(206 84% 64%);
+  --chart-1: hsl(206 84% 64%);
+  --chart-2: hsl(142.1 70% 45.3%);
   --chart-3: hsl(38 92% 50%);
   --chart-4: hsl(140 76.2% 42.2%);
   --chart-5: hsl(340 75% 50%);
-  --sidebar: hsl(0 0% 100%);
-  --sidebar-foreground: hsl(222.2 84% 4.9%);
-  --sidebar-primary: hsl(207.3 90% 54.1%);
+  --sidebar: hsl(224 21% 11%);
+  --sidebar-foreground: hsl(213 31% 91%);
+  --sidebar-primary: hsl(206 84% 64%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(210 40% 98%);
-  --sidebar-accent-foreground: hsl(222.2 84% 4.9%);
-  --sidebar-border: hsl(214.3 31.8% 91.4%);
-  --sidebar-ring: hsl(207.3 90% 54.1%);
+  --sidebar-accent: hsl(215 25% 27%);
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-border: hsl(215 27.9% 16.9%);
+  --sidebar-ring: hsl(206 84% 64%);
   --radius: 0.75rem;
 }
 
@@ -89,54 +89,54 @@
   }
 }
 
-/* Custom styles for FieldOps Pro */
+/* Custom styles for FieldOps Pro - Dark Theme */
 @layer components {
   .gradient-bg {
-    background: linear-gradient(135deg, hsl(210 100% 97%) 0%, hsl(220 100% 95%) 100%);
+    background: linear-gradient(135deg, hsl(224 21% 11%) 0%, hsl(215 25% 27%) 100%);
   }
   
   .status-pending {
-    @apply bg-yellow-100 text-yellow-800;
+    @apply bg-yellow-900/50 text-yellow-300 border-yellow-700/50;
   }
   
   .status-in-progress {
-    @apply bg-blue-100 text-blue-800;
+    @apply bg-blue-900/50 text-blue-300 border-blue-700/50;
   }
   
   .status-completed {
-    @apply bg-green-100 text-green-800;
+    @apply bg-green-900/50 text-green-300 border-green-700/50;
   }
   
   .status-cancelled {
-    @apply bg-red-100 text-red-800;
+    @apply bg-red-900/50 text-red-300 border-red-700/50;
   }
   
   .priority-low {
-    @apply text-green-600;
+    @apply text-green-400;
   }
   
   .priority-medium {
-    @apply text-yellow-600;
+    @apply text-yellow-400;
   }
   
   .priority-high {
-    @apply text-orange-600;
+    @apply text-orange-400;
   }
   
   .priority-urgent {
-    @apply text-red-600;
+    @apply text-red-400;
   }
   
   .role-badge-admin {
-    @apply bg-purple-100 text-purple-800;
+    @apply bg-purple-900/50 text-purple-300 border-purple-700/50;
   }
   
   .role-badge-manager {
-    @apply bg-blue-100 text-blue-800;
+    @apply bg-blue-900/50 text-blue-300 border-blue-700/50;
   }
   
   .role-badge-agent {
-    @apply bg-green-100 text-green-800;
+    @apply bg-green-900/50 text-green-300 border-green-700/50;
   }
   
   .nav-link-active {
@@ -144,7 +144,7 @@
   }
   
   .nav-link-inactive {
-    @apply border-transparent text-gray-500 hover:text-gray-700;
+    @apply border-transparent text-gray-400 hover:text-gray-300;
   }
   
   .time-tracker-active {
@@ -152,15 +152,15 @@
   }
   
   .work-order-card {
-    @apply bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200;
+    @apply bg-card rounded-lg border border-border p-4 hover:shadow-lg hover:shadow-black/20 transition-shadow duration-200;
   }
   
   .stats-card {
-    @apply bg-white p-6 rounded-xl shadow-sm border border-gray-200;
+    @apply bg-card p-6 rounded-xl shadow-sm border border-border;
   }
   
   .action-button-primary {
-    @apply bg-primary hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200;
+    @apply bg-primary hover:bg-primary/80 text-primary-foreground font-medium py-3 px-4 rounded-lg transition duration-200;
   }
   
   .action-button-success {
@@ -180,11 +180,11 @@
   }
   
   .form-section-title {
-    @apply text-lg font-semibold text-gray-900 mb-4;
+    @apply text-lg font-semibold text-foreground mb-4;
   }
   
   .modal-overlay {
-    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
+    @apply fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4;
   }
   
   .dashboard-header {
@@ -192,11 +192,11 @@
   }
   
   .dashboard-title {
-    @apply text-2xl font-bold text-gray-900;
+    @apply text-2xl font-bold text-foreground;
   }
   
   .dashboard-subtitle {
-    @apply mt-1 text-gray-600;
+    @apply mt-1 text-muted-foreground;
   }
 }
 
