@@ -149,7 +149,7 @@ export default function TeamPage() {
                               : 'bg-green-900/30 text-green-300 border-green-800/50'
                           } text-xs flex-shrink-0`}
                         >
-                          {userData.role === 'field_agent' ? 'Field_agent' : 
+                          {userData.role === 'field_agent' ? 'FA' : 
                            userData.role?.charAt(0).toUpperCase() + userData.role?.slice(1) || 'Unknown'}
                         </Badge>
                       </div>
@@ -160,12 +160,6 @@ export default function TeamPage() {
                             : userData.email || 'Unknown User'
                           }
                         </h4>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {userData.email || 'No email'}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate mt-1">
-                          Created: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Unknown'}
-                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 flex-shrink-0">
