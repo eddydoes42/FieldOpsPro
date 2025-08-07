@@ -46,6 +46,11 @@ export default function ManagerDashboard() {
     enabled: !!user && ((user as any).role === 'manager' || (user as any).role === 'administrator'),
   });
 
+  const { data: allIssues } = useQuery({
+    queryKey: ["/api/issues"],
+    enabled: !!user && ((user as any).role === 'manager' || (user as any).role === 'administrator'),
+  });
+
   const getAgentName = (assigneeId: string | null) => {
     if (!assigneeId) return 'Unassigned';
     const agent = (fieldAgents as any)?.find((a: any) => a.id === assigneeId);
@@ -159,7 +164,14 @@ export default function ManagerDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-foreground">Priority Tasks</h3>
                 <span className="bg-red-900/30 text-red-300 text-sm font-medium px-3 py-1 rounded-full border border-red-800/50">
-                  {(workOrders as any)?.filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress')).length || 0}
+                  {(() => {
+                    const highPriorityCount = (workOrders as any)?.filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress')).length || 0;
+                    const workOrdersWithIssues = (allIssues as any)?.filter((issue: any) => issue.status === 'open').map((issue: any) => issue.workOrderId) || [];
+                    const uniqueWorkOrdersWithIssues = Array.from(new Set(workOrdersWithIssues));
+                    const issueWorkOrders = (workOrders as any)?.filter((order: any) => uniqueWorkOrdersWithIssues.includes(order.id) && (order.status === 'pending' || order.status === 'in_progress')) || [];
+                    const combinedCount = highPriorityCount + issueWorkOrders.filter((order: any) => order.priority !== 'high').length;
+                    return combinedCount;
+                  })()}
                 </span>
               </div>
               <div className="space-y-4">
@@ -168,9 +180,13 @@ export default function ManagerDashboard() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   </div>
                 ) : workOrders && (workOrders as any).length > 0 ? (
-                  (workOrders as any)
-                    .filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress'))
-                    .slice(0, 4)
+                  (() => {
+                    const highPriorityOrders = (workOrders as any)?.filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress')) || [];
+                    const workOrdersWithIssues = (allIssues as any)?.filter((issue: any) => issue.status === 'open').map((issue: any) => issue.workOrderId) || [];
+                    const uniqueWorkOrdersWithIssues = Array.from(new Set(workOrdersWithIssues));
+                    const issueWorkOrders = (workOrders as any)?.filter((order: any) => uniqueWorkOrdersWithIssues.includes(order.id) && (order.status === 'pending' || order.status === 'in_progress') && order.priority !== 'high') || [];
+                    return [...highPriorityOrders, ...issueWorkOrders].slice(0, 4);
+                  })()
                     .map((order: any) => (
                       <div 
                         key={order.id} 

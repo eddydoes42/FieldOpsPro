@@ -118,6 +118,19 @@ export const workOrderTasks = pgTable("work_order_tasks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Work Order Issues table
+export const workOrderIssues = pgTable("work_order_issues", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  reason: varchar("reason").notNull(), // Schedule, Work Scope, Access, Personal/Other
+  explanation: text("explanation").notNull(),
+  createdById: varchar("created_by_id").notNull().references(() => users.id),
+  status: varchar("status").default("open"), // open, resolved
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
@@ -141,6 +154,7 @@ export const workOrdersRelations = relations(workOrders, ({ one, many }) => ({
   timeEntries: many(timeEntries),
   messages: many(messages),
   tasks: many(workOrderTasks),
+  issues: many(workOrderIssues),
 }));
 
 export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
@@ -182,6 +196,17 @@ export const workOrderTasksRelations = relations(workOrderTasks, ({ one }) => ({
   }),
 }));
 
+export const workOrderIssuesRelations = relations(workOrderIssues, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [workOrderIssues.workOrderId],
+    references: [workOrders.id],
+  }),
+  createdBy: one(users, {
+    fields: [workOrderIssues.createdById],
+    references: [users.id],
+  }),
+}));
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -216,6 +241,13 @@ export const insertWorkOrderTaskSchema = createInsertSchema(workOrderTasks).omit
   completedAt: true,
 });
 
+export const insertWorkOrderIssueSchema = createInsertSchema(workOrderIssues).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  resolvedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
@@ -232,3 +264,6 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export type WorkOrderTask = typeof workOrderTasks.$inferSelect;
 export type InsertWorkOrderTask = z.infer<typeof insertWorkOrderTaskSchema>;
+
+export type WorkOrderIssue = typeof workOrderIssues.$inferSelect;
+export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;

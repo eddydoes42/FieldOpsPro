@@ -4,6 +4,7 @@ import {
   timeEntries,
   messages,
   workOrderTasks,
+  workOrderIssues,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -15,6 +16,8 @@ import {
   type InsertMessage,
   type WorkOrderTask,
   type InsertWorkOrderTask,
+  type WorkOrderIssue,
+  type InsertWorkOrderIssue,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -84,6 +87,11 @@ export interface IStorage {
   createWorkOrderTask(task: InsertWorkOrderTask): Promise<WorkOrderTask>;
   updateWorkOrderTask(id: string, updates: Partial<InsertWorkOrderTask>): Promise<WorkOrderTask>;
   deleteWorkOrderTask(id: string): Promise<void>;
+
+  // Work Order Issue operations
+  getWorkOrderIssues(workOrderId: string): Promise<WorkOrderIssue[]>;
+  createWorkOrderIssue(issue: InsertWorkOrderIssue): Promise<WorkOrderIssue>;
+  getAllIssues(): Promise<WorkOrderIssue[]>;
 
   // Status and time tracking operations
   updateWorkOrderStatus(id: string, updateData: any): Promise<WorkOrder>;
@@ -517,6 +525,30 @@ export class DatabaseStorage implements IStorage {
       .where(eq(workOrderTasks.id, taskId))
       .returning();
     return task;
+  }
+
+  // Work Order Issue operations
+  async getWorkOrderIssues(workOrderId: string): Promise<WorkOrderIssue[]> {
+    return await db
+      .select()
+      .from(workOrderIssues)
+      .where(eq(workOrderIssues.workOrderId, workOrderId))
+      .orderBy(desc(workOrderIssues.createdAt));
+  }
+
+  async createWorkOrderIssue(issueData: InsertWorkOrderIssue): Promise<WorkOrderIssue> {
+    const [issue] = await db
+      .insert(workOrderIssues)
+      .values(issueData)
+      .returning();
+    return issue;
+  }
+
+  async getAllIssues(): Promise<WorkOrderIssue[]> {
+    return await db
+      .select()
+      .from(workOrderIssues)
+      .orderBy(desc(workOrderIssues.createdAt));
   }
 }
 

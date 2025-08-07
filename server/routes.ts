@@ -638,6 +638,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Work Order Issues Management
+  app.get("/api/work-orders/:workOrderId/issues", isAuthenticated, async (req: any, res) => {
+    try {
+      const { workOrderId } = req.params;
+      const issues = await storage.getWorkOrderIssues(workOrderId);
+      res.json(issues);
+    } catch (error) {
+      console.error("Error fetching work order issues:", error);
+      res.status(500).json({ message: "Failed to fetch work order issues" });
+    }
+  });
+
+  app.post("/api/work-orders/:workOrderId/issues", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { workOrderId } = req.params;
+      const issueData = {
+        ...req.body,
+        workOrderId,
+        createdById: currentUser.id,
+      };
+
+      const issue = await storage.createWorkOrderIssue(issueData);
+      res.json(issue);
+    } catch (error) {
+      console.error("Error creating work order issue:", error);
+      res.status(500).json({ message: "Failed to create issue" });
+    }
+  });
+
+  app.get("/api/issues", isAuthenticated, async (req: any, res) => {
+    try {
+      const issues = await storage.getAllIssues();
+      res.json(issues);
+    } catch (error) {
+      console.error("Error fetching all issues:", error);
+      res.status(500).json({ message: "Failed to fetch issues" });
+    }
+  });
+
   app.post("/api/work-orders/:workOrderId/tasks", isAuthenticated, async (req: any, res) => {
     try {
       const { workOrderId } = req.params;

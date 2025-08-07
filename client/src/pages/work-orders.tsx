@@ -71,6 +71,21 @@ interface NewTaskData {
   category: string;
 }
 
+interface WorkOrderIssue {
+  id: string;
+  workOrderId: string;
+  reason: string;
+  explanation: string;
+  createdById: string;
+  status: string;
+  createdAt: string;
+}
+
+interface NewIssueData {
+  reason: string;
+  explanation: string;
+}
+
 interface Task {
   title: string;
   description: string;
@@ -87,6 +102,7 @@ export default function WorkOrders() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateIssueDialogOpen, setIsCreateIssueDialogOpen] = useState(false);
   
   // Selected items
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
@@ -125,6 +141,11 @@ export default function WorkOrders() {
     title: "",
     description: "",
     category: "pre_visit"
+  });
+
+  const [newIssue, setNewIssue] = useState<NewIssueData>({
+    reason: "",
+    explanation: ""
   });
 
   // Task creation state for the work order form
@@ -382,6 +403,40 @@ export default function WorkOrders() {
       toast({
         title: "Error",
         description: "Failed to update work order. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createIssueMutation = useMutation({
+    mutationFn: async (data: NewIssueData) => {
+      if (!selectedWorkOrder) throw new Error("No work order selected");
+      return await apiRequest("POST", `/api/work-orders/${selectedWorkOrder.id}/issues`, data);
+    },
+    onSuccess: () => {
+      setIsCreateIssueDialogOpen(false);
+      setNewIssue({ reason: "", explanation: "" });
+      toast({
+        title: "Success",
+        description: "Issue created successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create issue. Please try again.",
         variant: "destructive",
       });
     },
@@ -1051,15 +1106,25 @@ export default function WorkOrders() {
                 <div className="space-y-4 border-t pt-6">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-foreground">Tasks</h3>
-                    {canCreateWorkOrders && (
+                    <div className="flex gap-2">
                       <Button 
-                        onClick={() => setIsTaskDialogOpen(true)}
+                        onClick={() => setIsCreateIssueDialogOpen(true)}
                         size="sm"
+                        variant="outline"
                         className="flex items-center"
                       >
-                        Add Task
+                        ⚠️ Create Issue
                       </Button>
-                    )}
+                      {canCreateWorkOrders && (
+                        <Button 
+                          onClick={() => setIsTaskDialogOpen(true)}
+                          size="sm"
+                          className="flex items-center"
+                        >
+                          Add Task
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {tasksLoading ? (
@@ -1646,6 +1711,63 @@ export default function WorkOrders() {
                 />
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Issue Dialog */}
+        <Dialog open={isCreateIssueDialogOpen} onOpenChange={setIsCreateIssueDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Issue</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="issue-reason">Reason</Label>
+                <Select
+                  value={newIssue.reason}
+                  onValueChange={(value) => setNewIssue({...newIssue, reason: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select reason for issue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Schedule">Schedule</SelectItem>
+                    <SelectItem value="Work Scope">Work Scope</SelectItem>
+                    <SelectItem value="Access">Access</SelectItem>
+                    <SelectItem value="Personal/Other">Personal/Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="issue-explanation">Explanation</Label>
+                <Textarea
+                  id="issue-explanation"
+                  placeholder="Provide a brief explanation of the issue..."
+                  value={newIssue.explanation}
+                  onChange={(e) => setNewIssue({...newIssue, explanation: e.target.value})}
+                  className="min-h-[100px]"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsCreateIssueDialogOpen(false);
+                    setNewIssue({ reason: "", explanation: "" });
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => createIssueMutation.mutate(newIssue)}
+                  disabled={!newIssue.reason || !newIssue.explanation || createIssueMutation.isPending}
+                >
+                  {createIssueMutation.isPending ? "Creating..." : "Create Issue"}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
