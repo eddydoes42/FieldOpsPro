@@ -53,7 +53,7 @@ export default function TeamPage() {
 
   const { data: allUsers, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
-    enabled: !!user && ((user as any).role === 'manager' || (user as any).role === 'administrator'),
+    enabled: !!user && ((user as any).roles?.includes('manager') || (user as any).roles?.includes('administrator')),
   });
 
   const deleteUserMutation = useMutation({
@@ -269,7 +269,7 @@ export default function TeamPage() {
               <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
               <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                 {/* Add Team Member Button - Show only for administrators */}
-                {(user as any).role === 'administrator' && (
+                {(user as any).roles?.includes('administrator') && (
                   <Button
                     onClick={() => setLocation('/onboarding')}
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
@@ -334,7 +334,7 @@ export default function TeamPage() {
             ) : (
               <div className="space-y-4">
                 {allUsers && (allUsers as any[])
-                  .filter((userData: any) => roleFilter === "all" || userData.role === roleFilter)
+                  .filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))
                   .map((userData: any): React.ReactElement => (
                   <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
                     <div 
@@ -352,20 +352,20 @@ export default function TeamPage() {
                           <Badge 
                             variant="secondary" 
                             className={`${
-                              userData.role === 'administrator' 
+                              userData.roles?.includes('administrator') 
                                 ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
-                                : userData.role === 'manager'
+                                : userData.roles?.includes('manager')
                                 ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
-                                : userData.role === 'dispatcher'
+                                : userData.roles?.includes('dispatcher')
                                 ? 'bg-orange-900/30 text-orange-300 border-orange-800/50'
                                 : 'bg-green-900/30 text-green-300 border-green-800/50'
                             } text-xs flex-shrink-0`}
                           >
-                            {userData.role === 'field_agent' ? 'FA' : 
-                             userData.role === 'administrator' ? 'A' :
-                             userData.role === 'manager' ? 'M' :
-                             userData.role === 'dispatcher' ? 'D' : 
-                             userData.role?.charAt(0).toUpperCase() || 'U'}
+                            {userData.roles?.includes('field_agent') ? 'FA' : 
+                             userData.roles?.includes('administrator') ? 'A' :
+                             userData.roles?.includes('manager') ? 'M' :
+                             userData.roles?.includes('dispatcher') ? 'D' : 
+                             userData.roles?.[0]?.charAt(0).toUpperCase() || 'U'}
                           </Badge>
                         </div>
                         <div className="min-w-0 flex-1">
@@ -378,7 +378,7 @@ export default function TeamPage() {
                           
                           {/* Action buttons below user name */}
                           <div className="flex items-center space-x-2 mt-2">
-                            {userData.id !== (user as any)?.id && userData.role !== 'administrator' && (
+                            {userData.id !== (user as any)?.id && !userData.roles?.includes('administrator') && (
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
@@ -432,7 +432,7 @@ export default function TeamPage() {
                                 Current User
                               </Badge>
                             )}
-                            {userData.role === 'administrator' && (user as any).role !== 'administrator' && (
+                            {userData.roles?.includes('administrator') && !(user as any).roles?.includes('administrator') && (
                               <Badge variant="outline" className="text-xs bg-purple-900/20 text-purple-300">
                                 Administrator (Cannot Delete)
                               </Badge>
@@ -444,7 +444,7 @@ export default function TeamPage() {
                   </div>
                 ))}
                 {allUsers && (allUsers as any[])
-                  .filter((userData: any) => roleFilter === "all" || userData.role === roleFilter)
+                  .filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))
                   .length === 0 && (
                   <div className="text-center py-8">
                     <i className="fas fa-users text-4xl text-muted-foreground mb-4"></i>
@@ -726,23 +726,23 @@ export default function TeamPage() {
                     <Badge 
                       variant="secondary" 
                       className={`${
-                        selectedUser.role === 'administrator' 
+                        selectedUser.roles?.includes('administrator') 
                           ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
-                          : selectedUser.role === 'manager'
+                          : selectedUser.roles?.includes('manager')
                           ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
-                          : selectedUser.role === 'dispatcher'
+                          : selectedUser.roles?.includes('dispatcher')
                           ? 'bg-orange-900/30 text-orange-300 border-orange-800/50'
                           : 'bg-green-900/30 text-green-300 border-green-800/50'
                       } ${
-                        selectedUser.role !== 'manager' && selectedUser.role !== 'administrator' 
+                        !selectedUser.roles?.includes('manager') && !selectedUser.roles?.includes('administrator') 
                           ? 'cursor-pointer hover:opacity-80 transition-opacity'
                           : 'cursor-default'
                       }`}
                     >
-                      {getRoleDisplayName(selectedUser.role)}
+                      {getRoleDisplayName(selectedUser.roles?.[0])}
                     </Badge>
                   </AlertDialogTrigger>
-                  {selectedUser.role !== 'manager' && selectedUser.role !== 'administrator' && (
+                  {!selectedUser.roles?.includes('manager') && !selectedUser.roles?.includes('administrator') && (
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Update User Role</AlertDialogTitle>
