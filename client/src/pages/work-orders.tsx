@@ -1934,11 +1934,11 @@ export default function WorkOrders() {
         <Dialog open={isCreateIssueDialogOpen} onOpenChange={setIsCreateIssueDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Create Issue</DialogTitle>
+              <DialogTitle>Issue Details</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="issue-reason">Reason</Label>
+                <Label htmlFor="issue-reason">Issue Reason</Label>
                 <Select
                   value={newIssue.reason}
                   onValueChange={(value) => setNewIssue({...newIssue, reason: value})}
@@ -1947,10 +1947,10 @@ export default function WorkOrders() {
                     <SelectValue placeholder="Select reason for issue" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Schedule">Schedule</SelectItem>
-                    <SelectItem value="Work Scope">Work Scope</SelectItem>
-                    <SelectItem value="Access">Access</SelectItem>
-                    <SelectItem value="Personal/Other">Personal/Other</SelectItem>
+                    <SelectItem value="schedule">schedule</SelectItem>
+                    <SelectItem value="access">access</SelectItem>
+                    <SelectItem value="scope">scope</SelectItem>
+                    <SelectItem value="personal/other">personal/other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1976,12 +1976,38 @@ export default function WorkOrders() {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={() => createIssueMutation.mutate(newIssue)}
-                  disabled={!newIssue.reason || !newIssue.explanation || createIssueMutation.isPending}
-                >
-                  {createIssueMutation.isPending ? "Creating..." : "Create Issue"}
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      disabled={!newIssue.reason || !newIssue.explanation || createIssueMutation.isPending}
+                    >
+                      {createIssueMutation.isPending ? "Creating..." : "Create Issue"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirm Issue Creation</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to create this issue for "{selectedWorkOrder?.title}"? 
+                        <br /><br />
+                        <strong>Issue Reason:</strong> {newIssue.reason}
+                        <br />
+                        <strong>Explanation:</strong> {newIssue.explanation}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          createIssueMutation.mutate(newIssue);
+                        }}
+                        disabled={createIssueMutation.isPending}
+                      >
+                        {createIssueMutation.isPending ? "Creating..." : "Confirm Create Issue"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </DialogContent>
