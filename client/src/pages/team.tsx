@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX, Edit2 } from "lucide-react";
+import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX, Edit2, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function TeamPage() {
@@ -267,7 +267,19 @@ export default function TeamPage() {
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
               <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                {/* Add Team Member Button - Show only for administrators */}
+                {(user as any).role === 'administrator' && (
+                  <Button
+                    onClick={() => setLocation('/onboarding')}
+                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
+                    size="sm"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Add Team Member
+                  </Button>
+                )}
+                <div className="flex flex-wrap gap-2">
                 <Button
                   variant={roleFilter === "field_agent" ? "default" : "outline"}
                   size="sm"
@@ -308,6 +320,7 @@ export default function TeamPage() {
                 >
                   All ({getRoleCount("all")})
                 </Button>
+                </div>
               </div>
             </div>
             {usersLoading ? (
@@ -322,7 +335,7 @@ export default function TeamPage() {
               <div className="space-y-4">
                 {allUsers && (allUsers as any[])
                   .filter((userData: any) => roleFilter === "all" || userData.role === roleFilter)
-                  .map((userData: any) => (
+                  .map((userData: any): React.ReactElement => (
                   <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
                     <div 
                       className="cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
