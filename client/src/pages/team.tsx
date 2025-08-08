@@ -25,6 +25,7 @@ export default function TeamPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editedUser, setEditedUser] = useState<any>({});
+  const [roleFilter, setRoleFilter] = useState<string>("all");
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -199,6 +200,12 @@ export default function TeamPage() {
     return role;
   };
 
+  const getRoleCount = (role: string) => {
+    if (!allUsers) return 0;
+    if (role === "all") return (allUsers as any[]).length;
+    return (allUsers as any[]).filter((user: any) => user.role === role).length;
+  };
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -249,7 +256,51 @@ export default function TeamPage() {
         {/* Team Members Section */}
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-6">Team Members</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
+              <div className="flex space-x-2">
+                <Button
+                  variant={roleFilter === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRoleFilter("all")}
+                  className="text-xs"
+                >
+                  All ({getRoleCount("all")})
+                </Button>
+                <Button
+                  variant={roleFilter === "administrator" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRoleFilter("administrator")}
+                  className={`text-xs ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
+                >
+                  Admin ({getRoleCount("administrator")})
+                </Button>
+                <Button
+                  variant={roleFilter === "manager" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRoleFilter("manager")}
+                  className={`text-xs ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
+                >
+                  Manager ({getRoleCount("manager")})
+                </Button>
+                <Button
+                  variant={roleFilter === "dispatcher" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRoleFilter("dispatcher")}
+                  className={`text-xs ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
+                >
+                  Dispatcher ({getRoleCount("dispatcher")})
+                </Button>
+                <Button
+                  variant={roleFilter === "field_agent" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRoleFilter("field_agent")}
+                  className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
+                >
+                  FA ({getRoleCount("field_agent")})
+                </Button>
+              </div>
+            </div>
             {usersLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -260,7 +311,9 @@ export default function TeamPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {allUsers && (allUsers as any[]).map((userData: any) => (
+                {allUsers && (allUsers as any[])
+                  .filter((userData: any) => roleFilter === "all" || userData.role === roleFilter)
+                  .map((userData: any) => (
                   <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
                     <div 
                       className="cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
@@ -363,10 +416,14 @@ export default function TeamPage() {
                     </div>
                   </div>
                 ))}
-                {(!allUsers || (allUsers as any[]).length === 0) && (
+                {allUsers && (allUsers as any[])
+                  .filter((userData: any) => roleFilter === "all" || userData.role === roleFilter)
+                  .length === 0 && (
                   <div className="text-center py-8">
                     <i className="fas fa-users text-4xl text-muted-foreground mb-4"></i>
-                    <p className="text-muted-foreground">No team members found</p>
+                    <p className="text-muted-foreground">
+                      {roleFilter === "all" ? "No team members found" : `No ${roleFilter === "field_agent" ? "field agents" : roleFilter + "s"} found`}
+                    </p>
                   </div>
                 )}
               </div>
