@@ -1638,6 +1638,35 @@ export default function WorkOrders() {
                   </div>
                 </div>
 
+                {/* Payment Status Section - Only show for completed work orders */}
+                {selectedWorkOrder && selectedWorkOrder.status === 'completed' && (
+                  <div className="space-y-4 border-t pt-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-foreground">Payment Status</h3>
+                      {(user as any)?.role === 'administrator' && (
+                        <div className="text-xs text-muted-foreground">
+                          Administrator Controls
+                        </div>
+                      )}
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                      <PaymentStatusButton 
+                        workOrder={selectedWorkOrder}
+                        isAdmin={(user as any)?.role === 'administrator'}
+                        onUpdatePaymentStatus={handlePaymentStatusUpdate}
+                        isLoading={updatePaymentStatusMutation.isPending}
+                      />
+                      {selectedWorkOrder.paymentUpdatedAt && (
+                        <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
+                          <div className="text-xs text-muted-foreground">
+                            Last updated: {new Date(selectedWorkOrder.paymentUpdatedAt).toLocaleString()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Task Management Section */}
                 <div className="space-y-4 border-t pt-6">
                   <div className="flex justify-between items-center">
@@ -2021,13 +2050,7 @@ export default function WorkOrders() {
                       </div>
                     )}
 
-                    {/* Payment Status - Only show for completed work orders and administrators */}
-                    <PaymentStatusButton 
-                      workOrder={order}
-                      isAdmin={(user as any)?.role === 'administrator'}
-                      onUpdatePaymentStatus={handlePaymentStatusUpdate}
-                      isLoading={updatePaymentStatusMutation.isPending}
-                    />
+
 
                     {(order.scopeOfWork || order.requiredTools) && (
                       <div className="space-y-2">
