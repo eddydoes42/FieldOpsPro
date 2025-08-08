@@ -334,11 +334,16 @@ export default function TeamPage() {
                                 ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
                                 : userData.role === 'manager'
                                 ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
+                                : userData.role === 'dispatcher'
+                                ? 'bg-orange-900/30 text-orange-300 border-orange-800/50'
                                 : 'bg-green-900/30 text-green-300 border-green-800/50'
                             } text-xs flex-shrink-0`}
                           >
                             {userData.role === 'field_agent' ? 'FA' : 
-                             userData.role?.charAt(0).toUpperCase() + userData.role?.slice(1) || 'Unknown'}
+                             userData.role === 'administrator' ? 'A' :
+                             userData.role === 'manager' ? 'M' :
+                             userData.role === 'dispatcher' ? 'D' : 
+                             userData.role?.charAt(0).toUpperCase() || 'U'}
                           </Badge>
                         </div>
                         <div className="min-w-0 flex-1">
