@@ -272,13 +272,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Work order not found" });
       }
 
-      // Only assigned field agents can confirm scheduled work orders, or admins/managers for testing
+      // Check authorization for work order confirmation
       const canConfirm = (currentUser.role === 'field_agent' && workOrder.assigneeId === userId) ||
                          currentUser.role === 'administrator' || 
-                         currentUser.role === 'manager';
+                         currentUser.role === 'manager' ||
+                         currentUser.role === 'dispatcher';
       
       if (!canConfirm) {
-        return res.status(403).json({ message: "Only assigned field agents, administrators, or managers can confirm work orders" });
+        return res.status(403).json({ message: "Only assigned field agents, administrators, managers, or dispatchers can confirm work orders" });
       }
 
       // Only scheduled work orders can be confirmed
@@ -318,9 +319,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Work order not found" });
       }
 
-      // Check if user is assigned to this work order or is admin/manager
+      // Check if user is assigned to this work order or has management privileges
       const canUpdate = currentUser.role === 'administrator' || 
                        currentUser.role === 'manager' || 
+                       currentUser.role === 'dispatcher' ||
                        workOrder.assigneeId === userId;
       
       if (!canUpdate) {

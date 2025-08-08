@@ -713,19 +713,25 @@ export default function WorkOrders() {
   const isStatusButtonDisabled = (workOrder: WorkOrder) => {
     const status = workOrder.status;
     const workStatus = (workOrder as any).workStatus || 'not_started';
+    const userRole = (user as any)?.role;
     
-    // For scheduled work orders, check time restrictions and assignment
+    // For scheduled work orders, check time restrictions and authorization
     if (status === 'scheduled') {
-      // Only assigned field agents can confirm
-      if ((user as any)?.role === 'field_agent') {
+      // Administrators, managers, and dispatchers can confirm any work order
+      if (userRole === 'administrator' || userRole === 'manager' || userRole === 'dispatcher') {
+        return false; // Allow confirmation
+      }
+      
+      // Field agents can only confirm their assigned work orders within time limits
+      if (userRole === 'field_agent') {
         if (workOrder.assigneeId !== (user as any)?.id) {
           return true; // Not assigned to this agent
         }
         // Check if within 24 hours or past due date
         return !isWithin24Hours(workOrder.dueDate);
-      } else {
-        return true; // Only assigned field agents can confirm
       }
+      
+      return true; // Default deny for other roles
     }
     
     // For all other status transitions, check task completion requirement
@@ -1606,7 +1612,7 @@ export default function WorkOrders() {
                         Edit
                       </Button>
                     )}
-                    {(order.assigneeId === (user as any)?.id || canCreateWorkOrders) && (
+                    {(order.assigneeId === (user as any)?.id || canCreateWorkOrders || (user as any)?.role === 'dispatcher') && (
                       confirmStatusUpdate(order) ? (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

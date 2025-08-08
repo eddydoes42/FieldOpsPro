@@ -16,6 +16,12 @@ The application is fully operational with comprehensive demo data and modern dar
   - Field agents and managers can mark tasks as complete
   - Tasks organized by phase with visual progress indicators
   - Complete task lifecycle management with timestamps
+- ✓ **Work Order Status Management with Task Dependencies**: Complete workflow system
+  - **Status Flow**: Scheduled → Confirmed → In Route → Check In → Check Out → Mark Complete
+  - **24-Hour Confirmation Rule**: Field agents can only confirm within 24 hours of due date or after due date passes
+  - **Task Completion Requirements**: All tasks must be completed before work status progression beyond confirmation
+  - **Role-based Access**: Administrators, managers, and dispatchers can manage any work order; field agents limited to assigned orders
+  - **Comprehensive Authorization**: Management roles can confirm and update status for any work order
 - ✓ **Role-based permissions**: Only administrators can assign user roles and create users
 - ✓ Sample data: 6 users (1 admin, 1 manager, 4 field agents)
 - ✓ 6 work orders with various statuses and assignments
