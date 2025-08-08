@@ -181,30 +181,10 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Quick Actions & Team Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Quick Actions */}
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <Button className="w-full justify-center">
-                  <i className="fas fa-user-plus mr-2"></i>Add New User
-                </Button>
-                <Button className="w-full bg-green-600 hover:bg-green-700 justify-center">
-                  <i className="fas fa-plus mr-2"></i>Create Work Order
-                </Button>
-                <Button variant="secondary" className="w-full justify-center">
-                  <i className="fas fa-download mr-2"></i>Export Reports
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Team Overview */}
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Team Overview</h3>
+        {/* Team Overview */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Team Overview</h3>
               <div className="space-y-4">
                 <div 
                   className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
@@ -245,7 +225,6 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );
