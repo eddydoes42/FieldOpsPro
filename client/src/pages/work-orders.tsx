@@ -730,9 +730,20 @@ export default function WorkOrders() {
       }
     }
     
+    // For all other status transitions, check task completion requirement
     if (workStatus === 'checked_out') {
+      // Can only mark complete if all tasks are done
       return !canMarkComplete(workOrder);
     }
+    
+    // For any status transition beyond confirmation, require all tasks to be completed first
+    if (status === 'confirmed' && workStatus !== 'completed') {
+      const workOrderTasks = tasksData?.[workOrder.id] || [];
+      if (workOrderTasks.length > 0 && !workOrderTasks.every(task => task.isCompleted)) {
+        return true; // Block status changes until all tasks are completed
+      }
+    }
+    
     return false; // Allow all other status changes
   };
 
@@ -1609,10 +1620,12 @@ export default function WorkOrders() {
                                     ? 'bg-green-600 hover:bg-green-700'
                                     : 'bg-blue-600 hover:bg-blue-700'
                                 }`}
-                                disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                                disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending || confirmWorkOrderMutation.isPending}
                                 title={
                                   order.status === 'scheduled' && isStatusButtonDisabled(order) && order.assigneeId === (user as any)?.id
                                     ? `Can only confirm within 24 hours of due date${order.dueDate ? ` (${new Date(order.dueDate).toLocaleDateString()})` : ''}`
+                                    : isStatusButtonDisabled(order) && order.status === 'confirmed'
+                                    ? 'Complete all tasks before proceeding with work order status'
                                     : ''
                                 }
                               >
@@ -1651,10 +1664,12 @@ export default function WorkOrders() {
                               : 'bg-blue-600 hover:bg-blue-700'
                           }`}
                           onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
-                          disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                          disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending || confirmWorkOrderMutation.isPending}
                           title={
                             order.status === 'scheduled' && isStatusButtonDisabled(order) && order.assigneeId === (user as any)?.id
                               ? `Can only confirm within 24 hours of due date${order.dueDate ? ` (${new Date(order.dueDate).toLocaleDateString()})` : ''}`
+                              : isStatusButtonDisabled(order) && order.status === 'confirmed'
+                              ? 'Complete all tasks before proceeding with work order status'
                               : ''
                           }
                         >
