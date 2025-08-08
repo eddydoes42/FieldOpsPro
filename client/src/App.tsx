@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,6 +21,7 @@ import FloatingQuickAction from "@/components/floating-quick-action";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [location] = useLocation();
   
 
 
@@ -106,8 +107,8 @@ function Router() {
       <Route component={NotFound} />
       </Switch>
       
-      {/* Global Floating Quick Action Button */}
-      {isAuthenticated && <FloatingQuickAction />}
+      {/* Global Floating Quick Action Button - Exclude from landing page */}
+      {isAuthenticated && location !== "/" && <FloatingQuickAction />}
     </div>
   );
 }
