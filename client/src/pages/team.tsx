@@ -256,9 +256,9 @@ export default function TeamPage() {
         {/* Team Members Section */}
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
               <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant={roleFilter === "all" ? "default" : "outline"}
                   size="sm"
@@ -273,7 +273,7 @@ export default function TeamPage() {
                   onClick={() => setRoleFilter("administrator")}
                   className={`text-xs ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
                 >
-                  Admin ({getRoleCount("administrator")})
+                  <span className="hidden sm:inline">Admin</span><span className="sm:hidden">A</span> ({getRoleCount("administrator")})
                 </Button>
                 <Button
                   variant={roleFilter === "manager" ? "default" : "outline"}
@@ -281,7 +281,7 @@ export default function TeamPage() {
                   onClick={() => setRoleFilter("manager")}
                   className={`text-xs ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
                 >
-                  Manager ({getRoleCount("manager")})
+                  <span className="hidden sm:inline">Manager</span><span className="sm:hidden">M</span> ({getRoleCount("manager")})
                 </Button>
                 <Button
                   variant={roleFilter === "dispatcher" ? "default" : "outline"}
@@ -289,7 +289,7 @@ export default function TeamPage() {
                   onClick={() => setRoleFilter("dispatcher")}
                   className={`text-xs ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
                 >
-                  Dispatcher ({getRoleCount("dispatcher")})
+                  <span className="hidden sm:inline">Dispatcher</span><span className="sm:hidden">D</span> ({getRoleCount("dispatcher")})
                 </Button>
                 <Button
                   variant={roleFilter === "field_agent" ? "default" : "outline"}
