@@ -247,12 +247,15 @@ export class DatabaseStorage implements IStorage {
     // 2. Delete work order tasks for this work order
     await db.delete(workOrderTasks).where(eq(workOrderTasks.workOrderId, id));
     
-    // 3. Update messages to remove work order reference (set to null instead of deleting)
+    // 3. Delete work order issues for this work order
+    await db.delete(workOrderIssues).where(eq(workOrderIssues.workOrderId, id));
+    
+    // 4. Update messages to remove work order reference (set to null instead of deleting)
     await db.update(messages)
       .set({ workOrderId: null })
       .where(eq(messages.workOrderId, id));
     
-    // 4. Finally delete the work order itself
+    // 5. Finally delete the work order itself
     await db.delete(workOrders).where(eq(workOrders.id, id));
   }
 
