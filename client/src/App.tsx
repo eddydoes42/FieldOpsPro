@@ -37,73 +37,60 @@ function Router() {
         ) : (
           <>
             <Route path="/">
-              {() => {
-                if (hasRole(user as any, 'administrator')) {
-                  return <AdminDashboard />;
-                } else if (hasRole(user as any, 'manager')) {
-                  return <ManagerDashboard />;
-                } else if (hasRole(user as any, 'field_agent')) {
-                  return <AgentDashboard />;
-                } else {
-                  return <Landing />;
-                }
-              }}
+              {hasRole(user as any, 'administrator') ? (
+                <AdminDashboard />
+              ) : hasRole(user as any, 'manager') ? (
+                <ManagerDashboard />
+              ) : hasRole(user as any, 'field_agent') ? (
+                <AgentDashboard />
+              ) : (
+                <Landing />
+              )}
             </Route>
             <Route path="/reports">
-              {() => {
-                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
-                  return <TeamReports />;
-                } else if (hasRole(user as any, 'field_agent')) {
-                  return <AgentDashboard />;
-                } else {
-                  return <Landing />;
-                }
-              }}
+              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
+                <TeamReports />
+              ) : hasRole(user as any, 'field_agent') ? (
+                <AgentDashboard />
+              ) : (
+                <Landing />
+              )}
             </Route>
             <Route path="/reports/team">
-              {() => {
-                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
-                  return <TeamReports />;
-                } else if (hasRole(user as any, 'field_agent')) {
-                  return <AgentDashboard />;
-                } else {
-                  return <Landing />;
-                }
-              }}
+              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
+                <TeamReports />
+              ) : hasRole(user as any, 'field_agent') ? (
+                <AgentDashboard />
+              ) : (
+                <Landing />
+              )}
             </Route>
             <Route path="/team">
-              {() => {
-                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
-                  return <TeamPage />;
-                } else if (hasRole(user as any, 'field_agent')) {
-                  return <AgentDashboard />;
-                } else {
-                  return <Landing />;
-                }
-              }}
+              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
+                <TeamPage />
+              ) : hasRole(user as any, 'field_agent') ? (
+                <AgentDashboard />
+              ) : (
+                <Landing />
+              )}
             </Route>
             <Route path="/onboarding">
-              {() => {
-                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
-                  return <Onboarding />;
-                } else if (hasRole(user as any, 'field_agent')) {
-                  return <AgentDashboard />;
-                } else {
-                  return <Landing />;
-                }
-              }}
+              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
+                <Onboarding />
+              ) : hasRole(user as any, 'field_agent') ? (
+                <AgentDashboard />
+              ) : (
+                <Landing />
+              )}
             </Route>
             <Route path="/work-orders">
-              {isAuthenticated && <WorkOrders />}
-              {!isAuthenticated && <Landing />}
+              {isAuthenticated ? <WorkOrders /> : <Landing />}
             </Route>
             <Route path="/messages">
-              {isAuthenticated && <Messages />}
-              {!isAuthenticated && <Landing />}
+              {isAuthenticated ? <Messages /> : <Landing />}
             </Route>
             <Route path="/calendar">
-              {isAuthenticated && <Calendar />}
-              {!isAuthenticated && <Landing />}
+              {isAuthenticated ? <Calendar /> : <Landing />}
             </Route>
         </>
       )}
