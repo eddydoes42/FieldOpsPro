@@ -207,6 +207,11 @@ export default function WorkOrders() {
 
   // Alias for easier reference
   const tasksData = allWorkOrderTasks;
+  
+  // Get current work order data (fresh from query) for the dialog
+  const currentSelectedWorkOrder = selectedWorkOrder 
+    ? workOrders?.find(wo => wo.id === selectedWorkOrder.id) || selectedWorkOrder
+    : null;
 
   // Status update mutation
   const updateStatusMutation = useMutation({
@@ -1898,7 +1903,7 @@ export default function WorkOrders() {
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-center text-xl font-semibold mb-4">
-                {selectedWorkOrder?.title}
+                {currentSelectedWorkOrder?.title}
               </DialogTitle>
               <div className="flex justify-center gap-3 mb-6">
                 <Button 
@@ -1922,7 +1927,7 @@ export default function WorkOrders() {
                 )}
               </div>
             </DialogHeader>
-            {selectedWorkOrder && (
+            {currentSelectedWorkOrder && (
               <div className="space-y-6">
                 {/* Work Order Information */}
                 <Card>
@@ -1931,35 +1936,35 @@ export default function WorkOrders() {
                       <div>
                         <Label className="font-semibold">Status</Label>
                         <div className="mt-1 flex items-center gap-3">
-                          <Badge className={getStatusColor(selectedWorkOrder.status)}>
-                            {selectedWorkOrder.status.replace('_', ' ').toUpperCase()}
+                          <Badge className={getStatusColor(currentSelectedWorkOrder.status)}>
+                            {currentSelectedWorkOrder.status.replace('_', ' ').toUpperCase()}
                           </Badge>
-                          {(((user as any)?.role === 'field_agent' && selectedWorkOrder.assigneeId === (user as any)?.id) || 
+                          {(((user as any)?.role === 'field_agent' && currentSelectedWorkOrder.assigneeId === (user as any)?.id) || 
                            (user as any)?.role === 'administrator' || 
                            (user as any)?.role === 'manager') && (
-                            confirmStatusUpdate(selectedWorkOrder) ? (
+                            confirmStatusUpdate(currentSelectedWorkOrder) ? (
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
-                                    disabled={isStatusButtonDisabled(selectedWorkOrder) || updateStatusMutation.isPending}
+                                    disabled={isStatusButtonDisabled(currentSelectedWorkOrder) || updateStatusMutation.isPending}
                                     size="sm"
                                     variant="outline"
                                     className="text-xs"
                                   >
-                                    {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(selectedWorkOrder)}
+                                    {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(currentSelectedWorkOrder)}
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      {confirmStatusUpdate(selectedWorkOrder)}
+                                      {confirmStatusUpdate(currentSelectedWorkOrder)}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
-                                      onClick={() => handleStatusUpdate(selectedWorkOrder.id, getNextStatus(selectedWorkOrder))}
+                                      onClick={() => handleStatusUpdate(currentSelectedWorkOrder.id, getNextStatus(currentSelectedWorkOrder))}
                                     >
                                       Confirm
                                     </AlertDialogAction>
@@ -1968,13 +1973,13 @@ export default function WorkOrders() {
                               </AlertDialog>
                             ) : (
                               <Button
-                                onClick={() => handleStatusUpdate(selectedWorkOrder.id, getNextStatus(selectedWorkOrder))}
-                                disabled={isStatusButtonDisabled(selectedWorkOrder) || updateStatusMutation.isPending}
+                                onClick={() => handleStatusUpdate(currentSelectedWorkOrder.id, getNextStatus(currentSelectedWorkOrder))}
+                                disabled={isStatusButtonDisabled(currentSelectedWorkOrder) || updateStatusMutation.isPending}
                                 size="sm"
                                 variant="outline"
                                 className="text-xs"
                               >
-                                {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(selectedWorkOrder)}
+                                {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(currentSelectedWorkOrder)}
                               </Button>
                             )
                           )}
@@ -1983,24 +1988,24 @@ export default function WorkOrders() {
                       <div>
                         <Label className="font-semibold">Priority</Label>
                         <div className="mt-1">
-                          <Badge className={getPriorityColor(selectedWorkOrder.priority)}>
-                            {selectedWorkOrder.priority.toUpperCase()}
+                          <Badge className={getPriorityColor(currentSelectedWorkOrder.priority)}>
+                            {currentSelectedWorkOrder.priority.toUpperCase()}
                           </Badge>
                         </div>
                       </div>
                       <div>
                         <Label className="font-semibold">Assigned To</Label>
-                        <p className="text-foreground">{getAgentName(selectedWorkOrder.assigneeId)}</p>
+                        <p className="text-foreground">{getAgentName(currentSelectedWorkOrder.assigneeId)}</p>
                       </div>
                       <div>
                         <Label className="font-semibold">Estimated Hours</Label>
-                        <p className="text-foreground">{selectedWorkOrder.estimatedHours ? `${selectedWorkOrder.estimatedHours}h` : 'N/A'}</p>
+                        <p className="text-foreground">{currentSelectedWorkOrder.estimatedHours ? `${currentSelectedWorkOrder.estimatedHours}h` : 'N/A'}</p>
                       </div>
                       <div>
                         <Label className="font-semibold">Due Date</Label>
                         <p className="text-foreground">
-                          {selectedWorkOrder.dueDate 
-                            ? new Date(selectedWorkOrder.dueDate).toLocaleDateString()
+                          {currentSelectedWorkOrder.dueDate 
+                            ? new Date(currentSelectedWorkOrder.dueDate).toLocaleDateString()
                             : 'No due date'
                           }
                         </p>
@@ -2008,7 +2013,7 @@ export default function WorkOrders() {
                     </div>
                     <div>
                       <Label className="font-semibold">Description</Label>
-                      <p className="text-foreground mt-1">{selectedWorkOrder.description}</p>
+                      <p className="text-foreground mt-1">{currentSelectedWorkOrder.description}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -2021,22 +2026,22 @@ export default function WorkOrders() {
                   <CardContent className="space-y-4">
                     <div>
                       <Label className="font-semibold">Scope of Work</Label>
-                      <p className="text-foreground mt-1">{selectedWorkOrder.scopeOfWork || 'Not specified'}</p>
+                      <p className="text-foreground mt-1">{currentSelectedWorkOrder.scopeOfWork || 'Not specified'}</p>
                     </div>
                     <div>
                       <Label className="font-semibold">Required Tools</Label>
-                      <p className="text-foreground mt-1">{selectedWorkOrder.requiredTools || 'Not specified'}</p>
+                      <p className="text-foreground mt-1">{currentSelectedWorkOrder.requiredTools || 'Not specified'}</p>
                     </div>
                     <div>
                       <Label className="font-semibold">Point of Contact</Label>
-                      <p className="text-foreground mt-1">{selectedWorkOrder.pointOfContact || 'Not specified'}</p>
+                      <p className="text-foreground mt-1">{currentSelectedWorkOrder.pointOfContact || 'Not specified'}</p>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Tasks Section */}
                 <WorkOrderTasks 
-                  workOrderId={selectedWorkOrder.id} 
+                  workOrderId={currentSelectedWorkOrder.id} 
                   userRole={(user as any)?.role} 
                 />
               </div>
@@ -2102,7 +2107,7 @@ export default function WorkOrders() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirm Issue Creation</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to create this issue for "{selectedWorkOrder?.title}"? 
+                        Are you sure you want to create this issue for "{currentSelectedWorkOrder?.title}"? 
                         <br /><br />
                         <strong>Issue Reason:</strong> {newIssue.reason}
                         <br />
