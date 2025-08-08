@@ -56,6 +56,14 @@ The application is fully operational with comprehensive demo data and modern dar
 - ✓ **Dark theme implementation** with professional blue-grey color scheme across all components
 - ✓ Enhanced manager dashboard with priority tasks (high-priority work orders) and active issues sections
 - ✓ **Clean Dashboard Interface**: Removed quick action icons from top of dashboard pages and navigation header while preserving floating action button at bottom right
+- ✓ **Comprehensive Calendar System**: Full-featured work order calendar with role-based access and advanced filtering
+  - **Automatic Population**: Work orders automatically appear on calendar based on their due dates
+  - **Role-based Views**: Administrators, managers, and dispatchers see all work orders; field agents see only assigned orders
+  - **Advanced Filtering**: Filter by agent, status, and priority (available to management roles)
+  - **Visual Calendar Grid**: Monthly view with color-coded priority indicators and work order previews
+  - **Detailed Work Order Dialog**: Click any work order for full details and quick navigation to work orders page
+  - **Navigation Integration**: Calendar accessible from main navigation and quick action menu for all user roles
+  - **Responsive Design**: Optimized calendar interface with proper date selection and work order display
 
 ## User Preferences
 

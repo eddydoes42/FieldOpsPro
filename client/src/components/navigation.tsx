@@ -60,6 +60,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
             { path: '/settings', label: 'Settings', icon: 'fas fa-cog' },
           ]
@@ -71,6 +72,7 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/onboarding', label: 'Onboarding', icon: 'fas fa-user-plus' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports/team', label: 'Team Reports', icon: 'fas fa-chart-bar' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
@@ -82,6 +84,7 @@ export default function Navigation({ userRole }: NavigationProps) {
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/work-orders', label: 'My Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/calendar', label: 'My Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/time-tracking', label: 'Time Tracking', icon: 'fas fa-clock' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]

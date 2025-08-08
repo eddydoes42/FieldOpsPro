@@ -13,6 +13,7 @@ import TeamPage from "@/pages/team";
 import Onboarding from "@/pages/onboarding";
 import WorkOrders from "@/pages/work-orders";
 import Messages from "@/pages/messages";
+import Calendar from "@/pages/calendar";
 import NotFound from "@/pages/not-found";
 import FloatingQuickAction from "@/components/floating-quick-action";
 
@@ -66,6 +67,10 @@ function Router() {
             </Route>
             <Route path="/messages">
               {isAuthenticated && <Messages />}
+              {!isAuthenticated && <Landing />}
+            </Route>
+            <Route path="/calendar">
+              {isAuthenticated && <Calendar />}
               {!isAuthenticated && <Landing />}
             </Route>
         </>

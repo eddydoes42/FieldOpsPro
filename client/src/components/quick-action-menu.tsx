@@ -12,7 +12,8 @@ import {
   X,
   Users,
   ClipboardList,
-  Zap
+  Zap,
+  Calendar as CalendarIcon
 } from "lucide-react";
 
 interface QuickActionMenuProps {
@@ -81,6 +82,9 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
         break;
       case 'view-work-orders':
         setLocation('/work-orders');
+        break;
+      case 'view-calendar':
+        setLocation('/calendar');
         break;
     }
   };
@@ -196,6 +200,15 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
               >
                 <ClipboardList className="h-4 w-4 text-blue-500" />
                 <span>All Work Orders</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 h-9 text-sm"
+                onClick={() => handleAction('view-calendar')}
+              >
+                <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                <span>Calendar View</span>
               </Button>
             </div>
           </div>
