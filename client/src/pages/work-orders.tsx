@@ -205,8 +205,66 @@ export default function WorkOrders() {
     retry: false,
   });
 
+  // Query to fetch time entries for all work orders
+  const { data: allTimeEntries } = useQuery<{ [workOrderId: string]: any[] }>({
+    queryKey: ["/api/work-orders/time-entries/all"],
+    queryFn: async () => {
+      if (!workOrders) return {};
+      
+      const timeData: { [workOrderId: string]: any[] } = {};
+      
+      // Fetch time entries for each work order
+      for (const workOrder of workOrders) {
+        try {
+          const response = await fetch(`/api/work-orders/${workOrder.id}/time-entries`);
+          if (response.ok) {
+            timeData[workOrder.id] = await response.json();
+          } else {
+            timeData[workOrder.id] = [];
+          }
+        } catch (error) {
+          timeData[workOrder.id] = [];
+        }
+      }
+      
+      return timeData;
+    },
+    enabled: !!workOrders && workOrders.length > 0,
+    retry: false,
+  });
+
   // Alias for easier reference
   const tasksData = allWorkOrderTasks;
+
+  // Calculate total logged time for a work order
+  const calculateLoggedTime = (workOrderId: string): string => {
+    const timeEntries = allTimeEntries?.[workOrderId] || [];
+    if (timeEntries.length === 0) return "0h 0m";
+    
+    let totalMinutes = 0;
+    
+    timeEntries.forEach((entry: any) => {
+      if (entry.startTime) {
+        const startTime = new Date(entry.startTime);
+        const endTime = entry.endTime ? new Date(entry.endTime) : new Date();
+        const durationMs = endTime.getTime() - startTime.getTime();
+        totalMinutes += Math.floor(durationMs / (1000 * 60));
+      }
+    });
+    
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours === 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  };
+
+  // Check if there's an active time entry for a work order
+  const hasActiveTimeEntry = (workOrderId: string): boolean => {
+    const timeEntries = allTimeEntries?.[workOrderId] || [];
+    return timeEntries.some((entry: any) => entry.isActive);
+  };
   
   // Get current work order data (fresh from query) for the dialog
   const currentSelectedWorkOrder = selectedWorkOrder 
@@ -220,6 +278,7 @@ export default function WorkOrders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders/time-entries/all"] });
       toast({
         title: "Status Updated",
         description: "Work order status has been updated successfully!",
@@ -1579,6 +1638,37 @@ export default function WorkOrders() {
                           {order.estimatedHours ? `${order.estimatedHours}h` : 'Not specified'}
                         </p>
                       </div>
+                    </div>
+
+                    {/* Time Tracking Information */}
+                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <i className="fas fa-stopwatch text-blue-600 dark:text-blue-400 mr-2"></i>
+                          <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Time Logged:</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                            {calculateLoggedTime(order.id)}
+                          </span>
+                          {hasActiveTimeEntry(order.id) && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-700">
+                              <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+                              Active
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {(order as any).checkedInAt && (
+                        <div className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+                          <div className="flex items-center justify-between">
+                            <span>Check-in: {new Date((order as any).checkedInAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                            {(order as any).checkedOutAt && (
+                              <span>Check-out: {new Date((order as any).checkedOutAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {(order.scopeOfWork || order.requiredTools) && (

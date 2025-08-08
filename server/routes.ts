@@ -821,6 +821,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Time tracking routes
+  app.get('/api/work-orders/:workOrderId/time-entries', isAuthenticated, async (req: any, res) => {
+    try {
+      const { workOrderId } = req.params;
+      const timeEntries = await storage.getTimeEntriesByWorkOrder(workOrderId);
+      res.json(timeEntries);
+    } catch (error) {
+      console.error("Error fetching time entries:", error);
+      res.status(500).json({ message: "Failed to fetch time entries" });
+    }
+  });
+
+  app.get('/api/users/:userId/time-entries', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      const { userId } = req.params;
+      
+      // Users can only view their own time entries unless they're admins/managers
+      if (currentUser?.id !== userId && currentUser?.role !== 'administrator' && currentUser?.role !== 'manager') {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+      
+      const timeEntries = await storage.getTimeEntriesByUser(userId);
+      res.json(timeEntries);
+    } catch (error) {
+      console.error("Error fetching user time entries:", error);
+      res.status(500).json({ message: "Failed to fetch time entries" });
+    }
+  });
+
   // Work Order Issues Management
   app.get("/api/work-orders/:workOrderId/issues", isAuthenticated, async (req: any, res) => {
     try {
