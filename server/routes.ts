@@ -526,7 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/work-orders/:id', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!canManageUsers(currentUser)) {
+      if (!canManageUsers(currentUser || null)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
@@ -713,14 +713,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!isAdmin(currentUser)) {
+      if (!isAdmin(currentUser || null)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
       const [allUsers, allWorkOrders, allTimeEntries] = await Promise.all([
         storage.getAllUsers(),
         storage.getAllWorkOrders(),
-        storage.getTimeEntriesByUser(currentUser.id),
+        storage.getTimeEntriesByUser(currentUser?.id || ''),
       ]);
 
       const stats = {
@@ -744,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/work-orders/:workOrderId/tasks', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!canManageUsers(currentUser)) {
+      if (!canManageUsers(currentUser || null)) {
         return res.status(403).json({ message: "Only administrators and managers can create tasks" });
       }
 
@@ -873,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       
       // Users can only view their own time entries unless they're admins/managers
-      if (currentUser?.id !== userId && !canManageUsers(currentUser)) {
+      if (currentUser?.id !== userId && !canManageUsers(currentUser || null)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
       
@@ -980,7 +980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/work-orders/:workOrderId/budget", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!canManageUsers(currentUser)) {
+      if (!canManageUsers(currentUser || null)) {
         return res.status(403).json({ message: "Only managers and administrators can create work order budgets" });
       }
 
@@ -1005,7 +1005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         budgetType,
         budgetAmount: budgetAmount.toString(),
         devicesInstalled: budgetType === 'per_device' ? devicesInstalled : null,
-        budgetCreatedById: currentUser.id,
+        budgetCreatedById: currentUser?.id || '',
         budgetCreatedAt: new Date(),
       };
 
@@ -1020,7 +1020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/work-orders/:workOrderId/budget", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!canManageUsers(currentUser)) {
+      if (!canManageUsers(currentUser || null)) {
         return res.status(403).json({ message: "Only managers and administrators can update work order budgets" });
       }
 
@@ -1045,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         budgetType,
         budgetAmount: budgetAmount.toString(),
         devicesInstalled: budgetType === 'per_device' ? devicesInstalled : null,
-        budgetCreatedById: currentUser.id,
+        budgetCreatedById: currentUser?.id || '',
         budgetCreatedAt: new Date(),
       };
 
