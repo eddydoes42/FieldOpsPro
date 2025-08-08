@@ -37,30 +37,61 @@ function Router() {
         ) : (
           <>
             <Route path="/">
-              {hasRole(user as any, 'administrator') && <AdminDashboard />}
-              {hasRole(user as any, 'manager') && !hasRole(user as any, 'administrator') && <ManagerDashboard />}
-              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
-              {!(user as any)?.roles?.length && <Landing />}
+              {() => {
+                if (hasRole(user as any, 'administrator')) {
+                  return <AdminDashboard />;
+                } else if (hasRole(user as any, 'manager')) {
+                  return <ManagerDashboard />;
+                } else if (hasRole(user as any, 'field_agent')) {
+                  return <AgentDashboard />;
+                } else {
+                  return <Landing />;
+                }
+              }}
             </Route>
             <Route path="/reports">
-              {hasAnyRole(user as any, ['administrator', 'manager']) && <TeamReports />}
-              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
-              {!(user as any)?.roles?.length && <Landing />}
+              {() => {
+                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
+                  return <TeamReports />;
+                } else if (hasRole(user as any, 'field_agent')) {
+                  return <AgentDashboard />;
+                } else {
+                  return <Landing />;
+                }
+              }}
             </Route>
             <Route path="/reports/team">
-              {hasAnyRole(user as any, ['administrator', 'manager']) && <TeamReports />}
-              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
-              {!(user as any)?.roles?.length && <Landing />}
+              {() => {
+                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
+                  return <TeamReports />;
+                } else if (hasRole(user as any, 'field_agent')) {
+                  return <AgentDashboard />;
+                } else {
+                  return <Landing />;
+                }
+              }}
             </Route>
             <Route path="/team">
-              {hasAnyRole(user as any, ['administrator', 'manager']) && <TeamPage />}
-              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
-              {!(user as any)?.roles?.length && <Landing />}
+              {() => {
+                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
+                  return <TeamPage />;
+                } else if (hasRole(user as any, 'field_agent')) {
+                  return <AgentDashboard />;
+                } else {
+                  return <Landing />;
+                }
+              }}
             </Route>
             <Route path="/onboarding">
-              {hasAnyRole(user as any, ['administrator', 'manager']) && <Onboarding />}
-              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
-              {!(user as any)?.roles?.length && <Landing />}
+              {() => {
+                if (hasAnyRole(user as any, ['administrator', 'manager'])) {
+                  return <Onboarding />;
+                } else if (hasRole(user as any, 'field_agent')) {
+                  return <AgentDashboard />;
+                } else {
+                  return <Landing />;
+                }
+              }}
             </Route>
             <Route path="/work-orders">
               {isAuthenticated && <WorkOrders />}
