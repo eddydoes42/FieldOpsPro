@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { isAdmin } from "../../../shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { useEffect } from "react";
@@ -271,7 +272,9 @@ export default function Onboarding() {
                       { value: 'field_agent', label: 'Field Agent' },
                       { value: 'manager', label: 'Manager' },
                       { value: 'dispatcher', label: 'Dispatcher' },
-                      { value: 'administrator', label: 'Administrator' }
+                      { value: 'administrator', label: 'Administrator' },
+                      // Only show client role to administrators
+                      ...(isAdmin(user) ? [{ value: 'client', label: 'Client' }] : [])
                     ].map((role) => (
                       <div key={role.value} className="flex items-center space-x-2">
                         <input
