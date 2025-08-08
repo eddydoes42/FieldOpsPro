@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { hasRole } from "../../../shared/schema";
 import Navigation from "@/components/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
-    enabled: !!user && (user as any).role === 'administrator',
+    enabled: !!user && hasRole(user as any, 'administrator'),
   });
 
   const { data: workOrders, isLoading: workOrdersLoading } = useQuery({
@@ -89,7 +90,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if ((user as any).role !== 'administrator') {
+  if (!hasRole(user as any, 'administrator')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">

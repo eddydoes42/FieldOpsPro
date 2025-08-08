@@ -20,6 +20,8 @@ import FloatingQuickAction from "@/components/floating-quick-action";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  
+
 
   if (isLoading) {
     return (
