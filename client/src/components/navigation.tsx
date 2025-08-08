@@ -9,7 +9,7 @@ import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
 import { Zap } from "lucide-react";
 
 interface NavigationProps {
-  userRole: string;
+  userRole: string | string[];
 }
 
 export default function Navigation({ userRole }: NavigationProps) {
@@ -52,10 +52,21 @@ export default function Navigation({ userRole }: NavigationProps) {
   }, []);
 
   const getRoleConfig = () => {
-    switch (userRole) {
+    // Handle multiple roles by prioritizing highest privilege role
+    const roles = Array.isArray(userRole) ? userRole : [userRole];
+    const priorityRole = roles.includes('administrator') ? 'administrator' :
+                        roles.includes('manager') ? 'manager' :
+                        roles.includes('dispatcher') ? 'dispatcher' : 'field_agent';
+
+    // Create combined role badge for multiple roles
+    const roleDisplay = roles.length > 1 ? 
+      `${priorityRole === 'administrator' ? 'Admin' : priorityRole === 'manager' ? 'Manager' : priorityRole === 'dispatcher' ? 'Dispatcher' : 'Agent'} +${roles.length - 1}` :
+      priorityRole;
+
+    switch (priorityRole) {
       case 'administrator':
         return {
-          badge: { text: 'Administrator', icon: 'fas fa-crown', color: 'bg-purple-900/30 text-purple-300 border-purple-800/50' },
+          badge: { text: roleDisplay, icon: 'fas fa-crown', color: 'bg-purple-900/30 text-purple-300 border-purple-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
@@ -67,7 +78,7 @@ export default function Navigation({ userRole }: NavigationProps) {
         };
       case 'manager':
         return {
-          badge: { text: 'Manager', icon: 'fas fa-users-cog', color: 'bg-blue-900/30 text-blue-300 border-blue-800/50' },
+          badge: { text: roleDisplay, icon: 'fas fa-users-cog', color: 'bg-blue-900/30 text-blue-300 border-blue-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/onboarding', label: 'Onboarding', icon: 'fas fa-user-plus' },
@@ -78,9 +89,19 @@ export default function Navigation({ userRole }: NavigationProps) {
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
+      case 'dispatcher':
+        return {
+          badge: { text: roleDisplay, icon: 'fas fa-headset', color: 'bg-orange-900/30 text-orange-300 border-orange-800/50' },
+          links: [
+            { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+          ]
+        };
       default:
         return {
-          badge: { text: 'FA', icon: 'fas fa-wrench', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
+          badge: { text: roleDisplay, icon: 'fas fa-wrench', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/work-orders', label: 'My Orders', icon: 'fas fa-clipboard-list' },

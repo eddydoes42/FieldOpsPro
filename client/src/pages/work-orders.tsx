@@ -779,7 +779,7 @@ export default function WorkOrders() {
   if (isLoading || ordersLoading || agentsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
-        <Navigation userRole={(user as any)?.role || 'manager'} />
+        <Navigation userRole={(user as any)?.roles || ['manager']} />
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -1187,7 +1187,7 @@ export default function WorkOrders() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navigation userRole={(user as any)?.role || 'manager'} />
+      <Navigation userRole={(user as any)?.roles || ['manager']} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Back to Dashboard Button */}
         <div className="mb-4">

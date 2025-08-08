@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema } from "@shared/schema";
+import { insertUserSchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -25,7 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || currentUser.role !== 'administrator') {
+      if (!isAdmin(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
@@ -57,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || currentUser.role !== 'administrator') {
+      if (!isAdmin(currentUser)) {
         return res.status(403).json({ message: "Only administrators can create users and assign roles" });
       }
 
@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users/onboard', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || currentUser.role !== 'administrator') {
+      if (!isAdmin(currentUser)) {
         return res.status(403).json({ message: "Only administrators can onboard users and assign roles" });
       }
 
@@ -85,7 +85,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: onboardingData.email,
         firstName: onboardingData.firstName,
         lastName: onboardingData.lastName,
-        role: onboardingData.role || 'field_agent',
+        roles: onboardingData.roles || ['field_agent'],
         phone: onboardingData.phone || null,
         profileImageUrl: null
       };
@@ -115,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/users/:id', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+      if (!canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Only administrators and managers can delete users" });
       }
 
@@ -133,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Only administrators can delete other administrators
-      if (userToDelete.role === 'administrator' && currentUser.role !== 'administrator') {
+      if (hasAnyRole(userToDelete, ['administrator']) && !isAdmin(currentUser)) {
         return res.status(403).json({ message: "Only administrators can delete other administrators" });
       }
 
@@ -155,12 +155,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Allow all authenticated users to see basic user info for messaging
       const users = await storage.getAllUsers();
       // Filter out sensitive info for non-admins
-      if (currentUser.role !== 'administrator') {
+      if (!isAdmin(currentUser)) {
         const filteredUsers = users.map(u => ({
           id: u.id,
           firstName: u.firstName,
           lastName: u.lastName,
-          role: u.role,
+          roles: u.roles,
           email: u.email
         }));
         res.json(filteredUsers);
@@ -206,44 +206,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Permission checks for different types of updates
-      const isUpdatingRole = 'role' in updateData;
+      const isUpdatingRoles = 'roles' in updateData;
       const isUpdatingStatus = 'isActive' in updateData || 'isSuspended' in updateData;
       const isUpdatingContactInfo = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'].some(field => field in updateData);
 
       // Role updates: Only administrators can change roles, and only up to their own level
-      if (isUpdatingRole) {
-        console.log(`Role update attempt: Current user (${currentUser.id}) with role "${currentUser.role}" trying to update user ${userIdToUpdate} role to "${updateData.role}"`);
-        if (currentUser.role !== 'administrator') {
+      if (isUpdatingRoles) {
+        console.log(`Role update attempt: Current user (${currentUser.id}) trying to update user ${userIdToUpdate} roles to "${updateData.roles}"`);
+        if (!isAdmin(currentUser)) {
           return res.status(403).json({ message: "Only administrators can assign roles" });
         }
         
         // Prevent elevating to administrator unless current user is administrator
-        if (updateData.role === 'administrator' && currentUser.role !== 'administrator') {
+        if (updateData.roles && updateData.roles.includes('administrator') && !isAdmin(currentUser)) {
           return res.status(403).json({ message: "Cannot promote users to administrator" });
         }
       }
 
       // Status updates: Administrators and managers can update status
       if (isUpdatingStatus) {
-        if (currentUser.role !== 'administrator' && currentUser.role !== 'manager') {
+        if (!canManageUsers(currentUser)) {
           return res.status(403).json({ message: "Only administrators and managers can update user status" });
         }
       }
 
       // Contact info updates: Administrators and managers can update any user, users can update themselves
       if (isUpdatingContactInfo) {
-        const canUpdateContactInfo = currentUser.role === 'administrator' || 
-                                   currentUser.role === 'manager' || 
-                                   currentUser.id === userIdToUpdate;
+        const canUpdateContactInfo = canManageUsers(currentUser) || currentUser.id === userIdToUpdate;
         
         if (!canUpdateContactInfo) {
           return res.status(403).json({ message: "Insufficient permissions to update contact information" });
         }
       }
 
-      // Prevent users from updating their own role or status (except contact info)
-      if (currentUser.id === userIdToUpdate && (isUpdatingRole || isUpdatingStatus)) {
-        return res.status(403).json({ message: "Cannot modify your own role or status" });
+      // Prevent users from updating their own roles or status (except contact info)
+      if (currentUser.id === userIdToUpdate && (isUpdatingRoles || isUpdatingStatus)) {
+        return res.status(403).json({ message: "Cannot modify your own roles or status" });
       }
 
       // Update the user
@@ -274,10 +272,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check authorization for work order confirmation
-      const canConfirm = (currentUser.role === 'field_agent' && workOrder.assigneeId === userId) ||
-                         currentUser.role === 'administrator' || 
-                         currentUser.role === 'manager' ||
-                         currentUser.role === 'dispatcher';
+      const canConfirm = (hasAnyRole(currentUser, ['field_agent']) && workOrder.assigneeId === userId) ||
+                         canManageWorkOrders(currentUser);
       
       if (!canConfirm) {
         return res.status(403).json({ message: "Only assigned field agents, administrators, managers, or dispatchers can confirm work orders" });
@@ -321,10 +317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user is assigned to this work order or has management privileges
-      const canUpdate = currentUser.role === 'administrator' || 
-                       currentUser.role === 'manager' || 
-                       currentUser.role === 'dispatcher' ||
-                       workOrder.assigneeId === userId;
+      const canUpdate = canManageWorkOrders(currentUser) || workOrder.assigneeId === userId;
       
       if (!canUpdate) {
         return res.status(403).json({ message: "Not authorized to update this work order" });
@@ -368,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/work-orders', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+      if (!canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
@@ -400,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/work-orders/:id', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+      if (!canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
@@ -434,10 +427,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let workOrders;
-      if (currentUser.role === 'administrator') {
+      if (canViewAllOrders(currentUser)) {
         workOrders = await storage.getAllWorkOrders();
-      } else if (currentUser.role === 'manager') {
-        workOrders = await storage.getWorkOrdersByCreator(currentUser.id);
       } else {
         workOrders = await storage.getWorkOrdersByAssignee(currentUser.id);
       }
@@ -470,7 +461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check permissions
-      const canUpdate = currentUser?.role === 'administrator' || 
+      const canUpdate = isAdmin(currentUser) || 
                        workOrder.createdById === currentUser?.id || 
                        workOrder.assigneeId === currentUser?.id;
 
@@ -491,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/work-orders/:id/payment-status', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || currentUser.role !== 'administrator') {
+      if (!isAdmin(currentUser)) {
         return res.status(403).json({ message: "Only administrators can update payment status" });
       }
 
@@ -532,7 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/work-orders/:id', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+      if (!canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
@@ -719,7 +710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || currentUser.role !== 'administrator') {
+      if (!isAdmin(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
@@ -734,9 +725,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeOrders: allWorkOrders.filter(order => order.status === 'in_progress' || order.status === 'confirmed' || order.status === 'scheduled').length,
         completedOrders: allWorkOrders.filter(order => order.status === 'completed').length,
         totalOrders: allWorkOrders.length,
-        adminCount: allUsers.filter(user => user.role === 'administrator').length,
-        managerCount: allUsers.filter(user => user.role === 'manager').length,
-        agentCount: allUsers.filter(user => user.role === 'field_agent').length,
+        adminCount: allUsers.filter(user => hasAnyRole(user, ['administrator'])).length,
+        managerCount: allUsers.filter(user => hasAnyRole(user, ['manager'])).length,
+        agentCount: allUsers.filter(user => hasAnyRole(user, ['field_agent'])).length,
       };
 
       res.json(stats);
@@ -750,7 +741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/work-orders/:workOrderId/tasks', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+      if (!canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Only administrators and managers can create tasks" });
       }
 
@@ -791,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Allow assigned agent or managers to mark tasks complete
-      if (currentUser.role !== 'administrator' && currentUser.role !== 'manager') {
+      if (!canManageUsers(currentUser)) {
         // Check if user is assigned to the work order
         const workOrder = await storage.getWorkOrder(task.workOrderId);
         if (!workOrder || workOrder.assigneeId !== currentUser.id) {
@@ -827,9 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check permissions: admins/managers can update any task, field agents can only update tasks for their assigned work orders
-      const canUpdate = currentUser.role === 'administrator' || 
-                       currentUser.role === 'manager' || 
-                       workOrder.assigneeId === currentUser.id;
+      const canUpdate = canManageUsers(currentUser) || workOrder.assigneeId === currentUser.id;
 
       if (!canUpdate) {
         return res.status(403).json({ message: "Not authorized to update this task" });
@@ -838,7 +827,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
       
       // If it's a completion update by a field agent, add completedById
-      if (updates.isCompleted && currentUser.role === 'field_agent') {
+      if (updates.isCompleted && hasAnyRole(currentUser, ['field_agent'])) {
         updates.completedById = currentUser.id;
         updates.completedAt = new Date();
       }
@@ -881,7 +870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       
       // Users can only view their own time entries unless they're admins/managers
-      if (currentUser?.id !== userId && currentUser?.role !== 'administrator' && currentUser?.role !== 'manager') {
+      if (currentUser?.id !== userId && !canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
       
@@ -988,7 +977,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/work-orders/:workOrderId/budget", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'manager' && currentUser.role !== 'administrator')) {
+      if (!canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Only managers and administrators can create work order budgets" });
       }
 
@@ -1028,7 +1017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/work-orders/:workOrderId/budget", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'manager' && currentUser.role !== 'administrator')) {
+      if (!canManageUsers(currentUser)) {
         return res.status(403).json({ message: "Only managers and administrators can update work order budgets" });
       }
 

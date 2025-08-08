@@ -138,7 +138,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.role, role));
+    return await db.select().from(users).where(sql`${role} = ANY(${users.roles})`);
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -368,13 +368,13 @@ export class DatabaseStorage implements IStorage {
     const activeOrders = activeOrdersResult[0]?.count || 0;
 
     // Get user role counts
-    const adminCountResult = await db.select({ count: count() }).from(users).where(eq(users.role, 'administrator'));
+    const adminCountResult = await db.select({ count: count() }).from(users).where(sql`'administrator' = ANY(${users.roles})`);
     const adminCount = adminCountResult[0]?.count || 0;
 
-    const managerCountResult = await db.select({ count: count() }).from(users).where(eq(users.role, 'manager'));
+    const managerCountResult = await db.select({ count: count() }).from(users).where(sql`'manager' = ANY(${users.roles})`);
     const managerCount = managerCountResult[0]?.count || 0;
 
-    const agentCountResult = await db.select({ count: count() }).from(users).where(eq(users.role, 'field_agent'));
+    const agentCountResult = await db.select({ count: count() }).from(users).where(sql`'field_agent' = ANY(${users.roles})`);
     const agentCount = agentCountResult[0]?.count || 0;
 
     return {
@@ -402,7 +402,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(workOrders, eq(users.id, workOrders.assigneeId))
-      .where(eq(users.role, 'field_agent'))
+      .where(sql`'field_agent' = ANY(${users.roles})`)
       .groupBy(users.id, users.firstName, users.lastName, users.email);
 
     // Work Order Statistics by Status
@@ -438,7 +438,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(workOrders, eq(users.id, workOrders.assigneeId))
-      .where(eq(users.role, 'field_agent'))
+      .where(sql`'field_agent' = ANY(${users.roles})`)
       .groupBy(users.id, users.firstName, users.lastName);
 
     // Monthly Trends (last 6 months)

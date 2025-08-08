@@ -19,7 +19,7 @@ interface OnboardingFormData {
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
+  roles: string[];
   department: string;
   phone: string;
   emergencyContact: string;
@@ -44,7 +44,7 @@ export default function Onboarding() {
     firstName: "",
     lastName: "",
     email: "",
-    role: "field_agent",
+    roles: ["field_agent"],
     department: "",
     phone: "",
     emergencyContact: "",
@@ -90,7 +90,7 @@ export default function Onboarding() {
         firstName: "",
         lastName: "",
         email: "",
-        role: "field_agent",
+        roles: ["field_agent"],
         department: "",
         phone: "",
         emergencyContact: "",
@@ -127,7 +127,7 @@ export default function Onboarding() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
-        <Navigation userRole={(user as any)?.role || 'manager'} />
+        <Navigation userRole={(user as any)?.roles || ['manager']} />
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
@@ -262,20 +262,36 @@ export default function Onboarding() {
                 </div>
               </div>
 
-              {/* Role and Department */}
+              {/* Roles and Department */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="field_agent">Field Agent</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="administrator">Administrator</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="roles">Roles *</Label>
+                  <div className="space-y-2 border rounded-md p-3">
+                    {[
+                      { value: 'field_agent', label: 'Field Agent' },
+                      { value: 'manager', label: 'Manager' },
+                      { value: 'dispatcher', label: 'Dispatcher' },
+                      { value: 'administrator', label: 'Administrator' }
+                    ].map((role) => (
+                      <div key={role.value} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`role-${role.value}`}
+                          checked={formData.roles.includes(role.value)}
+                          onChange={(e) => {
+                            const newRoles = e.target.checked
+                              ? [...formData.roles, role.value]
+                              : formData.roles.filter(r => r !== role.value);
+                            setFormData(prev => ({ ...prev, roles: newRoles }));
+                          }}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <Label htmlFor={`role-${role.value}`} className="text-sm font-normal">
+                          {role.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Department</Label>
@@ -430,7 +446,7 @@ export default function Onboarding() {
                     firstName: "",
                     lastName: "",
                     email: "",
-                    role: "field_agent",
+                    roles: ["field_agent"],
                     department: "",
                     phone: "",
                     emergencyContact: "",

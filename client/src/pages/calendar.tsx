@@ -152,7 +152,7 @@ export default function Calendar() {
   if (ordersLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation userRole={userRole} />
+        <Navigation userRole={Array.isArray(userRole) ? userRole : [userRole]} />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Loading calendar...</div>
         </div>
@@ -162,7 +162,7 @@ export default function Calendar() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation userRole={userRole} />
+      <Navigation userRole={Array.isArray(userRole) ? userRole : [userRole]} />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

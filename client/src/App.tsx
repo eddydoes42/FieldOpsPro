@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { hasRole, hasAnyRole } from "../../shared/schema";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
 import ManagerDashboard from "@/pages/manager-dashboard";
@@ -36,30 +37,30 @@ function Router() {
         ) : (
           <>
             <Route path="/">
-              {(user as any)?.role === 'administrator' && <AdminDashboard />}
-              {(user as any)?.role === 'manager' && <ManagerDashboard />}
-              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-              {!(user as any)?.role && <Landing />}
+              {hasRole(user as any, 'administrator') && <AdminDashboard />}
+              {hasRole(user as any, 'manager') && !hasRole(user as any, 'administrator') && <ManagerDashboard />}
+              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
+              {!(user as any)?.roles?.length && <Landing />}
             </Route>
             <Route path="/reports">
-              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
-              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-              {!(user as any)?.role && <Landing />}
+              {hasAnyRole(user as any, ['administrator', 'manager']) && <TeamReports />}
+              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
+              {!(user as any)?.roles?.length && <Landing />}
             </Route>
             <Route path="/reports/team">
-              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
-              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-              {!(user as any)?.role && <Landing />}
+              {hasAnyRole(user as any, ['administrator', 'manager']) && <TeamReports />}
+              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
+              {!(user as any)?.roles?.length && <Landing />}
             </Route>
             <Route path="/team">
-              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamPage />}
-              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-              {!(user as any)?.role && <Landing />}
+              {hasAnyRole(user as any, ['administrator', 'manager']) && <TeamPage />}
+              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
+              {!(user as any)?.roles?.length && <Landing />}
             </Route>
             <Route path="/onboarding">
-              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <Onboarding />}
-              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-              {!(user as any)?.role && <Landing />}
+              {hasAnyRole(user as any, ['administrator', 'manager']) && <Onboarding />}
+              {hasRole(user as any, 'field_agent') && !hasAnyRole(user as any, ['administrator', 'manager']) && <AgentDashboard />}
+              {!(user as any)?.roles?.length && <Landing />}
             </Route>
             <Route path="/work-orders">
               {isAuthenticated && <WorkOrders />}

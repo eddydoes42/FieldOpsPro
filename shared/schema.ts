@@ -36,7 +36,7 @@ export const users = pgTable("users", {
   city: varchar("city"),
   state: varchar("state"),
   zipCode: varchar("zip_code"),
-  role: varchar("role").notNull().default("field_agent"), // administrator, manager, field_agent
+  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: administrator, manager, dispatcher, field_agent
   profileImageUrl: varchar("profile_image_url"),
   // Manual login credentials for non-OAuth users
   username: varchar("username").unique(),
@@ -252,11 +252,17 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+// Role validation schema
+export const rolesSchema = z.array(z.enum(['administrator', 'manager', 'dispatcher', 'field_agent'])).min(1);
+
 // Schemas
-export const insertUserSchema = createInsertSchema(users).omit({
+export const insertUserSchema = createInsertSchema(users, {
+  roles: rolesSchema,
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  lastLoginAt: true,
 });
 
 export const insertWorkOrderSchema = createInsertSchema(workOrders).omit({
@@ -321,3 +327,52 @@ export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+// Role utility functions
+export function hasRole(user: User | null, role: string): boolean {
+  if (!user || !user.roles) return false;
+  return user.roles.includes(role);
+}
+
+export function hasAnyRole(user: User | null, roles: string[]): boolean {
+  if (!user || !user.roles) return false;
+  return roles.some(role => user.roles.includes(role));
+}
+
+export function isAdmin(user: User | null): boolean {
+  return hasRole(user, 'administrator');
+}
+
+export function isManager(user: User | null): boolean {
+  return hasRole(user, 'manager');
+}
+
+export function isFieldAgent(user: User | null): boolean {
+  return hasRole(user, 'field_agent');
+}
+
+export function canManageUsers(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager']);
+}
+
+export function canManageWorkOrders(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
+}
+
+export function canViewBudgets(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager']);
+}
+
+export function canViewAllOrders(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
+}
+
+export function getPrimaryRole(user: User | null): string {
+  if (!user || !user.roles || user.roles.length === 0) return 'field_agent';
+  
+  // Priority order: administrator > manager > dispatcher > field_agent
+  if (user.roles.includes('administrator')) return 'administrator';
+  if (user.roles.includes('manager')) return 'manager';
+  if (user.roles.includes('dispatcher')) return 'dispatcher';
+  return 'field_agent';
+}
