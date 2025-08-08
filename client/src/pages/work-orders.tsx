@@ -477,6 +477,37 @@ export default function WorkOrders() {
     },
   });
 
+  const confirmWorkOrderMutation = useMutation({
+    mutationFn: async ({ workOrderId, status, confirmedAt }: { workOrderId: string; status: string; confirmedAt: string }) => {
+      return await apiRequest("PUT", `/api/work-orders/${workOrderId}`, { status, confirmedAt });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      toast({
+        title: "Work Order Confirmed",
+        description: "Work order has been confirmed successfully!",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to confirm work order. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -588,11 +619,12 @@ export default function WorkOrders() {
     const workOrder = workOrders?.find(wo => wo.id === workOrderId);
     if (!workOrder) return;
     
-    // Handle status confirmation for scheduled orders
+    // Handle status confirmation for scheduled orders - update main status to confirmed
     if (workOrder.status === 'scheduled' && newStatus === 'confirmed') {
-      updateStatusMutation.mutate({ 
+      confirmWorkOrderMutation.mutate({ 
         workOrderId, 
-        workStatus: 'confirmed'
+        status: 'confirmed',
+        confirmedAt: new Date().toISOString()
       });
     } else {
       // Handle work status updates for confirmed orders
@@ -622,7 +654,7 @@ export default function WorkOrders() {
     
     // Handle main status flow first
     if (status === 'scheduled') return 'Confirm Work Order';
-    if (status === 'confirmed' && workStatus === 'not_started') return 'In Route';
+    if (status === 'confirmed' && (!workStatus || workStatus === 'not_started')) return 'In Route';
     
     // Handle work status flow for confirmed orders
     switch (workStatus) {
@@ -641,7 +673,7 @@ export default function WorkOrders() {
     
     // Handle main status flow first
     if (status === 'scheduled') return 'confirmed';
-    if (status === 'confirmed' && workStatus === 'not_started') return 'in_route';
+    if (status === 'confirmed' && (!workStatus || workStatus === 'not_started')) return 'in_route';
     
     // Handle work status flow for confirmed orders
     switch (workStatus) {
