@@ -54,6 +54,10 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedRoles, setSelectedRoles] = useState<string[]>(['field_agent']);
+  
+  // Debug logging
+  console.log('UserOnboardingForm currentUser:', currentUser);
+  console.log('isAdmin(currentUser):', isAdmin(currentUser));
 
   const form = useForm({
     resolver: zodResolver(onboardingSchema),
@@ -287,9 +291,14 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                           { value: "field_agent", label: "Field Agent" },
                           { value: "manager", label: "Manager" },
                           { value: "administrator", label: "Administrator" },
+                          { value: "client", label: "Client" },
+                        ].filter((role) => {
                           // Only show client role to administrators
-                          ...(isAdmin(currentUser) ? [{ value: "client", label: "Client" }] : []),
-                        ].map((role) => (
+                          if (role.value === "client") {
+                            return isAdmin(currentUser);
+                          }
+                          return true;
+                        }).map((role) => (
                           <div key={role.value} className="flex items-center space-x-2">
                             <Checkbox
                               id={role.value}
