@@ -261,101 +261,105 @@ export default function TeamPage() {
             ) : (
               <div className="space-y-4">
                 {allUsers && (allUsers as any[]).map((userData: any) => (
-                  <div key={userData.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
+                  <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
                     <div 
-                      className="flex items-start space-x-4 min-w-0 flex-1 cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
+                      className="cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
                       onClick={() => {
                         setSelectedUser(userData);
                         setIsDialogOpen(true);
                       }}
                     >
-                      <div className="flex flex-col items-center space-y-2 flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <i className="fas fa-user text-primary"></i>
+                      <div className="flex items-start space-x-4">
+                        <div className="flex flex-col items-center space-y-2 flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <i className="fas fa-user text-primary"></i>
+                          </div>
+                          <Badge 
+                            variant="secondary" 
+                            className={`${
+                              userData.role === 'administrator' 
+                                ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
+                                : userData.role === 'manager'
+                                ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
+                                : 'bg-green-900/30 text-green-300 border-green-800/50'
+                            } text-xs flex-shrink-0`}
+                          >
+                            {userData.role === 'field_agent' ? 'FA' : 
+                             userData.role?.charAt(0).toUpperCase() + userData.role?.slice(1) || 'Unknown'}
+                          </Badge>
                         </div>
-                        <Badge 
-                          variant="secondary" 
-                          className={`${
-                            userData.role === 'administrator' 
-                              ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
-                              : userData.role === 'manager'
-                              ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
-                              : 'bg-green-900/30 text-green-300 border-green-800/50'
-                          } text-xs flex-shrink-0`}
-                        >
-                          {userData.role === 'field_agent' ? 'FA' : 
-                           userData.role?.charAt(0).toUpperCase() + userData.role?.slice(1) || 'Unknown'}
-                        </Badge>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium text-foreground truncate">
+                            {userData.firstName && userData.lastName 
+                              ? `${userData.firstName} ${userData.lastName}`
+                              : userData.email || 'Unknown User'
+                            }
+                          </h4>
+                          
+                          {/* Action buttons below user name */}
+                          <div className="flex items-center space-x-2 mt-2">
+                            {userData.id !== (user as any)?.id && userData.role !== 'administrator' && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2 py-1 text-xs"
+                                    disabled={deleteUserMutation.isPending}
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete User Account</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete the account for{' '}
+                                      <strong>
+                                        {userData.firstName && userData.lastName 
+                                          ? `${userData.firstName} ${userData.lastName}`
+                                          : userData.email || 'this user'
+                                        }
+                                      </strong>
+                                      ? This action is <strong>irreversible</strong> and will permanently remove:
+                                      <br /><br />
+                                      • User account and profile information
+                                      <br />
+                                      • Work order assignments (reassigned to unassigned)
+                                      <br />
+                                      • Time tracking history
+                                      <br />
+                                      • Message history
+                                      <br /><br />
+                                      <strong>This cannot be undone.</strong>
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteUserMutation.mutate(userData.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Delete Account
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                            {userData.id === (user as any)?.id && (
+                              <Badge variant="outline" className="text-xs">
+                                Current User
+                              </Badge>
+                            )}
+                            {userData.role === 'administrator' && (user as any).role !== 'administrator' && (
+                              <Badge variant="outline" className="text-xs bg-purple-900/20 text-purple-300">
+                                Administrator (Cannot Delete)
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-medium text-foreground truncate">
-                          {userData.firstName && userData.lastName 
-                            ? `${userData.firstName} ${userData.lastName}`
-                            : userData.email || 'Unknown User'
-                          }
-                        </h4>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      {userData.id !== (user as any)?.id && userData.role !== 'administrator' && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2 py-1 text-xs"
-                              disabled={deleteUserMutation.isPending}
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete User Account</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete the account for{' '}
-                                <strong>
-                                  {userData.firstName && userData.lastName 
-                                    ? `${userData.firstName} ${userData.lastName}`
-                                    : userData.email || 'this user'
-                                  }
-                                </strong>
-                                ? This action is <strong>irreversible</strong> and will permanently remove:
-                                <br /><br />
-                                • User account and profile information
-                                <br />
-                                • Work order assignments (reassigned to unassigned)
-                                <br />
-                                • Time tracking history
-                                <br />
-                                • Message history
-                                <br /><br />
-                                <strong>This cannot be undone.</strong>
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteUserMutation.mutate(userData.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete Account
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                      {userData.id === (user as any)?.id && (
-                        <Badge variant="outline" className="text-xs">
-                          Current User
-                        </Badge>
-                      )}
-                      {userData.role === 'administrator' && (user as any).role !== 'administrator' && (
-                        <Badge variant="outline" className="text-xs bg-purple-900/20 text-purple-300">
-                          Administrator (Cannot Delete)
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 ))}
