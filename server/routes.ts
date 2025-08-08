@@ -188,6 +188,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user information - restricted access for role changes
+  app.patch('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      const userIdToUpdate = req.params.id;
+      const updateData = req.body;
+
+      if (!currentUser) {
+        return res.status(404).json({ message: "Current user not found" });
+      }
+
+      // Check if user exists
+      const userToUpdate = await storage.getUser(userIdToUpdate);
+      if (!userToUpdate) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Permission checks for different types of updates
+      const isUpdatingRole = 'role' in updateData;
+      const isUpdatingStatus = 'isActive' in updateData || 'isSuspended' in updateData;
+      const isUpdatingContactInfo = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'].some(field => field in updateData);
+
+      // Role updates: Only administrators can change roles, and only up to their own level
+      if (isUpdatingRole) {
+        if (currentUser.role !== 'administrator') {
+          return res.status(403).json({ message: "Only administrators can update user roles" });
+        }
+        
+        // Prevent elevating to administrator unless current user is administrator
+        if (updateData.role === 'administrator' && currentUser.role !== 'administrator') {
+          return res.status(403).json({ message: "Cannot promote users to administrator" });
+        }
+      }
+
+      // Status updates: Administrators and managers can update status
+      if (isUpdatingStatus) {
+        if (currentUser.role !== 'administrator' && currentUser.role !== 'manager') {
+          return res.status(403).json({ message: "Only administrators and managers can update user status" });
+        }
+      }
+
+      // Contact info updates: Administrators and managers can update any user, users can update themselves
+      if (isUpdatingContactInfo) {
+        const canUpdateContactInfo = currentUser.role === 'administrator' || 
+                                   currentUser.role === 'manager' || 
+                                   currentUser.id === userIdToUpdate;
+        
+        if (!canUpdateContactInfo) {
+          return res.status(403).json({ message: "Insufficient permissions to update contact information" });
+        }
+      }
+
+      // Prevent users from updating their own role or status (except contact info)
+      if (currentUser.id === userIdToUpdate && (isUpdatingRole || isUpdatingStatus)) {
+        return res.status(403).json({ message: "Cannot modify your own role or status" });
+      }
+
+      // Update the user
+      const updatedUser = await storage.updateUser(userIdToUpdate, updateData);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   // Update work order status
   app.patch("/api/work-orders/:id/status", isAuthenticated, async (req: any, res) => {
     try {
