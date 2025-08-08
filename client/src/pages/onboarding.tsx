@@ -282,7 +282,7 @@ export default function Onboarding() {
                       { value: 'dispatcher', label: 'Dispatcher' },
                       { value: 'administrator', label: 'Administrator' },
                       // Only show client role to administrators
-                      ...(isAdmin(user) ? [{ value: 'client', label: 'Client' }] : [])
+                      ...(isAdmin(user as any) ? [{ value: 'client', label: 'Client' }] : [])
                     ].map((role) => (
                       <div key={role.value} className="flex items-center space-x-2">
                         <input
@@ -502,7 +502,9 @@ export default function Onboarding() {
                     username: "",
                     password: "",
                     confirmPassword: "",
-                    temporaryPassword: true
+                    temporaryPassword: true,
+                    clientCompanyName: "",
+                    clientRole: ""
                   })}
                 >
                   Clear Form
