@@ -267,17 +267,10 @@ export default function Calendar() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* 5-Day Workweek Calendar Grid - Enhanced for readability */}
-            <div className="grid grid-cols-5 gap-3 bg-muted/20 p-4 rounded-lg">
-              {/* Day headers */}
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
-                <div key={day} className="p-3 text-center text-base font-semibold text-foreground bg-muted/50 rounded-t-lg border-b-2 border-primary/20">
-                  {day}
-                </div>
-              ))}
-              
-              {/* Calendar days */}
-              {calendarDays.map(date => {
+            {/* 5-Day Workweek Calendar - Vertical Layout */}
+            <div className="space-y-4 bg-muted/20 p-4 rounded-lg">
+              {/* Days stacked vertically */}
+              {calendarDays.map((date, dayIndex) => {
                 const dayOrders = getWorkOrdersForDate(date);
                 const isTodayDate = isToday(date);
                 const isSelected = selectedDate && isSameDay(date, selectedDate);
@@ -286,70 +279,71 @@ export default function Calendar() {
                   <div
                     key={date.toISOString()}
                     className={`
-                      min-h-64 p-4 border border-border rounded-b-lg cursor-pointer transition-colors bg-card flex flex-col
+                      w-full p-4 border border-border rounded-lg cursor-pointer transition-colors bg-card
                       ${isTodayDate ? 'ring-2 ring-primary bg-primary/10' : ''}
                       ${isSelected ? 'bg-accent' : ''}
                       hover:bg-accent/50 shadow-sm hover:shadow-md
                     `}
                     onClick={() => handleDateClick(date)}
                   >
-                    {/* Date header - fixed height */}
-                    <div className="text-center mb-3 pb-2 border-b border-border/40 flex-shrink-0">
-                      <span className="text-2xl font-bold text-foreground">{format(date, 'd')}</span>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {format(date, 'MMM')}
+                    {/* Day Header with full info */}
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/40">
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-foreground">{format(date, 'd')}</div>
+                          <div className="text-sm text-muted-foreground">{format(date, 'MMM')}</div>
+                        </div>
+                        <div>
+                          <div className="text-xl font-semibold text-foreground">{format(date, 'EEEE')}</div>
+                          <div className="text-sm text-muted-foreground">{format(date, 'MMMM d, yyyy')}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-muted-foreground">
+                          {dayOrders.length} {dayOrders.length === 1 ? 'order' : 'orders'}
+                        </div>
                       </div>
                     </div>
                     
-                    {/* Work orders container - takes remaining space */}
-                    <div className="flex-1 overflow-hidden">
+                    {/* Work orders for this day */}
+                    <div className="space-y-3">
                       {dayOrders.length === 0 ? (
-                        <div className="text-sm text-muted-foreground text-center py-4 italic">
-                          No work orders
+                        <div className="text-center py-6 text-muted-foreground italic">
+                          No work orders scheduled
                         </div>
                       ) : (
-                        <div className="space-y-2 overflow-y-auto max-h-48">
-                          {/* Show up to 4 work orders stacked vertically */}
-                          {dayOrders.slice(0, 4).map((order, index) => (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {dayOrders.map((order, index) => (
                             <div
                               key={order.id}
                               className={`
-                                w-full text-xs px-2 py-2 rounded-md cursor-pointer transition-colors block
-                                ${index === 0 ? 'bg-primary/15 hover:bg-primary/25 border-l-4 border-primary' : ''}
-                                ${index === 1 ? 'bg-blue-500/15 hover:bg-blue-500/25 border-l-4 border-blue-500' : ''}
-                                ${index === 2 ? 'bg-green-500/15 hover:bg-green-500/25 border-l-4 border-green-500' : ''}
-                                ${index === 3 ? 'bg-purple-500/15 hover:bg-purple-500/25 border-l-4 border-purple-500' : ''}
+                                p-3 rounded-md cursor-pointer transition-colors border
+                                ${index % 4 === 0 ? 'bg-primary/10 hover:bg-primary/20 border-primary/30' : ''}
+                                ${index % 4 === 1 ? 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30' : ''}
+                                ${index % 4 === 2 ? 'bg-green-500/10 hover:bg-green-500/20 border-green-500/30' : ''}
+                                ${index % 4 === 3 ? 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30' : ''}
                               `}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleWorkOrderClick(order);
                               }}
                             >
-                              <div className="font-medium text-foreground leading-tight mb-1 truncate">
+                              <div className="font-medium text-foreground mb-2 leading-tight">
                                 {order.title}
                               </div>
-                              <div className="flex items-center justify-between gap-1">
-                                <Badge className={`text-xs px-1 py-0 ${getStatusColor(order.status)}`}>
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <Badge className={`text-xs ${getStatusColor(order.status)}`}>
                                   {order.status.replace('_', ' ')}
                                 </Badge>
-                                {canViewAllOrders && order.assigneeId && (
-                                  <span className="text-xs text-muted-foreground truncate">
-                                    {getAgentName(order.assigneeId)?.split(' ')[0]}
-                                  </span>
-                                )}
+                                <div className={`w-2 h-2 rounded-full ${getPriorityColor(order.priority)}`} />
                               </div>
+                              {canViewAllOrders && order.assigneeId && (
+                                <div className="text-sm text-muted-foreground">
+                                  {getAgentName(order.assigneeId)}
+                                </div>
+                              )}
                             </div>
                           ))}
-                          
-                          {/* Show "more" indicator if there are additional orders */}
-                          {dayOrders.length > 4 && (
-                            <div 
-                              className="text-xs text-center py-1.5 text-muted-foreground bg-muted/40 rounded-md cursor-pointer hover:bg-muted/60 font-medium mt-2"
-                              onClick={() => handleDateClick(date)}
-                            >
-                              +{dayOrders.length - 4} more
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
