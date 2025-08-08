@@ -1643,37 +1643,7 @@ export default function WorkOrders() {
                   </div>
                 </div>
 
-                {/* Payment Status Section - Only show for completed work orders */}
-                {selectedWorkOrder && selectedWorkOrder.status === 'completed' && (
-                  <div className="space-y-4 border-t pt-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-foreground">Payment Status</h3>
-                      {(user as any)?.role === 'administrator' && (
-                        <div className="text-xs text-muted-foreground">
-                          Administrator Controls
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mb-2">
-                      Debug: Status={selectedWorkOrder.status}, PaymentStatus={selectedWorkOrder.paymentStatus || 'null'}, UserRole={(user as any)?.role || 'unknown'}
-                    </div>
-                    <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                      <PaymentStatusButton 
-                        workOrder={selectedWorkOrder}
-                        isAdmin={(user as any)?.role === 'administrator'}
-                        onUpdatePaymentStatus={handleUpdatePaymentStatus}
-                        isLoading={updatePaymentStatusMutation.isPending}
-                      />
-                      {selectedWorkOrder.paymentUpdatedAt && (
-                        <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
-                          <div className="text-xs text-muted-foreground">
-                            Last updated: {new Date(selectedWorkOrder.paymentUpdatedAt).toLocaleString()}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Task Management Section */}
                 <div className="space-y-4 border-t pt-6">
@@ -2561,6 +2531,42 @@ export default function WorkOrders() {
                           )}
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Payment Status Section - Only show for completed work orders */}
+                {currentSelectedWorkOrder && currentSelectedWorkOrder.status === 'completed' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg text-green-800 dark:text-green-300 flex items-center justify-between">
+                        Payment Status
+                        {(user as any)?.role === 'administrator' && (
+                          <div className="text-xs text-muted-foreground font-normal">
+                            Administrator Controls
+                          </div>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="text-xs text-muted-foreground mb-2">
+                        Debug: Status={currentSelectedWorkOrder.status}, PaymentStatus={currentSelectedWorkOrder.paymentStatus || 'null'}, UserRole={(user as any)?.role || 'unknown'}
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                        <PaymentStatusButton 
+                          workOrder={currentSelectedWorkOrder}
+                          isAdmin={(user as any)?.role === 'administrator'}
+                          onUpdatePaymentStatus={handleUpdatePaymentStatus}
+                          isLoading={updatePaymentStatusMutation.isPending}
+                        />
+                        {currentSelectedWorkOrder.paymentUpdatedAt && (
+                          <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
+                            <div className="text-xs text-muted-foreground">
+                              Last updated: {new Date(currentSelectedWorkOrder.paymentUpdatedAt).toLocaleString()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 )}
