@@ -254,6 +254,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Confirm scheduled work order
+  app.patch("/api/work-orders/:id/confirm", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+
+      // Get current user and work order
+      const currentUser = await storage.getUser(userId);
+      const workOrder = await storage.getWorkOrder(id);
+      
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Only assigned field agents can confirm scheduled work orders
+      if (currentUser.role !== 'field_agent' || workOrder.assigneeId !== userId) {
+        return res.status(403).json({ message: "Only assigned field agents can confirm work orders" });
+      }
+
+      // Only scheduled work orders can be confirmed
+      if (workOrder.status !== 'scheduled') {
+        return res.status(400).json({ message: "Only scheduled work orders can be confirmed" });
+      }
+
+      const updateData = {
+        status: 'confirmed',
+        confirmedAt: new Date(),
+      };
+
+      const updatedWorkOrder = await storage.updateWorkOrderStatus(id, updateData);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error confirming work order:", error);
+      res.status(500).json({ message: "Failed to confirm work order" });
+    }
+  });
+
   // Update work order status
   app.patch("/api/work-orders/:id/status", isAuthenticated, async (req: any, res) => {
     try {

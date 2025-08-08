@@ -478,8 +478,8 @@ export default function WorkOrders() {
   });
 
   const confirmWorkOrderMutation = useMutation({
-    mutationFn: async ({ workOrderId, status, confirmedAt }: { workOrderId: string; status: string; confirmedAt: string }) => {
-      return await apiRequest("PUT", `/api/work-orders/${workOrderId}`, { status, confirmedAt });
+    mutationFn: async ({ workOrderId }: { workOrderId: string }) => {
+      return await apiRequest("PATCH", `/api/work-orders/${workOrderId}/confirm`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
@@ -622,9 +622,7 @@ export default function WorkOrders() {
     // Handle status confirmation for scheduled orders - update main status to confirmed
     if (workOrder.status === 'scheduled' && newStatus === 'confirmed') {
       confirmWorkOrderMutation.mutate({ 
-        workOrderId, 
-        status: 'confirmed',
-        confirmedAt: new Date().toISOString()
+        workOrderId
       });
     } else {
       // Handle work status updates for confirmed orders
