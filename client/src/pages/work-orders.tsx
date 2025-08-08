@@ -1866,7 +1866,30 @@ export default function WorkOrders() {
                 {/* Basic Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Basic Information</CardTitle>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      Basic Information
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => setIsCreateIssueDialogOpen(true)}
+                          size="sm"
+                          variant="outline"
+                          className="flex items-center text-xs"
+                        >
+                          <i className="fas fa-exclamation-triangle mr-1"></i>
+                          Create Issue
+                        </Button>
+                        {canCreateWorkOrders && (
+                          <Button 
+                            onClick={() => setIsTaskDialogOpen(true)}
+                            size="sm"
+                            className="flex items-center text-xs"
+                          >
+                            <i className="fas fa-plus mr-1"></i>
+                            Add Task
+                          </Button>
+                        )}
+                      </div>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
