@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX, Edit2, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
+import { hasAnyRole, canManageUsers } from "../../../shared/schema";
 
 export default function TeamPage() {
   const { toast } = useToast();
@@ -53,7 +54,7 @@ export default function TeamPage() {
 
   const { data: allUsers, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
-    enabled: !!user && ((user as any).roles?.includes('manager') || (user as any).roles?.includes('administrator')),
+    enabled: !!user && canManageUsers(user as any),
   });
 
   const deleteUserMutation = useMutation({
@@ -153,8 +154,8 @@ export default function TeamPage() {
   });
 
   const updateUserRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const response = await apiRequest('PATCH', `/api/users/${userId}`, { role });
+    mutationFn: async ({ userId, roles }: { userId: string; roles: string[] }) => {
+      const response = await apiRequest('PATCH', `/api/users/${userId}`, { roles });
       return await response.json();
     },
     onSuccess: () => {
@@ -212,7 +213,7 @@ export default function TeamPage() {
   const getRoleCount = (role: string) => {
     if (!allUsers) return 0;
     if (role === "all") return (allUsers as any[]).length;
-    return (allUsers as any[]).filter((user: any) => user.role === role).length;
+    return (allUsers as any[]).filter((user: any) => user.roles?.includes(role)).length;
   };
 
   if (isLoading || !user) {
@@ -223,7 +224,7 @@ export default function TeamPage() {
     );
   }
 
-  if ((user as any).role !== 'manager' && (user as any).role !== 'administrator') {
+  if (!canManageUsers(user as any)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
@@ -240,7 +241,7 @@ export default function TeamPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation userRole={(user as any).role} />
+      <Navigation />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
