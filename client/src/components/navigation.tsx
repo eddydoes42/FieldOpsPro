@@ -134,9 +134,8 @@ export default function Navigation({ userRole }: NavigationProps) {
                         <p className="font-medium text-foreground">
                           {(user as any)?.firstName} {(user as any)?.lastName}
                         </p>
-                        <p className="text-sm text-muted-foreground">{(user as any)?.email}</p>
                         {/* Role Badge */}
-                        <span className={`${config.badge.color} text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap inline-flex mt-2`}>
+                        <span className={`${config.badge.color} text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap inline-flex mt-1`}>
                           <i className={`${config.badge.icon} mr-1`}></i>
                           {config.badge.text}
                         </span>
