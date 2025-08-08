@@ -256,7 +256,7 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 }));
 
 // Role validation schema
-export const rolesSchema = z.array(z.enum(['administrator', 'manager', 'dispatcher', 'field_agent'])).min(1);
+export const rolesSchema = z.array(z.enum(['administrator', 'manager', 'dispatcher', 'field_agent', 'client'])).min(1);
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users, {
@@ -377,9 +377,11 @@ export function canViewAllOrders(user: User | null): boolean {
 export function getPrimaryRole(user: User | null): string {
   if (!user || !user.roles || user.roles.length === 0) return 'field_agent';
   
-  // Priority order: administrator > manager > dispatcher > field_agent
+  // Priority order: administrator > manager > dispatcher > field_agent > client
   if (user.roles.includes('administrator')) return 'administrator';
   if (user.roles.includes('manager')) return 'manager';
   if (user.roles.includes('dispatcher')) return 'dispatcher';
+  if (user.roles.includes('field_agent')) return 'field_agent';
+  if (user.roles.includes('client')) return 'client';
   return 'field_agent';
 }
