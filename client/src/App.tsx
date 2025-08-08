@@ -38,6 +38,11 @@ function Router() {
             {(user as any)?.role === 'field_agent' && <AgentDashboard />}
             {!(user as any)?.role && <Landing />}
           </Route>
+          <Route path="/reports">
+            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
+            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+            {!(user as any)?.role && <Landing />}
+          </Route>
           <Route path="/reports/team">
             {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
             {(user as any)?.role === 'field_agent' && <AgentDashboard />}
