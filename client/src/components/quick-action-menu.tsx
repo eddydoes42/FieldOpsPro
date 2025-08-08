@@ -64,13 +64,8 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
     onClose();
     
     switch (action) {
-      case 'add-user':
-        setLocation('/team');
-        // Trigger add user dialog after navigation
-        setTimeout(() => {
-          const addButton = document.querySelector('[data-testid="add-user-button"]') as HTMLButtonElement;
-          if (addButton) addButton.click();
-        }, 100);
+      case 'add-team-member':
+        setLocation('/onboarding');
         break;
       case 'create-work-order':
         setLocation('/work-orders');
@@ -134,7 +129,7 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 h-9 text-sm"
-                  onClick={() => handleAction('add-user')}
+                  onClick={() => handleAction('add-team-member')}
                 >
                   <UserPlus className="h-4 w-4 text-blue-500" />
                   <span>Add Team Member</span>
