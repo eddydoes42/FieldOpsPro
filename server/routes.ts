@@ -426,6 +426,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete work order route - only administrators and managers can delete
+  app.delete('/api/work-orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const { id } = req.params;
+      const workOrder = await storage.getWorkOrder(id);
+      
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      await storage.deleteWorkOrder(id);
+      res.json({ message: "Work order deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting work order:", error);
+      res.status(500).json({ message: "Failed to delete work order" });
+    }
+  });
+
   // Messages routes
   app.post('/api/messages', isAuthenticated, async (req: any, res) => {
     try {

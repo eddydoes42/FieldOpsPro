@@ -16,6 +16,8 @@ import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import WorkOrderTasks from "@/components/work-order-tasks";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
+import { Trash2 } from "lucide-react";
 
 interface WorkOrder {
   id: string;
@@ -97,6 +99,7 @@ export default function WorkOrders() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   // Dialog states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -443,6 +446,37 @@ export default function WorkOrders() {
     },
   });
 
+  const deleteWorkOrderMutation = useMutation({
+    mutationFn: async (workOrderId: string) => {
+      return await apiRequest("DELETE", `/api/work-orders/${workOrderId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      toast({
+        title: "Success",
+        description: "Work order deleted permanently",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete work order. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -558,8 +592,7 @@ export default function WorkOrders() {
     if (workOrder.status === 'scheduled' && newStatus === 'confirmed') {
       updateStatusMutation.mutate({ 
         workOrderId, 
-        status: 'confirmed',
-        confirmedAt: new Date().toISOString()
+        workStatus: 'confirmed'
       });
     } else {
       // Handle work status updates for confirmed orders
@@ -1411,96 +1444,100 @@ export default function WorkOrders() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredWorkOrders.map((order) => (
-              <Card key={order.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                        {order.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                        {order.description}
-                      </p>
+              <Card key={order.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer">
+                <div onClick={() => {
+                  setSelectedWorkOrder(order);
+                  setIsViewDialogOpen(true);
+                }}>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                          {order.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                          {order.description}
+                        </p>
+                      </div>
+                      <div className="ml-3 flex flex-col items-end space-y-2">
+                        <Badge className={`${getPriorityColor(order.priority)} text-xs font-medium`}>
+                          {order.priority.charAt(0).toUpperCase() + order.priority.slice(1)}
+                        </Badge>
+                        <Badge className={`${getStatusColor(order.status)} text-xs font-medium`}>
+                          {order.status === 'in_progress' ? 'Active' : 
+                           order.status === 'scheduled' ? 'Scheduled' :
+                           order.status === 'confirmed' ? 'Confirmed' :
+                           order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </Badge>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {order.dueDate 
+                            ? new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : 'No due date'
+                          }
+                        </span>
+                      </div>
                     </div>
-                    <div className="ml-3 flex flex-col items-end space-y-2">
-                      <Badge className={`${getPriorityColor(order.priority)} text-xs font-medium`}>
-                        {order.priority.charAt(0).toUpperCase() + order.priority.slice(1)}
-                      </Badge>
-                      <Badge className={`${getStatusColor(order.status)} text-xs font-medium`}>
-                        {order.status === 'in_progress' ? 'Active' : 
-                         order.status === 'scheduled' ? 'Scheduled' :
-                         order.status === 'confirmed' ? 'Confirmed' :
-                         order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </Badge>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {order.dueDate 
-                          ? new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                          : 'No due date'
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
                 
-                <CardContent className="pt-0 space-y-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400 font-medium">Assigned To:</span>
-                      <p className="text-gray-900 dark:text-white mt-1 font-medium">
-                        {getAgentName(order.assigneeId)}
-                      </p>
+                  <CardContent className="pt-0 space-y-4">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400 font-medium">Assigned To:</span>
+                        <p className="text-gray-900 dark:text-white mt-1 font-medium">
+                          {getAgentName(order.assigneeId)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400 font-medium">Estimated Hours:</span>
+                        <p className="text-gray-900 dark:text-white mt-1 font-medium">
+                          {order.estimatedHours ? `${order.estimatedHours}h` : 'Not specified'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400 font-medium">Estimated Hours:</span>
-                      <p className="text-gray-900 dark:text-white mt-1 font-medium">
-                        {order.estimatedHours ? `${order.estimatedHours}h` : 'Not specified'}
-                      </p>
-                    </div>
-                  </div>
 
-                  {(order.scopeOfWork || order.requiredTools) && (
-                    <div className="space-y-2">
-                      {order.scopeOfWork && (
-                        <div>
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Scope:</span>
-                          <p className="text-sm text-gray-900 dark:text-white mt-1 line-clamp-2">
-                            {order.scopeOfWork}
-                          </p>
-                        </div>
-                      )}
-                      {order.requiredTools && (
-                        <div>
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tools:</span>
-                          <p className="text-sm text-gray-900 dark:text-white mt-1 line-clamp-2">
-                            {order.requiredTools}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    {(order.scopeOfWork || order.requiredTools) && (
+                      <div className="space-y-2">
+                        {order.scopeOfWork && (
+                          <div>
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Scope:</span>
+                            <p className="text-sm text-gray-900 dark:text-white mt-1 line-clamp-2">
+                              {order.scopeOfWork}
+                            </p>
+                          </div>
+                        )}
+                        {order.requiredTools && (
+                          <div>
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tools:</span>
+                            <p className="text-sm text-gray-900 dark:text-white mt-1 line-clamp-2">
+                              {order.requiredTools}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                  {order.pointOfContact && (
-                    <div>
-                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Contact:</span>
-                      <p className="text-sm text-gray-900 dark:text-white mt-1">
-                        {order.pointOfContact}
-                      </p>
-                    </div>
-                  )}
+                    {order.pointOfContact && (
+                      <div>
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Contact:</span>
+                        <p className="text-sm text-gray-900 dark:text-white mt-1">
+                          {order.pointOfContact}
+                        </p>
+                      </div>
+                    )}
 
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-xs px-3 whitespace-nowrap"
-                      onClick={() => {
-                        setSelectedWorkOrder(order);
-                        setIsViewDialogOpen(true);
-                      }}
-                    >
-                      <i className="fas fa-eye mr-1"></i>
-                      View Details
-                    </Button>
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-xs px-3 whitespace-nowrap"
+                        onClick={() => {
+                          setSelectedWorkOrder(order);
+                          setIsViewDialogOpen(true);
+                        }}
+                      >
+                        <i className="fas fa-eye mr-1"></i>
+                        View Details
+                      </Button>
                     {canCreateWorkOrders && (
                       <Button 
                         variant="outline" 
@@ -1570,8 +1607,41 @@ export default function WorkOrders() {
                         </Button>
                       )
                     )}
-                  </div>
-                </CardContent>
+                    {canCreateWorkOrders && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="text-xs px-3"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Work Order</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{order.title}"? This action is irreversible and will permanently remove the work order from the system.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteWorkOrderMutation.mutate(order.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                              disabled={deleteWorkOrderMutation.isPending}
+                            >
+                              {deleteWorkOrderMutation.isPending ? 'Deleting...' : 'Delete Work Order'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                    </div>
+                  </CardContent>
+                </div>
               </Card>
             ))}
           </div>
