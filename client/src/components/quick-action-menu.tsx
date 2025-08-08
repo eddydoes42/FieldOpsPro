@@ -68,18 +68,13 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
         setLocation('/onboarding');
         break;
       case 'create-work-order':
-        setLocation('/work-orders');
-        // Trigger create work order dialog after navigation
-        setTimeout(() => {
-          const createButton = document.querySelector('[data-testid="create-work-order-button"]') as HTMLButtonElement;
-          if (createButton) createButton.click();
-        }, 100);
+        setLocation('/work-orders?action=create');
         break;
       case 'view-active-issues':
-        setLocation('/work-orders?filter=issues');
+        setLocation('/work-orders?filter=active-issues');
         break;
       case 'view-priority-tasks':
-        setLocation('/work-orders?filter=priority');
+        setLocation('/work-orders?filter=high-priority');
         break;
       case 'view-team':
         setLocation('/team');

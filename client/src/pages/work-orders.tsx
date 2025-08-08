@@ -140,13 +140,36 @@ export default function WorkOrders() {
   // Filter states
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
+  const [quickFilter, setQuickFilter] = useState<string | null>(null);
 
-  // Handle URL parameters for filtering
+  // Handle URL parameters for filtering and actions
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const statusParam = urlParams.get('status');
+    const filterParam = urlParams.get('filter');
+    const actionParam = urlParams.get('action');
+    
+    // Handle status parameter
     if (statusParam) {
       setFilterStatus(statusParam);
+    }
+    
+    // Handle filter parameter
+    if (filterParam) {
+      if (filterParam === 'high-priority') {
+        setFilterStatus('all');
+        setQuickFilter('high-priority');
+      } else if (filterParam === 'active-issues') {
+        setFilterStatus('all');
+        setQuickFilter('active-issues');
+      }
+    }
+    
+    // Handle action parameter
+    if (actionParam === 'create') {
+      setIsCreateDialogOpen(true);
+      // Clear the URL parameter to avoid reopening on refresh
+      window.history.replaceState({}, '', '/work-orders');
     }
   }, []);
   
@@ -724,6 +747,15 @@ export default function WorkOrders() {
   const filteredWorkOrders = workOrders?.filter(order => {
     if (filterStatus !== 'all' && order.status !== filterStatus) return false;
     if (filterAssignee !== 'all' && order.assigneeId !== filterAssignee) return false;
+    
+    // Apply quick filters
+    if (quickFilter === 'high-priority' && order.priority !== 'high') return false;
+    if (quickFilter === 'active-issues') {
+      // Filter for work orders with active issues (you may need to adjust this logic based on your data structure)
+      const hasActiveIssue = order.status === 'blocked' || order.status === 'delayed' || order.priority === 'high';
+      if (!hasActiveIssue) return false;
+    }
+    
     return true;
   }) || [];
 
