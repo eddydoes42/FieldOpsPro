@@ -41,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/reports/team', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+      if (!currentUser || (!hasAnyRole(currentUser, ['administrator', 'manager']))) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
@@ -176,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/users/role/:role', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (currentUser.role !== 'administrator' && currentUser.role !== 'manager')) {
+      if (!currentUser || (!hasAnyRole(currentUser, ['administrator', 'manager']))) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
