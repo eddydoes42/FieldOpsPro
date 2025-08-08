@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import QuickActionMenu from "@/components/quick-action-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { hasAnyRole } from "../../../shared/schema";
 
 export default function FloatingQuickAction() {
   const { user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
-  const userRole = (user as any)?.role;
-  const canShowQuickActions = userRole === 'administrator' || userRole === 'manager' || userRole === 'dispatcher';
+  const canShowQuickActions = hasAnyRole(user as any, ['administrator', 'manager', 'dispatcher']);
 
   if (!canShowQuickActions) return null;
 
