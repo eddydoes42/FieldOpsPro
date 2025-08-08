@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase } from "lucide-react";
+import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function TeamPage() {
@@ -69,6 +69,48 @@ export default function TeamPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserStatusMutation = useMutation({
+    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
+      const response = await apiRequest('PATCH', `/api/users/${userId}`, { isActive });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Success",
+        description: "User status updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const suspendUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest('PATCH', `/api/users/${userId}`, { isActive: false, isSuspended: true });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Success",
+        description: "User suspended successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to suspend user",
         variant: "destructive",
       });
     },
@@ -300,12 +342,43 @@ export default function TeamPage() {
               {/* Status */}
               <div className="space-y-2">
                 <h4 className="font-medium text-foreground">Status</h4>
-                <Badge 
-                  variant={selectedUser.isActive ? "default" : "destructive"}
-                  className={selectedUser.isActive ? "bg-green-900/30 text-green-300" : ""}
-                >
-                  {selectedUser.isActive ? 'Active' : 'Inactive'}
-                </Badge>
+                <div className="flex items-center space-x-2">
+                  <Badge 
+                    variant={selectedUser.isActive ? "default" : "destructive"}
+                    className={`${
+                      selectedUser.isActive ? "bg-green-900/30 text-green-300" : ""
+                    } ${
+                      !selectedUser.isSuspended ? "cursor-pointer hover:opacity-80 transition-opacity" : "opacity-50"
+                    }`}
+                    onClick={() => {
+                      if (!selectedUser.isSuspended) {
+                        updateUserStatusMutation.mutate({
+                          userId: selectedUser.id,
+                          isActive: !selectedUser.isActive
+                        });
+                        setSelectedUser({...selectedUser, isActive: !selectedUser.isActive});
+                      }
+                    }}
+                  >
+                    {selectedUser.isSuspended ? 'Suspended' : selectedUser.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                  
+                  {!selectedUser.isSuspended && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-orange-500 hover:text-orange-600 border-orange-500/50 hover:border-orange-600 px-3 py-1 text-xs"
+                      onClick={() => {
+                        suspendUserMutation.mutate(selectedUser.id);
+                        setSelectedUser({...selectedUser, isSuspended: true, isActive: false});
+                      }}
+                      disabled={suspendUserMutation.isPending}
+                    >
+                      <UserX className="h-3 w-3 mr-1" />
+                      Suspend User
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Role */}
