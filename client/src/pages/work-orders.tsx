@@ -977,7 +977,7 @@ export default function WorkOrders() {
           {canCreateWorkOrders && (
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center">
+                <Button className="flex items-center" data-testid="create-work-order-button">
                   <i className="fas fa-plus mr-2"></i>
                   Create Work Order
                 </Button>

@@ -4,6 +4,9 @@ import { Link, useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import QuickActionMenu from "@/components/quick-action-menu";
+import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
+import { Zap } from "lucide-react";
 
 interface NavigationProps {
   userRole: string;
@@ -15,6 +18,9 @@ export default function Navigation({ userRole }: NavigationProps) {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Quick action menu
+  const { isOpen: isQuickMenuOpen, position: quickMenuPosition, openMenu: openQuickMenu, closeMenu: closeQuickMenu } = useQuickActionMenu();
 
   // Fetch messages to calculate unread count
   const { data: messages } = useQuery<any[]>({
@@ -97,8 +103,24 @@ export default function Navigation({ userRole }: NavigationProps) {
             <span className="text-xl font-bold text-foreground whitespace-nowrap">FieldOps Pro</span>
           </div>
           
-          {/* Right side - Navigation Menu Dropdown */}
+          {/* Right side - Quick Actions and Navigation Menu */}
           <div className="flex items-center space-x-4">
+            {/* Quick Action Button - Show for admin, manager, dispatcher */}
+            {(userRole === 'administrator' || userRole === 'manager' || userRole === 'dispatcher') && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openQuickMenu(e.clientX - 280, e.clientY + 10);
+                }}
+                className="flex items-center gap-2 hover:bg-primary/10 border-primary/20"
+              >
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="hidden sm:inline">Quick Actions</span>
+              </Button>
+            )}
+            
             {/* Navigation Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
@@ -182,6 +204,13 @@ export default function Navigation({ userRole }: NavigationProps) {
         </div>
 
       </div>
+      
+      {/* Quick Action Menu */}
+      <QuickActionMenu
+        isOpen={isQuickMenuOpen}
+        onClose={closeQuickMenu}
+        position={quickMenuPosition}
+      />
     </nav>
   );
 }

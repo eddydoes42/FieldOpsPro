@@ -14,6 +14,7 @@ import Onboarding from "@/pages/onboarding";
 import WorkOrders from "@/pages/work-orders";
 import Messages from "@/pages/messages";
 import NotFound from "@/pages/not-found";
+import FloatingQuickAction from "@/components/floating-quick-action";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -27,49 +28,54 @@ function Router() {
   }
 
   return (
-    <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/">
-            {(user as any)?.role === 'administrator' && <AdminDashboard />}
-            {(user as any)?.role === 'manager' && <ManagerDashboard />}
-            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-            {!(user as any)?.role && <Landing />}
-          </Route>
-          <Route path="/reports">
-            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
-            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-            {!(user as any)?.role && <Landing />}
-          </Route>
-          <Route path="/reports/team">
-            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
-            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-            {!(user as any)?.role && <Landing />}
-          </Route>
-          <Route path="/team">
-            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamPage />}
-            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-            {!(user as any)?.role && <Landing />}
-          </Route>
-          <Route path="/onboarding">
-            {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <Onboarding />}
-            {(user as any)?.role === 'field_agent' && <AgentDashboard />}
-            {!(user as any)?.role && <Landing />}
-          </Route>
-          <Route path="/work-orders">
-            {isAuthenticated && <WorkOrders />}
-            {!isAuthenticated && <Landing />}
-          </Route>
-          <Route path="/messages">
-            {isAuthenticated && <Messages />}
-            {!isAuthenticated && <Landing />}
-          </Route>
+    <div data-quick-actions="true" className="quick-action-zone">
+      <Switch>
+        {!isAuthenticated ? (
+          <Route path="/" component={Landing} />
+        ) : (
+          <>
+            <Route path="/">
+              {(user as any)?.role === 'administrator' && <AdminDashboard />}
+              {(user as any)?.role === 'manager' && <ManagerDashboard />}
+              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+              {!(user as any)?.role && <Landing />}
+            </Route>
+            <Route path="/reports">
+              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
+              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+              {!(user as any)?.role && <Landing />}
+            </Route>
+            <Route path="/reports/team">
+              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamReports />}
+              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+              {!(user as any)?.role && <Landing />}
+            </Route>
+            <Route path="/team">
+              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <TeamPage />}
+              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+              {!(user as any)?.role && <Landing />}
+            </Route>
+            <Route path="/onboarding">
+              {((user as any)?.role === 'administrator' || (user as any)?.role === 'manager') && <Onboarding />}
+              {(user as any)?.role === 'field_agent' && <AgentDashboard />}
+              {!(user as any)?.role && <Landing />}
+            </Route>
+            <Route path="/work-orders">
+              {isAuthenticated && <WorkOrders />}
+              {!isAuthenticated && <Landing />}
+            </Route>
+            <Route path="/messages">
+              {isAuthenticated && <Messages />}
+              {!isAuthenticated && <Landing />}
+            </Route>
         </>
       )}
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+      
+      {/* Global Floating Quick Action Button */}
+      {isAuthenticated && <FloatingQuickAction />}
+    </div>
   );
 }
 
