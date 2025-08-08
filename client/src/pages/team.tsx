@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX, Edit2 } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function TeamPage() {
@@ -20,6 +23,8 @@ export default function TeamPage() {
   const [, setLocation] = useLocation();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [editedUser, setEditedUser] = useState<any>({});
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -115,6 +120,63 @@ export default function TeamPage() {
       });
     },
   });
+
+  const updateUserRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const response = await apiRequest('PATCH', `/api/users/${userId}`, { role });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Success",
+        description: "User role updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to update user role",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserContactMutation = useMutation({
+    mutationFn: async ({ userId, userData }: { userId: string; userData: any }) => {
+      const response = await apiRequest('PATCH', `/api/users/${userId}`, userData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setIsEditingContact(false);
+      toast({
+        title: "Success",
+        description: "Contact information updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to update contact information",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getNextRole = (currentRole: string) => {
+    if (currentRole === 'field_agent') return 'dispatcher';
+    if (currentRole === 'dispatcher') return 'manager';
+    return currentRole; // Don't change if already manager or administrator
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    if (role === 'field_agent') return 'Field Agent';
+    if (role === 'dispatcher') return 'Dispatcher';
+    if (role === 'manager') return 'Manager';
+    if (role === 'administrator') return 'Administrator';
+    return role;
+  };
 
   if (isLoading || !user) {
     return (
@@ -309,34 +371,170 @@ export default function TeamPage() {
             <div className="space-y-4">
               {/* Contact Information */}
               <div className="space-y-3">
-                <h4 className="font-medium text-foreground">Contact Information</h4>
-                
-                <div className="flex items-center space-x-3 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Email:</span>
-                  <span className="text-foreground">{selectedUser.email || 'Not provided'}</span>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-foreground">Contact Information</h4>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="px-3 py-1 text-xs"
+                    onClick={() => {
+                      setIsEditingContact(!isEditingContact);
+                      if (!isEditingContact) {
+                        setEditedUser({
+                          firstName: selectedUser.firstName || '',
+                          lastName: selectedUser.lastName || '',
+                          email: selectedUser.email || '',
+                          phone: selectedUser.phone || '',
+                          address: selectedUser.address || '',
+                          city: selectedUser.city || '',
+                          state: selectedUser.state || '',
+                          zipCode: selectedUser.zipCode || ''
+                        });
+                      }
+                    }}
+                  >
+                    <Edit2 className="h-3 w-3 mr-1" />
+                    {isEditingContact ? 'Cancel' : 'Edit'}
+                  </Button>
                 </div>
-                
-                <div className="flex items-center space-x-3 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Phone:</span>
-                  <span className="text-foreground">{selectedUser.phone || 'Not provided'}</span>
-                </div>
-                
-                <div className="flex items-start space-x-3 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <span className="text-muted-foreground">Address:</span>
-                  <div className="text-foreground">
-                    {selectedUser.address || 'Not provided'}
-                    {selectedUser.city && (
-                      <div className="text-xs text-muted-foreground">
-                        {selectedUser.city}
-                        {selectedUser.state && `, ${selectedUser.state}`}
-                        {selectedUser.zipCode && ` ${selectedUser.zipCode}`}
+
+                {isEditingContact ? (
+                  <div className="space-y-3">
+                    {/* Name fields */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="firstName" className="text-xs">First Name</Label>
+                        <Input
+                          id="firstName"
+                          value={editedUser.firstName}
+                          onChange={(e) => setEditedUser({...editedUser, firstName: e.target.value})}
+                          className="h-8"
+                        />
                       </div>
-                    )}
+                      <div>
+                        <Label htmlFor="lastName" className="text-xs">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          value={editedUser.lastName}
+                          onChange={(e) => setEditedUser({...editedUser, lastName: e.target.value})}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <Label htmlFor="email" className="text-xs">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={editedUser.email}
+                        onChange={(e) => setEditedUser({...editedUser, email: e.target.value})}
+                        className="h-8"
+                      />
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                      <Label htmlFor="phone" className="text-xs">Phone</Label>
+                      <Input
+                        id="phone"
+                        value={editedUser.phone}
+                        onChange={(e) => setEditedUser({...editedUser, phone: e.target.value})}
+                        className="h-8"
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <Label htmlFor="address" className="text-xs">Address</Label>
+                      <Input
+                        id="address"
+                        value={editedUser.address}
+                        onChange={(e) => setEditedUser({...editedUser, address: e.target.value})}
+                        className="h-8"
+                      />
+                    </div>
+
+                    {/* City, State, Zip */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label htmlFor="city" className="text-xs">City</Label>
+                        <Input
+                          id="city"
+                          value={editedUser.city}
+                          onChange={(e) => setEditedUser({...editedUser, city: e.target.value})}
+                          className="h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="state" className="text-xs">State</Label>
+                        <Input
+                          id="state"
+                          value={editedUser.state}
+                          onChange={(e) => setEditedUser({...editedUser, state: e.target.value})}
+                          className="h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="zipCode" className="text-xs">Zip</Label>
+                        <Input
+                          id="zipCode"
+                          value={editedUser.zipCode}
+                          onChange={(e) => setEditedUser({...editedUser, zipCode: e.target.value})}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Save/Cancel buttons */}
+                    <div className="flex space-x-2 pt-2">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          updateUserContactMutation.mutate({
+                            userId: selectedUser.id,
+                            userData: editedUser
+                          });
+                          setSelectedUser({...selectedUser, ...editedUser});
+                        }}
+                        disabled={updateUserContactMutation.isPending}
+                        className="flex-1"
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Email:</span>
+                      <span className="text-foreground">{selectedUser.email || 'Not provided'}</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Phone:</span>
+                      <span className="text-foreground">{selectedUser.phone || 'Not provided'}</span>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3 text-sm">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <span className="text-muted-foreground">Address:</span>
+                      <div className="text-foreground">
+                        {selectedUser.address || 'Not provided'}
+                        {selectedUser.city && (
+                          <div className="text-xs text-muted-foreground">
+                            {selectedUser.city}
+                            {selectedUser.state && `, ${selectedUser.state}`}
+                            {selectedUser.zipCode && ` ${selectedUser.zipCode}`}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Status */}
@@ -384,19 +582,53 @@ export default function TeamPage() {
               {/* Role */}
               <div className="space-y-2">
                 <h4 className="font-medium text-foreground">Role</h4>
-                <Badge 
-                  variant="secondary" 
-                  className={`${
-                    selectedUser.role === 'administrator' 
-                      ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
-                      : selectedUser.role === 'manager'
-                      ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
-                      : 'bg-green-900/30 text-green-300 border-green-800/50'
-                  }`}
-                >
-                  {selectedUser.role === 'field_agent' ? 'Field Agent' : 
-                   selectedUser.role?.charAt(0).toUpperCase() + selectedUser.role?.slice(1) || 'Unknown'}
-                </Badge>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Badge 
+                      variant="secondary" 
+                      className={`${
+                        selectedUser.role === 'administrator' 
+                          ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
+                          : selectedUser.role === 'manager'
+                          ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
+                          : selectedUser.role === 'dispatcher'
+                          ? 'bg-orange-900/30 text-orange-300 border-orange-800/50'
+                          : 'bg-green-900/30 text-green-300 border-green-800/50'
+                      } ${
+                        selectedUser.role !== 'manager' && selectedUser.role !== 'administrator' 
+                          ? 'cursor-pointer hover:opacity-80 transition-opacity'
+                          : 'cursor-default'
+                      }`}
+                    >
+                      {getRoleDisplayName(selectedUser.role)}
+                    </Badge>
+                  </AlertDialogTrigger>
+                  {selectedUser.role !== 'manager' && selectedUser.role !== 'administrator' && (
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Update User Role</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to promote {selectedUser.firstName} {selectedUser.lastName} from {getRoleDisplayName(selectedUser.role)} to {getRoleDisplayName(getNextRole(selectedUser.role))}?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            const nextRole = getNextRole(selectedUser.role);
+                            updateUserRoleMutation.mutate({
+                              userId: selectedUser.id,
+                              role: nextRole
+                            });
+                            setSelectedUser({...selectedUser, role: nextRole});
+                          }}
+                        >
+                          Confirm Promotion
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  )}
+                </AlertDialog>
               </div>
 
               {/* Work Orders Button */}
