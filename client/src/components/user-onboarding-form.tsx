@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { z } from "zod";
 
 const onboardingSchema = insertUserSchema.extend({
@@ -29,6 +30,18 @@ const onboardingSchema = insertUserSchema.extend({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   zipCode: z.string().min(1, "ZIP code is required"),
+  // Client-specific fields - conditional validation
+  clientCompanyName: z.string().optional(),
+  clientRole: z.string().optional(),
+}).refine((data) => {
+  // If client role is selected, company name and client role are required
+  if (data.roles?.includes('client')) {
+    return data.clientCompanyName && data.clientRole;
+  }
+  return true;
+}, {
+  message: "Company name and role within company are required for client accounts",
+  path: ["clientCompanyName"],
 });
 
 interface UserOnboardingFormProps {
@@ -39,6 +52,7 @@ interface UserOnboardingFormProps {
 export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardingFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(['field_agent']);
 
   const form = useForm({
     resolver: zodResolver(onboardingSchema),
@@ -51,13 +65,23 @@ export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardin
       city: "",
       state: "",
       zipCode: "",
-      role: "field_agent",
+      roles: ["field_agent"],
+      clientCompanyName: "",
+      clientRole: "",
     },
   });
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: any) => {
-      await apiRequest("POST", "/api/users", userData);
+      // Clean up the data for submission
+      const submitData = {
+        ...userData,
+        roles: selectedRoles, // Use the managed state
+        // Only include client fields if client role is selected
+        clientCompanyName: selectedRoles.includes('client') ? userData.clientCompanyName : null,
+        clientRole: selectedRoles.includes('client') ? userData.clientRole : null,
+      };
+      await apiRequest("POST", "/api/users", submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -93,7 +117,7 @@ export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardin
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Onboard New Field Agent
+              Onboard New Team Member
             </CardTitle>
             <Button
               variant="ghost"
@@ -104,7 +128,7 @@ export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardin
               <i className="fas fa-times text-xl"></i>
             </Button>
           </div>
-          <p className="text-gray-600">Create a new user account and assign appropriate permissions</p>
+          <p className="text-gray-600">Create a new user account and assign appropriate roles and permissions</p>
         </CardHeader>
         
         <CardContent>
@@ -253,27 +277,81 @@ export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardin
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Role Assignment</h3>
                 <FormField
                   control={form.control}
-                  name="role"
-                  render={({ field }) => (
+                  name="roles"
+                  render={() => (
                     <FormItem>
-                      <FormLabel>User Role *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="field_agent">FA (Field Agent)</SelectItem>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="administrator">Administrator</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>User Roles *</FormLabel>
+                      <div className="space-y-2">
+                        {[
+                          { value: "field_agent", label: "Field Agent" },
+                          { value: "manager", label: "Manager" },
+                          { value: "administrator", label: "Administrator" },
+                          { value: "client", label: "Client" },
+                        ].map((role) => (
+                          <div key={role.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={role.value}
+                              checked={selectedRoles.includes(role.value)}
+                              onCheckedChange={(checked) => {
+                                let newRoles = [...selectedRoles];
+                                if (checked) {
+                                  newRoles.push(role.value);
+                                } else {
+                                  newRoles = newRoles.filter(r => r !== role.value);
+                                }
+                                setSelectedRoles(newRoles);
+                                form.setValue("roles", newRoles);
+                              }}
+                            />
+                            <label
+                              htmlFor={role.value}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {role.label}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              {/* Client-specific fields - only show if client role is selected */}
+              {selectedRoles.includes('client') && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Client Information</h3>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="clientCompanyName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Company Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter company name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clientRole"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Role within Company *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., IT Manager, CEO, Operations Director" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex space-x-4 pt-6 border-t border-gray-200">

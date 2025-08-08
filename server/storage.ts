@@ -73,6 +73,7 @@ export interface IStorage {
     adminCount: number;
     managerCount: number;
     agentCount: number;
+    clientCount: number;
   }>;
 
   // Team reports
@@ -393,6 +394,9 @@ export class DatabaseStorage implements IStorage {
     const agentCountResult = await db.select({ count: count() }).from(users).where(sql`'field_agent' = ANY(${users.roles})`);
     const agentCount = agentCountResult[0]?.count || 0;
 
+    const clientCountResult = await db.select({ count: count() }).from(users).where(sql`'client' = ANY(${users.roles})`);
+    const clientCount = clientCountResult[0]?.count || 0;
+
     return {
       totalUsers,
       activeOrders,
@@ -401,6 +405,7 @@ export class DatabaseStorage implements IStorage {
       adminCount,
       managerCount,
       agentCount,
+      clientCount,
     };
   }
 

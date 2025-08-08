@@ -223,6 +223,15 @@ export default function AdminDashboard() {
                     {(stats as any)?.agentCount || 0}
                   </span>
                 </div>
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
+                  onClick={() => setLocation('/team?role=client')}
+                >
+                  <span className="text-sm font-medium text-muted-foreground">Clients</span>
+                  <span className="bg-pink-900/30 text-pink-300 text-xs font-medium px-2 py-1 rounded border border-pink-800/50">
+                    {(stats as any)?.clientCount || 0}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>

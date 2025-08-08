@@ -36,8 +36,11 @@ export const users = pgTable("users", {
   city: varchar("city"),
   state: varchar("state"),
   zipCode: varchar("zip_code"),
-  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: administrator, manager, dispatcher, field_agent
+  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: administrator, manager, dispatcher, field_agent, client
   profileImageUrl: varchar("profile_image_url"),
+  // Client-specific fields
+  clientCompanyName: varchar("client_company_name"),
+  clientRole: varchar("client_role"),
   // Manual login credentials for non-OAuth users
   username: varchar("username").unique(),
   passwordHash: varchar("password_hash"),
@@ -349,6 +352,10 @@ export function isManager(user: User | null): boolean {
 
 export function isFieldAgent(user: User | null): boolean {
   return hasRole(user, 'field_agent');
+}
+
+export function isClient(user: User | null): boolean {
+  return hasRole(user, 'client');
 }
 
 export function canManageUsers(user: User | null): boolean {
