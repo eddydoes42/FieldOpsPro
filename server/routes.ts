@@ -943,6 +943,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Work Order Budget Management - Manager Only
+  app.post("/api/work-orders/:workOrderId/budget", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'manager' && currentUser.role !== 'administrator')) {
+        return res.status(403).json({ message: "Only managers and administrators can create work order budgets" });
+      }
+
+      const { workOrderId } = req.params;
+      const { budgetType, budgetAmount, devicesInstalled } = req.body;
+
+      // Validate budget type
+      if (!['fixed', 'hourly', 'per_device'].includes(budgetType)) {
+        return res.status(400).json({ message: "Invalid budget type. Must be 'fixed', 'hourly', or 'per_device'" });
+      }
+
+      // Validate required fields
+      if (!budgetAmount || budgetAmount <= 0) {
+        return res.status(400).json({ message: "Budget amount is required and must be greater than 0" });
+      }
+
+      if (budgetType === 'per_device' && (!devicesInstalled || devicesInstalled <= 0)) {
+        return res.status(400).json({ message: "Devices installed is required for per-device budget type" });
+      }
+
+      const budgetData = {
+        budgetType,
+        budgetAmount: budgetAmount.toString(),
+        devicesInstalled: budgetType === 'per_device' ? devicesInstalled : null,
+        budgetCreatedById: currentUser.id,
+        budgetCreatedAt: new Date(),
+      };
+
+      const updatedWorkOrder = await storage.updateWorkOrder(workOrderId, budgetData);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error creating work order budget:", error);
+      res.status(500).json({ message: "Failed to create work order budget" });
+    }
+  });
+
+  app.put("/api/work-orders/:workOrderId/budget", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (currentUser.role !== 'manager' && currentUser.role !== 'administrator')) {
+        return res.status(403).json({ message: "Only managers and administrators can update work order budgets" });
+      }
+
+      const { workOrderId } = req.params;
+      const { budgetType, budgetAmount, devicesInstalled } = req.body;
+
+      // Validate budget type
+      if (!['fixed', 'hourly', 'per_device'].includes(budgetType)) {
+        return res.status(400).json({ message: "Invalid budget type. Must be 'fixed', 'hourly', or 'per_device'" });
+      }
+
+      // Validate required fields
+      if (!budgetAmount || budgetAmount <= 0) {
+        return res.status(400).json({ message: "Budget amount is required and must be greater than 0" });
+      }
+
+      if (budgetType === 'per_device' && (!devicesInstalled || devicesInstalled <= 0)) {
+        return res.status(400).json({ message: "Devices installed is required for per-device budget type" });
+      }
+
+      const budgetData = {
+        budgetType,
+        budgetAmount: budgetAmount.toString(),
+        devicesInstalled: budgetType === 'per_device' ? devicesInstalled : null,
+        budgetCreatedById: currentUser.id,
+        budgetCreatedAt: new Date(),
+      };
+
+      const updatedWorkOrder = await storage.updateWorkOrder(workOrderId, budgetData);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error updating work order budget:", error);
+      res.status(500).json({ message: "Failed to update work order budget" });
+    }
+  });
+
+  app.get("/api/work-orders/:workOrderId/budget-calculation", isAuthenticated, async (req: any, res) => {
+    try {
+      const { workOrderId } = req.params;
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      if (!workOrder.budgetType || !workOrder.budgetAmount) {
+        return res.status(404).json({ message: "No budget set for this work order" });
+      }
+
+      let calculatedBudget = parseFloat(workOrder.budgetAmount);
+      let details: any = { baseAmount: calculatedBudget, multiplier: 1, total: calculatedBudget };
+
+      if (workOrder.budgetType === 'hourly') {
+        // Get total logged time for this work order  
+        const timeEntries = await storage.getTimeEntriesForWorkOrder(workOrderId);
+        const totalHours = timeEntries.reduce((total: number, entry: any) => {
+          if (entry.endTime) {
+            const hours = (new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / (1000 * 60 * 60);
+            return total + hours;
+          }
+          return total;
+        }, 0);
+        
+        calculatedBudget = parseFloat(workOrder.budgetAmount) * totalHours;
+        details = { 
+          baseAmount: parseFloat(workOrder.budgetAmount), 
+          multiplier: totalHours, 
+          total: calculatedBudget,
+          type: 'hourly',
+          loggedHours: totalHours
+        };
+      } else if (workOrder.budgetType === 'per_device') {
+        const devices = workOrder.devicesInstalled || 0;
+        calculatedBudget = parseFloat(workOrder.budgetAmount) * devices;
+        details = { 
+          baseAmount: parseFloat(workOrder.budgetAmount), 
+          multiplier: devices, 
+          total: calculatedBudget,
+          type: 'per_device',
+          devicesInstalled: devices
+        };
+      } else {
+        details = {
+          baseAmount: calculatedBudget,
+          multiplier: 1,
+          total: calculatedBudget,
+          type: 'fixed'
+        };
+      }
+
+      res.json({
+        workOrderId,
+        budgetType: workOrder.budgetType,
+        ...details
+      });
+    } catch (error) {
+      console.error("Error calculating work order budget:", error);
+      res.status(500).json({ message: "Failed to calculate work order budget" });
+    }
+  });
+
   // Notification routes
   app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
     try {

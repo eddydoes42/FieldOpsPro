@@ -68,6 +68,12 @@ export const workOrders = pgTable("work_orders", {
   dueDate: timestamp("due_date"),
   completedAt: timestamp("completed_at"),
   confirmedAt: timestamp("confirmed_at"), // when agent confirms the work order
+  // Budget tracking fields
+  budgetType: varchar("budget_type"), // fixed, hourly, per_device
+  budgetAmount: decimal("budget_amount", { precision: 10, scale: 2 }), // base budget amount
+  devicesInstalled: integer("devices_installed"), // only used when budget_type is per_device
+  budgetCreatedById: varchar("budget_created_by_id").references(() => users.id),
+  budgetCreatedAt: timestamp("budget_created_at"),
   // Status tracking fields
   workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
   checkedInAt: timestamp("checked_in_at"),
@@ -151,6 +157,7 @@ export const notifications = pgTable("notifications", {
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
   createdWorkOrders: many(workOrders, { relationName: "creatorWorkOrders" }),
+  budgetCreatedWorkOrders: many(workOrders, { relationName: "budgetCreatorWorkOrders" }),
   timeEntries: many(timeEntries),
   sentMessages: many(messages, { relationName: "senderMessages" }),
   receivedMessages: many(messages, { relationName: "recipientMessages" }),
@@ -167,6 +174,11 @@ export const workOrdersRelations = relations(workOrders, ({ one, many }) => ({
     fields: [workOrders.createdById],
     references: [users.id],
     relationName: "creatorWorkOrders",
+  }),
+  budgetCreatedBy: one(users, {
+    fields: [workOrders.budgetCreatedById],
+    references: [users.id],
+    relationName: "budgetCreatorWorkOrders",
   }),
   timeEntries: many(timeEntries),
   messages: many(messages),
