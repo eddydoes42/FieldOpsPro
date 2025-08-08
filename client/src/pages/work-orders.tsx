@@ -659,7 +659,14 @@ export default function WorkOrders() {
       case 'not_started': return 'In Route';
       case 'in_route': return 'Check In';
       case 'checked_in': return 'Check Out';
-      case 'checked_out': return 'Mark Complete';
+      case 'checked_out': {
+        // Check if all tasks are completed before allowing completion
+        const workOrderTasks = tasksData?.[workOrder.id] || [];
+        if (workOrderTasks.length > 0 && !workOrderTasks.every(task => task.isCompleted)) {
+          return 'Complete All Tasks First';
+        }
+        return 'Mark Complete';
+      }
       case 'completed': return 'Mark Incomplete';
       default: return 'In Route';
     }
@@ -1630,6 +1637,8 @@ export default function WorkOrders() {
                                     ? `Can only confirm within 24 hours of due date${order.dueDate ? ` (${new Date(order.dueDate).toLocaleDateString()})` : ''}`
                                     : isStatusButtonDisabled(order) && order.status === 'confirmed'
                                     ? 'Complete all tasks before proceeding with work order status'
+                                    : isStatusButtonDisabled(order) && (order as any).workStatus === 'checked_out'
+                                    ? 'All tasks must be completed before marking work order as complete'
                                     : ''
                                 }
                               >
@@ -1674,6 +1683,8 @@ export default function WorkOrders() {
                               ? `Can only confirm within 24 hours of due date${order.dueDate ? ` (${new Date(order.dueDate).toLocaleDateString()})` : ''}`
                               : isStatusButtonDisabled(order) && order.status === 'confirmed'
                               ? 'Complete all tasks before proceeding with work order status'
+                              : isStatusButtonDisabled(order) && (order as any).workStatus === 'checked_out'
+                              ? 'All tasks must be completed before marking work order as complete'
                               : ''
                           }
                         >
