@@ -249,7 +249,7 @@ export default function TeamPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setLocation((user as any).role === 'administrator' ? '/admin-dashboard' : '/manager-dashboard')}
+              onClick={() => setLocation('/')}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
