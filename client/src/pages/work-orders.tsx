@@ -1856,47 +1856,37 @@ export default function WorkOrders() {
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center">
-                <i className="fas fa-clipboard-list mr-2 text-blue-600 dark:text-blue-400"></i>
-                Work Order Details: {selectedWorkOrder?.title}
+              <DialogTitle className="text-center text-xl font-semibold mb-4">
+                {selectedWorkOrder?.title}
               </DialogTitle>
+              <div className="flex justify-center gap-3 mb-6">
+                <Button 
+                  onClick={() => setIsCreateIssueDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <i className="fas fa-exclamation-triangle mr-2"></i>
+                  Create Issue
+                </Button>
+                {canCreateWorkOrders && (
+                  <Button 
+                    onClick={() => setIsTaskDialogOpen(true)}
+                    size="sm"
+                    className="flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    Add Task
+                  </Button>
+                )}
+              </div>
             </DialogHeader>
             {selectedWorkOrder && (
               <div className="space-y-6">
-                {/* Basic Information */}
+                {/* Work Order Information */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      Basic Information
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={() => setIsCreateIssueDialogOpen(true)}
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center text-xs"
-                        >
-                          <i className="fas fa-exclamation-triangle mr-1"></i>
-                          Create Issue
-                        </Button>
-                        {canCreateWorkOrders && (
-                          <Button 
-                            onClick={() => setIsTaskDialogOpen(true)}
-                            size="sm"
-                            className="flex items-center text-xs"
-                          >
-                            <i className="fas fa-plus mr-1"></i>
-                            Add Task
-                          </Button>
-                        )}
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="font-semibold">Title</Label>
-                        <p className="text-foreground">{selectedWorkOrder.title}</p>
-                      </div>
                       <div>
                         <Label className="font-semibold">Status</Label>
                         <div className="mt-1 flex items-center gap-3">
