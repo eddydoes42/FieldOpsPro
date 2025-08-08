@@ -240,6 +240,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteWorkOrder(id: string): Promise<void> {
+    // Delete in correct order to handle foreign key constraints
+    // 1. Delete time entries for this work order
+    await db.delete(timeEntries).where(eq(timeEntries.workOrderId, id));
+    
+    // 2. Delete work order tasks for this work order
+    await db.delete(workOrderTasks).where(eq(workOrderTasks.workOrderId, id));
+    
+    // 3. Update messages to remove work order reference (set to null instead of deleting)
+    await db.update(messages)
+      .set({ workOrderId: null })
+      .where(eq(messages.workOrderId, id));
+    
+    // 4. Finally delete the work order itself
     await db.delete(workOrders).where(eq(workOrders.id, id));
   }
 
