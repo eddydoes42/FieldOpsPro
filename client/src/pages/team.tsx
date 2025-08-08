@@ -27,6 +27,15 @@ export default function TeamPage() {
   const [editedUser, setEditedUser] = useState<any>({});
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
+  // Check URL parameters for initial role filter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    if (roleParam && ['administrator', 'manager', 'dispatcher', 'field_agent'].includes(roleParam)) {
+      setRoleFilter(roleParam);
+    }
+  }, []);
+
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

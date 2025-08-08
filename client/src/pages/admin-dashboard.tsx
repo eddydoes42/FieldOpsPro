@@ -206,19 +206,37 @@ export default function AdminDashboard() {
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">Team Overview</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
+                  onClick={() => setLocation('/team?role=administrator')}
+                >
                   <span className="text-sm font-medium text-muted-foreground">Administrators</span>
                   <span className="bg-purple-900/30 text-purple-300 text-xs font-medium px-2 py-1 rounded border border-purple-800/50">
                     {(stats as any)?.adminCount || 0}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
+                  onClick={() => setLocation('/team?role=manager')}
+                >
                   <span className="text-sm font-medium text-muted-foreground">Managers</span>
                   <span className="bg-blue-900/30 text-blue-300 text-xs font-medium px-2 py-1 rounded border border-blue-800/50">
                     {(stats as any)?.managerCount || 0}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
+                  onClick={() => setLocation('/team?role=dispatcher')}
+                >
+                  <span className="text-sm font-medium text-muted-foreground">Dispatchers</span>
+                  <span className="bg-orange-900/30 text-orange-300 text-xs font-medium px-2 py-1 rounded border border-orange-800/50">
+                    {(stats as any)?.dispatcherCount || 0}
+                  </span>
+                </div>
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
+                  onClick={() => setLocation('/team?role=field_agent')}
+                >
                   <span className="text-sm font-medium text-muted-foreground">Field Agents (FA)</span>
                   <span className="bg-green-900/30 text-green-300 text-xs font-medium px-2 py-1 rounded border border-green-800/50">
                     {(stats as any)?.agentCount || 0}
