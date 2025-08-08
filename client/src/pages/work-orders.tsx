@@ -15,6 +15,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import WorkOrderTasks from "@/components/work-order-tasks";
+import PaymentStatusButton from "@/components/payment-status-button";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Trash2, ArrowLeft } from "lucide-react";
@@ -37,6 +38,9 @@ interface WorkOrder {
   devicesInstalled?: number | null;
   budgetCreatedById?: string | null;
   budgetCreatedAt?: string | null;
+  paymentStatus?: string | null;
+  paymentUpdatedById?: string | null;
+  paymentUpdatedAt?: string | null;
 }
 
 interface User {
@@ -373,6 +377,38 @@ export default function WorkOrders() {
   const currentSelectedWorkOrder = selectedWorkOrder 
     ? workOrders?.find(wo => wo.id === selectedWorkOrder.id) || selectedWorkOrder
     : null;
+
+  // Payment status update mutation
+  const updatePaymentStatusMutation = useMutation({
+    mutationFn: async ({ workOrderId, paymentStatus }: { workOrderId: string; paymentStatus: string }) => {
+      return await apiRequest("PATCH", `/api/work-orders/${workOrderId}/payment-status`, { paymentStatus });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      toast({
+        title: "Payment Status Updated",
+        description: "Payment status has been updated successfully!",
+      });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to update payment status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Status update mutation
   const updateStatusMutation = useMutation({
@@ -836,6 +872,10 @@ export default function WorkOrders() {
   };
 
   // Status button handlers
+  const handlePaymentStatusUpdate = (workOrderId: string, paymentStatus: string) => {
+    updatePaymentStatusMutation.mutate({ workOrderId, paymentStatus });
+  };
+
   const handleStatusUpdate = (workOrderId: string, newStatus: string) => {
     const workOrder = workOrders?.find(wo => wo.id === workOrderId);
     if (!workOrder) return;
@@ -1980,6 +2020,14 @@ export default function WorkOrders() {
                         )}
                       </div>
                     )}
+
+                    {/* Payment Status - Only show for completed work orders and administrators */}
+                    <PaymentStatusButton 
+                      workOrder={order}
+                      isAdmin={(user as any)?.role === 'administrator'}
+                      onUpdatePaymentStatus={handlePaymentStatusUpdate}
+                      isLoading={updatePaymentStatusMutation.isPending}
+                    />
 
                     {(order.scopeOfWork || order.requiredTools) && (
                       <div className="space-y-2">

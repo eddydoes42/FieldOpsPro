@@ -74,6 +74,10 @@ export const workOrders = pgTable("work_orders", {
   devicesInstalled: integer("devices_installed"), // only used when budget_type is per_device
   budgetCreatedById: varchar("budget_created_by_id").references(() => users.id),
   budgetCreatedAt: timestamp("budget_created_at"),
+  // Payment workflow fields
+  paymentStatus: varchar("payment_status"), // null, pending_payment, payment_approved, payment_received, paid
+  paymentUpdatedById: varchar("payment_updated_by_id").references(() => users.id),
+  paymentUpdatedAt: timestamp("payment_updated_at"),
   // Status tracking fields
   workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
   checkedInAt: timestamp("checked_in_at"),

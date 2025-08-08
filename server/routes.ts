@@ -487,6 +487,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update work order payment status - only administrators can update
+  app.patch('/api/work-orders/:id/payment-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || currentUser.role !== 'administrator') {
+        return res.status(403).json({ message: "Only administrators can update payment status" });
+      }
+
+      const { id } = req.params;
+      const { paymentStatus } = req.body;
+      
+      // Validate payment status
+      const validStatuses = ['pending_payment', 'payment_approved', 'payment_received', 'paid'];
+      if (!validStatuses.includes(paymentStatus)) {
+        return res.status(400).json({ message: "Invalid payment status" });
+      }
+
+      const workOrder = await storage.getWorkOrder(id);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Only allow payment status updates for completed work orders
+      if (workOrder.status !== 'completed') {
+        return res.status(400).json({ message: "Payment status can only be updated for completed work orders" });
+      }
+
+      const updates = {
+        paymentStatus,
+        paymentUpdatedById: currentUser.id,
+        paymentUpdatedAt: new Date(),
+      };
+
+      const updatedWorkOrder = await storage.updateWorkOrder(id, updates);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      res.status(500).json({ message: "Failed to update payment status" });
+    }
+  });
+
   // Delete work order route - only administrators and managers can delete
   app.delete('/api/work-orders/:id', isAuthenticated, async (req: any, res) => {
     try {
@@ -1042,7 +1083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (workOrder.budgetType === 'hourly') {
         // Get total logged time for this work order  
-        const timeEntries = await storage.getTimeEntriesForWorkOrder(workOrderId);
+        const timeEntries = await storage.getTimeEntriesByWorkOrder(workOrderId);
         const totalHours = timeEntries.reduce((total: number, entry: any) => {
           if (entry.endTime) {
             const hours = (new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / (1000 * 60 * 60);
