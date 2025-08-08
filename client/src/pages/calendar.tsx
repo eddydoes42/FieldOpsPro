@@ -285,55 +285,80 @@ export default function Calendar() {
                   <div
                     key={date.toISOString()}
                     className={`
-                      min-h-40 p-2 border border-border rounded-b-lg cursor-pointer transition-colors bg-card
+                      min-h-48 p-2 border border-border rounded-b-lg cursor-pointer transition-colors bg-card flex flex-col
                       ${isTodayDate ? 'ring-1 ring-primary bg-primary/5' : ''}
                       ${isSelected ? 'bg-accent' : ''}
                       hover:bg-accent/50
                     `}
                     onClick={() => handleDateClick(date)}
                   >
-                    <div className="text-center mb-2 pb-1 border-b border-border/30">
+                    {/* Date header - fixed height */}
+                    <div className="text-center mb-2 pb-1 border-b border-border/30 flex-shrink-0">
                       <span className="text-lg font-semibold text-foreground">{format(date, 'd')}</span>
                     </div>
                     
-                    {/* Work orders for this date */}
-                    <div className="space-y-1">
+                    {/* Work orders container - takes remaining space */}
+                    <div className="flex-1 overflow-hidden">
                       {dayOrders.length === 0 ? (
                         <div className="text-xs text-muted-foreground text-center py-2">
                           No orders
                         </div>
                       ) : (
-                        <>
-                          {dayOrders.slice(0, 2).map(order => (
+                        <div className="h-full flex flex-col gap-1">
+                          {/* Show first work order always */}
+                          {dayOrders.length >= 1 && (
                             <div
-                              key={order.id}
-                              className="text-xs px-2 py-1 rounded-sm cursor-pointer bg-primary/10 hover:bg-primary/20 border-l-2 border-primary"
+                              key={dayOrders[0].id}
+                              className="text-xs px-2 py-1.5 rounded-sm cursor-pointer bg-primary/10 hover:bg-primary/20 border-l-2 border-primary flex-shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleWorkOrderClick(order);
+                                handleWorkOrderClick(dayOrders[0]);
                               }}
                             >
                               <div className="font-medium text-foreground truncate leading-tight">
-                                {order.title.length > 15 ? order.title.substring(0, 15) + '...' : order.title}
+                                {dayOrders[0].title.length > 12 ? dayOrders[0].title.substring(0, 12) + '...' : dayOrders[0].title}
                               </div>
-                              <div className="text-xs text-muted-foreground mt-0.5">
-                                {order.status.replace('_', ' ')}
-                                {canViewAllOrders && order.assigneeId && (
-                                  <span className="ml-1">• {getAgentName(order.assigneeId)?.split(' ')[0]}</span>
+                              <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                                {dayOrders[0].status.replace('_', ' ')}
+                                {canViewAllOrders && dayOrders[0].assigneeId && (
+                                  <span className="ml-1">• {getAgentName(dayOrders[0].assigneeId)?.split(' ')[0]}</span>
                                 )}
                               </div>
                             </div>
-                          ))}
+                          )}
                           
+                          {/* Show second work order if it exists */}
+                          {dayOrders.length >= 2 && (
+                            <div
+                              key={dayOrders[1].id}
+                              className="text-xs px-2 py-1.5 rounded-sm cursor-pointer bg-secondary/10 hover:bg-secondary/20 border-l-2 border-secondary flex-shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleWorkOrderClick(dayOrders[1]);
+                              }}
+                            >
+                              <div className="font-medium text-foreground truncate leading-tight">
+                                {dayOrders[1].title.length > 12 ? dayOrders[1].title.substring(0, 12) + '...' : dayOrders[1].title}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                                {dayOrders[1].status.replace('_', ' ')}
+                                {canViewAllOrders && dayOrders[1].assigneeId && (
+                                  <span className="ml-1">• {getAgentName(dayOrders[1].assigneeId)?.split(' ')[0]}</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Show "more" indicator if there are additional orders */}
                           {dayOrders.length > 2 && (
                             <div 
-                              className="text-xs text-center py-1 text-muted-foreground bg-muted/30 rounded-sm cursor-pointer hover:bg-muted/50"
+                              className="text-xs text-center py-1.5 text-muted-foreground bg-muted/30 rounded-sm cursor-pointer hover:bg-muted/50 flex-shrink-0 mt-auto"
                               onClick={() => handleDateClick(date)}
                             >
                               +{dayOrders.length - 2} more
                             </div>
                           )}
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
