@@ -27,10 +27,10 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
   const { user } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const userRole = (user as any)?.role;
-  const isAdmin = userRole === 'administrator';
-  const isManager = userRole === 'manager';
-  const isDispatcher = userRole === 'dispatcher';
+  const userRoles = (user as any)?.roles || [];
+  const isAdmin = userRoles.includes('administrator');
+  const isManager = userRoles.includes('manager');
+  const isDispatcher = userRoles.includes('dispatcher');
   const canManageUsers = isAdmin || isManager;
   const canCreateWorkOrders = isAdmin || isManager || isDispatcher;
 
@@ -118,12 +118,6 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
           <div className="p-2 space-y-1">
             {/* Primary Actions */}
             <div className="space-y-1">
-              <div className="px-2 py-1">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Create & Add
-                </span>
-              </div>
-              
               {canManageUsers && (
                 <Button
                   variant="ghost"
