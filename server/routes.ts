@@ -212,8 +212,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Role updates: Only administrators can change roles, and only up to their own level
       if (isUpdatingRole) {
+        console.log(`Role update attempt: Current user (${currentUser.id}) with role "${currentUser.role}" trying to update user ${userIdToUpdate} role to "${updateData.role}"`);
         if (currentUser.role !== 'administrator') {
-          return res.status(403).json({ message: "Only administrators can update user roles" });
+          return res.status(403).json({ message: "Only administrators can assign roles" });
         }
         
         // Prevent elevating to administrator unless current user is administrator
