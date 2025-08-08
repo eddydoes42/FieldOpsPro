@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import { useEffect, useState } from "react";
-import { Clock, MapPin, User, Calendar } from "lucide-react";
+import { Clock, MapPin, User, Calendar, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface TeamReportsData {
   agentPerformance: {
@@ -52,6 +53,7 @@ interface TeamReportsData {
 export default function TeamReports() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedAgent, setSelectedAgent] = useState("all");
@@ -168,6 +170,19 @@ export default function TeamReports() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
+        {/* Back to Dashboard Button */}
+        <div className="mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation('/')}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Reports</h1>

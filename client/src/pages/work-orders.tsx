@@ -17,7 +17,7 @@ import Navigation from "@/components/navigation";
 import WorkOrderTasks from "@/components/work-order-tasks";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Trash2 } from "lucide-react";
+import { Trash2, ArrowLeft } from "lucide-react";
 
 interface WorkOrder {
   id: string;
@@ -969,6 +969,19 @@ export default function WorkOrders() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-7xl mx-auto p-6">
+        {/* Back to Dashboard Button */}
+        <div className="mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation('/')}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div className="flex-1 text-center">

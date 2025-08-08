@@ -12,6 +12,8 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { useEffect } from "react";
+import { useLocation } from "wouter";
+import { ArrowLeft } from "lucide-react";
 
 interface OnboardingFormData {
   firstName: string;
@@ -36,6 +38,7 @@ export default function Onboarding() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   const [formData, setFormData] = useState<OnboardingFormData>({
     firstName: "",
@@ -182,6 +185,19 @@ export default function Onboarding() {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Navigation userRole={(user as any)?.role || 'manager'} />
       <div className="max-w-4xl mx-auto p-6">
+        {/* Back to Dashboard Button */}
+        <div className="mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation('/')}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Member Onboarding</h1>
