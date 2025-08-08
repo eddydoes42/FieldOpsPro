@@ -52,7 +52,7 @@ export default function Navigation({ userRole }: NavigationProps) {
           badge: { text: 'Administrator', icon: 'fas fa-crown', color: 'bg-purple-900/30 text-purple-300 border-purple-800/50' },
           links: [
             { path: '/', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-            { path: '/users', label: 'Users', icon: 'fas fa-users' },
+            { path: '/team', label: 'My Team', icon: 'fas fa-users' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
             { path: '/settings', label: 'Settings', icon: 'fas fa-cog' },
