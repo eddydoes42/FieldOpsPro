@@ -377,8 +377,8 @@ export default function WorkOrders() {
       const response = await apiRequest("POST", "/api/work-orders", workOrderData);
       const createdWorkOrder = await response.json();
       
-      // Create budget if provided and user is manager
-      if ((user as any)?.role === 'manager' && data.budgetType && data.budgetAmount) {
+      // Create budget if provided and user is manager or administrator
+      if (((user as any)?.role === 'manager' || (user as any)?.role === 'administrator') && data.budgetType && data.budgetAmount) {
         const budgetData = {
           budgetType: data.budgetType,
           budgetAmount: parseFloat(data.budgetAmount),
@@ -1173,8 +1173,8 @@ export default function WorkOrders() {
                     />
                   </div>
 
-                  {/* Budget Section - Managers Only */}
-                  {(user as any)?.role === 'manager' && (
+                  {/* Budget Section - Administrators and Managers Only */}
+                  {((user as any)?.role === 'manager' || (user as any)?.role === 'administrator') && (
                     <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border-2 border-green-200 dark:border-green-800">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">💰 Budget Information</h3>
@@ -1821,8 +1821,8 @@ export default function WorkOrders() {
                       )}
                     </div>
 
-                    {/* Budget Information - Only show to managers */}
-                    {(user as any)?.role === 'manager' && order.budgetType && (
+                    {/* Budget Information - Only show to administrators and managers */}
+                    {((user as any)?.role === 'manager' || (user as any)?.role === 'administrator') && order.budgetType && (
                       <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
@@ -2303,8 +2303,8 @@ export default function WorkOrders() {
                   </CardContent>
                 </Card>
 
-                {/* Budget Information - Manager Only */}
-                {(user as any)?.role === 'manager' && currentSelectedWorkOrder?.budgetType && (
+                {/* Budget Information - Administrators and Managers Only */}
+                {((user as any)?.role === 'manager' || (user as any)?.role === 'administrator') && currentSelectedWorkOrder?.budgetType && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg text-green-800 dark:text-green-300">Budget Details</CardTitle>
