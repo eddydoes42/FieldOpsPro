@@ -267,10 +267,10 @@ export default function Calendar() {
           </CardHeader>
           <CardContent>
             {/* Weekly Calendar Grid - Enhanced for better readability */}
-            <div className="grid grid-cols-7 gap-4">
+            <div className="grid grid-cols-7 gap-2">
               {/* Day headers */}
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground">
+              {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => (
+                <div key={day} className="p-2 text-center text-sm font-semibold text-foreground bg-muted/50 rounded-t border-b-2 border-primary/20">
                   {day}
                 </div>
               ))}
@@ -285,26 +285,24 @@ export default function Calendar() {
                   <div
                     key={date.toISOString()}
                     className={`
-                      min-h-48 p-4 border border-border rounded-lg cursor-pointer transition-colors bg-background shadow-sm
-                      ${isTodayDate ? 'ring-2 ring-primary bg-primary/5 border-primary/20' : ''}
-                      ${isSelected ? 'bg-primary/10 border-primary/20' : ''}
-                      hover:bg-muted/50 hover:shadow-md
+                      min-h-48 p-2 border border-border rounded-b-lg cursor-pointer transition-colors bg-background
+                      ${isTodayDate ? 'ring-2 ring-primary bg-primary/5 border-primary' : ''}
+                      ${isSelected ? 'bg-primary/10 border-primary' : ''}
+                      hover:bg-muted/30
                     `}
                     onClick={() => handleDateClick(date)}
                   >
-                    <div className="text-base font-semibold mb-2 flex items-center justify-between">
-                      <span>{format(date, 'EEE')}</span>
-                      <span className="text-lg">{format(date, 'd')}</span>
+                    <div className="text-center mb-2 pb-2 border-b border-border/50">
+                      <span className="text-2xl font-bold text-foreground">{format(date, 'd')}</span>
                     </div>
                     
                     {/* Work orders for this date */}
-                    <div className="space-y-2">
-                      {dayOrders.slice(0, 4).map(order => (
+                    <div className="space-y-1 overflow-hidden">
+                      {dayOrders.slice(0, 3).map(order => (
                         <div
                           key={order.id}
-                          className="text-sm p-2 rounded-lg cursor-pointer hover:shadow-sm transition-all border-l-4"
+                          className="text-xs p-1.5 rounded border-l-3 cursor-pointer hover:bg-muted/50 transition-all bg-card"
                           style={{ 
-                            backgroundColor: `${getPriorityColor(order.priority)}15`,
                             borderLeftColor: getPriorityColor(order.priority).replace('bg-', '').includes('red') ? '#ef4444' : 
                                            getPriorityColor(order.priority).replace('bg-', '').includes('yellow') ? '#f59e0b' : '#10b981'
                           }}
@@ -313,37 +311,25 @@ export default function Calendar() {
                             handleWorkOrderClick(order);
                           }}
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className={`w-3 h-3 rounded-full ${getPriorityColor(order.priority)}`}
-                              />
-                              <Badge className={`text-xs ${getStatusColor(order.status)}`}>
-                                {order.status}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="font-medium text-foreground truncate mb-1">
+                          <div className="font-semibold text-foreground truncate mb-0.5 text-xs leading-tight">
                             {order.title}
                           </div>
-                          {canViewAllOrders && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              {getAgentName(order.assigneeId)}
-                            </div>
-                          )}
-                          {order.estimatedHours && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {order.estimatedHours}h
-                            </div>
-                          )}
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
+                              {order.status.replace('_', ' ')}
+                            </Badge>
+                            {canViewAllOrders && (
+                              <span className="text-xs text-muted-foreground truncate max-w-12">
+                                {getAgentName(order.assigneeId)?.split(' ')[0]}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
                       
-                      {dayOrders.length > 4 && (
-                        <div className="text-xs text-muted-foreground text-center py-2 bg-muted/50 rounded">
-                          +{dayOrders.length - 4} more work orders
+                      {dayOrders.length > 3 && (
+                        <div className="text-xs text-muted-foreground text-center py-1 bg-muted/50 rounded-sm">
+                          +{dayOrders.length - 3} more orders
                         </div>
                       )}
                     </div>
