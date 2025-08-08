@@ -91,11 +91,10 @@ export default function Calendar() {
     });
   }, [workOrders, userRole, user, filterAgent, filterStatus, filterPriority, isFieldAgent, canViewAllOrders]);
 
-  // Weekly calendar calculations - 5-day workweek
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Start on Monday
-  const weekEnd = addWeeks(weekStart, 0); // Get the same week
-  const workWeekEnd = addDays(weekStart, 4); // Friday (Monday + 4 days)
-  const calendarDays = eachDayOfInterval({ start: weekStart, end: workWeekEnd });
+  // Weekly calendar calculations - 7-day week
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Start on Sunday
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 }); // End on Saturday
+  const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   // Get work orders for a specific date
   const getWorkOrdersForDate = (date: Date) => {
@@ -247,7 +246,7 @@ export default function Calendar() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl font-semibold">
-                Week of {format(weekStart, 'MMM d')} - {format(workWeekEnd, 'MMM d, yyyy')}
+                Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handlePrevWeek}>
@@ -267,7 +266,7 @@ export default function Calendar() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* 5-Day Workweek Calendar - Vertical Layout */}
+            {/* 7-Day Weekly Calendar - Vertical Layout */}
             <div className="space-y-4 bg-muted/20 p-4 rounded-lg">
               {/* Days stacked vertically */}
               {calendarDays.map((date, dayIndex) => {
