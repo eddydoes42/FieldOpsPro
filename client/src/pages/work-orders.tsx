@@ -377,8 +377,11 @@ export default function WorkOrders() {
       const response = await apiRequest("POST", "/api/work-orders", workOrderData);
       const createdWorkOrder = await response.json();
       
-      // Create budget if provided and user is manager or administrator
-      if (((user as any)?.role === 'manager' || (user as any)?.role === 'administrator') && data.budgetType && data.budgetAmount) {
+      // Create budget - required for managers and administrators
+      if (((user as any)?.role === 'manager' || (user as any)?.role === 'administrator')) {
+        if (!data.budgetType || !data.budgetAmount) {
+          throw new Error('Budget information is required for work order creation');
+        }
         const budgetData = {
           budgetType: data.budgetType,
           budgetAmount: parseFloat(data.budgetAmount),
@@ -958,6 +961,35 @@ export default function WorkOrders() {
       });
       return;
     }
+
+    // Validate budget fields for managers and administrators
+    if ((user as any)?.role === 'manager' || (user as any)?.role === 'administrator') {
+      if (!newWorkOrder.budgetType) {
+        toast({
+          title: "Validation Error",
+          description: "Budget type is required.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!newWorkOrder.budgetAmount) {
+        toast({
+          title: "Validation Error",
+          description: "Budget amount is required.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (newWorkOrder.budgetType === 'per_device' && !newWorkOrder.devicesInstalled) {
+        toast({
+          title: "Validation Error",
+          description: "Number of devices is required for per-device budget type.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     createWorkOrderMutation.mutate(newWorkOrder);
   };
 
@@ -1178,21 +1210,21 @@ export default function WorkOrders() {
                     <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border-2 border-green-200 dark:border-green-800">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">💰 Budget Information</h3>
-                        <Badge variant="secondary" className="bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200">
-                          Optional
+                        <Badge variant="destructive" className="bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200">
+                          Required
                         </Badge>
                       </div>
                       
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="budgetType">Budget Type</Label>
+                            <Label htmlFor="budgetType">Budget Type *</Label>
                             <Select 
                               value={newWorkOrder.budgetType || ""} 
                               onValueChange={(value) => handleInputChange('budgetType', value)}
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Select budget type (optional)" />
+                                <SelectValue placeholder="Select budget type *" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="fixed">Fixed Amount</SelectItem>
@@ -1203,10 +1235,10 @@ export default function WorkOrders() {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="budgetAmount">
-                              {newWorkOrder.budgetType === 'fixed' ? 'Budget Amount ($)' : 
-                               newWorkOrder.budgetType === 'hourly' ? 'Hourly Rate ($)' : 
-                               newWorkOrder.budgetType === 'per_device' ? 'Rate Per Device ($)' :
-                               'Amount ($)'}
+                              {newWorkOrder.budgetType === 'fixed' ? 'Budget Amount ($) *' : 
+                               newWorkOrder.budgetType === 'hourly' ? 'Hourly Rate ($) *' : 
+                               newWorkOrder.budgetType === 'per_device' ? 'Rate Per Device ($) *' :
+                               'Amount ($) *'}
                             </Label>
                             <Input
                               id="budgetAmount"
@@ -1222,13 +1254,13 @@ export default function WorkOrders() {
                         
                         {newWorkOrder.budgetType === 'per_device' && (
                           <div className="space-y-2">
-                            <Label htmlFor="devicesInstalled">Number of Devices</Label>
+                            <Label htmlFor="devicesInstalled">Number of Devices *</Label>
                             <Input
                               id="devicesInstalled"
                               type="number"
                               value={newWorkOrder.devicesInstalled || ""}
                               onChange={(e) => handleInputChange('devicesInstalled', e.target.value)}
-                              placeholder="Enter number of devices to be installed"
+                              placeholder="Enter number of devices to be installed *"
                             />
                           </div>
                         )}

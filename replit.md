@@ -30,6 +30,7 @@ The application is fully operational with comprehensive demo data and modern dar
   - **Time Entry API**: Backend endpoints for fetching time data per work order and user
   - **Real-time Updates**: Time tracking data refreshes automatically when status changes
 - ✓ **Comprehensive Budget Management System**: Administrator and manager budget creation and tracking
+  - **Mandatory Budget Creation**: Budget information is required when administrators and managers create work orders
   - **Integrated Budget Creation**: Budget setup integrated into work order creation form for administrators and managers
   - **Three Budget Types**: Fixed amount, hourly rate (calculated from logged time), and per-device pricing
   - **Real-time Calculations**: Budget totals automatically calculated based on time logged or devices installed
