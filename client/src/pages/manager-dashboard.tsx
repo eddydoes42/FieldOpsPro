@@ -167,10 +167,10 @@ export default function ManagerDashboard() {
                 <h3 className="text-lg font-semibold text-foreground">Priority Tasks</h3>
                 <span className="bg-red-900/30 text-red-300 text-sm font-medium px-3 py-1 rounded-full border border-red-800/50">
                   {(() => {
-                    const highPriorityCount = (workOrders as any)?.filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress')).length || 0;
+                    const highPriorityCount = (workOrders as any)?.filter((order: any) => order.priority === 'high' && order.status !== 'completed').length || 0;
                     const workOrdersWithIssues = (allIssues as any)?.filter((issue: any) => issue.status === 'open').map((issue: any) => issue.workOrderId) || [];
                     const uniqueWorkOrdersWithIssues = Array.from(new Set(workOrdersWithIssues));
-                    const issueWorkOrders = (workOrders as any)?.filter((order: any) => uniqueWorkOrdersWithIssues.includes(order.id) && (order.status === 'pending' || order.status === 'in_progress')) || [];
+                    const issueWorkOrders = (workOrders as any)?.filter((order: any) => uniqueWorkOrdersWithIssues.includes(order.id) && order.status !== 'completed') || [];
                     const combinedCount = highPriorityCount + issueWorkOrders.filter((order: any) => order.priority !== 'high').length;
                     return combinedCount;
                   })()}
@@ -183,10 +183,10 @@ export default function ManagerDashboard() {
                   </div>
                 ) : workOrders && (workOrders as any).length > 0 ? (
                   (() => {
-                    const highPriorityOrders = (workOrders as any)?.filter((order: any) => order.priority === 'high' && (order.status === 'pending' || order.status === 'in_progress')) || [];
+                    const highPriorityOrders = (workOrders as any)?.filter((order: any) => order.priority === 'high' && order.status !== 'completed') || [];
                     const workOrdersWithIssues = (allIssues as any)?.filter((issue: any) => issue.status === 'open').map((issue: any) => issue.workOrderId) || [];
                     const uniqueWorkOrdersWithIssues = Array.from(new Set(workOrdersWithIssues));
-                    const issueWorkOrders = (workOrders as any)?.filter((order: any) => uniqueWorkOrdersWithIssues.includes(order.id) && (order.status === 'pending' || order.status === 'in_progress') && order.priority !== 'high') || [];
+                    const issueWorkOrders = (workOrders as any)?.filter((order: any) => uniqueWorkOrdersWithIssues.includes(order.id) && order.status !== 'completed' && order.priority !== 'high') || [];
                     return [...highPriorityOrders, ...issueWorkOrders].slice(0, 4);
                   })()
                     .map((order: any) => (
@@ -246,7 +246,7 @@ export default function ManagerDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-foreground">Active Issues</h3>
                 <span className="bg-orange-900/30 text-orange-300 text-sm font-medium px-3 py-1 rounded-full border border-orange-800/50">
-                  {(workOrders as any)?.filter((order: any) => (order.status === 'in_progress' || order.status === 'pending') && (order.title.toLowerCase().includes('issue') || order.title.toLowerCase().includes('problem') || order.title.toLowerCase().includes('outage') || order.title.toLowerCase().includes('down') || order.title.toLowerCase().includes('failure'))).length || 0}
+                  {(allIssues as any)?.filter((issue: any) => issue.status === 'open').length || 0}
                 </span>
               </div>
               
@@ -255,50 +255,44 @@ export default function ManagerDashboard() {
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   </div>
-                ) : workOrders && (workOrders as any).length > 0 ? (
-                  (workOrders as any)
-                    .filter((order: any) => (order.status === 'in_progress' || order.status === 'pending') && 
-                      (order.title.toLowerCase().includes('issue') || 
-                       order.title.toLowerCase().includes('problem') || 
-                       order.title.toLowerCase().includes('outage') || 
-                       order.title.toLowerCase().includes('down') || 
-                       order.title.toLowerCase().includes('failure') ||
-                       order.title.toLowerCase().includes('repair') ||
-                       order.title.toLowerCase().includes('fix')))
+                ) : allIssues && (allIssues as any).length > 0 ? (
+                  (allIssues as any)
+                    .filter((issue: any) => issue.status === 'open')
                     .slice(0, 4)
-                    .map((order: any) => (
-                      <div key={order.id} className="border-l-4 border-orange-500 bg-orange-900/20 p-4 rounded-r-lg border border-orange-800/30">
-                        <div className="flex items-start justify-between overflow-hidden">
-                          <div className="flex-1 min-w-0 pr-3">
-                            <h4 className="font-medium text-foreground truncate">{order.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1 truncate">{order.description}</p>
-                            <div className="flex items-center mt-2 space-x-4">
-                              <span className="text-xs text-muted-foreground truncate">
-                                <i className="fas fa-map-marker-alt mr-1"></i>
-                                {order.location || 'No location'}
+                    .map((issue: any) => {
+                      const workOrder = (workOrders as any)?.find((order: any) => order.id === issue.workOrderId);
+                      return (
+                        <div key={issue.id} className="border-l-4 border-orange-500 bg-orange-900/20 p-4 rounded-r-lg border border-orange-800/30">
+                          <div className="flex items-start justify-between overflow-hidden">
+                            <div className="flex-1 min-w-0 pr-3">
+                              <h4 className="font-medium text-foreground truncate">
+                                <i className="fas fa-exclamation-triangle mr-2 text-orange-400"></i>
+                                {issue.reason.charAt(0).toUpperCase() + issue.reason.slice(1)} Issue
+                              </h4>
+                              <p className="text-sm text-muted-foreground mt-1 truncate">{issue.explanation}</p>
+                              <div className="flex items-center mt-2 space-x-4">
+                                <span className="text-xs text-muted-foreground truncate">
+                                  <i className="fas fa-clipboard mr-1"></i>
+                                  Work Order: {workOrder?.title || 'Unknown'}
+                                </span>
+                                <span className="text-xs text-muted-foreground truncate">
+                                  <i className="fas fa-calendar mr-1"></i>
+                                  {new Date(issue.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0 flex flex-col items-end">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap mb-1 bg-orange-900/50 text-orange-200 border-orange-700">
+                                {issue.reason.toUpperCase()}
                               </span>
-                              <span className="text-xs text-muted-foreground truncate">
-                                <i className="fas fa-user mr-1"></i>
-                                {getAgentName(order.assigneeId) || 'Unassigned'}
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-red-900/50 text-red-200 border border-red-700">
+                                OPEN
                               </span>
                             </div>
                           </div>
-                          <div className="flex-shrink-0 flex flex-col items-end">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap mb-1 ${getPriorityColor(order.priority)}`}>
-                              {order.priority.toUpperCase()}
-                            </span>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(order.status)}`}>
-                              {order.status?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                            </span>
-                            {order.dueDate && (
-                              <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
-                                {new Date(order.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </span>
-                            )}
-                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     No active issues reported
