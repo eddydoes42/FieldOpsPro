@@ -140,6 +140,8 @@ export default function WorkOrders() {
   // Filter states
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterIssues, setFilterIssues] = useState("all");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
 
   // Handle URL parameters for filtering and actions
@@ -304,8 +306,37 @@ export default function WorkOrders() {
     retry: false,
   });
 
-  // Alias for easier reference
+  // Query to fetch issues for all work orders
+  const { data: allWorkOrderIssues } = useQuery<{ [workOrderId: string]: WorkOrderIssue[] }>({
+    queryKey: ["/api/work-orders/issues/all"],
+    queryFn: async () => {
+      if (!workOrders) return {};
+      
+      const issuesData: { [workOrderId: string]: WorkOrderIssue[] } = {};
+      
+      // Fetch issues for each work order
+      for (const workOrder of workOrders) {
+        try {
+          const response = await fetch(`/api/work-orders/${workOrder.id}/issues`);
+          if (response.ok) {
+            issuesData[workOrder.id] = await response.json();
+          } else {
+            issuesData[workOrder.id] = [];
+          }
+        } catch (error) {
+          issuesData[workOrder.id] = [];
+        }
+      }
+      
+      return issuesData;
+    },
+    enabled: !!workOrders && workOrders.length > 0,
+    retry: false,
+  });
+
+  // Aliases for easier reference
   const tasksData = allWorkOrderTasks;
+  const issuesData = allWorkOrderIssues;
 
   // Calculate total logged time for a work order
   const calculateLoggedTime = (workOrderId: string): string => {
@@ -747,12 +778,21 @@ export default function WorkOrders() {
   const filteredWorkOrders = workOrders?.filter(order => {
     if (filterStatus !== 'all' && order.status !== filterStatus) return false;
     if (filterAssignee !== 'all' && order.assigneeId !== filterAssignee) return false;
+    if (filterPriority !== 'all' && order.priority !== filterPriority) return false;
+    
+    // Filter by issues - check if work order has any reported issues
+    if (filterIssues !== 'all') {
+      const workOrderIssues = issuesData?.[order.id] || [];
+      if (filterIssues === 'with-issues' && workOrderIssues.length === 0) return false;
+      if (filterIssues === 'without-issues' && workOrderIssues.length > 0) return false;
+    }
     
     // Apply quick filters
     if (quickFilter === 'high-priority' && order.priority !== 'high') return false;
     if (quickFilter === 'active-issues') {
-      // Filter for work orders with active issues (you may need to adjust this logic based on your data structure)
-      const hasActiveIssue = order.status === 'blocked' || order.status === 'delayed' || order.priority === 'high';
+      // Filter for work orders with active issues
+      const workOrderIssues = issuesData?.[order.id] || [];
+      const hasActiveIssue = workOrderIssues.length > 0 || order.status === 'blocked' || order.status === 'delayed' || order.priority === 'high';
       if (!hasActiveIssue) return false;
     }
     
@@ -1782,6 +1822,33 @@ export default function WorkOrders() {
                         {agent.firstName} {agent.lastName}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="priorityFilter">Priority:</Label>
+                <Select value={filterPriority} onValueChange={setFilterPriority}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="issuesFilter">Issues:</Label>
+                <Select value={filterIssues} onValueChange={setFilterIssues}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Orders</SelectItem>
+                    <SelectItem value="with-issues">With Issues</SelectItem>
+                    <SelectItem value="without-issues">No Issues</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
