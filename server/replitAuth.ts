@@ -115,7 +115,12 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    // Handle both localhost development and Replit domain
+    const hostname = req.hostname === 'localhost' ? 
+      process.env.REPLIT_DOMAINS!.split(",")[0] : 
+      req.hostname;
+    
+    passport.authenticate(`replitauth:${hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
@@ -123,7 +128,12 @@ export async function setupAuth(app: Express) {
 
   // Callback route - handle authentication success/failure with custom logic for restricted access
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, (err: any, user: any, info: any) => {
+    // Handle both localhost development and Replit domain
+    const hostname = req.hostname === 'localhost' ? 
+      process.env.REPLIT_DOMAINS!.split(",")[0] : 
+      req.hostname;
+    
+    passport.authenticate(`replitauth:${hostname}`, (err: any, user: any, info: any) => {
       if (err) {
         // Authentication failed - redirect with error message
         console.log("Authentication failed:", err.message);
