@@ -5,11 +5,13 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import { useEffect, useState } from "react";
+import { Clock, MapPin, User, Calendar } from "lucide-react";
 
 interface TeamReportsData {
   agentPerformance: {
@@ -54,6 +56,8 @@ export default function TeamReports() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedAgent, setSelectedAgent] = useState("all");
   const [selectedPeriod, setSelectedPeriod] = useState("30");
+  const [selectedCardData, setSelectedCardData] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -73,6 +77,11 @@ export default function TeamReports() {
   const { data: reportsData, isLoading: reportsLoading, error } = useQuery<TeamReportsData>({
     queryKey: ["/api/reports/team"],
     retry: false,
+  });
+
+  const { data: workOrdersData } = useQuery({
+    queryKey: ["/api/work-orders"],
+    enabled: !!user && ((user as any).role === 'manager' || (user as any).role === 'administrator'),
   });
 
   if (error && isUnauthorizedError(error as Error)) {
@@ -119,6 +128,40 @@ export default function TeamReports() {
   const formatHours = (hours: number | null) => {
     if (hours === null || hours === undefined) return 'N/A';
     return `${Number(hours).toFixed(1)}h`;
+  };
+
+  const getContributingWorkOrders = (type: string, status?: string, agentId?: string) => {
+    if (!workOrdersData) return [];
+    
+    let filteredOrders = workOrdersData as any[];
+    
+    switch (type) {
+      case 'total':
+        return filteredOrders;
+      case 'hours':
+        return filteredOrders.filter((wo: any) => wo.actualHours && wo.actualHours > 0);
+      case 'active':
+        return filteredOrders.filter((wo: any) => wo.status === 'in_progress');
+      case 'avg_session':
+        return filteredOrders.filter((wo: any) => wo.actualHours && wo.actualHours > 0);
+      case 'status':
+        return filteredOrders.filter((wo: any) => wo.status === status);
+      case 'agent':
+        return filteredOrders.filter((wo: any) => wo.assigneeId === agentId);
+      default:
+        return filteredOrders;
+    }
+  };
+
+  const openCardDetails = (cardType: string, title: string, additionalData?: any) => {
+    const workOrders = getContributingWorkOrders(cardType, additionalData?.status, additionalData?.agentId);
+    setSelectedCardData({
+      type: cardType,
+      title,
+      workOrders,
+      ...additionalData
+    });
+    setIsDialogOpen(true);
   };
 
   return (
@@ -183,7 +226,10 @@ export default function TeamReports() {
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => openCardDetails('total', 'Total Work Orders')}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -197,7 +243,10 @@ export default function TeamReports() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => openCardDetails('hours', 'Hours Worked')}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -211,7 +260,10 @@ export default function TeamReports() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => openCardDetails('active', 'Active Sessions')}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -225,7 +277,10 @@ export default function TeamReports() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => openCardDetails('avg_session', 'Average Session Length')}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -252,7 +307,11 @@ export default function TeamReports() {
               <CardContent>
                 <div className="space-y-4">
                   {reportsData?.workOrderStats.map((stat) => (
-                    <div key={stat.status} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                    <div 
+                      key={stat.status} 
+                      className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow"
+                      onClick={() => openCardDetails('status', `Work Orders: ${stat.status.replace('_', ' ').toUpperCase()}`, { status: stat.status })}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 flex-1 min-w-0">
                           <Badge className={getStatusColor(stat.status)}>
@@ -288,7 +347,11 @@ export default function TeamReports() {
                       : '0';
                     
                     return (
-                      <div key={agent.agentId} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div 
+                        key={agent.agentId} 
+                        className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => openCardDetails('agent', `${agent.agentName} - Performance Details`, { agentId: agent.agentId, agentName: agent.agentName })}
+                      >
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1 min-w-0 pr-2">
                             <h4 className="font-semibold text-gray-900 dark:text-white truncate">{agent.agentName}</h4>
@@ -329,6 +392,92 @@ export default function TeamReports() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Work Order Details Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="text-blue-600 dark:text-blue-400">📊</span>
+                {selectedCardData?.title}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {selectedCardData?.workOrders && selectedCardData.workOrders.length > 0 ? (
+                <>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                    Showing {selectedCardData.workOrders.length} work orders that contributed to this metric
+                  </div>
+                  <div className="grid gap-4">
+                    {selectedCardData.workOrders.map((wo: any) => (
+                      <Card key={wo.id} className="bg-gray-50 dark:bg-gray-800/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 dark:text-white truncate">
+                                {wo.title || 'Untitled Work Order'}
+                              </h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                {wo.description || 'No description'}
+                              </p>
+                            </div>
+                            <Badge className={getStatusColor(wo.status)}>
+                              {wo.status?.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                            <div className="flex items-center gap-1">
+                              <User className="w-3 h-3 text-gray-500" />
+                              <span className="text-gray-600 dark:text-gray-300">
+                                {wo.assigneeName || wo.assigneeId || 'Unassigned'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-gray-500" />
+                              <span className="text-gray-600 dark:text-gray-300 truncate">
+                                {wo.location || 'No location'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-gray-500" />
+                              <span className="text-gray-600 dark:text-gray-300">
+                                Est: {formatHours(wo.estimatedHours)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-gray-500" />
+                              <span className="text-gray-600 dark:text-gray-300">
+                                Act: {formatHours(wo.actualHours)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {wo.priority && (
+                            <div className="mt-2">
+                              <Badge variant="outline" className={
+                                wo.priority === 'high' ? 'border-red-300 text-red-700 dark:border-red-700 dark:text-red-300' :
+                                wo.priority === 'medium' ? 'border-yellow-300 text-yellow-700 dark:border-yellow-700 dark:text-yellow-300' :
+                                'border-green-300 text-green-700 dark:border-green-700 dark:text-green-300'
+                              }>
+                                {wo.priority.toUpperCase()} Priority
+                              </Badge>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <p>No work orders found for this metric.</p>
+                  <p className="text-sm">This could mean the data is still loading or no work orders match the criteria.</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
