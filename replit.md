@@ -33,6 +33,11 @@ The application is fully operational with comprehensive demo data and modern dar
   - **Dispatchers**: Can view and complete work orders assigned to any field agent, create and delete work orders (cannot use onboarding functions)
   - **Managers**: Same abilities as dispatchers plus onboarding functions
   - **Administrators**: Full access to all functions including role assignment and user creation
+- ✓ **Restricted Authentication System**: Login access limited to pre-existing team members only
+  - **Pre-approval Required**: Users must be created through "Team Member Information" menu before they can login
+  - **No Auto-registration**: Automatic user creation on first login is disabled
+  - **Access Control**: Authentication fails with clear error message for unauthorized users
+  - **Admin-only User Creation**: Only administrators can add new team members to the system
 - ✓ Sample data: 6 users (1 admin, 1 manager, 4 field agents)
 - ✓ 6 work orders with various statuses and assignments
 - ✓ Time tracking entries including active sessions with logged hours display

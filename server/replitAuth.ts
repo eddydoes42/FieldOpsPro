@@ -54,15 +54,23 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(
+async function authenticateExistingUser(
   claims: any,
 ) {
-  await storage.upsertUser({
-    id: claims["sub"],
+  // Check if user exists in the system
+  const existingUser = await storage.getUser(claims["sub"]);
+  
+  if (!existingUser) {
+    // User doesn't exist in our system - deny access
+    throw new Error("Access denied: User not found in system. Please contact your administrator to be added to the team.");
+  }
+  
+  // User exists - update their profile information from OAuth
+  await storage.updateUser(existingUser.id, {
     email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
+    firstName: claims["first_name"] || existingUser.firstName,
+    lastName: claims["last_name"] || existingUser.lastName,
+    profileImageUrl: claims["profile_image_url"] || existingUser.profileImageUrl,
   });
 }
 
@@ -78,10 +86,15 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      const user = {};
+      updateUserSession(user, tokens);
+      await authenticateExistingUser(tokens.claims());
+      verified(null, user);
+    } catch (error) {
+      // Pass the error to passport which will handle the authentication failure
+      verified(error as Error, false);
+    }
   };
 
   for (const domain of process.env
@@ -108,10 +121,24 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
+  // Callback route - handle authentication success/failure with custom logic for restricted access
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    passport.authenticate(`replitauth:${req.hostname}`, (err: any, user: any, info: any) => {
+      if (err) {
+        // Authentication failed - redirect with error message
+        console.log("Authentication failed:", err.message);
+        return res.redirect(`/?error=${encodeURIComponent("Access denied: You must be added to the team by an administrator before you can login.")}`);
+      }
+      if (!user) {
+        return res.redirect(`/?error=${encodeURIComponent("Authentication failed. Please try again.")}`);
+      }
+      // Authentication successful
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.redirect(`/?error=${encodeURIComponent("Login error. Please try again.")}`);
+        }
+        return res.redirect("/");
+      });
     })(req, res, next);
   });
 
