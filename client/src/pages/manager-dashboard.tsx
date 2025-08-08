@@ -103,7 +103,7 @@ export default function ManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation userRole={(user as any)?.roles || ['manager']} />
+      <Navigation />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">

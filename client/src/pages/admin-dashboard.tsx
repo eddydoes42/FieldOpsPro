@@ -107,7 +107,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation userRole={(user as any)?.roles || ['administrator']} />
+      <Navigation />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Dashboard Header */}

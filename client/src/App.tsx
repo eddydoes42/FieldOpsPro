@@ -40,6 +40,9 @@ function Router() {
         ) : (
           <>
             <Route path="/">
+              <Landing />
+            </Route>
+            <Route path="/dashboard">
               {hasRole(user as any, 'administrator') ? (
                 <AdminDashboard />
               ) : hasRole(user as any, 'manager') ? (

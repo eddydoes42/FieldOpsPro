@@ -779,7 +779,7 @@ export default function WorkOrders() {
   if (isLoading || ordersLoading || agentsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
-        <Navigation userRole={(user as any)?.roles || ['manager']} />
+        <Navigation />
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -1187,14 +1187,14 @@ export default function WorkOrders() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navigation userRole={(user as any)?.roles || ['manager']} />
+      <Navigation />
       <div className="max-w-7xl mx-auto p-6">
         {/* Back to Dashboard Button */}
         <div className="mb-4">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setLocation('/')}
+            onClick={() => setLocation('/dashboard')}
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="h-4 w-4" />
