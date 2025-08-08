@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import { useState, useMemo } from "react";
-import { format, eachDayOfInterval, isSameDay, addWeeks, subWeeks, startOfWeek, endOfWeek, isToday, isSameWeek } from "date-fns";
+import { format, eachDayOfInterval, isSameDay, addWeeks, subWeeks, startOfWeek, endOfWeek, isToday, isSameWeek, addDays } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -91,10 +91,11 @@ export default function Calendar() {
     });
   }, [workOrders, userRole, user, filterAgent, filterStatus, filterPriority, isFieldAgent, canViewAllOrders]);
 
-  // Weekly calendar calculations
-  const weekStart = startOfWeek(currentDate);
-  const weekEnd = endOfWeek(currentDate);
-  const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  // Weekly calendar calculations - 5-day workweek
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Start on Monday
+  const weekEnd = addWeeks(weekStart, 0); // Get the same week
+  const workWeekEnd = addDays(weekStart, 4); // Friday (Monday + 4 days)
+  const calendarDays = eachDayOfInterval({ start: weekStart, end: workWeekEnd });
 
   // Get work orders for a specific date
   const getWorkOrdersForDate = (date: Date) => {
@@ -246,7 +247,7 @@ export default function Calendar() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl font-semibold">
-                Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+                Week of {format(weekStart, 'MMM d')} - {format(workWeekEnd, 'MMM d, yyyy')}
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handlePrevWeek}>
@@ -266,11 +267,11 @@ export default function Calendar() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Weekly Calendar Grid - Simplified for readability */}
-            <div className="grid grid-cols-7 gap-1 bg-muted/20 p-2 rounded-lg">
+            {/* 5-Day Workweek Calendar Grid - Enhanced for readability */}
+            <div className="grid grid-cols-5 gap-3 bg-muted/20 p-4 rounded-lg">
               {/* Day headers */}
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground bg-muted/30 rounded-t-lg">
+              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => (
+                <div key={day} className="p-3 text-center text-base font-semibold text-foreground bg-muted/50 rounded-t-lg border-b-2 border-primary/20">
                   {day}
                 </div>
               ))}
@@ -285,77 +286,67 @@ export default function Calendar() {
                   <div
                     key={date.toISOString()}
                     className={`
-                      min-h-48 p-2 border border-border rounded-b-lg cursor-pointer transition-colors bg-card flex flex-col
-                      ${isTodayDate ? 'ring-1 ring-primary bg-primary/5' : ''}
+                      min-h-64 p-4 border border-border rounded-b-lg cursor-pointer transition-colors bg-card flex flex-col
+                      ${isTodayDate ? 'ring-2 ring-primary bg-primary/10' : ''}
                       ${isSelected ? 'bg-accent' : ''}
-                      hover:bg-accent/50
+                      hover:bg-accent/50 shadow-sm hover:shadow-md
                     `}
                     onClick={() => handleDateClick(date)}
                   >
                     {/* Date header - fixed height */}
-                    <div className="text-center mb-2 pb-1 border-b border-border/30 flex-shrink-0">
-                      <span className="text-lg font-semibold text-foreground">{format(date, 'd')}</span>
+                    <div className="text-center mb-3 pb-2 border-b border-border/40 flex-shrink-0">
+                      <span className="text-2xl font-bold text-foreground">{format(date, 'd')}</span>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {format(date, 'MMM')}
+                      </div>
                     </div>
                     
                     {/* Work orders container - takes remaining space */}
                     <div className="flex-1 overflow-hidden">
                       {dayOrders.length === 0 ? (
-                        <div className="text-xs text-muted-foreground text-center py-2">
-                          No orders
+                        <div className="text-sm text-muted-foreground text-center py-4 italic">
+                          No work orders
                         </div>
                       ) : (
-                        <div className="h-full flex flex-col gap-1">
-                          {/* Show first work order always */}
-                          {dayOrders.length >= 1 && (
+                        <div className="h-full flex flex-col gap-2">
+                          {/* Show up to 3 work orders with full readability */}
+                          {dayOrders.slice(0, 3).map((order, index) => (
                             <div
-                              key={dayOrders[0].id}
-                              className="text-xs px-2 py-1.5 rounded-sm cursor-pointer bg-primary/10 hover:bg-primary/20 border-l-2 border-primary flex-shrink-0"
+                              key={order.id}
+                              className={`
+                                text-sm px-3 py-2 rounded-md cursor-pointer transition-colors flex-shrink-0
+                                ${index === 0 ? 'bg-primary/15 hover:bg-primary/25 border-l-4 border-primary' : ''}
+                                ${index === 1 ? 'bg-blue-500/15 hover:bg-blue-500/25 border-l-4 border-blue-500' : ''}
+                                ${index === 2 ? 'bg-green-500/15 hover:bg-green-500/25 border-l-4 border-green-500' : ''}
+                              `}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleWorkOrderClick(dayOrders[0]);
+                                handleWorkOrderClick(order);
                               }}
                             >
-                              <div className="font-medium text-foreground truncate leading-tight">
-                                {dayOrders[0].title.length > 12 ? dayOrders[0].title.substring(0, 12) + '...' : dayOrders[0].title}
+                              <div className="font-medium text-foreground leading-tight mb-1">
+                                {order.title.length > 20 ? order.title.substring(0, 20) + '...' : order.title}
                               </div>
-                              <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                                {dayOrders[0].status.replace('_', ' ')}
-                                {canViewAllOrders && dayOrders[0].assigneeId && (
-                                  <span className="ml-1">• {getAgentName(dayOrders[0].assigneeId)?.split(' ')[0]}</span>
+                              <div className="flex items-center justify-between">
+                                <Badge className={`text-xs ${getStatusColor(order.status)}`}>
+                                  {order.status.replace('_', ' ')}
+                                </Badge>
+                                {canViewAllOrders && order.assigneeId && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {getAgentName(order.assigneeId)?.split(' ')[0]}
+                                  </span>
                                 )}
                               </div>
                             </div>
-                          )}
-                          
-                          {/* Show second work order if it exists */}
-                          {dayOrders.length >= 2 && (
-                            <div
-                              key={dayOrders[1].id}
-                              className="text-xs px-2 py-1.5 rounded-sm cursor-pointer bg-secondary/10 hover:bg-secondary/20 border-l-2 border-secondary flex-shrink-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleWorkOrderClick(dayOrders[1]);
-                              }}
-                            >
-                              <div className="font-medium text-foreground truncate leading-tight">
-                                {dayOrders[1].title.length > 12 ? dayOrders[1].title.substring(0, 12) + '...' : dayOrders[1].title}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                                {dayOrders[1].status.replace('_', ' ')}
-                                {canViewAllOrders && dayOrders[1].assigneeId && (
-                                  <span className="ml-1">• {getAgentName(dayOrders[1].assigneeId)?.split(' ')[0]}</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
+                          ))}
                           
                           {/* Show "more" indicator if there are additional orders */}
-                          {dayOrders.length > 2 && (
+                          {dayOrders.length > 3 && (
                             <div 
-                              className="text-xs text-center py-1.5 text-muted-foreground bg-muted/30 rounded-sm cursor-pointer hover:bg-muted/50 flex-shrink-0 mt-auto"
+                              className="text-sm text-center py-2 text-muted-foreground bg-muted/40 rounded-md cursor-pointer hover:bg-muted/60 flex-shrink-0 mt-auto font-medium"
                               onClick={() => handleDateClick(date)}
                             >
-                              +{dayOrders.length - 2} more
+                              +{dayOrders.length - 3} more orders
                             </div>
                           )}
                         </div>
