@@ -308,31 +308,32 @@ export default function Calendar() {
                           No work orders
                         </div>
                       ) : (
-                        <div className="h-full flex flex-col gap-2">
-                          {/* Show up to 3 work orders with full readability */}
-                          {dayOrders.slice(0, 3).map((order, index) => (
+                        <div className="space-y-2 overflow-y-auto max-h-48">
+                          {/* Show up to 4 work orders stacked vertically */}
+                          {dayOrders.slice(0, 4).map((order, index) => (
                             <div
                               key={order.id}
                               className={`
-                                text-sm px-3 py-2 rounded-md cursor-pointer transition-colors flex-shrink-0
+                                w-full text-xs px-2 py-2 rounded-md cursor-pointer transition-colors block
                                 ${index === 0 ? 'bg-primary/15 hover:bg-primary/25 border-l-4 border-primary' : ''}
                                 ${index === 1 ? 'bg-blue-500/15 hover:bg-blue-500/25 border-l-4 border-blue-500' : ''}
                                 ${index === 2 ? 'bg-green-500/15 hover:bg-green-500/25 border-l-4 border-green-500' : ''}
+                                ${index === 3 ? 'bg-purple-500/15 hover:bg-purple-500/25 border-l-4 border-purple-500' : ''}
                               `}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleWorkOrderClick(order);
                               }}
                             >
-                              <div className="font-medium text-foreground leading-tight mb-1">
-                                {order.title.length > 20 ? order.title.substring(0, 20) + '...' : order.title}
+                              <div className="font-medium text-foreground leading-tight mb-1 truncate">
+                                {order.title}
                               </div>
-                              <div className="flex items-center justify-between">
-                                <Badge className={`text-xs ${getStatusColor(order.status)}`}>
+                              <div className="flex items-center justify-between gap-1">
+                                <Badge className={`text-xs px-1 py-0 ${getStatusColor(order.status)}`}>
                                   {order.status.replace('_', ' ')}
                                 </Badge>
                                 {canViewAllOrders && order.assigneeId && (
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-xs text-muted-foreground truncate">
                                     {getAgentName(order.assigneeId)?.split(' ')[0]}
                                   </span>
                                 )}
@@ -341,12 +342,12 @@ export default function Calendar() {
                           ))}
                           
                           {/* Show "more" indicator if there are additional orders */}
-                          {dayOrders.length > 3 && (
+                          {dayOrders.length > 4 && (
                             <div 
-                              className="text-sm text-center py-2 text-muted-foreground bg-muted/40 rounded-md cursor-pointer hover:bg-muted/60 flex-shrink-0 mt-auto font-medium"
+                              className="text-xs text-center py-1.5 text-muted-foreground bg-muted/40 rounded-md cursor-pointer hover:bg-muted/60 font-medium mt-2"
                               onClick={() => handleDateClick(date)}
                             >
-                              +{dayOrders.length - 3} more orders
+                              +{dayOrders.length - 4} more
                             </div>
                           )}
                         </div>
