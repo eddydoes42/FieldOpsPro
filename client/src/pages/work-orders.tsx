@@ -160,6 +160,7 @@ export default function WorkOrders() {
     if (filterParam) {
       if (filterParam === 'high-priority') {
         setFilterStatus('all');
+        setFilterPriority('high');
         setQuickFilter('high-priority');
       } else if (filterParam === 'active-issues') {
         setFilterStatus('all');
@@ -787,13 +788,18 @@ export default function WorkOrders() {
       if (filterIssues === 'without-issues' && workOrderIssues.length > 0) return false;
     }
     
-    // Apply quick filters
-    if (quickFilter === 'high-priority' && order.priority !== 'high') return false;
+    // Apply quick filters (these override regular filters for specific views)
+    if (quickFilter === 'high-priority') {
+      // Already handled by filterPriority being set to 'high'
+    }
     if (quickFilter === 'active-issues') {
-      // Filter for work orders with active issues
+      // Filter for work orders with active issues - broader criteria for "active issues"
       const workOrderIssues = issuesData?.[order.id] || [];
-      const hasActiveIssue = workOrderIssues.length > 0 || order.status === 'blocked' || order.status === 'delayed' || order.priority === 'high';
-      if (!hasActiveIssue) return false;
+      const hasReportedIssues = workOrderIssues.length > 0;
+      const hasStatusIssues = order.status === 'blocked' || order.status === 'delayed' || order.status === 'cancelled';
+      const isHighPriorityOverdue = order.priority === 'high' && order.dueDate && new Date(order.dueDate) < new Date();
+      
+      if (!hasReportedIssues && !hasStatusIssues && !isHighPriorityOverdue) return false;
     }
     
     return true;
