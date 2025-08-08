@@ -57,6 +57,9 @@ interface NewWorkOrderData {
   scopeOfWork: string;
   requiredTools: string;
   pointOfContact: string;
+  budgetType?: string;
+  budgetAmount?: string;
+  devicesInstalled?: string;
 }
 
 interface WorkOrderTask {
@@ -129,7 +132,6 @@ export default function WorkOrders() {
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateIssueDialogOpen, setIsCreateIssueDialogOpen] = useState(false);
-  const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
   
   // Selected items
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
@@ -158,7 +160,10 @@ export default function WorkOrders() {
     dueDate: "",
     scopeOfWork: "",
     requiredTools: "",
-    pointOfContact: ""
+    pointOfContact: "",
+    budgetType: "",
+    budgetAmount: "",
+    devicesInstalled: ""
   });
 
   const [editWorkOrder, setEditWorkOrder] = useState<NewWorkOrderData>({
@@ -170,7 +175,10 @@ export default function WorkOrders() {
     dueDate: "",
     scopeOfWork: "",
     requiredTools: "",
-    pointOfContact: ""
+    pointOfContact: "",
+    budgetType: "",
+    budgetAmount: "",
+    devicesInstalled: ""
   });
 
   const [newTask, setNewTask] = useState<NewTaskData>({
@@ -184,13 +192,7 @@ export default function WorkOrders() {
     explanation: ""
   });
 
-  const [budgetData, setBudgetData] = useState<BudgetData>({
-    budgetType: "fixed",
-    budgetAmount: "",
-    devicesInstalled: ""
-  });
-  
-  const [selectedWorkOrderForBudget, setSelectedWorkOrderForBudget] = useState<string | null>(null);
+
 
   // Task creation state for the work order form
   const [formTasks, setFormTasks] = useState<Task[]>([]);
@@ -375,6 +377,18 @@ export default function WorkOrders() {
       const response = await apiRequest("POST", "/api/work-orders", workOrderData);
       const createdWorkOrder = await response.json();
       
+      // Create budget if provided and user is manager
+      if ((user as any)?.role === 'manager' && data.budgetType && data.budgetAmount) {
+        const budgetData = {
+          budgetType: data.budgetType,
+          budgetAmount: parseFloat(data.budgetAmount),
+          ...(data.budgetType === 'per_device' && data.devicesInstalled && { 
+            devicesInstalled: parseInt(data.devicesInstalled) 
+          })
+        };
+        await apiRequest("POST", `/api/work-orders/${createdWorkOrder.id}/budget`, budgetData);
+      }
+      
       // Create tasks for the work order
       if (formTasks.length > 0) {
         for (let i = 0; i < formTasks.length; i++) {
@@ -405,7 +419,10 @@ export default function WorkOrders() {
         dueDate: "",
         scopeOfWork: "",
         requiredTools: "",
-        pointOfContact: ""
+        pointOfContact: "",
+        budgetType: "",
+        budgetAmount: "",
+        devicesInstalled: ""
       });
     },
     onError: (error) => {
@@ -629,48 +646,7 @@ export default function WorkOrders() {
     },
   });
 
-  const createBudgetMutation = useMutation({
-    mutationFn: async (data: BudgetData & { workOrderId: string }) => {
-      const { workOrderId, ...budgetInfo } = data;
-      const requestData = {
-        budgetType: budgetInfo.budgetType,
-        budgetAmount: parseFloat(budgetInfo.budgetAmount),
-        ...(budgetInfo.budgetType === 'per_device' && { devicesInstalled: parseInt(budgetInfo.devicesInstalled || '0') })
-      };
-      return await apiRequest("POST", `/api/work-orders/${workOrderId}/budget`, requestData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
-      toast({
-        title: "Success",
-        description: "Budget created successfully!",
-      });
-      setIsBudgetDialogOpen(false);
-      setBudgetData({
-        budgetType: "fixed",
-        budgetAmount: "",
-        devicesInstalled: ""
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error as Error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to create budget. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -1196,6 +1172,78 @@ export default function WorkOrders() {
                       placeholder="Client contact information"
                     />
                   </div>
+
+                  {/* Budget Section - Managers Only */}
+                  {(user as any)?.role === 'manager' && (
+                    <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border-2 border-green-200 dark:border-green-800">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">💰 Budget Information</h3>
+                        <Badge variant="secondary" className="bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200">
+                          Optional
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="budgetType">Budget Type</Label>
+                            <Select 
+                              value={newWorkOrder.budgetType || ""} 
+                              onValueChange={(value) => handleInputChange('budgetType', value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select budget type (optional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="fixed">Fixed Amount</SelectItem>
+                                <SelectItem value="hourly">Hourly Rate</SelectItem>
+                                <SelectItem value="per_device">Per Device</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="budgetAmount">
+                              {newWorkOrder.budgetType === 'fixed' ? 'Budget Amount ($)' : 
+                               newWorkOrder.budgetType === 'hourly' ? 'Hourly Rate ($)' : 
+                               newWorkOrder.budgetType === 'per_device' ? 'Rate Per Device ($)' :
+                               'Amount ($)'}
+                            </Label>
+                            <Input
+                              id="budgetAmount"
+                              type="number"
+                              step="0.01"
+                              value={newWorkOrder.budgetAmount || ""}
+                              onChange={(e) => handleInputChange('budgetAmount', e.target.value)}
+                              placeholder="0.00"
+                              disabled={!newWorkOrder.budgetType}
+                            />
+                          </div>
+                        </div>
+                        
+                        {newWorkOrder.budgetType === 'per_device' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="devicesInstalled">Number of Devices</Label>
+                            <Input
+                              id="devicesInstalled"
+                              type="number"
+                              value={newWorkOrder.devicesInstalled || ""}
+                              onChange={(e) => handleInputChange('devicesInstalled', e.target.value)}
+                              placeholder="Enter number of devices to be installed"
+                            />
+                          </div>
+                        )}
+                        
+                        <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                          <p className="text-sm text-blue-900 dark:text-blue-100">
+                            <strong>Budget Types:</strong><br/>
+                            • <strong>Fixed:</strong> Single payment amount for the work order<br/>
+                            • <strong>Hourly:</strong> Payment calculated based on time logged by the field agent<br/>
+                            • <strong>Per Device:</strong> Payment multiplied by the number of devices installed
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Task Creation Section */}
                   <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
@@ -1850,25 +1898,7 @@ export default function WorkOrders() {
                         Edit
                       </Button>
                     )}
-                    {(user as any)?.role === 'manager' && !order.budgetType && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs px-3 text-green-600 hover:text-green-700 border-green-200 hover:border-green-300"
-                        onClick={() => {
-                          setSelectedWorkOrderForBudget(order.id);
-                          setBudgetData({
-                            budgetType: "fixed",
-                            budgetAmount: "",
-                            devicesInstalled: ""
-                          });
-                          setIsBudgetDialogOpen(true);
-                        }}
-                      >
-                        <i className="fas fa-dollar-sign mr-1"></i>
-                        Add Budget
-                      </Button>
-                    )}
+
                     {(order.assigneeId === (user as any)?.id || canCreateWorkOrders || (user as any)?.role === 'dispatcher') && (
                       confirmStatusUpdate(order) ? (
                         <AlertDialog>
@@ -2412,99 +2442,7 @@ export default function WorkOrders() {
           </DialogContent>
         </Dialog>
 
-        {/* Budget Creation Dialog */}
-        <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create Budget</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="budget-type">Budget Type</Label>
-                <Select
-                  value={budgetData.budgetType}
-                  onValueChange={(value) => setBudgetData({...budgetData, budgetType: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select budget type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fixed">Fixed Amount</SelectItem>
-                    <SelectItem value="hourly">Hourly Rate</SelectItem>
-                    <SelectItem value="per_device">Per Device</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div>
-                <Label htmlFor="budget-amount">
-                  {budgetData.budgetType === 'fixed' ? 'Budget Amount' : 
-                   budgetData.budgetType === 'hourly' ? 'Hourly Rate' : 
-                   'Rate Per Device'}
-                </Label>
-                <Input
-                  id="budget-amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={budgetData.budgetAmount}
-                  onChange={(e) => setBudgetData({...budgetData, budgetAmount: e.target.value})}
-                />
-              </div>
-
-              {budgetData.budgetType === 'per_device' && (
-                <div>
-                  <Label htmlFor="devices-installed">Devices Installed</Label>
-                  <Input
-                    id="devices-installed"
-                    type="number"
-                    placeholder="0"
-                    value={budgetData.devicesInstalled}
-                    onChange={(e) => setBudgetData({...budgetData, devicesInstalled: e.target.value})}
-                  />
-                </div>
-              )}
-              
-              <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-900 dark:text-blue-100">
-                  <strong>Budget Type Information:</strong><br/>
-                  • <strong>Fixed:</strong> Single payment amount<br/>
-                  • <strong>Hourly:</strong> Calculated based on logged time<br/>
-                  • <strong>Per Device:</strong> Multiplied by number of devices
-                </p>
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setIsBudgetDialogOpen(false);
-                    setBudgetData({
-                      budgetType: "fixed",
-                      budgetAmount: "",
-                      devicesInstalled: ""
-                    });
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={() => {
-                    if (selectedWorkOrderForBudget) {
-                      createBudgetMutation.mutate({
-                        ...budgetData,
-                        workOrderId: selectedWorkOrderForBudget
-                      });
-                    }
-                  }}
-                  disabled={!budgetData.budgetAmount || createBudgetMutation.isPending || (budgetData.budgetType === 'per_device' && !budgetData.devicesInstalled)}
-                >
-                  {createBudgetMutation.isPending ? "Creating..." : "Create Budget"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

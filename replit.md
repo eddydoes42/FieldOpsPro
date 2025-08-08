@@ -29,10 +29,17 @@ The application is fully operational with comprehensive demo data and modern dar
   - **Time Calculation & Display**: Work order cards show total logged time in hours and minutes format
   - **Time Entry API**: Backend endpoints for fetching time data per work order and user
   - **Real-time Updates**: Time tracking data refreshes automatically when status changes
+- ✓ **Comprehensive Budget Management System**: Manager-only budget creation and tracking
+  - **Integrated Budget Creation**: Budget setup integrated into work order creation form for managers
+  - **Three Budget Types**: Fixed amount, hourly rate (calculated from logged time), and per-device pricing
+  - **Real-time Calculations**: Budget totals automatically calculated based on time logged or devices installed
+  - **Manager-only Access**: Only managers can create and view budget information
+  - **Budget Display**: Budget information shown on work order cards and detailed view dialogs
+  - **Database Integration**: Complete backend API with budget calculation endpoints
 - ✓ **Role-based permissions with clear access controls**:
   - **Field Agents**: Can only view and complete work orders assigned to them
   - **Dispatchers**: Can view and complete work orders assigned to any field agent, create and delete work orders (cannot use onboarding functions)
-  - **Managers**: Same abilities as dispatchers plus onboarding functions
+  - **Managers**: Same abilities as dispatchers plus onboarding functions and budget management
   - **Administrators**: Full access to all functions including role assignment and user creation
 - ✓ **Restricted Authentication System**: Login access limited to pre-existing team members only
   - **Pre-approval Required**: Users must be created through "Team Member Information" menu before they can login
