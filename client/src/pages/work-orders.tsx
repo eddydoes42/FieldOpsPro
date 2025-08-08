@@ -115,6 +115,15 @@ export default function WorkOrders() {
   // Filter states
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
+
+  // Handle URL parameters for filtering
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusParam = urlParams.get('status');
+    if (statusParam) {
+      setFilterStatus(statusParam);
+    }
+  }, []);
   
   // Form states
   const [newWorkOrder, setNewWorkOrder] = useState<NewWorkOrderData>({

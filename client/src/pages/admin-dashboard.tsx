@@ -132,7 +132,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/work-orders')}>
+          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/work-orders?status=in_progress')}>
             <CardContent className="p-4">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/work-orders')}>
+          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/work-orders?status=completed')}>
             <CardContent className="p-4">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
