@@ -340,6 +340,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.checkedOutAt = new Date();
         // End time tracking
         await storage.endActiveTimeEntry(userId, id);
+      } else if (workStatus === 'completed') {
+        // Before marking as complete, verify all tasks are completed
+        const tasks = await storage.getWorkOrderTasks(id);
+        if (tasks.length > 0) {
+          const incompleteTasks = tasks.filter(task => !task.isCompleted);
+          if (incompleteTasks.length > 0) {
+            return res.status(400).json({ 
+              message: `Cannot mark work order as complete. ${incompleteTasks.length} task(s) still incomplete.`,
+              incompleteTasks: incompleteTasks.map(t => t.title)
+            });
+          }
+        }
+        updateData.completedAt = new Date();
       }
 
       const updatedWorkOrder = await storage.updateWorkOrderStatus(id, updateData);

@@ -220,7 +220,7 @@ export default function WorkOrders() {
         description: "Work order status has been updated successfully!",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error as Error)) {
         toast({
           title: "Unauthorized",
@@ -232,6 +232,17 @@ export default function WorkOrders() {
         }, 500);
         return;
       }
+      
+      // Handle task completion validation errors
+      if (error?.message?.includes('task(s) still incomplete')) {
+        toast({
+          title: "Cannot Mark Complete",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       toast({
         title: "Error",
         description: "Failed to update status. Please try again.",
