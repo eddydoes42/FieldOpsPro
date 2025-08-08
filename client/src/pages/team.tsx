@@ -121,6 +121,27 @@ export default function TeamPage() {
     },
   });
 
+  const unsuspendUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest('PATCH', `/api/users/${userId}`, { isActive: true, isSuspended: false });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Success",
+        description: "User unsuspended successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to unsuspend user",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
       const response = await apiRequest('PATCH', `/api/users/${userId}`, { role });
@@ -541,25 +562,55 @@ export default function TeamPage() {
               <div className="space-y-2">
                 <h4 className="font-medium text-foreground">Status</h4>
                 <div className="flex items-center space-x-2">
-                  <Badge 
-                    variant={selectedUser.isActive ? "default" : "destructive"}
-                    className={`${
-                      selectedUser.isActive ? "bg-green-900/30 text-green-300" : ""
-                    } ${
-                      !selectedUser.isSuspended ? "cursor-pointer hover:opacity-80 transition-opacity" : "opacity-50"
-                    }`}
-                    onClick={() => {
-                      if (!selectedUser.isSuspended) {
+                  {selectedUser.isSuspended ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Badge 
+                          variant="destructive"
+                          className="cursor-pointer hover:opacity-80 transition-opacity bg-red-900/30 text-red-300"
+                        >
+                          Suspended
+                        </Badge>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Unsuspend User</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to unsuspend {selectedUser.firstName} {selectedUser.lastName}? This will restore their access to the system.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              unsuspendUserMutation.mutate(selectedUser.id);
+                              const updatedUser = {...selectedUser, isSuspended: false, isActive: true};
+                              setSelectedUser(updatedUser);
+                            }}
+                            disabled={unsuspendUserMutation.isPending}
+                          >
+                            Unsuspend User
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <Badge 
+                      variant={selectedUser.isActive ? "default" : "destructive"}
+                      className={`${
+                        selectedUser.isActive ? "bg-green-900/30 text-green-300" : ""
+                      } cursor-pointer hover:opacity-80 transition-opacity`}
+                      onClick={() => {
                         updateUserStatusMutation.mutate({
                           userId: selectedUser.id,
                           isActive: !selectedUser.isActive
                         });
                         setSelectedUser({...selectedUser, isActive: !selectedUser.isActive});
-                      }
-                    }}
-                  >
-                    {selectedUser.isSuspended ? 'Suspended' : selectedUser.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                      }}
+                    >
+                      {selectedUser.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  )}
                   
                   {!selectedUser.isSuspended && (
                     <Button
