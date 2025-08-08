@@ -33,6 +33,9 @@ interface OnboardingFormData {
   password: string;
   confirmPassword: string;
   temporaryPassword: boolean;
+  // Client-specific fields
+  clientCompanyName: string;
+  clientRole: string;
 }
 
 export default function Onboarding() {
@@ -57,7 +60,10 @@ export default function Onboarding() {
     username: "",
     password: "",
     confirmPassword: "",
-    temporaryPassword: true
+    temporaryPassword: true,
+    // Client-specific fields
+    clientCompanyName: "",
+    clientRole: ""
   });
 
   // Redirect to home if not authenticated
@@ -102,7 +108,9 @@ export default function Onboarding() {
         username: "",
         password: "",
         confirmPassword: "",
-        temporaryPassword: true
+        temporaryPassword: true,
+        clientCompanyName: "",
+        clientRole: ""
       });
     },
     onError: (error) => {
@@ -307,6 +315,40 @@ export default function Onboarding() {
                   />
                 </div>
               </div>
+
+              {/* Client-specific fields - only show if client role is selected */}
+              {formData.roles.includes('client') && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <i className="fas fa-building mr-2 text-blue-600 dark:text-blue-400"></i>
+                    Client Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="clientCompanyName">Company Name *</Label>
+                      <Input
+                        id="clientCompanyName"
+                        type="text"
+                        value={formData.clientCompanyName}
+                        onChange={(e) => handleInputChange('clientCompanyName', e.target.value)}
+                        placeholder="Enter company name"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="clientRole">Role within Company *</Label>
+                      <Input
+                        id="clientRole"
+                        type="text"
+                        value={formData.clientRole}
+                        onChange={(e) => handleInputChange('clientRole', e.target.value)}
+                        placeholder="e.g., IT Manager, Operations Director"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Login Credentials */}
               <div className="space-y-4">
