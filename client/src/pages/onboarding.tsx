@@ -127,7 +127,7 @@ export default function Onboarding() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
-        <Navigation userRole={(user as any)?.roles || ['manager']} />
+        <Navigation />
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>

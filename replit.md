@@ -7,6 +7,8 @@ FieldOps Pro is a full-stack web application designed for managing IT field oper
 ## Current Status (August 2025)
 
 The application is fully operational with comprehensive demo data, modern dark theme, and complete multiple role assignment system:
+- ✓ **Dashboard Route Renamed**: Successfully changed main dashboard route from "/" to "/dashboard" with OAuth callback redirect updated
+- ✓ **Navigation System Updated**: Removed deprecated userRole prop from all Navigation components across application
 - ✓ Complete role-based authentication and authorization system with administrator-only role assignment
 - ✓ Administrator dashboard with real-time statistics and full system access
 - ✓ Manager dashboard for team and work order management with priority tasks and active issues sections

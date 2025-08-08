@@ -173,7 +173,7 @@ export default function Messages() {
   if (isLoading || messagesLoading || usersLoading || ordersLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
-        <Navigation userRole={(user as any)?.roles || ['manager']} />
+        <Navigation />
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>

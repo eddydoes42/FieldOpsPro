@@ -147,7 +147,7 @@ export async function setupAuth(app: Express) {
         if (err) {
           return res.redirect(`/?error=${encodeURIComponent("Login error. Please try again.")}`);
         }
-        return res.redirect("/");
+        return res.redirect("/dashboard");
       });
     })(req, res, next);
   });
