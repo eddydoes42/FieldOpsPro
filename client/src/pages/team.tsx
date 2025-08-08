@@ -260,12 +260,12 @@ export default function TeamPage() {
               <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
               <div className="flex flex-wrap gap-2">
                 <Button
-                  variant={roleFilter === "all" ? "default" : "outline"}
+                  variant={roleFilter === "field_agent" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setRoleFilter("all")}
-                  className="text-xs"
+                  onClick={() => setRoleFilter("field_agent")}
+                  className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
                 >
-                  All ({getRoleCount("all")})
+                  FA ({getRoleCount("field_agent")})
                 </Button>
                 <Button
                   variant={roleFilter === "administrator" ? "default" : "outline"}
@@ -292,12 +292,12 @@ export default function TeamPage() {
                   <span className="hidden sm:inline">Dispatcher</span><span className="sm:hidden">D</span> ({getRoleCount("dispatcher")})
                 </Button>
                 <Button
-                  variant={roleFilter === "field_agent" ? "default" : "outline"}
+                  variant={roleFilter === "all" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setRoleFilter("field_agent")}
-                  className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
+                  onClick={() => setRoleFilter("all")}
+                  className="text-xs"
                 >
-                  FA ({getRoleCount("field_agent")})
+                  All ({getRoleCount("all")})
                 </Button>
               </div>
             </div>
