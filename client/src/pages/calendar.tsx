@@ -11,6 +11,7 @@ import { useState, useMemo } from "react";
 import { format, eachDayOfInterval, isSameDay, addWeeks, subWeeks, startOfWeek, endOfWeek, isToday, isSameWeek, addDays } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
+import { hasAnyRole } from "../../../shared/schema";
 
 interface WorkOrder {
   id: string;
@@ -65,9 +66,9 @@ export default function Calendar() {
   if (isLoading) return <div>Loading...</div>;
   if (!isAuthenticated) return <div>Unauthorized</div>;
 
-  const userRole = (user as any)?.role;
-  const isFieldAgent = userRole === 'field_agent';
-  const canViewAllOrders = ['administrator', 'manager', 'dispatcher'].includes(userRole);
+  const userRoles = (user as any)?.roles || [];
+  const isFieldAgent = userRoles.includes('field_agent');
+  const canViewAllOrders = hasAnyRole(user as any, ['administrator', 'manager', 'dispatcher']);
 
   // Filter work orders based on role and filters
   const filteredWorkOrders = useMemo(() => {
@@ -169,7 +170,7 @@ export default function Calendar() {
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
-              onClick={() => setLocation('/dashboard')}
+              onClick={() => setLocation('/')}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
