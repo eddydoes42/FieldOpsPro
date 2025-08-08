@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import { useState, useMemo } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday, isSameMonth } from "date-fns";
+import { format, eachDayOfInterval, isSameDay, addWeeks, subWeeks, startOfWeek, endOfWeek, isToday, isSameWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -91,12 +91,10 @@ export default function Calendar() {
     });
   }, [workOrders, userRole, user, filterAgent, filterStatus, filterPriority, isFieldAgent, canViewAllOrders]);
 
-  // Calendar calculations
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfWeek(monthStart);
-  const calendarEnd = endOfWeek(monthEnd);
-  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  // Weekly calendar calculations
+  const weekStart = startOfWeek(currentDate);
+  const weekEnd = endOfWeek(currentDate);
+  const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   // Get work orders for a specific date
   const getWorkOrdersForDate = (date: Date) => {
@@ -134,12 +132,12 @@ export default function Calendar() {
     }
   };
 
-  const handlePrevMonth = () => {
-    setCurrentDate(subMonths(currentDate, 1));
+  const handlePrevWeek = () => {
+    setCurrentDate(subWeeks(currentDate, 1));
   };
 
-  const handleNextMonth = () => {
-    setCurrentDate(addMonths(currentDate, 1));
+  const handleNextWeek = () => {
+    setCurrentDate(addWeeks(currentDate, 1));
   };
 
   const handleDateClick = (date: Date) => {
@@ -248,13 +246,13 @@ export default function Calendar() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl font-semibold">
-                {format(currentDate, 'MMMM yyyy')}
+                Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrevMonth}>
+                <Button variant="outline" size="sm" onClick={handlePrevWeek}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleNextMonth}>
+                <Button variant="outline" size="sm" onClick={handleNextWeek}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 <Button
@@ -268,8 +266,8 @@ export default function Calendar() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1">
+            {/* Weekly Calendar Grid - Enhanced for better readability */}
+            <div className="grid grid-cols-7 gap-4">
               {/* Day headers */}
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                 <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground">
@@ -280,7 +278,6 @@ export default function Calendar() {
               {/* Calendar days */}
               {calendarDays.map(date => {
                 const dayOrders = getWorkOrdersForDate(date);
-                const isCurrentMonth = isSameMonth(date, currentDate);
                 const isTodayDate = isToday(date);
                 const isSelected = selectedDate && isSameDay(date, selectedDate);
 
@@ -288,47 +285,65 @@ export default function Calendar() {
                   <div
                     key={date.toISOString()}
                     className={`
-                      min-h-24 p-2 border border-border cursor-pointer transition-colors
-                      ${isCurrentMonth ? 'bg-background' : 'bg-muted/30'}
-                      ${isTodayDate ? 'ring-2 ring-primary' : ''}
-                      ${isSelected ? 'bg-primary/10' : ''}
-                      hover:bg-muted/50
+                      min-h-48 p-4 border border-border rounded-lg cursor-pointer transition-colors bg-background shadow-sm
+                      ${isTodayDate ? 'ring-2 ring-primary bg-primary/5 border-primary/20' : ''}
+                      ${isSelected ? 'bg-primary/10 border-primary/20' : ''}
+                      hover:bg-muted/50 hover:shadow-md
                     `}
                     onClick={() => handleDateClick(date)}
                   >
-                    <div className={`text-sm font-medium mb-1 ${!isCurrentMonth ? 'text-muted-foreground' : ''}`}>
-                      {format(date, 'd')}
+                    <div className="text-base font-semibold mb-2 flex items-center justify-between">
+                      <span>{format(date, 'EEE')}</span>
+                      <span className="text-lg">{format(date, 'd')}</span>
                     </div>
                     
                     {/* Work orders for this date */}
-                    <div className="space-y-1">
-                      {dayOrders.slice(0, 2).map(order => (
+                    <div className="space-y-2">
+                      {dayOrders.slice(0, 4).map(order => (
                         <div
                           key={order.id}
-                          className="text-xs p-1 rounded cursor-pointer hover:opacity-80 transition-opacity"
-                          style={{ backgroundColor: `${getPriorityColor(order.priority)}20` }}
+                          className="text-sm p-2 rounded-lg cursor-pointer hover:shadow-sm transition-all border-l-4"
+                          style={{ 
+                            backgroundColor: `${getPriorityColor(order.priority)}15`,
+                            borderLeftColor: getPriorityColor(order.priority).replace('bg-', '').includes('red') ? '#ef4444' : 
+                                           getPriorityColor(order.priority).replace('bg-', '').includes('yellow') ? '#f59e0b' : '#10b981'
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleWorkOrderClick(order);
                           }}
                         >
-                          <div className="flex items-center gap-1">
-                            <div 
-                              className={`w-2 h-2 rounded-full ${getPriorityColor(order.priority)}`}
-                            />
-                            <span className="truncate flex-1">{order.title}</span>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className={`w-3 h-3 rounded-full ${getPriorityColor(order.priority)}`}
+                              />
+                              <Badge className={`text-xs ${getStatusColor(order.status)}`}>
+                                {order.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="font-medium text-foreground truncate mb-1">
+                            {order.title}
                           </div>
                           {canViewAllOrders && (
-                            <div className="text-muted-foreground truncate">
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <User className="w-3 h-3" />
                               {getAgentName(order.assigneeId)}
+                            </div>
+                          )}
+                          {order.estimatedHours && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {order.estimatedHours}h
                             </div>
                           )}
                         </div>
                       ))}
                       
-                      {dayOrders.length > 2 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{dayOrders.length - 2} more
+                      {dayOrders.length > 4 && (
+                        <div className="text-xs text-muted-foreground text-center py-2 bg-muted/50 rounded">
+                          +{dayOrders.length - 4} more work orders
                         </div>
                       )}
                     </div>
