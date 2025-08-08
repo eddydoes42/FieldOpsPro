@@ -19,6 +19,7 @@ import PaymentStatusButton from "@/components/payment-status-button";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Trash2, ArrowLeft } from "lucide-react";
+import { hasAnyRole, canViewAllOrders } from "../../../shared/schema";
 
 interface WorkOrder {
   id: string;
@@ -1116,10 +1117,10 @@ export default function WorkOrders() {
     createWorkOrderMutation.mutate(newWorkOrder);
   };
 
-  const canCreateWorkOrders = (user as any)?.role === 'administrator' || (user as any)?.role === 'manager';
+  const canCreateWorkOrders = hasAnyRole(user as any, ['administrator', 'manager', 'dispatcher']);
 
-  const canCompleteTask = (userRole: string) => {
-    return userRole === 'administrator' || userRole === 'manager' || userRole === 'field_agent';
+  const canCompleteTask = (user: any) => {
+    return hasAnyRole(user, ['administrator', 'manager', 'field_agent']);
   };
 
 
