@@ -272,6 +272,7 @@ export default function ManagerDashboard() {
               description: "New user has been onboarded successfully.",
             });
           }}
+          currentUser={user}
         />
       )}
 

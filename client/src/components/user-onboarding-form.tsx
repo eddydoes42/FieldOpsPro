@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema, isAdmin } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -47,9 +47,10 @@ const onboardingSchema = insertUserSchema.extend({
 interface UserOnboardingFormProps {
   onClose: () => void;
   onSuccess: () => void;
+  currentUser?: any; // Current user to check permissions
 }
 
-export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardingFormProps) {
+export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: UserOnboardingFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedRoles, setSelectedRoles] = useState<string[]>(['field_agent']);
@@ -286,7 +287,8 @@ export default function UserOnboardingForm({ onClose, onSuccess }: UserOnboardin
                           { value: "field_agent", label: "Field Agent" },
                           { value: "manager", label: "Manager" },
                           { value: "administrator", label: "Administrator" },
-                          { value: "client", label: "Client" },
+                          // Only show client role to administrators
+                          ...(isAdmin(currentUser) ? [{ value: "client", label: "Client" }] : []),
                         ].map((role) => (
                           <div key={role.value} className="flex items-center space-x-2">
                             <Checkbox
