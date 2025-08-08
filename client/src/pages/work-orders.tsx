@@ -1654,7 +1654,9 @@ export default function WorkOrders() {
                         </div>
                       )}
                     </div>
-
+                    <div className="text-xs text-muted-foreground mb-2">
+                      Debug: Status={selectedWorkOrder.status}, PaymentStatus={selectedWorkOrder.paymentStatus || 'null'}, UserRole={(user as any)?.role || 'unknown'}
+                    </div>
                     <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
                       <PaymentStatusButton 
                         workOrder={selectedWorkOrder}
