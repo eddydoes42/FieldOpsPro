@@ -103,24 +103,8 @@ export default function Navigation({ userRole }: NavigationProps) {
             <span className="text-xl font-bold text-foreground whitespace-nowrap">FieldOps Pro</span>
           </div>
           
-          {/* Right side - Quick Actions and Navigation Menu */}
+          {/* Right side - Navigation Menu */}
           <div className="flex items-center space-x-4">
-            {/* Quick Action Button - Show for admin, manager, dispatcher */}
-            {(userRole === 'administrator' || userRole === 'manager' || userRole === 'dispatcher') && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  openQuickMenu(e.clientX - 280, e.clientY + 10);
-                }}
-                className="flex items-center gap-2 hover:bg-primary/10 border-primary/20"
-              >
-                <Zap className="h-4 w-4 text-primary" />
-                <span className="hidden sm:inline">Quick Actions</span>
-              </Button>
-            )}
-            
             {/* Navigation Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
