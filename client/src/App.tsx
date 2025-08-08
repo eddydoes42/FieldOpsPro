@@ -15,6 +15,7 @@ import Onboarding from "@/pages/onboarding";
 import WorkOrders from "@/pages/work-orders";
 import Messages from "@/pages/messages";
 import Calendar from "@/pages/calendar";
+import TimeTracking from "@/pages/time-tracking";
 import NotFound from "@/pages/not-found";
 import FloatingQuickAction from "@/components/floating-quick-action";
 
@@ -93,6 +94,9 @@ function Router() {
             </Route>
             <Route path="/calendar">
               {isAuthenticated ? <Calendar /> : <Landing />}
+            </Route>
+            <Route path="/time-tracking">
+              {isAuthenticated ? <TimeTracking /> : <Landing />}
             </Route>
         </>
       )}
