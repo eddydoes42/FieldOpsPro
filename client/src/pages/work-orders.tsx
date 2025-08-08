@@ -668,18 +668,34 @@ export default function WorkOrders() {
     return workOrderTasks.every(task => task.isCompleted);
   };
 
+  const isWithin24Hours = (dueDate: string | null) => {
+    if (!dueDate) return false; // No due date, don't allow early confirmation
+    
+    const due = new Date(dueDate);
+    const now = new Date();
+    const timeDifference = due.getTime() - now.getTime();
+    const hoursUntilDue = timeDifference / (1000 * 60 * 60); // Convert to hours
+    
+    // Allow if due date has passed or is within 24 hours
+    return hoursUntilDue <= 24;
+  };
+
   const isStatusButtonDisabled = (workOrder: WorkOrder) => {
     const status = workOrder.status;
     const workStatus = (workOrder as any).workStatus || 'not_started';
     
-    // Only allow field agents to confirm their own work orders
-    if (status === 'scheduled' && (user as any)?.role === 'field_agent') {
-      return workOrder.assigneeId !== (user as any)?.id;
-    }
-    
-    // Prevent status changes if work order isn't confirmed yet
-    if (status === 'scheduled' && (user as any)?.role !== 'field_agent') {
-      return true; // Only assigned agents can confirm
+    // For scheduled work orders, check time restrictions and assignment
+    if (status === 'scheduled') {
+      // Only assigned field agents can confirm
+      if ((user as any)?.role === 'field_agent') {
+        if (workOrder.assigneeId !== (user as any)?.id) {
+          return true; // Not assigned to this agent
+        }
+        // Check if within 24 hours or past due date
+        return !isWithin24Hours(workOrder.dueDate);
+      } else {
+        return true; // Only assigned field agents can confirm
+      }
     }
     
     if (workStatus === 'checked_out') {
@@ -1553,22 +1569,29 @@ export default function WorkOrders() {
                       confirmStatusUpdate(order) ? (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              className={`text-xs px-2 py-1 whitespace-nowrap min-w-0 flex-shrink-0 ${
-                                (order as any).workStatus === 'completed'
-                                  ? 'bg-green-600 hover:bg-green-700'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                              }`}
-                              disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
-                            >
-                              {updateStatusMutation.isPending ? (
-                                <i className="fas fa-spinner fa-spin mr-1"></i>
-                              ) : (
-                                <i className="fas fa-play mr-1"></i>
-                              )}
-                              {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
-                            </Button>
+                            <div className="relative">
+                              <Button
+                                size="sm"
+                                className={`text-xs px-2 py-1 whitespace-nowrap min-w-0 flex-shrink-0 ${
+                                  (order as any).workStatus === 'completed'
+                                    ? 'bg-green-600 hover:bg-green-700'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
+                                disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                                title={
+                                  order.status === 'scheduled' && isStatusButtonDisabled(order) && order.assigneeId === (user as any)?.id
+                                    ? `Can only confirm within 24 hours of due date${order.dueDate ? ` (${new Date(order.dueDate).toLocaleDateString()})` : ''}`
+                                    : ''
+                                }
+                              >
+                                {updateStatusMutation.isPending ? (
+                                  <i className="fas fa-spinner fa-spin mr-1"></i>
+                                ) : (
+                                  <i className="fas fa-play mr-1"></i>
+                                )}
+                                {updateStatusMutation.isPending ? 'Updating...' : getStatusButtonText(order)}
+                              </Button>
+                            </div>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -1597,6 +1620,11 @@ export default function WorkOrders() {
                           }`}
                           onClick={() => handleStatusUpdate(order.id, getNextStatus(order))}
                           disabled={isStatusButtonDisabled(order) || updateStatusMutation.isPending}
+                          title={
+                            order.status === 'scheduled' && isStatusButtonDisabled(order) && order.assigneeId === (user as any)?.id
+                              ? `Can only confirm within 24 hours of due date${order.dueDate ? ` (${new Date(order.dueDate).toLocaleDateString()})` : ''}`
+                              : ''
+                          }
                         >
                           {updateStatusMutation.isPending ? (
                             <i className="fas fa-spinner fa-spin mr-1"></i>
