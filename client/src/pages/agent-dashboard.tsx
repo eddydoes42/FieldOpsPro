@@ -210,22 +210,7 @@ export default function AgentDashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button className="bg-green-600 hover:bg-green-700 p-4 h-auto text-center">
-            <div>
-              <i className="fas fa-check-circle text-2xl mb-2 block"></i>
-              <p className="font-medium">Complete Order</p>
-            </div>
-          </Button>
-          
-          <Button className="bg-purple-600 hover:bg-purple-700 p-4 h-auto text-center">
-            <div>
-              <i className="fas fa-comments text-2xl mb-2 block"></i>
-              <p className="font-medium">Team Messages</p>
-            </div>
-          </Button>
-        </div>
+
       </div>
     </div>
   );

@@ -110,54 +110,6 @@ export default function ManagerDashboard() {
           <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
         </div>
 
-        {/* Action Buttons Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Button 
-            onClick={() => window.location.href = "/team"}
-            className="bg-primary hover:bg-blue-700 text-white p-6 h-auto text-left"
-          >
-            <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-lg mr-4">
-                <i className="fas fa-users text-blue-600 text-xl"></i>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">My Team</h3>
-                <p className="text-blue-100 text-sm">View and manage your team members</p>
-              </div>
-            </div>
-          </Button>
-          
-          <Button 
-            onClick={() => window.location.href = "/work-orders"}
-            className="bg-green-600 hover:bg-green-700 text-white p-6 h-auto text-left"
-          >
-            <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-lg mr-4">
-                <i className="fas fa-clipboard-list text-green-600 text-xl"></i>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">View Work Orders</h3>
-                <p className="text-green-100 text-sm">Manage and track all work orders</p>
-              </div>
-            </div>
-          </Button>
-          
-          <Button 
-            onClick={() => window.location.href = "/reports/team"}
-            className="bg-purple-600 hover:bg-purple-700 text-white p-6 h-auto text-left"
-          >
-            <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-lg mr-4">
-                <i className="fas fa-chart-line text-purple-600 text-xl"></i>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Team Reports</h3>
-                <p className="text-purple-100 text-sm">View team performance metrics</p>
-              </div>
-            </div>
-          </Button>
-        </div>
-
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Priority Tasks */}
