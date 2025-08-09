@@ -174,26 +174,26 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-1 overflow-y-auto">
-      <Card className="max-w-2xl w-full min-h-fit my-2 flex flex-col bg-white dark:bg-gray-900">
-        <CardHeader className="pb-3 px-4 pt-4 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+      <Card className="max-w-2xl w-full min-h-fit my-1 flex flex-col bg-white dark:bg-gray-900 max-h-[98vh] overflow-hidden">
+        <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+            <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
               {isClient ? "Create Work Order Request" : "Create New Work Order"}
             </CardTitle>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 h-6 w-6 p-0"
             >
               ✕
             </Button>
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 p-4">
+        <CardContent className="flex-1 p-3 overflow-y-auto">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
               {isClient ? (
                 // Simplified client form
                 <>
@@ -222,9 +222,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                         <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Description *</FormLabel>
                         <FormControl>
                           <Textarea 
-                            rows={2}
+                            rows={1}
                             placeholder="Describe the work to be performed"
-                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 min-h-[32px]"
                             {...field} 
                           />
                         </FormControl>
@@ -472,26 +472,26 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
               {/* Tasks Section - Only visible to management */}
               {!isClient && (
-                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
-                  <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
+                  <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 text-xs">
                     {tasks.length} tasks ready
                   </Badge>
                 </div>
                 
                 {/* Add Task Form */}
-                <Card className="mb-4 border-dashed border-2 border-blue-300 dark:border-blue-700">
-                  <CardContent className="pt-4">
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card className="mb-3 border-dashed border-2 border-blue-300 dark:border-blue-700">
+                  <CardContent className="pt-3 pb-3">
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-sm font-medium text-blue-900 dark:text-blue-100">Category</label>
+                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Category</label>
                           <Select 
                             value={newTask.category} 
                             onValueChange={(value) => setNewTask({ ...newTask, category: value as any })}
                           >
-                            <SelectTrigger className="mt-1">
+                            <SelectTrigger className="mt-1 h-8">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -501,33 +501,33 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="md:col-span-2">
-                          <label className="text-sm font-medium text-blue-900 dark:text-blue-100">Task Title</label>
+                        <div>
+                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Task Title</label>
                           <Input
                             value={newTask.title}
                             onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                             placeholder="Enter task title"
-                            className="mt-1"
+                            className="mt-1 h-8"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
+                        <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
                         <Textarea
                           value={newTask.description}
                           onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                           placeholder="Enter task description"
-                          rows={2}
-                          className="mt-1"
+                          rows={1}
+                          className="mt-1 min-h-[32px]"
                         />
                       </div>
                       <Button
                         type="button"
                         onClick={handleAddTask}
                         size="sm"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
+                        <Plus className="h-3 w-3 mr-1" />
                         Add Task to Work Order
                       </Button>
                     </div>
@@ -536,7 +536,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
                 {/* Tasks List */}
                 {tasks.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {['pre_visit', 'on_site', 'post_site'].map(category => {
                       const categoryTasks = tasks.filter(task => task.category === category);
                       if (categoryTasks.length === 0) return null;
@@ -621,12 +621,12 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
 
               {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-4 sticky bottom-0 bg-white dark:bg-gray-900">
+              <div className="flex space-x-2 pt-3 border-t border-gray-200 dark:border-gray-700 mt-3 sticky bottom-0 bg-white dark:bg-gray-900 -mx-3 px-3 pb-2">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={onClose}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 dark:border-gray-600 h-9"
                   size="sm"
                 >
                   Cancel
@@ -634,7 +634,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                 <Button 
                   type="submit"
                   disabled={createWorkOrderMutation.isPending}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 h-9"
                   size="sm"
                 >
                   {createWorkOrderMutation.isPending ? "Creating..." : "Create"}
