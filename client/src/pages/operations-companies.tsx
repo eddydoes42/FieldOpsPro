@@ -143,9 +143,9 @@ export default function OperationsCompanies() {
                         )}
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          {company.email && (
+                          {company.contactEmail && (
                             <div>
-                              <span className="font-medium">Email:</span> {company.email}
+                              <span className="font-medium">Email:</span> {company.contactEmail}
                             </div>
                           )}
                           {company.phone && (

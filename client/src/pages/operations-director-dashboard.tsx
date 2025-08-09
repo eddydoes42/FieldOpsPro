@@ -18,7 +18,7 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/companies'],
   });
 
-  const { data: stats } = useQuery<{
+  const { data: stats = {} } = useQuery<{
     totalAdmins: number;
     activeCompanies: number;
     recentSetups: number;
