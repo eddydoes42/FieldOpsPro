@@ -170,7 +170,16 @@ export default function Calendar() {
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
-              onClick={() => setLocation('/dashboard')}
+              onClick={() => {
+                const selectedRole = localStorage.getItem('selectedRole');
+                if (selectedRole === 'operations_director' || (user as any).roles?.includes('operations_director')) {
+                  setLocation('/operations-dashboard');
+                } else if ((user as any).roles?.includes('administrator')) {
+                  setLocation('/admin-dashboard');
+                } else {
+                  setLocation('/dashboard');
+                }
+              }}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
