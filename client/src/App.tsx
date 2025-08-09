@@ -108,10 +108,35 @@ function Router() {
               })()}
             </Route>
             <Route path="/operations-dashboard">
-              <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
-                <OperationsDirectorDashboard />
-              </div>
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                
+                const DashboardContent = () => {
+                  if (effectiveRole === 'operations_director') {
+                    return <OperationsDirectorDashboard />;
+                  } else if (effectiveRole === 'administrator') {
+                    return <AdminDashboard />;
+                  } else if (effectiveRole === 'manager') {
+                    return <ManagerDashboard />;
+                  } else if (effectiveRole === 'dispatcher') {
+                    return <ManagerDashboard />;
+                  } else if (effectiveRole === 'field_agent') {
+                    return <AgentDashboard />;
+                  } else if (effectiveRole === 'client') {
+                    const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
+                    return <ClientDashboard />;
+                  } else {
+                    return <OperationsDirectorDashboard />;
+                  }
+                };
+
+                return (
+                  <div>
+                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                    <DashboardContent />
+                  </div>
+                );
+              })()}
             </Route>
             <Route path="/operations/companies">
               <div>
