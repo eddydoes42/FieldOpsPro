@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, ArrowLeft, Plus, Search, Filter, Users, Briefcase, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus, Clipboard } from "lucide-react";
+import { Building2, ArrowLeft, Plus, Search, Filter, Users, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus, Clipboard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
@@ -409,7 +409,7 @@ export default function OperationsCompanies() {
 
         {/* Company Details Modal */}
         <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-3">
                 <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -428,7 +428,7 @@ export default function OperationsCompanies() {
             </DialogHeader>
 
             {selectedCompany && (
-              <div className="space-y-3 max-h-[calc(80vh-120px)] overflow-y-auto">
+              <div className="space-y-3 max-h-[calc(85vh-120px)] overflow-y-auto">
                 {/* Company Overview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={(e) => selectedCompany && handleEditCompany(selectedCompany, e)}>
@@ -552,9 +552,6 @@ export default function OperationsCompanies() {
                               <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyOnboardedUsers || 2}</div>
-                                <div className="flex justify-center">
-                                  <Users className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-                                </div>
                               </div>
                             </div>
                             
@@ -562,19 +559,13 @@ export default function OperationsCompanies() {
                               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyCompletedOrders || 1}</div>
-                                <div className="flex justify-center">
-                                  <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                </div>
                               </div>
                             </div>
                             
                             <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <Briefcase className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                              <Clipboard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyAssignedOrders || 3}</div>
-                                <div className="flex justify-center">
-                                  <Clipboard className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-                                </div>
                               </div>
                             </div>
                           </>
