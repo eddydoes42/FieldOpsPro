@@ -513,7 +513,7 @@ export default function OperationsCompanies() {
                               </div>
                               
                               <div className="text-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                                <Briefcase className="h-5 w-5 text-orange-600 dark:text-orange-400 mx-auto mb-1" />
+                                <Clipboard className="h-5 w-5 text-orange-600 dark:text-orange-400 mx-auto mb-1" />
                                 <div className="text-lg font-bold text-gray-900 dark:text-white">{details.activeWorkOrders}</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Active Work Orders</div>
                               </div>
@@ -551,21 +551,21 @@ export default function OperationsCompanies() {
                             <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                               <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                               <div className="text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyOnboardedUsers || 2}</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">2</div>
                               </div>
                             </div>
                             
                             <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                               <div className="text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyCompletedOrders || 1}</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">1</div>
                               </div>
                             </div>
                             
                             <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                               <Clipboard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                               <div className="text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyAssignedOrders || 3}</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">3</div>
                               </div>
                             </div>
                           </>
