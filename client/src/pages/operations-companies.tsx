@@ -24,6 +24,8 @@ export default function OperationsCompanies() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Partial<Company>>({});
+  const [showSuccessRatePopup, setShowSuccessRatePopup] = useState(false);
+  const [showRecentAssignedPopup, setShowRecentAssignedPopup] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery<Company[]>({
@@ -146,6 +148,36 @@ export default function OperationsCompanies() {
     if (selectedCompany) {
       deleteCompanyMutation.mutate(selectedCompany.id);
     }
+  };
+
+  // Navigation handlers for Performance Overview cards
+  const handleOnboardedUsersClick = (companyId: string) => {
+    setLocation(`/operations/companies/${companyId}/users`);
+  };
+
+  const handleActiveWorkOrdersClick = (companyId: string) => {
+    setLocation(`/operations/companies/${companyId}/work-orders?filter=active`);
+  };
+
+  const handleCompletedOrdersClick = (companyId: string) => {
+    setLocation(`/operations/companies/${companyId}/work-orders?filter=completed`);
+  };
+
+  const handleSuccessRateClick = () => {
+    setShowSuccessRatePopup(true);
+  };
+
+  // Navigation handlers for Recent Activity cards
+  const handleRecentUsersClick = (companyId: string) => {
+    setLocation(`/operations/companies/${companyId}/users?filter=new`);
+  };
+
+  const handleRecentCompletedClick = (companyId: string) => {
+    setLocation(`/operations/companies/${companyId}/work-orders?filter=last30days`);
+  };
+
+  const handleRecentAssignedClick = () => {
+    setShowRecentAssignedPopup(true);
   };
 
   const filteredCompanies = useMemo(() => {
@@ -506,25 +538,37 @@ export default function OperationsCompanies() {
                           const details = getCompanyDetails(selectedCompany.id);
                           return (
                             <>
-                              <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <div 
+                                className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                onClick={() => handleOnboardedUsersClick(selectedCompany.id)}
+                              >
                                 <Users className="h-5 w-5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
                                 <div className="text-lg font-bold text-gray-900 dark:text-white">{details.onboardedUsers}</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Onboarded Users</div>
                               </div>
                               
-                              <div className="text-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                              <div 
+                                className="text-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                                onClick={() => handleActiveWorkOrdersClick(selectedCompany.id)}
+                              >
                                 <Clipboard className="h-5 w-5 text-orange-600 dark:text-orange-400 mx-auto mb-1" />
                                 <div className="text-lg font-bold text-gray-900 dark:text-white">{details.activeWorkOrders}</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Active Work Orders</div>
                               </div>
                               
-                              <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                              <div 
+                                className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                                onClick={() => handleCompletedOrdersClick(selectedCompany.id)}
+                              >
                                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
                                 <div className="text-lg font-bold text-gray-900 dark:text-white">{details.completedWorkOrders}</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Completed Orders</div>
                               </div>
                               
-                              <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                              <div 
+                                className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                                onClick={handleSuccessRateClick}
+                              >
                                 <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
                                 <div className="text-lg font-bold text-gray-900 dark:text-white">{details.successRate}%</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Success Rate</div>
@@ -548,21 +592,30 @@ export default function OperationsCompanies() {
                         const details = getCompanyDetails(selectedCompany.id);
                         return (
                           <>
-                            <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div 
+                              className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              onClick={() => handleRecentUsersClick(selectedCompany.id)}
+                            >
                               <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">2</div>
                               </div>
                             </div>
                             
-                            <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div 
+                              className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              onClick={() => handleRecentCompletedClick(selectedCompany.id)}
+                            >
                               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">1</div>
                               </div>
                             </div>
                             
-                            <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div 
+                              className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                              onClick={handleRecentAssignedClick}
+                            >
                               <Clipboard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">3</div>
@@ -773,6 +826,63 @@ export default function OperationsCompanies() {
               >
                 {deleteCompanyMutation.isPending ? 'Deleting...' : 'Delete Company'}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Success Rate Popup */}
+        <Dialog open={showSuccessRatePopup} onOpenChange={setShowSuccessRatePopup}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Success Rate Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {selectedCompany ? getCompanyDetails(selectedCompany.id).completedWorkOrders : 0}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Completed Successfully</div>
+                </div>
+                <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    {selectedCompany ? Math.floor(getCompanyDetails(selectedCompany.id).completedWorkOrders * 0.2) : 0}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Failed/Cancelled</div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-semibold">Contributing Factors:</h4>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <li>• Response time: Average 2.3 hours</li>
+                  <li>• First-time fix rate: 85%</li>
+                  <li>• Customer satisfaction: 4.7/5.0</li>
+                  <li>• Issue escalation rate: 12%</li>
+                </ul>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Recent Assigned Work Orders Popup */}
+        <Dialog open={showRecentAssignedPopup} onOpenChange={setShowRecentAssignedPopup}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Recently Assigned Work Orders</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="p-3 border rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold">WO-{item.toString().padStart(3, '0')}: Network Equipment Installation</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Assigned to: Field Agent {item}</p>
+                      <p className="text-xs text-gray-500">Due: {new Date(Date.now() + item * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+                    </div>
+                    <Badge variant="secondary">Scheduled</Badge>
+                  </div>
+                </div>
+              ))}
             </div>
           </DialogContent>
         </Dialog>
