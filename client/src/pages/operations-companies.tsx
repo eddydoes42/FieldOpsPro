@@ -409,7 +409,7 @@ export default function OperationsCompanies() {
 
         {/* Company Details Modal */}
         <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-3">
                 <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -428,7 +428,7 @@ export default function OperationsCompanies() {
             </DialogHeader>
 
             {selectedCompany && (
-              <div className="space-y-3 max-h-[calc(90vh-140px)] overflow-y-auto">
+              <div className="space-y-2 max-h-[calc(95vh-160px)] overflow-y-auto">
                 {/* Company Overview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={(e) => selectedCompany && handleEditCompany(selectedCompany, e)}>
@@ -576,7 +576,7 @@ export default function OperationsCompanies() {
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end items-center space-x-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-end items-center space-x-2 pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
                   {isAdministrator && (
                     <Button 
                       variant="destructive" 
