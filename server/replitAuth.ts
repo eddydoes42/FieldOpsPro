@@ -133,7 +133,7 @@ export async function setupAuth(app: Express) {
       process.env.REPLIT_DOMAINS!.split(",")[0] : 
       req.hostname;
     
-    passport.authenticate(`replitauth:${hostname}`, (err: any, user: any, info: any) => {
+    passport.authenticate(`replitauth:${hostname}`, async (err: any, user: any, info: any) => {
       if (err) {
         // Authentication failed - redirect with error message
         console.log("Authentication failed:", err.message);
@@ -143,11 +143,35 @@ export async function setupAuth(app: Express) {
         return res.redirect(`/?error=${encodeURIComponent("Authentication failed. Please try again.")}`);
       }
       // Authentication successful
-      req.logIn(user, (err) => {
+      req.logIn(user, async (err) => {
         if (err) {
           return res.redirect(`/?error=${encodeURIComponent("Login error. Please try again.")}`);
         }
-        return res.redirect("/dashboard");
+        
+        // Get user from database to check roles
+        try {
+          const dbUser = await storage.getUser(user.claims.sub);
+          if (!dbUser) {
+            return res.redirect("/?error=user_not_found");
+          }
+          
+          const hasOpsDirector = dbUser.roles?.includes('operations_director');
+          const hasAdmin = dbUser.roles?.includes('administrator');
+          
+          // If user has both roles, redirect to role selection
+          if (hasOpsDirector && hasAdmin) {
+            return res.redirect("/choose-role");
+          } else if (hasOpsDirector) {
+            return res.redirect("/operations-dashboard");
+          } else if (hasAdmin) {
+            return res.redirect("/admin-dashboard");
+          } else {
+            return res.redirect("/dashboard");
+          }
+        } catch (error) {
+          console.error("Error checking user roles:", error);
+          return res.redirect("/dashboard");
+        }
       });
     })(req, res, next);
   });

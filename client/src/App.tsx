@@ -45,15 +45,19 @@ function Router() {
             <Route path="/">
               <Landing />
             </Route>
+            <Route path="/choose-role">
+              <RoleSelection user={user} />
+            </Route>
             <Route path="/dashboard">
               {(() => {
                 const selectedRole = localStorage.getItem('selectedRole');
                 const hasOpsDirector = isOperationsDirector(user as any);
                 const hasAdmin = hasRole(user as any, 'administrator');
                 
-                // If user has both operations director and admin roles, show role selection unless they've chosen
+                // If user has both operations director and admin roles and hasn't chosen, redirect to role selection
                 if (hasOpsDirector && hasAdmin && !selectedRole) {
-                  return <RoleSelection user={user} />;
+                  setLocation('/choose-role');
+                  return null;
                 }
                 
                 // Default role-based routing

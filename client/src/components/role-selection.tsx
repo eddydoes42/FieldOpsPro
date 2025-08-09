@@ -15,12 +15,12 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
 
   // If user only has one relevant role, redirect automatically
   if (hasOperationsDirectorRole && !hasAdministratorRole) {
-    setLocation('/dashboard');
+    setLocation('/operations-dashboard');
     return null;
   }
   
   if (hasAdministratorRole && !hasOperationsDirectorRole) {
-    setLocation('/dashboard');
+    setLocation('/admin-dashboard');
     return null;
   }
 
