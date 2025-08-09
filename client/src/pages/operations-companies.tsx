@@ -409,7 +409,7 @@ export default function OperationsCompanies() {
 
         {/* Company Details Modal */}
         <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-3">
                 <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -428,17 +428,17 @@ export default function OperationsCompanies() {
             </DialogHeader>
 
             {selectedCompany && (
-              <div className="space-y-4">
+              <div className="space-y-3 max-h-[calc(80vh-120px)] overflow-y-auto">
                 {/* Company Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={(e) => selectedCompany && handleEditCompany(selectedCompany, e)}>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center justify-between">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center justify-between">
                         Company Information
                         <Edit className="h-4 w-4 text-gray-400" />
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-2 pt-0">
                       {selectedCompany.description && (
                         <div>
                           <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm">Description</h4>
@@ -487,7 +487,7 @@ export default function OperationsCompanies() {
                         )}
                       </div>
                       
-                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="pt-1 border-t border-gray-200 dark:border-gray-700">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Onboarded: {selectedCompany.createdAt ? new Date(selectedCompany.createdAt).toLocaleDateString() : 'Unknown'}
                         </p>
@@ -497,36 +497,36 @@ export default function OperationsCompanies() {
 
                   {/* Statistics Overview */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Performance Overview</CardTitle>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Performance Overview</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-3">
+                    <CardContent className="pt-0">
+                      <div className="grid grid-cols-2 gap-2">
                         {(() => {
                           const details = getCompanyDetails(selectedCompany.id);
                           return (
                             <>
-                              <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
-                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.onboardedUsers}</div>
+                              <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
+                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.onboardedUsers}</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Onboarded Users</div>
                               </div>
                               
-                              <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                                <Briefcase className="h-6 w-6 text-orange-600 dark:text-orange-400 mx-auto mb-1" />
-                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.activeWorkOrders}</div>
+                              <div className="text-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                <Briefcase className="h-5 w-5 text-orange-600 dark:text-orange-400 mx-auto mb-1" />
+                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.activeWorkOrders}</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Active Work Orders</div>
                               </div>
                               
-                              <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 mx-auto mb-1" />
-                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.completedWorkOrders}</div>
+                              <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
+                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.completedWorkOrders}</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Completed Orders</div>
                               </div>
                               
-                              <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
-                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.successRate}%</div>
+                              <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
+                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.successRate}%</div>
                                 <div className="text-xs text-gray-600 dark:text-gray-400">Success Rate</div>
                               </div>
                             </>
@@ -539,35 +539,35 @@ export default function OperationsCompanies() {
 
                 {/* Recent Activity */}
                 <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Recent Activity</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Recent Activity</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-3 gap-4">
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-3 gap-3">
                       {(() => {
                         const details = getCompanyDetails(selectedCompany.id);
                         return (
                           <>
-                            <div className="flex items-center justify-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                               <div className="text-center">
-                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.recentlyOnboardedUsers || 2}</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyOnboardedUsers || 2}</div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">Recently Onboarded</div>
                               </div>
                             </div>
                             
-                            <div className="flex items-center justify-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                               <div className="text-center">
-                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.recentlyCompletedOrders || 1}</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyCompletedOrders || 1}</div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">Recently Completed</div>
                               </div>
                             </div>
                             
-                            <div className="flex items-center justify-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <Briefcase className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                            <div className="flex items-center justify-center space-x-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <Briefcase className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                               <div className="text-center">
-                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.recentlyAssignedOrders || 3}</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyAssignedOrders || 3}</div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">Recently Assigned</div>
                               </div>
                             </div>
@@ -579,10 +579,11 @@ export default function OperationsCompanies() {
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
                   {isAdministrator && (
                     <Button 
                       variant="destructive" 
+                      size="sm"
                       onClick={handleDeleteCompany}
                       className="flex items-center space-x-2"
                     >
@@ -591,11 +592,11 @@ export default function OperationsCompanies() {
                     </Button>
                   )}
                   
-                  <div className="flex space-x-3">
-                    <Button variant="outline" onClick={() => setSelectedCompany(null)}>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedCompany(null)}>
                       Close
                     </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                       View Full Dashboard
                     </Button>
                   </div>
