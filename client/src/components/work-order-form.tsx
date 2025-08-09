@@ -173,25 +173,25 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
-      <Card className="max-w-2xl w-full max-h-[95vh] overflow-hidden flex flex-col">
-        <CardHeader className="pb-2 flex-shrink-0">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-1 overflow-y-auto">
+      <Card className="max-w-2xl w-full min-h-fit my-2 flex flex-col bg-white dark:bg-gray-900">
+        <CardHeader className="pb-3 px-4 pt-4 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold text-gray-900">
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
               {isClient ? "Create Work Order Request" : "Create New Work Order"}
             </CardTitle>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               ✕
             </Button>
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 overflow-y-auto p-4">
+        <CardContent className="flex-1 p-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
               {isClient ? (
@@ -202,9 +202,13 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Title *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Title *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter work order title" {...field} />
+                          <Input 
+                            placeholder="Enter work order title" 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -215,11 +219,12 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Description *</FormLabel>
                         <FormControl>
                           <Textarea 
-                            rows={3}
-                            placeholder="Describe the work to be performed" 
+                            rows={2}
+                            placeholder="Describe the work to be performed"
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                             {...field} 
                           />
                         </FormControl>
@@ -232,9 +237,13 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                     name="location"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Location *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Location *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter location details" {...field} />
+                          <Input 
+                            placeholder="Enter location details"
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -245,10 +254,10 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                     name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Priority *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Priority *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
                               <SelectValue placeholder="Select priority" />
                             </SelectTrigger>
                           </FormControl>
@@ -268,9 +277,13 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                     name="dueDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Due Date</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Due Date</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <Input 
+                            type="datetime-local"
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -289,9 +302,13 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Title *</FormLabel>
+                            <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Title *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter work order title" {...field} />
+                              <Input 
+                                placeholder="Enter work order title"
+                                className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -302,11 +319,12 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Description *</FormLabel>
+                            <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Description *</FormLabel>
                             <FormControl>
                               <Textarea 
-                                rows={4}
-                                placeholder="Describe the work to be performed" 
+                                rows={3}
+                                placeholder="Describe the work to be performed"
+                                className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                                 {...field} 
                               />
                             </FormControl>
@@ -319,7 +337,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
                   {/* Work Details */}
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-2">Work Details</h3>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Work Details</h3>
                     <div className="space-y-3">
                       <FormField
                         control={form.control}
@@ -376,7 +394,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
                   {/* Location & Scheduling */}
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-2">Location & Scheduling</h3>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Location & Scheduling</h3>
                     <div className="space-y-3">
                       <FormField
                         control={form.control}
@@ -603,12 +621,12 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
 
               {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4 border-t border-gray-200 mt-4 sticky bottom-0 bg-white">
+              <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-4 sticky bottom-0 bg-white dark:bg-gray-900">
                 <Button 
                   type="button" 
-                  variant="secondary" 
+                  variant="outline" 
                   onClick={onClose}
-                  className="flex-1"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                   size="sm"
                 >
                   Cancel
@@ -616,7 +634,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                 <Button 
                   type="submit"
                   disabled={createWorkOrderMutation.isPending}
-                  className="flex-1"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
                   size="sm"
                 >
                   {createWorkOrderMutation.isPending ? "Creating..." : "Create"}
