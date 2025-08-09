@@ -69,7 +69,10 @@ export default function OperationsRecentSetups() {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/companies?filter=recent')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center">
                 <UserPlus className="h-6 w-6 text-orange-600 dark:text-orange-400" />
@@ -85,7 +88,10 @@ export default function OperationsRecentSetups() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/companies?filter=administrators')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center">
                 <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -101,7 +107,10 @@ export default function OperationsRecentSetups() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/companies?filter=other_users')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center">
                 <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -117,7 +126,10 @@ export default function OperationsRecentSetups() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/companies?filter=this_week')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center">
                 <UserPlus className="h-6 w-6 text-purple-600 dark:text-purple-400" />
