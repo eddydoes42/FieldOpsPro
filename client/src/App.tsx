@@ -108,17 +108,29 @@ function Router() {
               })()}
             </Route>
             <Route path="/operations-dashboard">
-              <OperationsDirectorDashboard />
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <OperationsDirectorDashboard />
+              </div>
             </Route>
             <Route path="/operations/companies">
-              <OperationsCompanies />
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <OperationsCompanies />
+              </div>
             </Route>
             <Route path="/operations/active-admins">
-              <OperationsActiveAdmins />
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <OperationsActiveAdmins />
+              </div>
             </Route>
 
             <Route path="/operations/recent-setups">
-              <OperationsRecentSetups />
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <OperationsRecentSetups />
+              </div>
             </Route>
             <Route path="/admin-dashboard">
               <AdminDashboard />
