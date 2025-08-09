@@ -122,13 +122,13 @@ function Router() {
 
                 return (
                   <div>
+                    {/* Role switcher for operations directors */}
+                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
                     {/* Permanent role switcher for dual-role users */}
                     <PermanentRoleSwitcher 
                       currentActiveRole={effectiveRole} 
                       onRoleSwitch={handlePermanentRoleSwitch} 
                     />
-                    {/* Role switcher for operations directors */}
-                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
                     <DashboardContent />
                   </div>
                 );
@@ -162,12 +162,12 @@ function Router() {
 
                 return (
                   <div>
+                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
                     {/* Permanent role switcher for dual-role users */}
                     <PermanentRoleSwitcher 
                       currentActiveRole={effectiveRole} 
                       onRoleSwitch={handlePermanentRoleSwitch} 
                     />
-                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
                     <DashboardContent />
                   </div>
                 );
@@ -175,32 +175,32 @@ function Router() {
             </Route>
             <Route path="/operations/companies">
               <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <PermanentRoleSwitcher 
                   currentActiveRole={getEffectiveRole()} 
                   onRoleSwitch={handlePermanentRoleSwitch} 
                 />
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <OperationsCompanies />
               </div>
             </Route>
             <Route path="/operations/active-admins">
               <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <PermanentRoleSwitcher 
                   currentActiveRole={getEffectiveRole()} 
                   onRoleSwitch={handlePermanentRoleSwitch} 
                 />
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <OperationsActiveAdmins />
               </div>
             </Route>
 
             <Route path="/operations/recent-setups">
               <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <PermanentRoleSwitcher 
                   currentActiveRole={getEffectiveRole()} 
                   onRoleSwitch={handlePermanentRoleSwitch} 
                 />
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <OperationsRecentSetups />
               </div>
             </Route>
