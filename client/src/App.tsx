@@ -261,14 +261,27 @@ function Router() {
               )}
             </Route>
             <Route path="/client-dashboard">
-              {hasRole(user as any, 'client') ? (
-                (() => {
-                  const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
-                  return <ClientDashboard />;
-                })()
-              ) : (
-                <Landing />
-              )}
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasClientAccess = hasRole(user as any, 'client') || effectiveRole === 'client';
+                
+                if (isAuthenticated && hasClientAccess) {
+                  return (
+                    <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
+                      <div>
+                        {isOperationsDirector(user as any) && (
+                          <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                        )}
+                        {(() => {
+                          const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
+                          return <ClientDashboard />;
+                        })()}
+                      </div>
+                    </Suspense>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
             <Route path="/client/work-orders">
               {(() => {
