@@ -592,14 +592,9 @@ export default function OperationsCompanies() {
                     </Button>
                   )}
                   
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedCompany(null)}>
-                      Close
-                    </Button>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                      View Full Dashboard
-                    </Button>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setSelectedCompany(null)}>
+                    Close
+                  </Button>
                 </div>
               </div>
             )}
