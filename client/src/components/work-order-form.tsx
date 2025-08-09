@@ -173,12 +173,12 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <Card className="max-w-4xl w-full my-4 max-h-none">
-        <CardHeader className="pb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+      <Card className="max-w-2xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+        <CardHeader className="pb-2 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Create New Work Order
+            <CardTitle className="text-lg font-bold text-gray-900">
+              {isClient ? "Create Work Order Request" : "Create New Work Order"}
             </CardTitle>
             <Button
               variant="ghost"
@@ -186,19 +186,18 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
             >
-              <i className="fas fa-times text-xl"></i>
+              ✕
             </Button>
           </div>
-          <p className="text-gray-600">{isClient ? "Create a new work order request" : "Create and assign a new work order to field agents"}</p>
         </CardHeader>
         
-        <CardContent className="max-h-[70vh] overflow-y-auto">
+        <CardContent className="flex-1 overflow-y-auto p-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
               {/* Work Order Details */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Work Order Details</h3>
-                <div className="space-y-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Work Order Details</h3>
+                <div className="space-y-3">
                   <FormField
                     control={form.control}
                     name="title"
@@ -234,8 +233,8 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
               {/* Work Details */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Work Details</h3>
-                <div className="space-y-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Work Details</h3>
+                <div className="space-y-3">
                   <FormField
                     control={form.control}
                     name="scopeOfWork"
@@ -293,8 +292,8 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
               {/* Location & Scheduling */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Location & Scheduling</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Location & Scheduling</h3>
+                <div className="space-y-3">
                   <FormField
                     control={form.control}
                     name="location"
@@ -518,12 +517,13 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
 
               {/* Action Buttons */}
-              <div className="flex space-x-4 pt-6 border-t border-gray-200">
+              <div className="flex space-x-3 pt-4 border-t border-gray-200 mt-4 sticky bottom-0 bg-white">
                 <Button 
                   type="button" 
                   variant="secondary" 
                   onClick={onClose}
                   className="flex-1"
+                  size="sm"
                 >
                   Cancel
                 </Button>
@@ -531,8 +531,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                   type="submit"
                   disabled={createWorkOrderMutation.isPending}
                   className="flex-1"
+                  size="sm"
                 >
-                  {createWorkOrderMutation.isPending ? "Creating..." : "Create Work Order"}
+                  {createWorkOrderMutation.isPending ? "Creating..." : "Create"}
                 </Button>
               </div>
             </form>
