@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import QuickActionMenu from "@/components/quick-action-menu";
 import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
 import { Zap } from "lucide-react";
+import RoleSwitcher from "@/components/role-switcher";
 
 export default function Navigation() {
   const { user } = useAuth();
@@ -30,6 +31,8 @@ export default function Navigation() {
   ).length || 0;
 
   const handleLogout = () => {
+    // Clear role selection when logging out
+    localStorage.removeItem('selectedRole');
     window.location.href = "/api/logout";
   };
 
@@ -126,6 +129,9 @@ export default function Navigation() {
           
           {/* Right side - Navigation Menu */}
           <div className="flex items-center space-x-4">
+            {/* Role Switcher */}
+            <RoleSwitcher user={user} />
+            
             {/* Navigation Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button

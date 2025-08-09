@@ -10,6 +10,7 @@ import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import ManagerDashboard from "@/pages/manager-dashboard";
 import AgentDashboard from "@/pages/agent-dashboard";
+import RoleSelection from "@/components/role-selection";
 import TeamReports from "@/pages/team-reports";
 import TeamPage from "@/pages/team";
 import Onboarding from "@/pages/onboarding";
@@ -45,17 +46,37 @@ function Router() {
               <Landing />
             </Route>
             <Route path="/dashboard">
-              {isOperationsDirector(user as any) ? (
-                <OperationsDirectorDashboard />
-              ) : hasRole(user as any, 'administrator') ? (
-                <AdminDashboard />
-              ) : hasRole(user as any, 'manager') ? (
-                <ManagerDashboard />
-              ) : hasRole(user as any, 'field_agent') ? (
-                <AgentDashboard />
-              ) : (
-                <Landing />
-              )}
+              {(() => {
+                const selectedRole = localStorage.getItem('selectedRole');
+                const hasOpsDirector = isOperationsDirector(user as any);
+                const hasAdmin = hasRole(user as any, 'administrator');
+                
+                // If user has both operations director and admin roles, show role selection unless they've chosen
+                if (hasOpsDirector && hasAdmin && !selectedRole) {
+                  return <RoleSelection user={user} />;
+                }
+                
+                // If user has selected a role, use that
+                if (selectedRole === 'operations_director' && hasOpsDirector) {
+                  return <OperationsDirectorDashboard />;
+                }
+                if (selectedRole === 'administrator' && hasAdmin) {
+                  return <AdminDashboard />;
+                }
+                
+                // Default role-based routing
+                if (hasOpsDirector) {
+                  return <OperationsDirectorDashboard />;
+                } else if (hasAdmin) {
+                  return <AdminDashboard />;
+                } else if (hasRole(user as any, 'manager')) {
+                  return <ManagerDashboard />;
+                } else if (hasRole(user as any, 'field_agent')) {
+                  return <AgentDashboard />;
+                } else {
+                  return <Landing />;
+                }
+              })()}
             </Route>
             <Route path="/reports">
               {hasAnyRole(user as any, ['administrator', 'manager']) ? (
