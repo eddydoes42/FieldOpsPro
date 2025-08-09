@@ -28,7 +28,17 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
 
   // Only show for operations directors
   if (!isOperationsDirector(user as any)) {
-    return null;
+    // Temporary debug info for troubleshooting
+    return (
+      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+        <p className="text-red-800 text-sm font-medium">Role Switcher Debug</p>
+        <p className="text-red-700 text-xs">
+          User roles: {JSON.stringify((user as any)?.roles)} | 
+          Company ID: {(user as any)?.companyId || 'null'} | 
+          Is Ops Director: {isOperationsDirector(user as any) ? 'YES' : 'NO'}
+        </p>
+      </div>
+    );
   }
 
   const handleRoleSwitch = () => {
