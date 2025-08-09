@@ -20,9 +20,10 @@ The application is fully operational with comprehensive demo data, modern dark t
   - **Field Agent Request System**: Clients can review agent performance history and approve/decline assignment requests
   - **Operations Director Client Onboarding**: Only operations directors can create client users through the onboarding system
 - ✓ **Operations Director Role Testing Feature**: Advanced role switching capability for system testing
-  - **Role Switcher Component**: Operations directors can switch between all role dashboards to test functionality
+  - **Compact Dropdown Role Switcher**: Streamlined button with dropdown menu for switching between all role dashboards
   - **Testing Mode Indicators**: Clear visual indicators when in testing mode with reset functionality
   - **Comprehensive Role Access**: Full access to administrator, manager, dispatcher, field agent, and client dashboards
+  - **Available on All Operations Routes**: Role switcher appears on operations dashboard, companies, active admins, and recent setups pages
 - ✓ **Task Management System**: Pre-visit, on-site, and post-site task tracking for work orders
   - Administrators and managers can create and assign tasks
   - Field agents and managers can mark tasks as complete
