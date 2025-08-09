@@ -59,6 +59,20 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
   console.log('UserOnboardingForm currentUser:', currentUser);
   console.log('isAdmin(currentUser):', isAdmin(currentUser));
 
+  // Phone number formatting function
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit characters
+    const phoneNumber = value.replace(/\D/g, '');
+    
+    // Format as (XXX) XXX-XXXX
+    if (phoneNumber.length === 0) return '';
+    if (phoneNumber.length <= 3) return phoneNumber;
+    if (phoneNumber.length <= 6) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    }
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+  };
+
   const form = useForm({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
@@ -196,7 +210,15 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       <FormItem>
                         <FormLabel>Phone Number *</FormLabel>
                         <FormControl>
-                          <Input type="tel" placeholder="Enter phone number" {...field} />
+                          <Input 
+                            type="tel" 
+                            placeholder="Enter phone number" 
+                            {...field}
+                            onChange={(e) => {
+                              const formattedValue = formatPhoneNumber(e.target.value);
+                              field.onChange(formattedValue);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

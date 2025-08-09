@@ -147,7 +147,26 @@ export default function Onboarding() {
     );
   }
 
+  // Phone number formatting function
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit characters
+    const phoneNumber = value.replace(/\D/g, '');
+    
+    // Format as (XXX) XXX-XXXX
+    if (phoneNumber.length === 0) return '';
+    if (phoneNumber.length <= 3) return phoneNumber;
+    if (phoneNumber.length <= 6) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    }
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+  };
+
   const handleInputChange = (field: keyof OnboardingFormData, value: string | boolean) => {
+    // Handle phone number formatting
+    if ((field === 'phone' || field === 'emergencyPhone') && typeof value === 'string') {
+      value = formatPhoneNumber(value);
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: field === 'temporaryPassword' ? value : value
