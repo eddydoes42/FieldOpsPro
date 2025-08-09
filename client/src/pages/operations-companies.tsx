@@ -280,10 +280,10 @@ export default function OperationsCompanies() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-2 mb-4">
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 mb-3">
             <Button
               variant="outline"
               size="sm"
@@ -302,20 +302,16 @@ export default function OperationsCompanies() {
             </Button>
           </div>
           
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                All Service Companies
-              </h1>
-            </div>
-            <Button 
-              onClick={() => setLocation('/operations-dashboard')}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 ml-6 mt-1"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Company
-            </Button>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+            Service Companies
+          </h1>
+          <Button 
+            onClick={() => setLocation('/operations-dashboard')}
+            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Company
+          </Button>
         </div>
 
         {/* Filters */}
