@@ -38,12 +38,12 @@ export default function RoleSwitcher({ user }: RoleSwitcherProps) {
 
   const switchToOperationsDirector = () => {
     localStorage.setItem('selectedRole', 'operations_director');
-    window.location.reload();
+    setLocation('/operations-dashboard');
   };
 
   const switchToCompanyAdmin = () => {
     localStorage.setItem('selectedRole', 'administrator');
-    window.location.reload();
+    setLocation('/admin-dashboard');
   };
 
   const currentRole = getCurrentRoleDisplay();

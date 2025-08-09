@@ -23,7 +23,7 @@ import FloatingQuickAction from "@/components/floating-quick-action";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
 
 
@@ -56,20 +56,8 @@ function Router() {
                   return <RoleSelection user={user} />;
                 }
                 
-                // If user has selected a role, use that
-                if (selectedRole === 'operations_director' && hasOpsDirector) {
-                  return <OperationsDirectorDashboard />;
-                }
-                if (selectedRole === 'administrator' && hasAdmin) {
-                  return <AdminDashboard />;
-                }
-                
                 // Default role-based routing
-                if (hasOpsDirector) {
-                  return <OperationsDirectorDashboard />;
-                } else if (hasAdmin) {
-                  return <AdminDashboard />;
-                } else if (hasRole(user as any, 'manager')) {
+                if (hasRole(user as any, 'manager')) {
                   return <ManagerDashboard />;
                 } else if (hasRole(user as any, 'field_agent')) {
                   return <AgentDashboard />;
@@ -77,6 +65,12 @@ function Router() {
                   return <Landing />;
                 }
               })()}
+            </Route>
+            <Route path="/operations-dashboard">
+              <OperationsDirectorDashboard />
+            </Route>
+            <Route path="/admin-dashboard">
+              <AdminDashboard />
             </Route>
             <Route path="/reports">
               {hasAnyRole(user as any, ['administrator', 'manager']) ? (

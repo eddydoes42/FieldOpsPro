@@ -35,7 +35,7 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
     e.stopPropagation();
     // Store preference and redirect to operations director dashboard
     localStorage.setItem('selectedRole', 'operations_director');
-    window.location.reload(); // Force reload to ensure role change takes effect
+    setLocation('/operations-dashboard');
   };
 
   const handleCompanyAdmin = (e: React.MouseEvent) => {
@@ -43,7 +43,7 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
     e.stopPropagation();
     // Store preference and redirect to company admin dashboard
     localStorage.setItem('selectedRole', 'administrator');
-    window.location.reload(); // Force reload to ensure role change takes effect
+    setLocation('/admin-dashboard');
   };
 
   return (

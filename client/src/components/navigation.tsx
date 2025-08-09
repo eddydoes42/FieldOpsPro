@@ -68,7 +68,7 @@ export default function Navigation() {
         return {
           badge: { text: roleDisplay, icon: 'fas fa-crown', color: 'bg-purple-900/30 text-purple-300 border-purple-800/50' },
           links: [
-            { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/admin-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
