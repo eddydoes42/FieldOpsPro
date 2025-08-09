@@ -23,7 +23,7 @@ const availableRoles = [
 
 export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcherProps) {
   const { user } = useAuth();
-  const [isTestMode, setIsTestMode] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(currentRole !== 'operations_director');
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
   // Only show for operations directors
