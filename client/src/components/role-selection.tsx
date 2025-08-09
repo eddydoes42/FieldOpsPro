@@ -30,16 +30,20 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
     return null;
   }
 
-  const handleOperationsDirector = () => {
+  const handleOperationsDirector = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     // Store preference and redirect to operations director dashboard
     localStorage.setItem('selectedRole', 'operations_director');
-    setLocation('/dashboard');
+    window.location.reload(); // Force reload to ensure role change takes effect
   };
 
-  const handleCompanyAdmin = () => {
+  const handleCompanyAdmin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     // Store preference and redirect to company admin dashboard
     localStorage.setItem('selectedRole', 'administrator');
-    setLocation('/dashboard');
+    window.location.reload(); // Force reload to ensure role change takes effect
   };
 
   return (
@@ -57,8 +61,7 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Operations Director Option */}
           <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={handleOperationsDirector}
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
           >
             <CardHeader className="text-center pb-4">
               <div className="mx-auto mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-full w-fit">
@@ -89,6 +92,7 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
               <Button 
                 className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
                 onClick={handleOperationsDirector}
+                type="button"
               >
                 Access Operations Director Dashboard
               </Button>
@@ -97,8 +101,7 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
 
           {/* Service Company Admin Option */}
           <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={handleCompanyAdmin}
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
           >
             <CardHeader className="text-center pb-4">
               <div className="mx-auto mb-4 p-3 bg-green-100 dark:bg-green-900 rounded-full w-fit">
@@ -129,6 +132,7 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
               <Button 
                 className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
                 onClick={handleCompanyAdmin}
+                type="button"
               >
                 Access Company Admin Dashboard
               </Button>
