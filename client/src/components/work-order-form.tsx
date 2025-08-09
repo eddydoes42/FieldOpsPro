@@ -270,22 +270,24 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="pointOfContact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Point of Contact</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Name and contact information of client/site contact" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!isClient && (
+                    <FormField
+                      control={form.control}
+                      name="pointOfContact"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Point of Contact</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Name and contact information of client/site contact" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -365,8 +367,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                 </div>
               </div>
 
-              {/* Tasks Section */}
-              <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+              {/* Tasks Section - Only visible to management */}
+              {!isClient && (
+                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
                   <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
@@ -479,36 +482,39 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                     })}
                   </div>
                 )}
-              </div>
+                </div>
+              )}
 
-              {/* Assignment */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment</h3>
-                <FormField
-                  control={form.control}
-                  name="assigneeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assign to Agent</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select field agent" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {(fieldAgents as any)?.map((agent: any) => (
-                            <SelectItem key={agent.id} value={agent.id}>
-                              {agent.firstName} {agent.lastName} - {agent.role === 'field_agent' ? 'FA' : agent.role?.replace('_', ' ')}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {/* Assignment - Only visible to management */}
+              {!isClient && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment</h3>
+                  <FormField
+                    control={form.control}
+                    name="assigneeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Assign to Agent</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select field agent" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {(fieldAgents as any)?.map((agent: any) => (
+                              <SelectItem key={agent.id} value={agent.id}>
+                                {agent.firstName} {agent.lastName} - {agent.role === 'field_agent' ? 'FA' : agent.role?.replace('_', ' ')}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
 
               {/* Action Buttons */}
