@@ -409,7 +409,7 @@ export default function OperationsCompanies() {
 
         {/* Company Details Modal */}
         <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-3">
                 <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -428,9 +428,9 @@ export default function OperationsCompanies() {
             </DialogHeader>
 
             {selectedCompany && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Company Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={(e) => selectedCompany && handleEditCompany(selectedCompany, e)}>
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center justify-between">
@@ -438,15 +438,15 @@ export default function OperationsCompanies() {
                         <Edit className="h-4 w-4 text-gray-400" />
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-3">
                       {selectedCompany.description && (
                         <div>
-                          <h4 className="font-medium text-gray-700 dark:text-gray-300">Description</h4>
-                          <p className="text-gray-600 dark:text-gray-400">{selectedCompany.description}</p>
+                          <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm">Description</h4>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">{selectedCompany.description}</p>
                         </div>
                       )}
                       
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-2">
                         {selectedCompany.email && (
                           <div className="flex items-center space-x-2">
                             <Mail className="h-4 w-4 text-gray-500" />
@@ -488,7 +488,7 @@ export default function OperationsCompanies() {
                       </div>
                       
                       <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Onboarded: {selectedCompany.createdAt ? new Date(selectedCompany.createdAt).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
@@ -501,33 +501,33 @@ export default function OperationsCompanies() {
                       <CardTitle className="text-lg">Performance Overview</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-3">
                         {(() => {
                           const details = getCompanyDetails(selectedCompany.id);
                           return (
                             <>
-                              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <Users className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.onboardedUsers}</div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Onboarded Users</div>
+                              <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
+                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.onboardedUsers}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">Onboarded Users</div>
                               </div>
                               
-                              <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                                <Briefcase className="h-8 w-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.activeWorkOrders}</div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Active Work Orders</div>
+                              <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                <Briefcase className="h-6 w-6 text-orange-600 dark:text-orange-400 mx-auto mb-1" />
+                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.activeWorkOrders}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">Active Work Orders</div>
                               </div>
                               
-                              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.completedWorkOrders}</div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Completed Orders</div>
+                              <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 mx-auto mb-1" />
+                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.completedWorkOrders}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">Completed Orders</div>
                               </div>
                               
-                              <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.successRate}%</div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
+                              <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
+                                <div className="text-xl font-bold text-gray-900 dark:text-white">{details.successRate}%</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">Success Rate</div>
                               </div>
                             </>
                           );
@@ -539,35 +539,41 @@ export default function OperationsCompanies() {
 
                 {/* Recent Activity */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <CardTitle className="text-lg">Recent Activity</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {/* Mock recent activity data */}
-                      <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Work Order #WO-2024-001 completed</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">2 hours ago</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">New technician onboarded</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">1 day ago</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <Briefcase className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">3 new work orders assigned</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">3 days ago</p>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      {(() => {
+                        const details = getCompanyDetails(selectedCompany.id);
+                        return (
+                          <>
+                            <div className="flex items-center justify-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              <div className="text-center">
+                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.recentlyOnboardedUsers || 2}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Recently Onboarded</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                              <div className="text-center">
+                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.recentlyCompletedOrders || 1}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Recently Completed</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <Briefcase className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                              <div className="text-center">
+                                <div className="text-lg font-bold text-gray-900 dark:text-white">{details.recentlyAssignedOrders || 3}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Recently Assigned</div>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </CardContent>
                 </Card>
