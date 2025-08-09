@@ -586,111 +586,118 @@ export default function OperationsCompanies() {
 
         {/* Edit Company Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader className="pb-3">
               <DialogTitle>Edit Company Information</DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="company-name">Company Name</Label>
+                <Label htmlFor="company-name" className="text-sm">Company Name</Label>
                 <Input
                   id="company-name"
                   value={editingCompany.name || ''}
                   onChange={(e) => setEditingCompany(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Enter company name"
+                  className="h-9"
                 />
               </div>
               
               <div>
-                <Label htmlFor="company-description">Description</Label>
-                <Textarea
-                  id="company-description"
-                  value={editingCompany.description || ''}
-                  onChange={(e) => setEditingCompany(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Enter company description"
-                  rows={3}
+                <Label htmlFor="company-email" className="text-sm">Email</Label>
+                <Input
+                  id="company-email"
+                  type="email"
+                  value={editingCompany.email || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="company@example.com"
+                  className="h-9"
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="company-email">Email</Label>
-                  <Input
-                    id="company-email"
-                    type="email"
-                    value={editingCompany.email || ''}
-                    onChange={(e) => setEditingCompany(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="company@example.com"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="company-phone">Phone</Label>
-                  <Input
-                    id="company-phone"
-                    value={editingCompany.phone || ''}
-                    onChange={(e) => setEditingCompany(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="company-phone" className="text-sm">Phone</Label>
+                <Input
+                  id="company-phone"
+                  value={editingCompany.phone || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="(555) 123-4567"
+                  className="h-9"
+                />
               </div>
               
               <div>
-                <Label htmlFor="company-website">Website</Label>
+                <Label htmlFor="company-website" className="text-sm">Website</Label>
                 <Input
                   id="company-website"
                   value={editingCompany.website || ''}
                   onChange={(e) => setEditingCompany(prev => ({ ...prev, website: e.target.value }))}
                   placeholder="https://company.com"
+                  className="h-9"
                 />
               </div>
               
-              <div>
-                <Label htmlFor="company-address">Address</Label>
+              <div className="md:col-span-2">
+                <Label htmlFor="company-description" className="text-sm">Description</Label>
+                <Textarea
+                  id="company-description"
+                  value={editingCompany.description || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter company description"
+                  rows={2}
+                  className="resize-none"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <Label htmlFor="company-address" className="text-sm">Address</Label>
                 <Input
                   id="company-address"
                   value={editingCompany.address || ''}
                   onChange={(e) => setEditingCompany(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="123 Main Street"
+                  className="h-9"
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="company-city" className="text-sm">City</Label>
+                <Input
+                  id="company-city"
+                  value={editingCompany.city || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="City"
+                  className="h-9"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="company-city">City</Label>
-                  <Input
-                    id="company-city"
-                    value={editingCompany.city || ''}
-                    onChange={(e) => setEditingCompany(prev => ({ ...prev, city: e.target.value }))}
-                    placeholder="City"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="company-state">State</Label>
+                  <Label htmlFor="company-state" className="text-sm">State</Label>
                   <Input
                     id="company-state"
                     value={editingCompany.state || ''}
                     onChange={(e) => setEditingCompany(prev => ({ ...prev, state: e.target.value }))}
                     placeholder="State"
+                    className="h-9"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="company-zip">ZIP Code</Label>
+                  <Label htmlFor="company-zip" className="text-sm">ZIP Code</Label>
                   <Input
                     id="company-zip"
                     value={editingCompany.zipCode || ''}
                     onChange={(e) => setEditingCompany(prev => ({ ...prev, zipCode: e.target.value }))}
                     placeholder="12345"
+                    className="h-9"
                   />
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-end space-x-3 pt-6">
-              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)} className="h-9">
                 Cancel
               </Button>
               <Button 
@@ -703,6 +710,7 @@ export default function OperationsCompanies() {
                   }
                 }}
                 disabled={updateCompanyMutation.isPending}
+                className="h-9"
               >
                 {updateCompanyMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
