@@ -387,6 +387,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requiredTools: req.body.requiredTools || null,
         pointOfContact: isClientUser ? null : (req.body.pointOfContact || null), // Clients can't set POC
         isClientCreated: isClientUser, // Mark client-created work orders
+        // Budget information - available to both management and clients
+        budgetType: req.body.budgetType || null,
+        budgetAmount: req.body.budgetAmount ? req.body.budgetAmount.toString() : null,
+        devicesInstalled: req.body.devicesInstalled ? parseInt(req.body.devicesInstalled) : null,
+        budgetCreatedById: req.body.budgetType ? currentUser!.id : null,
+        budgetCreatedAt: req.body.budgetType ? new Date() : null,
       };
       const workOrder = await storage.createWorkOrder(workOrderData);
       res.json(workOrder);

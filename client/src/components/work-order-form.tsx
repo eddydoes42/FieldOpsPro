@@ -33,6 +33,10 @@ const workOrderFormSchema = insertWorkOrderSchema.extend({
   priority: z.string().min(1, "Priority is required"),
   dueDate: z.string().optional(),
   estimatedHours: z.string().optional(),
+  // Budget fields
+  budgetType: z.string().optional(),
+  budgetAmount: z.string().optional(),
+  devicesInstalled: z.string().optional(),
 });
 
 interface Task {
@@ -74,6 +78,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
       assigneeId: "",
       dueDate: "",
       estimatedHours: "",
+      budgetType: "",
+      budgetAmount: "",
+      devicesInstalled: "",
     },
   });
 
@@ -84,6 +91,10 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
         dueDate: workOrderData.dueDate ? new Date(workOrderData.dueDate).toISOString() : null,
         estimatedHours: workOrderData.estimatedHours ? parseFloat(workOrderData.estimatedHours) : null,
         isClientCreated: isClient,
+        // Include budget information if provided
+        budgetType: workOrderData.budgetType || null,
+        budgetAmount: workOrderData.budgetAmount ? parseFloat(workOrderData.budgetAmount) : null,
+        devicesInstalled: workOrderData.devicesInstalled ? parseInt(workOrderData.devicesInstalled) : null,
       };
       const response = await apiRequest("POST", "/api/work-orders", data);
       const createdWorkOrder = await response.json();
@@ -289,6 +300,84 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       </FormItem>
                     )}
                   />
+
+                  {/* Budget Information for Client */}
+                  <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                    <h4 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">💰 Budget Information (Optional)</h4>
+                    <div className="space-y-2">
+                      <FormField
+                        control={form.control}
+                        name="budgetType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-green-900 dark:text-green-100">Budget Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
+                                  <SelectValue placeholder="Select budget type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="fixed">Fixed Amount</SelectItem>
+                                <SelectItem value="hourly">Hourly Rate</SelectItem>
+                                <SelectItem value="per_device">Per Device</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {form.watch("budgetType") && (
+                        <FormField
+                          control={form.control}
+                          name="budgetAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium text-green-900 dark:text-green-100">
+                                {form.watch("budgetType") === "fixed" && "Fixed Amount ($)"}
+                                {form.watch("budgetType") === "hourly" && "Hourly Rate ($)"}
+                                {form.watch("budgetType") === "per_device" && "Price Per Device ($)"}
+                              </FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="Enter amount"
+                                  className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      
+                      {form.watch("budgetType") === "per_device" && (
+                        <FormField
+                          control={form.control}
+                          name="devicesInstalled"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium text-green-900 dark:text-green-100">Number of Devices</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number"
+                                  min="1"
+                                  placeholder="Enter number of devices"
+                                  className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
                 </>
               ) : (
                 // Full management form
