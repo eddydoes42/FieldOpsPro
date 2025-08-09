@@ -103,7 +103,13 @@ export default function ManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation 
+        currentActiveRole={localStorage.getItem('permanentRole') || 'manager'} 
+        onPermanentRoleSwitch={(role) => {
+          localStorage.setItem('permanentRole', role);
+          window.location.reload();
+        }}
+      />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">

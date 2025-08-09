@@ -7,12 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import QuickActionMenu from "@/components/quick-action-menu";
 import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
 import { Zap } from "lucide-react";
+import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
 
 interface NavigationProps {
   testingRole?: string;
+  currentActiveRole?: string;
+  onPermanentRoleSwitch?: (role: string) => void;
 }
 
-export default function Navigation({ testingRole }: NavigationProps = {}) {
+export default function Navigation({ testingRole, currentActiveRole, onPermanentRoleSwitch }: NavigationProps = {}) {
   const { user } = useAuth();
   const [location] = useLocation();
 
@@ -181,6 +184,14 @@ export default function Navigation({ testingRole }: NavigationProps = {}) {
           
           {/* Right side - Navigation Menu */}
           <div className="flex items-center space-x-4">
+            {/* Permanent Role Switcher */}
+            {currentActiveRole && onPermanentRoleSwitch && (
+              <PermanentRoleSwitcher 
+                currentActiveRole={currentActiveRole} 
+                onRoleSwitch={onPermanentRoleSwitch} 
+              />
+            )}
+            
             {/* Navigation Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button

@@ -51,7 +51,7 @@ export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch 
   const CurrentIcon = currentRoleInfo?.icon || User;
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="flex items-center">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
