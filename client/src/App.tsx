@@ -260,16 +260,18 @@ function Router() {
                 const hasClientAccess = hasRole(user as any, 'client') || effectiveRole === 'client';
                 
                 if (isAuthenticated && hasClientAccess) {
-                  const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
                   return (
-                    <div>
-                      {isOperationsDirector(user as any) && (
-                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
-                      )}
-                      <Suspense fallback={<div className="p-4">Loading client work orders...</div>}>
-                        <ClientWorkOrders />
-                      </Suspense>
-                    </div>
+                    <Suspense fallback={<div className="p-4">Loading client work orders...</div>}>
+                      <div>
+                        {isOperationsDirector(user as any) && (
+                          <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                        )}
+                        {(() => {
+                          const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
+                          return <ClientWorkOrders />;
+                        })()}
+                      </div>
+                    </Suspense>
                   );
                 }
                 return <Landing />;

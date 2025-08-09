@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Link } from "wouter";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Calendar, MapPin, DollarSign, User, Star, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
-import WorkOrderForm from "@/components/work-order-form";
+
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 
@@ -70,7 +71,7 @@ interface AssignmentRequest {
 export default function ClientDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
   const [selectedRequest, setSelectedRequest] = useState<AssignmentRequest | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [responseNotes, setResponseNotes] = useState("");
@@ -233,35 +234,13 @@ export default function ClientDashboard() {
       <Navigation testingRole="client" />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Client Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
-          </p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Work Order
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Work Order</DialogTitle>
-            </DialogHeader>
-            <WorkOrderForm 
-              onSuccess={() => {
-                setIsCreateDialogOpen(false);
-                queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
-              }}
-              isClient={true}
-            />
-          </DialogContent>
-        </Dialog>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Client Dashboard
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -342,10 +321,12 @@ export default function ClientDashboard() {
                 <p className="text-gray-600 text-center mb-4">
                   Create your first work order to get started
                 </p>
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Work Order
-                </Button>
+                <Link href="/client/work-orders">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    View Work Orders
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ) : (

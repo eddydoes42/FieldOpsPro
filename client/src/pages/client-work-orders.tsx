@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, MapPin, AlertTriangle, User, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, AlertTriangle, User, Calendar, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
+import WorkOrderForm from "@/components/work-order-form";
 
 interface WorkOrder {
   id: string;
@@ -60,6 +61,7 @@ const getRequestStatusColor = (status?: string) => {
 
 export default function ClientWorkOrders() {
   const { user } = useAuth();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Fetch client's work orders
   const { data: workOrders = [], isLoading } = useQuery<WorkOrder[]>({
@@ -153,17 +155,28 @@ export default function ClientWorkOrders() {
       
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/client-dashboard">
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Work Orders</h1>
-            <p className="text-gray-600 dark:text-gray-300">Track your submitted work order requests and assignments</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Link href="/client-dashboard">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Work Orders</h1>
+              <p className="text-gray-600 dark:text-gray-300">Track your submitted work order requests and assignments</p>
+            </div>
           </div>
+          
+          {/* Create Work Order Button */}
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Work Order
+          </Button>
         </div>
 
         {/* Work Orders List */}
@@ -276,6 +289,17 @@ export default function ClientWorkOrders() {
               </Card>
             ))}
           </div>
+        )}
+        
+        {/* Work Order Creation Dialog */}
+        {isCreateDialogOpen && (
+          <WorkOrderForm 
+            onClose={() => setIsCreateDialogOpen(false)}
+            onSuccess={() => {
+              setIsCreateDialogOpen(false);
+              // Refresh work orders list - the query will automatically refetch
+            }}
+          />
         )}
       </div>
     </div>
