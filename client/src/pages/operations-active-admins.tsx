@@ -95,7 +95,7 @@ export default function OperationsActiveAdmins() {
 
           <Card 
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
-            onClick={() => setLocation('/operations-companies?status=active')}
+            onClick={() => setLocation('/operations/companies?status=active')}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
