@@ -152,15 +152,30 @@ export default function OperationsCompanies() {
 
   // Navigation handlers for Performance Overview cards
   const handleOnboardedUsersClick = (companyId: string) => {
-    setLocation(`/operations/companies/${companyId}/users`);
+    // Navigate to team management page
+    setLocation(`/team`);
+    toast({
+      title: "Navigating to Team Management",
+      description: `Showing users for company: ${selectedCompany?.name || companyId}`,
+    });
   };
 
   const handleActiveWorkOrdersClick = (companyId: string) => {
-    setLocation(`/operations/companies/${companyId}/work-orders?filter=active`);
+    // Navigate to work orders page
+    setLocation(`/work-orders`);
+    toast({
+      title: "Navigating to Work Orders",
+      description: `Showing active work orders for ${selectedCompany?.name || companyId}`,
+    });
   };
 
   const handleCompletedOrdersClick = (companyId: string) => {
-    setLocation(`/operations/companies/${companyId}/work-orders?filter=completed`);
+    // Navigate to work orders page
+    setLocation(`/work-orders`);
+    toast({
+      title: "Navigating to Work Orders", 
+      description: `Showing completed work orders for ${selectedCompany?.name || companyId}`,
+    });
   };
 
   const handleSuccessRateClick = () => {
@@ -169,11 +184,21 @@ export default function OperationsCompanies() {
 
   // Navigation handlers for Recent Activity cards
   const handleRecentUsersClick = (companyId: string) => {
-    setLocation(`/operations/companies/${companyId}/users?filter=new`);
+    // Navigate to team management page
+    setLocation(`/team`);
+    toast({
+      title: "Navigating to Team Management",
+      description: `Showing recently onboarded users for ${selectedCompany?.name || companyId}`,
+    });
   };
 
   const handleRecentCompletedClick = (companyId: string) => {
-    setLocation(`/operations/companies/${companyId}/work-orders?filter=last30days`);
+    // Navigate to work orders page
+    setLocation(`/work-orders`);
+    toast({
+      title: "Navigating to Work Orders",
+      description: `Showing last 30 days work orders for ${selectedCompany?.name || companyId}`,
+    });
   };
 
   const handleRecentAssignedClick = () => {
