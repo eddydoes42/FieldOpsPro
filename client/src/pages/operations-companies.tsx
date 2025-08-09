@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import { useState, useMemo } from "react";
-import { Company } from "../../../shared/schema";
+import { Company, User } from "../../../shared/schema";
 
 export default function OperationsCompanies() {
   const [, setLocation] = useLocation();
@@ -29,6 +29,13 @@ export default function OperationsCompanies() {
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ['/api/companies'],
   });
+
+  const { data: user } = useQuery<User>({
+    queryKey: ['/api/auth/user'],
+  });
+
+  // Check if user is operations director
+  const isOperationsDirector = user?.roles?.includes('operations_director') || false;
 
   // API mutations
   const updateCompanyMutation = useMutation({
@@ -84,6 +91,16 @@ export default function OperationsCompanies() {
 
   const handleToggleActive = (company: Company, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (!isOperationsDirector) {
+      toast({ 
+        title: "Access Denied", 
+        description: "Only Operations Directors can deactivate companies",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     updateCompanyMutation.mutate({
       id: company.id,
       data: { isActive: !company.isActive }
@@ -297,12 +314,15 @@ export default function OperationsCompanies() {
                           </TableCell>
                           <TableCell>
                             <span 
-                              className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${
+                              className={`px-2 py-1 rounded-full text-xs font-medium transition-opacity ${
+                                isOperationsDirector ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-75'
+                              } ${
                                 company.isActive 
                                   ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                                   : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
                               }`}
                               onClick={(e) => handleToggleActive(company, e)}
+                              title={!isOperationsDirector ? "Only Operations Directors can change company status" : "Click to toggle company status"}
                             >
                               {company.isActive ? 'Active' : 'Deactivated'}
                             </span>
@@ -383,8 +403,11 @@ export default function OperationsCompanies() {
                 <span>{selectedCompany?.name}</span>
                 <Badge 
                   variant={selectedCompany?.isActive ? "default" : "secondary"}
-                  className="cursor-pointer hover:opacity-80"
+                  className={`transition-opacity ${
+                    isOperationsDirector ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-75'
+                  }`}
                   onClick={(e) => selectedCompany && handleToggleActive(selectedCompany, e)}
+                  title={!isOperationsDirector ? "Only Operations Directors can change company status" : "Click to toggle company status"}
                 >
                   {selectedCompany?.isActive ? "Active" : "Deactivated"}
                 </Badge>
