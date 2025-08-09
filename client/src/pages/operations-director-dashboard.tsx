@@ -69,24 +69,24 @@ export default function OperationsDirectorDashboard() {
           </div>
           
           {/* Budget Indicator */}
-          <div className="flex items-center space-x-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
             <div className="flex items-center space-x-2">
-              <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
               <div className="text-right">
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Total Earned
                 </p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
                   ${(budgetData?.totalEarned || 0).toLocaleString()}
                 </p>
               </div>
             </div>
-            <div className="h-8 w-px bg-gray-200 dark:bg-gray-700"></div>
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
             <div className="text-right">
               <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                 Today's Earning
               </p>
-              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+              <p className="text-sm font-bold text-green-600 dark:text-green-400">
                 ${(budgetData?.todayEarning || 0).toLocaleString()}
               </p>
             </div>
