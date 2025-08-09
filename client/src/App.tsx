@@ -266,7 +266,9 @@ function Router() {
                       {isOperationsDirector(user as any) && (
                         <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
                       )}
-                      <ClientWorkOrders />
+                      <Suspense fallback={<div className="p-4">Loading client work orders...</div>}>
+                        <ClientWorkOrders />
+                      </Suspense>
                     </div>
                   );
                 }
