@@ -24,23 +24,9 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
-  // Always show debug info and role switcher for operations directors
-  const isOpsDirector = isOperationsDirector(user as any);
-  const debugInfo = (
-    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-      <p className="text-yellow-800 text-sm font-medium">Role Switcher Debug</p>
-      <p className="text-yellow-700 text-xs">
-        User: {user ? 'Loaded' : 'Null'} | 
-        User roles: {JSON.stringify((user as any)?.roles)} | 
-        Company ID: {(user as any)?.companyId || 'null'} | 
-        Is Ops Director: {isOpsDirector ? 'YES' : 'NO'}
-      </p>
-    </div>
-  );
-
-  // Show debug info even when not ops director to understand the issue
-  if (!isOpsDirector) {
-    return debugInfo;
+  // Only show for operations directors
+  if (!isOperationsDirector(user as any)) {
+    return null;
   }
 
   const handleRoleSwitch = () => {
@@ -50,10 +36,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
   const currentRoleInfo = availableRoles.find(role => role.value === currentRole);
 
   return (
-    <div>
-      {debugInfo}
-      {isOpsDirector && (
-        <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
+    <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
           <div className="flex items-center space-x-3">
             <Settings className="h-4 w-4 text-purple-600" />
             <Badge className={`${currentRoleInfo?.color} border text-xs px-2 py-1`}>
@@ -99,7 +82,5 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
             </DropdownMenu>
           </div>
         </div>
-      )}
-    </div>
   );
 }
