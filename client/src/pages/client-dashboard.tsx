@@ -13,6 +13,7 @@ import { format } from "date-fns";
 
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
+import WorkOrderForm from "@/components/work-order-form";
 
 interface WorkOrder {
   id: string;
@@ -75,6 +76,7 @@ export default function ClientDashboard() {
   const [selectedRequest, setSelectedRequest] = useState<AssignmentRequest | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [responseNotes, setResponseNotes] = useState("");
+  const [showCreateWorkOrder, setShowCreateWorkOrder] = useState(false);
 
   // Fetch client's work orders - with demo data for testing
   const { data: workOrders = [], isLoading: ordersLoading } = useQuery<WorkOrder[]>({
@@ -235,12 +237,23 @@ export default function ClientDashboard() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Client Dashboard
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Client Dashboard
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowCreateWorkOrder(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Work Order
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -314,19 +327,25 @@ export default function ClientDashboard() {
               </CardContent>
             </Card>
           ) : workOrders.length === 0 ? (
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setShowCreateWorkOrder(true)}
+            >
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Plus className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Work Orders</h3>
-                <p className="text-gray-600 text-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Work Orders</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-center mb-4">
                   Create your first work order to get started
                 </p>
-                <Link href="/client/work-orders">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    View Work Orders
-                  </Button>
-                </Link>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCreateWorkOrder(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  View Work Orders
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -548,6 +567,17 @@ export default function ClientDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Create Work Order Dialog */}
+      {showCreateWorkOrder && (
+        <WorkOrderForm
+          onClose={() => setShowCreateWorkOrder(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
+            setShowCreateWorkOrder(false);
+          }}
+        />
+      )}
       </div>
     </div>
   );
