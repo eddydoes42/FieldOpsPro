@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -26,6 +26,9 @@ import Calendar from "@/pages/calendar";
 import TimeTracking from "@/pages/time-tracking";
 import NotFound from "@/pages/not-found";
 import FloatingQuickAction from "@/components/floating-quick-action";
+
+// Lazy load ClientDashboard
+const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -91,8 +94,11 @@ function Router() {
                   } else if (effectiveRole === 'field_agent') {
                     return <AgentDashboard />;
                   } else if (effectiveRole === 'client') {
-                    const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
-                    return <ClientDashboard />;
+                    return (
+                      <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
+                        <ClientDashboard />
+                      </Suspense>
+                    );
                   } else {
                     return <Landing />;
                   }
@@ -123,8 +129,11 @@ function Router() {
                   } else if (effectiveRole === 'field_agent') {
                     return <AgentDashboard />;
                   } else if (effectiveRole === 'client') {
-                    const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
-                    return <ClientDashboard />;
+                    return (
+                      <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
+                        <ClientDashboard />
+                      </Suspense>
+                    );
                   } else {
                     return <OperationsDirectorDashboard />;
                   }
