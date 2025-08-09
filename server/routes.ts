@@ -1219,6 +1219,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all administrators for operations dashboard
+  app.get('/api/operations/admins', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const admins = await storage.getOperationsAdmins();
+      res.json(admins);
+    } catch (error) {
+      console.error("Error fetching operations admins:", error);
+      res.status(500).json({ message: "Failed to fetch admins" });
+    }
+  });
+
+  // Get recently onboarded users for operations dashboard
+  app.get('/api/operations/recent-users', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const recentUsers = await storage.getRecentUsers();
+      res.json(recentUsers);
+    } catch (error) {
+      console.error("Error fetching recent users:", error);
+      res.status(500).json({ message: "Failed to fetch recent users" });
+    }
+  });
+
   // Onboard admin for a company - restricted to operations directors
   app.post('/api/users/onboard-admin', isAuthenticated, async (req: any, res) => {
     try {

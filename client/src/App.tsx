@@ -7,6 +7,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { hasRole, hasAnyRole, isOperationsDirector } from "../../shared/schema";
 import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
+import OperationsCompanies from "@/pages/operations-companies";
+import OperationsActiveAdmins from "@/pages/operations-active-admins";
+import OperationsActiveCompanies from "@/pages/operations-active-companies";
+import OperationsRecentSetups from "@/pages/operations-recent-setups";
 import AdminDashboard from "@/pages/admin-dashboard";
 import ManagerDashboard from "@/pages/manager-dashboard";
 import AgentDashboard from "@/pages/agent-dashboard";
@@ -72,6 +76,18 @@ function Router() {
             </Route>
             <Route path="/operations-dashboard">
               <OperationsDirectorDashboard />
+            </Route>
+            <Route path="/operations/companies">
+              <OperationsCompanies />
+            </Route>
+            <Route path="/operations/active-admins">
+              <OperationsActiveAdmins />
+            </Route>
+            <Route path="/operations/active-companies">
+              <OperationsActiveCompanies />
+            </Route>
+            <Route path="/operations/recent-setups">
+              <OperationsRecentSetups />
             </Route>
             <Route path="/admin-dashboard">
               <AdminDashboard />

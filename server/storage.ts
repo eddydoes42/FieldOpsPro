@@ -43,12 +43,14 @@ export interface IStorage {
   getAllCompanies(): Promise<Company[]>;
   updateCompany(id: string, updates: Partial<InsertCompany>): Promise<Company>;
 
-  // Operations Director statistics
+  // Operations Director statistics and data
   getOperationsStats(): Promise<{
     totalAdmins: number;
     activeCompanies: number;
     recentSetups: number;
   }>;
+  getOperationsAdmins(): Promise<any[]>;
+  getRecentUsers(): Promise<any[]>;
 
   // Work Order operations
   createWorkOrder(workOrder: InsertWorkOrder): Promise<WorkOrder>;
@@ -227,6 +229,76 @@ export class DatabaseStorage implements IStorage {
       activeCompanies: companyResult[0]?.count || 0,
       recentSetups: recentResult[0]?.count || 0,
     };
+  }
+
+  async getOperationsAdmins(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        roles: users.roles,
+        companyId: users.companyId,
+        isActive: sql<boolean>`true`, // Assuming all users are active
+        createdAt: users.createdAt,
+        lastLoginAt: sql<string>`null`, // TODO: Add last login tracking
+      })
+      .from(users)
+      .leftJoin(companies, eq(users.companyId, companies.id))
+      .where(sql`'administrator' = ANY(${users.roles})`)
+      .orderBy(desc(users.createdAt));
+
+    // Add company names
+    const adminsWithCompanies = await Promise.all(
+      result.map(async (admin) => {
+        let companyName = null;
+        if (admin.companyId) {
+          const company = await this.getCompany(admin.companyId);
+          companyName = company?.name || null;
+        }
+        return {
+          ...admin,
+          companyName,
+        };
+      })
+    );
+
+    return adminsWithCompanies;
+  }
+
+  async getRecentUsers(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        roles: users.roles,
+        companyId: users.companyId,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(sql`${users.createdAt} >= CURRENT_DATE - INTERVAL '30 days'`)
+      .orderBy(desc(users.createdAt));
+
+    // Add company names
+    const usersWithCompanies = await Promise.all(
+      result.map(async (user) => {
+        let companyName = null;
+        if (user.companyId) {
+          const company = await this.getCompany(user.companyId);
+          companyName = company?.name || null;
+        }
+        return {
+          ...user,
+          companyName,
+          onboardedBy: 'Operations Director', // TODO: Track who onboarded each user
+        };
+      })
+    );
+
+    return usersWithCompanies;
   }
 
   // Work Order operations

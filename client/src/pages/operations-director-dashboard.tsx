@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, Users, UserPlus, Settings } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
 import AdminOnboardingForm from "@/components/admin-onboarding-form";
 import { Company } from "../../../shared/schema";
@@ -11,6 +12,7 @@ import { Company } from "../../../shared/schema";
 export default function OperationsDirectorDashboard() {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [showAdminForm, setShowAdminForm] = useState(false);
+  const [, setLocation] = useLocation();
 
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ['/api/companies'],
@@ -49,7 +51,10 @@ export default function OperationsDirectorDashboard() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/companies')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -65,7 +70,10 @@ export default function OperationsDirectorDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/active-admins')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
@@ -81,7 +89,10 @@ export default function OperationsDirectorDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/active-companies')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Settings className="h-8 w-8 text-purple-600 dark:text-purple-400" />
@@ -97,7 +108,10 @@ export default function OperationsDirectorDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/operations/recent-setups')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <UserPlus className="h-8 w-8 text-orange-600 dark:text-orange-400" />
