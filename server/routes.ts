@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -364,25 +364,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/work-orders', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !canManageUsers(currentUser)) {
+      // Allow both management users and clients to create work orders
+      if (!currentUser || (!canManageUsers(currentUser) && !isClient(currentUser))) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
       // Transform the data to match schema expectations
+      const isClientUser = isClient(currentUser);
       const workOrderData = {
         id: `wo-${Date.now()}`, // Generate unique ID
         title: req.body.title,
         description: req.body.description,
         location: req.body.location || '',
         priority: req.body.priority || 'medium',
-        status: 'pending',
-        assigneeId: req.body.assignedTo || req.body.assigneeId || null,
+        status: 'pending', // Default status for new work orders
+        assigneeId: isClientUser ? null : (req.body.assignedTo || req.body.assigneeId || null), // Clients can't assign
         createdById: currentUser!.id,
         estimatedHours: req.body.estimatedHours ? req.body.estimatedHours.toString() : null,
         dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
         scopeOfWork: req.body.scopeOfWork || null,
         requiredTools: req.body.requiredTools || null,
-        pointOfContact: req.body.pointOfContact || null,
+        pointOfContact: isClientUser ? null : (req.body.pointOfContact || null), // Clients can't set POC
       };
       const workOrder = await storage.createWorkOrder(workOrderData);
       res.json(workOrder);
