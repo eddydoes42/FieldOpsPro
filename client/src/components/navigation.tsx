@@ -8,7 +8,11 @@ import QuickActionMenu from "@/components/quick-action-menu";
 import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
 import { Zap } from "lucide-react";
 
-export default function Navigation() {
+interface NavigationProps {
+  testingRole?: string;
+}
+
+export default function Navigation({ testingRole }: NavigationProps = {}) {
   const { user } = useAuth();
   const [location] = useLocation();
 
@@ -50,9 +54,19 @@ export default function Navigation() {
   }, []);
 
   const getRoleConfig = () => {
+    // Use testing role if provided, otherwise use actual user roles
+    if (testingRole) {
+      const roles = [testingRole];
+      return getConfigForRoles(roles);
+    }
+    
     // Handle multiple roles by prioritizing highest privilege role
     const userRoles = (user as any)?.roles || [];
     const roles = Array.isArray(userRoles) ? userRoles : [userRoles];
+    return getConfigForRoles(roles);
+  };
+
+  const getConfigForRoles = (roles: string[]) => {
     
     // Check if user is truly an operations director (has operations_director role AND no companyId)
     const isOperationsDirector = roles.includes('operations_director') && !(user as any)?.companyId;
@@ -60,7 +74,8 @@ export default function Navigation() {
     const priorityRole = isOperationsDirector ? 'operations_director' :
                         roles.includes('administrator') ? 'administrator' :
                         roles.includes('manager') ? 'manager' :
-                        roles.includes('dispatcher') ? 'dispatcher' : 'field_agent';
+                        roles.includes('dispatcher') ? 'dispatcher' :
+                        roles.includes('client') ? 'client' : 'field_agent';
 
     // Create combined role badge for multiple roles
     const roleDisplay = roles.length > 1 ? 
@@ -89,42 +104,61 @@ export default function Navigation() {
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
-            { path: '/settings', label: 'Settings', icon: 'fas fa-cog' },
+            { path: '/onboarding', label: 'Team Member Information', icon: 'fas fa-user-plus' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
       case 'manager':
         return {
-          badge: { text: roleDisplay, icon: 'fas fa-users-cog', color: 'bg-blue-900/30 text-blue-300 border-blue-800/50' },
+          badge: { text: roleDisplay, icon: 'fas fa-users', color: 'bg-blue-900/30 text-blue-300 border-blue-800/50' },
           links: [
-            { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-            { path: '/onboarding', label: 'Onboarding', icon: 'fas fa-user-plus' },
+            { path: '/manager-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/team', label: 'My Team', icon: 'fas fa-users' },
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
-            { path: '/reports/team', label: 'Team Reports', icon: 'fas fa-chart-bar' },
-            { path: '/team', label: 'My Team', icon: 'fas fa-users' },
+            { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
+            { path: '/onboarding', label: 'Team Member Information', icon: 'fas fa-user-plus' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
       case 'dispatcher':
         return {
-          badge: { text: roleDisplay, icon: 'fas fa-headset', color: 'bg-orange-900/30 text-orange-300 border-orange-800/50' },
+          badge: { text: roleDisplay, icon: 'fas fa-headset', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
           links: [
-            { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/dispatcher-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
+      case 'field_agent':
+        return {
+          badge: { text: roleDisplay, icon: 'fas fa-tools', color: 'bg-orange-900/30 text-orange-300 border-orange-800/50' },
+          links: [
+            { path: '/agent-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/calendar', label: 'Schedule', icon: 'fas fa-calendar-alt' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+          ]
+        };
+      case 'client':
+        return {
+          badge: { text: 'Client', icon: 'fas fa-user-tie', color: 'bg-teal-900/30 text-teal-300 border-teal-800/50' },
+          links: [
+            { path: '/client-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/client/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+          ]
+        };
       default:
         return {
-          badge: { text: roleDisplay, icon: 'fas fa-wrench', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
+          badge: { text: 'Field Agent', icon: 'fas fa-tools', color: 'bg-gray-900/30 text-gray-300 border-gray-800/50' },
           links: [
-            { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-            { path: '/work-orders', label: 'My Orders', icon: 'fas fa-clipboard-list' },
-            { path: '/calendar', label: 'My Calendar', icon: 'fas fa-calendar-alt' },
-            { path: '/time-tracking', label: 'Time Tracking', icon: 'fas fa-clock' },
+            { path: '/agent-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/calendar', label: 'Schedule', icon: 'fas fa-calendar-alt' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
