@@ -3,9 +3,22 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, ArrowLeft, Plus, Building2, Users, Home } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
+import { useState } from "react";
+import CompanyOnboardingForm from "@/components/company-onboarding-form";
+import AdminOnboardingForm from "@/components/admin-onboarding-form";
 
 export default function OperationsRecentSetups() {
   const [, setLocation] = useLocation();
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [showAdminForm, setShowAdminForm] = useState(false);
+
+  if (showCompanyForm) {
+    return <CompanyOnboardingForm onClose={() => setShowCompanyForm(false)} />;
+  }
+
+  if (showAdminForm) {
+    return <AdminOnboardingForm onClose={() => setShowAdminForm(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -43,7 +56,7 @@ export default function OperationsRecentSetups() {
         {/* Actions */}
         <div className="flex justify-center space-x-4">
           <Button 
-            onClick={() => setLocation('/operations-dashboard')}
+            onClick={() => setShowCompanyForm(true)}
             variant="outline"
             size="lg"
           >
@@ -51,7 +64,7 @@ export default function OperationsRecentSetups() {
             Add Company
           </Button>
           <Button 
-            onClick={() => setLocation('/operations-dashboard')}
+            onClick={() => setShowAdminForm(true)}
             className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
             size="lg"
           >
