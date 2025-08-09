@@ -63,7 +63,9 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
                   <DropdownMenuItem
                     key={role.value}
                     onClick={() => {
+                      console.log('Role clicked:', role.value, 'Current:', currentRole);
                       if (role.value !== currentRole) {
+                        console.log('Switching to role:', role.value);
                         onRoleSwitch(role.value);
                       }
                     }}
