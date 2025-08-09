@@ -1,5 +1,6 @@
 import {
   users,
+  companies,
   workOrders,
   timeEntries,
   messages,
@@ -9,6 +10,8 @@ import {
   type User,
   type UpsertUser,
   type InsertUser,
+  type Company,
+  type InsertCompany,
   type WorkOrder,
   type InsertWorkOrder,
   type TimeEntry,
@@ -33,6 +36,19 @@ export interface IStorage {
   getUsersByRole(role: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
+
+  // Company operations
+  createCompany(company: InsertCompany): Promise<Company>;
+  getCompany(id: string): Promise<Company | undefined>;
+  getAllCompanies(): Promise<Company[]>;
+  updateCompany(id: string, updates: Partial<InsertCompany>): Promise<Company>;
+
+  // Operations Director statistics
+  getOperationsStats(): Promise<{
+    totalAdmins: number;
+    activeCompanies: number;
+    recentSetups: number;
+  }>;
 
   // Work Order operations
   createWorkOrder(workOrder: InsertWorkOrder): Promise<WorkOrder>;
@@ -157,6 +173,60 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<void> {
     await db.delete(users).where(eq(users.id, id));
+  }
+
+  // Company operations
+  async createCompany(companyData: InsertCompany): Promise<Company> {
+    const [company] = await db.insert(companies).values(companyData).returning();
+    return company;
+  }
+
+  async getCompany(id: string): Promise<Company | undefined> {
+    const [company] = await db.select().from(companies).where(eq(companies.id, id));
+    return company;
+  }
+
+  async getAllCompanies(): Promise<Company[]> {
+    return await db.select().from(companies).orderBy(companies.name);
+  }
+
+  async updateCompany(id: string, updates: Partial<InsertCompany>): Promise<Company> {
+    const [company] = await db
+      .update(companies)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(companies.id, id))
+      .returning();
+    return company;
+  }
+
+  async getOperationsStats(): Promise<{
+    totalAdmins: number;
+    activeCompanies: number;
+    recentSetups: number;
+  }> {
+    // Count administrators across all companies
+    const adminResult = await db
+      .select({ count: count() })
+      .from(users)
+      .where(sql`'administrator' = ANY(${users.roles})`);
+
+    // Count active companies
+    const companyResult = await db
+      .select({ count: count() })
+      .from(companies)
+      .where(eq(companies.isActive, true));
+
+    // Count recent setups (companies created in last 30 days)
+    const recentResult = await db
+      .select({ count: count() })
+      .from(companies)
+      .where(sql`${companies.createdAt} >= CURRENT_DATE - INTERVAL '30 days'`);
+
+    return {
+      totalAdmins: adminResult[0]?.count || 0,
+      activeCompanies: companyResult[0]?.count || 0,
+      recentSetups: recentResult[0]?.count || 0,
+    };
   }
 
   // Work Order operations

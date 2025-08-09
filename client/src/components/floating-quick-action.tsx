@@ -4,11 +4,16 @@ import { Zap } from "lucide-react";
 import QuickActionMenu from "@/components/quick-action-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { hasAnyRole } from "../../../shared/schema";
+import { useLocation } from "wouter";
 
 export default function FloatingQuickAction() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const [location] = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+
+  // Don't show on landing page or if not authenticated
+  if (location === "/" || !isAuthenticated || !user) return null;
 
   const canShowQuickActions = hasAnyRole(user as any, ['administrator', 'manager', 'dispatcher']);
 

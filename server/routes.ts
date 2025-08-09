@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1168,6 +1168,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating notification:", error);
       res.status(500).json({ message: "Failed to update notification" });
+    }
+  });
+
+  // Company routes - restricted to operations directors
+  app.get('/api/companies', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const companies = await storage.getAllCompanies();
+      res.json(companies);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ message: "Failed to fetch companies" });
+    }
+  });
+
+  app.post('/api/companies', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const companyData = insertCompanySchema.parse(req.body);
+      const company = await storage.createCompany(companyData);
+      res.json(company);
+    } catch (error) {
+      console.error("Error creating company:", error);
+      res.status(500).json({ message: "Failed to create company" });
+    }
+  });
+
+  // Operations Director statistics
+  app.get('/api/operations/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const stats = await storage.getOperationsStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching operations stats:", error);
+      res.status(500).json({ message: "Failed to fetch operations stats" });
+    }
+  });
+
+  // Onboard admin for a company - restricted to operations directors
+  app.post('/api/users/onboard-admin', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const userData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(userData);
+      res.json(user);
+    } catch (error) {
+      console.error("Error onboarding admin:", error);
+      res.status(500).json({ message: "Failed to onboard admin" });
     }
   });
 

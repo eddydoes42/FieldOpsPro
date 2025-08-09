@@ -25,6 +25,23 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Companies table - for multi-company support
+export const companies = pgTable("companies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  address: text("address"),
+  city: varchar("city"),
+  state: varchar("state"),
+  zipCode: varchar("zip_code"),
+  phone: varchar("phone"),
+  email: varchar("email"),
+  website: varchar("website"),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User storage table.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -36,7 +53,8 @@ export const users = pgTable("users", {
   city: varchar("city"),
   state: varchar("state"),
   zipCode: varchar("zip_code"),
-  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: administrator, manager, dispatcher, field_agent, client
+  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: operations_director, administrator, manager, dispatcher, field_agent, client
+  companyId: varchar("company_id").references(() => companies.id), // null for operations_director
   profileImageUrl: varchar("profile_image_url"),
   // Client-specific fields
   clientCompanyName: varchar("client_company_name"),
@@ -56,6 +74,7 @@ export const users = pgTable("users", {
 // Work Orders table
 export const workOrders = pgTable("work_orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
   title: varchar("title").notNull(),
   description: text("description").notNull(),
   location: varchar("location").notNull(),
@@ -256,7 +275,7 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 }));
 
 // Role validation schema
-export const rolesSchema = z.array(z.enum(['administrator', 'manager', 'dispatcher', 'field_agent', 'client'])).min(1);
+export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_agent', 'client'])).min(1);
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users, {
@@ -308,7 +327,15 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   confirmedAt: true,
 });
 
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -358,6 +385,10 @@ export function isClient(user: User | null): boolean {
   return hasRole(user, 'client');
 }
 
+export function isOperationsDirector(user: User | null): boolean {
+  return hasRole(user, 'operations_director');
+}
+
 export function canManageUsers(user: User | null): boolean {
   return hasAnyRole(user, ['administrator', 'manager']);
 }
@@ -374,10 +405,19 @@ export function canViewAllOrders(user: User | null): boolean {
   return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
 }
 
+export function canOnboardAdmins(user: User | null): boolean {
+  return hasRole(user, 'operations_director');
+}
+
+export function canManageCompanies(user: User | null): boolean {
+  return hasRole(user, 'operations_director');
+}
+
 export function getPrimaryRole(user: User | null): string {
   if (!user || !user.roles || user.roles.length === 0) return 'field_agent';
   
-  // Priority order: administrator > manager > dispatcher > field_agent > client
+  // Priority order: operations_director > administrator > manager > dispatcher > field_agent > client
+  if (user.roles.includes('operations_director')) return 'operations_director';
   if (user.roles.includes('administrator')) return 'administrator';
   if (user.roles.includes('manager')) return 'manager';
   if (user.roles.includes('dispatcher')) return 'dispatcher';
