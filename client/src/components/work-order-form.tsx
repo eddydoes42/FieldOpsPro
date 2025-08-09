@@ -42,11 +42,12 @@ interface Task {
 }
 
 interface WorkOrderFormProps {
-  onClose: () => void;
+  onClose?: () => void;
   onSuccess: () => void;
+  isClient?: boolean;
 }
 
-export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps) {
+export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: WorkOrderFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -82,6 +83,7 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
         ...workOrderData,
         dueDate: workOrderData.dueDate ? new Date(workOrderData.dueDate).toISOString() : null,
         estimatedHours: workOrderData.estimatedHours ? parseFloat(workOrderData.estimatedHours) : null,
+        isClientCreated: isClient,
       };
       const response = await apiRequest("POST", "/api/work-orders", data);
       const createdWorkOrder = await response.json();
@@ -101,6 +103,8 @@ export default function WorkOrderForm({ onClose, onSuccess }: WorkOrderFormProps
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/job-network/work-orders"] });
       setTasks([]);
       onSuccess();
     },

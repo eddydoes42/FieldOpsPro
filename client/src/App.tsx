@@ -1,10 +1,11 @@
+import React from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { hasRole, hasAnyRole, isOperationsDirector } from "../../shared/schema";
+import { hasRole, hasAnyRole, isOperationsDirector, canViewJobNetwork } from "../../shared/schema";
 import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
 import OperationsCompanies from "@/pages/operations-companies";
@@ -65,7 +66,11 @@ function Router() {
                 }
                 
                 // Default role-based routing
-                if (hasRole(user as any, 'manager')) {
+                if (hasRole(user as any, 'client')) {
+                  // Import and use client dashboard for client role
+                  const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
+                  return <ClientDashboard />;
+                } else if (hasRole(user as any, 'manager')) {
                   return <ManagerDashboard />;
                 } else if (hasRole(user as any, 'field_agent')) {
                   return <AgentDashboard />;
@@ -137,6 +142,26 @@ function Router() {
             </Route>
             <Route path="/time-tracking">
               {isAuthenticated ? <TimeTracking /> : <Landing />}
+            </Route>
+            <Route path="/job-network">
+              {canViewJobNetwork(user as any) ? (
+                (() => {
+                  const JobNetwork = React.lazy(() => import('@/pages/job-network'));
+                  return <JobNetwork />;
+                })()
+              ) : (
+                <Landing />
+              )}
+            </Route>
+            <Route path="/client-dashboard">
+              {hasRole(user as any, 'client') ? (
+                (() => {
+                  const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
+                  return <ClientDashboard />;
+                })()
+              ) : (
+                <Landing />
+              )}
             </Route>
         </>
       )}

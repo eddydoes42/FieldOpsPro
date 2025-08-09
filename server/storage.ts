@@ -136,6 +136,14 @@ export interface IStorage {
   getUnreadNotificationsByUser(userId: string): Promise<Notification[]>;
   updateNotification(id: string, updates: Partial<InsertNotification>): Promise<Notification>;
   confirmWorkOrderNotification(notificationId: string, workOrderId: string): Promise<WorkOrder>;
+
+  // Client management and job network operations
+  getClientWorkOrders(clientId: string): Promise<WorkOrder[]>;
+  getJobNetworkWorkOrders(): Promise<WorkOrder[]>;
+  getClientAssignmentRequests(clientId: string): Promise<any[]>;
+  respondToAssignmentRequest(requestId: string, action: 'accept' | 'decline', notes: string, clientId: string): Promise<any>;
+  requestWorkOrderAssignment(workOrderId: string, agentId: string, requestedById: string, notes?: string): Promise<any>;
+  getFieldAgents(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -861,6 +869,155 @@ export class DatabaseStorage implements IStorage {
       completedWorkOrders,
       successRate,
     };
+  }
+
+  // Client management and job network operations
+  async getClientWorkOrders(clientId: string): Promise<WorkOrder[]> {
+    return await db
+      .select({
+        ...workOrders,
+        assignedAgent: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName
+        }
+      })
+      .from(workOrders)
+      .leftJoin(users, eq(workOrders.assigneeId, users.id))
+      .where(eq(workOrders.createdById, clientId))
+      .orderBy(desc(workOrders.createdAt));
+  }
+
+  async getJobNetworkWorkOrders(): Promise<WorkOrder[]> {
+    return await db
+      .select({
+        ...workOrders,
+        createdBy: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          clientCompanyName: users.clientCompanyName
+        },
+        requestedAgent: sql`CASE 
+          WHEN requested_agent_id IS NOT NULL THEN 
+            json_build_object(
+              'id', ra.id,
+              'firstName', ra.first_name,
+              'lastName', ra.last_name
+            )
+          ELSE NULL
+        END`.as('requestedAgent')
+      })
+      .from(workOrders)
+      .leftJoin(users, eq(workOrders.createdById, users.id))
+      .leftJoin(sql`users ra`, sql`ra.id = work_orders.requested_agent_id`)
+      .where(eq(workOrders.isClientCreated, true))
+      .orderBy(desc(workOrders.createdAt));
+  }
+
+  async getClientAssignmentRequests(clientId: string): Promise<any[]> {
+    // Get work orders created by this client that have assignment requests
+    const requests = await db
+      .select({
+        id: workOrders.id,
+        workOrderId: workOrders.id,
+        workOrder: {
+          title: workOrders.title,
+          description: workOrders.description
+        },
+        requestedAgent: sql`json_build_object(
+          'id', ra.id,
+          'firstName', ra.first_name,
+          'lastName', ra.last_name
+        )`.as('requestedAgent'),
+        requestedBy: sql`json_build_object(
+          'firstName', rb.first_name,
+          'lastName', rb.last_name
+        )`.as('requestedBy'),
+        requestedAt: workOrders.requestedAt,
+        performance: sql`COALESCE(
+          (SELECT json_agg(
+            json_build_object(
+              'id', ap.id,
+              'completionSuccess', ap.completion_success,
+              'timeliness', ap.timeliness,
+              'issuesReported', ap.issues_reported,
+              'clientRating', ap.client_rating,
+              'clientFeedback', ap.client_feedback,
+              'createdAt', ap.created_at
+            )
+          ) FROM agent_performance ap WHERE ap.agent_id = work_orders.requested_agent_id AND ap.client_id = work_orders.created_by_id),
+          '[]'::json
+        )`.as('performance')
+      })
+      .from(workOrders)
+      .leftJoin(sql`users ra`, sql`ra.id = work_orders.requested_agent_id`)
+      .leftJoin(sql`users rb`, sql`rb.id = work_orders.requested_by_id`)
+      .where(and(
+        eq(workOrders.createdById, clientId),
+        eq(workOrders.requestStatus, 'request_sent')
+      ))
+      .orderBy(desc(workOrders.requestedAt));
+
+    return requests;
+  }
+
+  async respondToAssignmentRequest(
+    requestId: string, 
+    action: 'accept' | 'decline', 
+    notes: string, 
+    clientId: string
+  ): Promise<any> {
+    const status = action === 'accept' ? 'request_accepted' : 'request_declined';
+    
+    // Update the work order with the response
+    const [updatedWorkOrder] = await db
+      .update(workOrders)
+      .set({
+        requestStatus: status,
+        requestReviewedAt: new Date(),
+        clientNotes: notes,
+        // If accepted, assign the requested agent
+        ...(action === 'accept' && { assigneeId: sql`requested_agent_id` }),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(workOrders.id, requestId),
+        eq(workOrders.createdById, clientId)
+      ))
+      .returning();
+
+    return updatedWorkOrder;
+  }
+
+  async requestWorkOrderAssignment(
+    workOrderId: string, 
+    agentId: string, 
+    requestedById: string, 
+    notes?: string
+  ): Promise<any> {
+    // Update work order with assignment request details
+    const [updatedWorkOrder] = await db
+      .update(workOrders)
+      .set({
+        requestStatus: 'request_sent',
+        requestedAgentId: agentId,
+        requestedById: requestedById,
+        requestedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(workOrders.id, workOrderId))
+      .returning();
+
+    return updatedWorkOrder;
+  }
+
+  async getFieldAgents(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(sql`'field_agent' = ANY(roles)`)
+      .orderBy(users.firstName, users.lastName);
   }
 }
 

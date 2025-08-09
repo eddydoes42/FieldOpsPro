@@ -86,6 +86,7 @@ export default function Navigation() {
           links: [
             { path: '/admin-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
@@ -98,6 +99,7 @@ export default function Navigation() {
           links: [
             { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/onboarding', label: 'Onboarding', icon: 'fas fa-user-plus' },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports/team', label: 'Team Reports', icon: 'fas fa-chart-bar' },
@@ -110,8 +112,18 @@ export default function Navigation() {
           badge: { text: roleDisplay, icon: 'fas fa-headset', color: 'bg-orange-900/30 text-orange-300 border-orange-800/50' },
           links: [
             { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+          ]
+        };
+      case 'client':
+        return {
+          badge: { text: roleDisplay, icon: 'fas fa-building', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
+          links: [
+            { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };

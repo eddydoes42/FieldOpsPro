@@ -315,9 +315,9 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                           { value: "administrator", label: "Administrator" },
                           { value: "client", label: "Client" },
                         ].filter((role) => {
-                          // Only show client role to administrators
+                          // Only show client role to operations directors
                           if (role.value === "client") {
-                            return isAdmin(currentUser);
+                            return isOperationsDirector(currentUser);
                           }
                           return true;
                         }).map((role) => (

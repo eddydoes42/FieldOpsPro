@@ -104,8 +104,31 @@ export const workOrders = pgTable("work_orders", {
   workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
   checkedInAt: timestamp("checked_in_at"),
   checkedOutAt: timestamp("checked_out_at"),
+  // Client work order fields
+  isClientCreated: boolean("is_client_created").default(false), // true if created by client
+  // Request assignment fields for job network
+  requestStatus: varchar("request_status"), // null, pending_request, request_sent, request_accepted, request_declined
+  requestedAgentId: varchar("requested_agent_id").references(() => users.id), // field agent requested for assignment
+  requestedById: varchar("requested_by_id").references(() => users.id), // admin/manager/dispatcher who made the request
+  requestedAt: timestamp("requested_at"),
+  requestReviewedAt: timestamp("request_reviewed_at"),
+  clientNotes: text("client_notes"), // client's notes when accepting/declining request
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Agent performance history table for client review
+export const agentPerformance = pgTable("agent_performance", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull().references(() => users.id),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  clientId: varchar("client_id").notNull().references(() => users.id),
+  completionSuccess: boolean("completion_success").notNull(), // true if work completed successfully
+  timeliness: varchar("timeliness").notNull(), // early, on_time, late
+  issuesReported: integer("issues_reported").default(0), // number of issues reported
+  clientRating: integer("client_rating"), // 1-5 star rating
+  clientFeedback: text("client_feedback"), // client's written feedback
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Time Tracking table
@@ -383,6 +406,14 @@ export function isFieldAgent(user: User | null): boolean {
 
 export function isClient(user: User | null): boolean {
   return hasRole(user, 'client');
+}
+
+export function canViewJobNetwork(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
+}
+
+export function canRequestWorkOrder(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
 }
 
 export function isOperationsDirector(user: User | null): boolean {

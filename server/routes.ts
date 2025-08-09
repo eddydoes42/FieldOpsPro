@@ -1376,6 +1376,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== CLIENT MANAGEMENT & JOB NETWORK ROUTES =====
+
+  // Client work orders route
+  app.get('/api/client/work-orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !currentUser.roles.includes('client')) {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const workOrders = await storage.getClientWorkOrders(currentUser.id);
+      res.json(workOrders);
+    } catch (error) {
+      console.error("Error fetching client work orders:", error);
+      res.status(500).json({ message: "Failed to fetch work orders" });
+    }
+  });
+
+  // Client assignment requests route
+  app.get('/api/client/assignment-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !currentUser.roles.includes('client')) {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const requests = await storage.getClientAssignmentRequests(currentUser.id);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching client assignment requests:", error);
+      res.status(500).json({ message: "Failed to fetch assignment requests" });
+    }
+  });
+
+  // Client respond to assignment request
+  app.post('/api/client/respond-request', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !currentUser.roles.includes('client')) {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const { requestId, action, notes } = req.body;
+      if (!['accept', 'decline'].includes(action)) {
+        return res.status(400).json({ message: "Invalid action. Must be 'accept' or 'decline'" });
+      }
+
+      const result = await storage.respondToAssignmentRequest(requestId, action, notes, currentUser.id);
+      res.json(result);
+    } catch (error) {
+      console.error("Error responding to assignment request:", error);
+      res.status(500).json({ message: "Failed to respond to request" });
+    }
+  });
+
+  // Job network work orders (client-created orders for management assignment)
+  app.get('/api/job-network/work-orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Management role required." });
+      }
+
+      const workOrders = await storage.getJobNetworkWorkOrders();
+      res.json(workOrders);
+    } catch (error) {
+      console.error("Error fetching job network work orders:", error);
+      res.status(500).json({ message: "Failed to fetch job network work orders" });
+    }
+  });
+
+  // Request assignment of work order to field agent
+  app.post('/api/job-network/request-assignment', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Management role required." });
+      }
+
+      const { workOrderId, agentId, notes } = req.body;
+      if (!workOrderId || !agentId) {
+        return res.status(400).json({ message: "Work order ID and agent ID are required" });
+      }
+
+      const result = await storage.requestWorkOrderAssignment(workOrderId, agentId, currentUser.id, notes);
+      res.json(result);
+    } catch (error) {
+      console.error("Error requesting work order assignment:", error);
+      res.status(500).json({ message: "Failed to request assignment" });
+    }
+  });
+
+  // Get field agents for assignment selection
+  app.get('/api/users/field-agents', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Management role required." });
+      }
+
+      const fieldAgents = await storage.getFieldAgents();
+      res.json(fieldAgents);
+    } catch (error) {
+      console.error("Error fetching field agents:", error);
+      res.status(500).json({ message: "Failed to fetch field agents" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
