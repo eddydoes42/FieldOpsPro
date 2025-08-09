@@ -83,21 +83,18 @@ export default function OperationsCompanies() {
             <span>Back to Operations Dashboard</span>
           </Button>
           
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-start mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 All Service Companies
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Complete list of all onboarded IT service companies
-              </p>
             </div>
             <Button 
               onClick={() => setLocation('/operations-dashboard')}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 ml-6 mt-1"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add New Company
+              Add Company
             </Button>
           </div>
         </div>
