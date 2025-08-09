@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, ArrowLeft, Plus, Search, Filter } from "lucide-react";
+import { Building2, ArrowLeft, Plus, Search, Filter, Users, Briefcase, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import { useState, useMemo } from "react";
@@ -15,10 +17,22 @@ export default function OperationsCompanies() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ['/api/companies'],
   });
+
+  // Mock company details data - in a real app, this would come from API
+  const getCompanyDetails = (companyId: string) => {
+    const mockData = {
+      onboardedUsers: Math.floor(Math.random() * 50) + 5,
+      activeWorkOrders: Math.floor(Math.random() * 20) + 1,
+      completedWorkOrders: Math.floor(Math.random() * 100) + 10,
+      successRate: Math.floor(Math.random() * 30) + 70, // 70-100%
+    };
+    return mockData;
+  };
 
   const filteredCompanies = useMemo(() => {
     let filtered = companies;
@@ -177,7 +191,11 @@ export default function OperationsCompanies() {
                         : null;
 
                       return (
-                        <TableRow key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
+                        <TableRow 
+                          key={company.id} 
+                          className="hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+                          onClick={() => setSelectedCompany(company)}
+                        >
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -268,6 +286,175 @@ export default function OperationsCompanies() {
             )}
           </CardContent>
         </Card>
+
+        {/* Company Details Modal */}
+        <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-3">
+                <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <span>{selectedCompany?.name}</span>
+                <Badge variant={selectedCompany?.isActive ? "default" : "secondary"}>
+                  {selectedCompany?.isActive ? "Active" : "Inactive"}
+                </Badge>
+              </DialogTitle>
+            </DialogHeader>
+
+            {selectedCompany && (
+              <div className="space-y-6">
+                {/* Company Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Company Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {selectedCompany.description && (
+                        <div>
+                          <h4 className="font-medium text-gray-700 dark:text-gray-300">Description</h4>
+                          <p className="text-gray-600 dark:text-gray-400">{selectedCompany.description}</p>
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-1 gap-3">
+                        {selectedCompany.email && (
+                          <div className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">{selectedCompany.email}</span>
+                          </div>
+                        )}
+                        {selectedCompany.phone && (
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">{selectedCompany.phone}</span>
+                          </div>
+                        )}
+                        {selectedCompany.website && (
+                          <div className="flex items-center space-x-2">
+                            <Globe className="h-4 w-4 text-gray-500" />
+                            <a 
+                              href={selectedCompany.website} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              {selectedCompany.website}
+                            </a>
+                          </div>
+                        )}
+                        {(selectedCompany.city || selectedCompany.state) && (
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">
+                              {selectedCompany.address && `${selectedCompany.address}, `}
+                              {selectedCompany.city && selectedCompany.state 
+                                ? `${selectedCompany.city}, ${selectedCompany.state}`
+                                : selectedCompany.city || selectedCompany.state
+                              }
+                              {selectedCompany.zipCode && ` ${selectedCompany.zipCode}`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Onboarded: {selectedCompany.createdAt ? new Date(selectedCompany.createdAt).toLocaleDateString() : 'Unknown'}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Statistics Overview */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Performance Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        {(() => {
+                          const details = getCompanyDetails(selectedCompany.id);
+                          return (
+                            <>
+                              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <Users className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.onboardedUsers}</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">Onboarded Users</div>
+                              </div>
+                              
+                              <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                <Briefcase className="h-8 w-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.activeWorkOrders}</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">Active Work Orders</div>
+                              </div>
+                              
+                              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.completedWorkOrders}</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">Completed Orders</div>
+                              </div>
+                              
+                              <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white">{details.successRate}%</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent Activity */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Recent Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Mock recent activity data */}
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Work Order #WO-2024-001 completed</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">2 hours ago</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">New technician onboarded</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">1 day ago</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Briefcase className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">3 new work orders assigned</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">3 days ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button variant="outline" onClick={() => setSelectedCompany(null)}>
+                    Close
+                  </Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    View Full Dashboard
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
