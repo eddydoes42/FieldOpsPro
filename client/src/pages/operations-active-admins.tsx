@@ -32,10 +32,10 @@ export default function OperationsActiveAdmins() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-2 mb-4">
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 mb-3">
             <Button
               variant="outline"
               size="sm"
@@ -63,18 +63,18 @@ export default function OperationsActiveAdmins() {
               className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Onboard New Admin
+              Add New Admin
             </Button>
           </div>
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card 
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
             onClick={() => setLocation('/team?role=administrator&status=active')}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
                 <div className="ml-4">
@@ -93,7 +93,7 @@ export default function OperationsActiveAdmins() {
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
             onClick={() => setLocation('/team?role=administrator')}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 <div className="ml-4">
@@ -112,7 +112,7 @@ export default function OperationsActiveAdmins() {
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
             onClick={() => setLocation('/operations/companies?status=active')}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center">
                 <Building2 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 <div className="ml-4">
