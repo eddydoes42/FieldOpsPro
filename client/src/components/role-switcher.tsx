@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Settings, Eye, RefreshCw, ChevronDown, User } from "lucide-react";
+import { Settings, Eye, ChevronDown, User } from "lucide-react";
 import { isOperationsDirector } from "@shared/schema";
 
 interface RoleSwitcherProps {
@@ -22,7 +22,6 @@ const availableRoles = [
 
 export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcherProps) {
   const { user } = useAuth();
-  const [isTestMode, setIsTestMode] = useState(currentRole !== 'operations_director');
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
   // Only show for operations directors
@@ -42,12 +41,6 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
 
   const handleRoleSwitch = () => {
     onRoleSwitch(selectedRole);
-    setIsTestMode(selectedRole !== 'operations_director');
-  };
-
-  const handleResetToNormal = () => {
-    onRoleSwitch('operations_director');
-    setIsTestMode(false);
   };
 
   const currentRoleInfo = availableRoles.find(role => role.value === currentRole);
@@ -82,7 +75,6 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
                 onClick={() => {
                   if (role.value !== currentRole) {
                     onRoleSwitch(role.value);
-                    setIsTestMode(role.value !== 'operations_director');
                   }
                 }}
                 disabled={role.value === currentRole}
@@ -99,17 +91,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {isTestMode && (
-          <Button 
-            onClick={handleResetToNormal}
-            variant="outline" 
-            size="sm"
-            className="border-purple-300 text-purple-700 hover:bg-purple-50"
-          >
-            <RefreshCw className="h-3 w-3 mr-2" />
-            Reset
-          </Button>
-        )}
+
       </div>
     </div>
   );
