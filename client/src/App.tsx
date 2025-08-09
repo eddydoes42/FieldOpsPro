@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { hasRole, hasAnyRole, isOperationsDirector, canViewJobNetwork } from "../../shared/schema";
+import { hasRole, hasAnyRole, isOperationsDirector, canViewJobNetwork, getPrimaryRole } from "../../shared/schema";
+import RoleSwitcher from "@/components/role-switcher";
 import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
 import OperationsCompanies from "@/pages/operations-companies";
@@ -29,6 +30,19 @@ import FloatingQuickAction from "@/components/floating-quick-action";
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
+  const [testingRole, setTestingRole] = useState<string | null>(null);
+  
+  // Get the effective role for operations directors who are testing other roles
+  const getEffectiveRole = () => {
+    if (isOperationsDirector(user as any) && testingRole) {
+      return testingRole;
+    }
+    return getPrimaryRole(user as any);
+  };
+
+  const handleRoleSwitch = (role: string) => {
+    setTestingRole(role);
+  };
   
 
 
@@ -58,25 +72,39 @@ function Router() {
                 const selectedRole = localStorage.getItem('selectedRole');
                 const hasOpsDirector = isOperationsDirector(user as any);
                 const hasAdmin = hasRole(user as any, 'administrator');
+                const effectiveRole = getEffectiveRole();
                 
                 // If user has both operations director and admin roles and hasn't chosen, redirect to role selection
-                if (hasOpsDirector && hasAdmin && !selectedRole) {
+                if (hasOpsDirector && hasAdmin && !selectedRole && !testingRole) {
                   setLocation('/choose-role');
                   return null;
                 }
                 
-                // Default role-based routing
-                if (hasRole(user as any, 'client')) {
-                  // Import and use client dashboard for client role
-                  const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
-                  return <ClientDashboard />;
-                } else if (hasRole(user as any, 'manager')) {
-                  return <ManagerDashboard />;
-                } else if (hasRole(user as any, 'field_agent')) {
-                  return <AgentDashboard />;
-                } else {
-                  return <Landing />;
-                }
+                const DashboardContent = () => {
+                  // Use effective role for dashboard rendering
+                  if (effectiveRole === 'operations_director') {
+                    return <OperationsDirectorDashboard />;
+                  } else if (effectiveRole === 'administrator') {
+                    return <AdminDashboard />;
+                  } else if (effectiveRole === 'manager') {
+                    return <ManagerDashboard />;
+                  } else if (effectiveRole === 'field_agent') {
+                    return <AgentDashboard />;
+                  } else if (effectiveRole === 'client') {
+                    const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
+                    return <ClientDashboard />;
+                  } else {
+                    return <Landing />;
+                  }
+                };
+
+                return (
+                  <div>
+                    {/* Role switcher for operations directors */}
+                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                    <DashboardContent />
+                  </div>
+                );
               })()}
             </Route>
             <Route path="/operations-dashboard">
@@ -139,6 +167,23 @@ function Router() {
             </Route>
             <Route path="/calendar">
               {isAuthenticated ? <Calendar /> : <Landing />}
+            </Route>
+            <Route path="/job-network">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher'].includes(effectiveRole);
+                
+                if (isAuthenticated && hasJobNetworkAccess) {
+                  const JobNetwork = React.lazy(() => import('@/pages/job-network'));
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                      <JobNetwork />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
             <Route path="/time-tracking">
               {isAuthenticated ? <TimeTracking /> : <Landing />}

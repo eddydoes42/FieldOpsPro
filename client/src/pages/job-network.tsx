@@ -90,10 +90,7 @@ export default function JobNetwork() {
   // Request work order assignment mutation
   const requestAssignmentMutation = useMutation({
     mutationFn: async (data: { workOrderId: string; agentId: string; notes: string }) => {
-      return apiRequest("/api/job-network/request-assignment", {
-        method: "POST",
-        body: data,
-      });
+      return apiRequest("POST", "/api/job-network/request-assignment", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/job-network/work-orders"] });

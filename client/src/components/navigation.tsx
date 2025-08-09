@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import QuickActionMenu from "@/components/quick-action-menu";
 import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
 import { Zap } from "lucide-react";
-import RoleSwitcher from "@/components/role-switcher";
 
 export default function Navigation() {
   const { user } = useAuth();
@@ -118,15 +117,6 @@ export default function Navigation() {
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
-      case 'client':
-        return {
-          badge: { text: roleDisplay, icon: 'fas fa-building', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
-          links: [
-            { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-            { path: '/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
-            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
-          ]
-        };
       default:
         return {
           badge: { text: roleDisplay, icon: 'fas fa-wrench', color: 'bg-green-900/30 text-green-300 border-green-800/50' },
@@ -157,9 +147,6 @@ export default function Navigation() {
           
           {/* Right side - Navigation Menu */}
           <div className="flex items-center space-x-4">
-            {/* Role Switcher */}
-            <RoleSwitcher user={user} />
-            
             {/* Navigation Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
