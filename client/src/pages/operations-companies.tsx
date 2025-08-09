@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, ArrowLeft, Plus, Search, Filter, Users, Briefcase, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus } from "lucide-react";
+import { Building2, ArrowLeft, Plus, Search, Filter, Users, Briefcase, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus, Clipboard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
@@ -552,7 +552,9 @@ export default function OperationsCompanies() {
                               <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyOnboardedUsers || 2}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Recently Onboarded</div>
+                                <div className="flex justify-center">
+                                  <Users className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                </div>
                               </div>
                             </div>
                             
@@ -560,7 +562,9 @@ export default function OperationsCompanies() {
                               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyCompletedOrders || 1}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Recently Completed</div>
+                                <div className="flex justify-center">
+                                  <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                </div>
                               </div>
                             </div>
                             
@@ -568,7 +572,9 @@ export default function OperationsCompanies() {
                               <Briefcase className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                               <div className="text-center">
                                 <div className="text-base font-bold text-gray-900 dark:text-white">{details.recentlyAssignedOrders || 3}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Recently Assigned</div>
+                                <div className="flex justify-center">
+                                  <Clipboard className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                                </div>
                               </div>
                             </div>
                           </>
@@ -579,7 +585,7 @@ export default function OperationsCompanies() {
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-end items-center space-x-2 pt-3 border-t border-gray-200 dark:border-gray-700">
                   {isAdministrator && (
                     <Button 
                       variant="destructive" 
