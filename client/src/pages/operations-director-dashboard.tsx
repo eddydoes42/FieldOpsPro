@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Users, UserPlus, Settings } from "lucide-react";
 import Navigation from "@/components/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
 import AdminOnboardingForm from "@/components/admin-onboarding-form";
@@ -13,6 +13,20 @@ export default function OperationsDirectorDashboard() {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [, setLocation] = useLocation();
+
+  // Listen for custom events from quick action menu
+  useEffect(() => {
+    const handleOpenCompanyForm = () => setShowCompanyForm(true);
+    const handleOpenAdminForm = () => setShowAdminForm(true);
+
+    window.addEventListener('openCompanyForm', handleOpenCompanyForm);
+    window.addEventListener('openAdminForm', handleOpenAdminForm);
+
+    return () => {
+      window.removeEventListener('openCompanyForm', handleOpenCompanyForm);
+      window.removeEventListener('openAdminForm', handleOpenAdminForm);
+    };
+  }, []);
 
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ['/api/companies'],
@@ -128,50 +142,7 @@ export default function OperationsDirectorDashboard() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                <Building2 className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                Company Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Onboard new IT service companies and manage their profiles
-              </p>
-              <Button 
-                onClick={() => setShowCompanyForm(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
-              >
-                <Building2 className="h-4 w-4 mr-2" />
-                Add New Company
-              </Button>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                <UserPlus className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                Administrator Setup
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Create administrator accounts for company management
-              </p>
-              <Button 
-                onClick={() => setShowAdminForm(true)}
-                className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Onboard Admin
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Companies List */}
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">

@@ -54,7 +54,8 @@ export default function Navigation() {
     // Handle multiple roles by prioritizing highest privilege role
     const userRoles = (user as any)?.roles || [];
     const roles = Array.isArray(userRoles) ? userRoles : [userRoles];
-    const priorityRole = roles.includes('administrator') ? 'administrator' :
+    const priorityRole = roles.includes('operations_director') ? 'operations_director' :
+                        roles.includes('administrator') ? 'administrator' :
                         roles.includes('manager') ? 'manager' :
                         roles.includes('dispatcher') ? 'dispatcher' : 'field_agent';
 
@@ -64,6 +65,17 @@ export default function Navigation() {
       priorityRole;
 
     switch (priorityRole) {
+      case 'operations_director':
+        return {
+          badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
+          links: [
+            { path: '/operations-dashboard', label: 'Operations Dashboard', icon: 'fas fa-chart-network' },
+            { path: '/operations/companies', label: 'Companies', icon: 'fas fa-building' },
+            { path: '/operations/active-admins', label: 'Administrators', icon: 'fas fa-users-cog' },
+            { path: '/operations/recent-setups', label: 'Recent Setups', icon: 'fas fa-user-plus' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+          ]
+        };
       case 'administrator':
         return {
           badge: { text: roleDisplay, icon: 'fas fa-crown', color: 'bg-purple-900/30 text-purple-300 border-purple-800/50' },

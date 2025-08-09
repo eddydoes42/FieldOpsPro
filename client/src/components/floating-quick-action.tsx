@@ -15,7 +15,7 @@ export default function FloatingQuickAction() {
   // Don't show on landing page or if not authenticated
   if (location === "/" || !isAuthenticated || !user) return null;
 
-  const canShowQuickActions = hasAnyRole(user as any, ['administrator', 'manager', 'dispatcher']);
+  const canShowQuickActions = hasAnyRole(user as any, ['administrator', 'manager', 'dispatcher', 'operations_director']);
 
   if (!canShowQuickActions) return null;
 

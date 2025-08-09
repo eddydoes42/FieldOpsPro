@@ -13,7 +13,8 @@ import {
   Users,
   ClipboardList,
   Zap,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Building2
 } from "lucide-react";
 
 interface QuickActionMenuProps {
@@ -31,6 +32,7 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
   const isAdmin = userRoles.includes('administrator');
   const isManager = userRoles.includes('manager');
   const isDispatcher = userRoles.includes('dispatcher');
+  const isOperationsDirector = userRoles.includes('operations_director');
   const canManageUsers = isAdmin || isManager;
   const canCreateWorkOrders = isAdmin || isManager || isDispatcher;
 
@@ -86,6 +88,21 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
       case 'view-calendar':
         setLocation('/calendar');
         break;
+      case 'add-company':
+        window.dispatchEvent(new CustomEvent('openCompanyForm'));
+        break;
+      case 'onboard-admin':
+        window.dispatchEvent(new CustomEvent('openAdminForm'));
+        break;
+      case 'view-companies':
+        setLocation('/operations/companies');
+        break;
+      case 'view-admins':
+        setLocation('/operations/active-admins');
+        break;
+      case 'view-recent-setups':
+        setLocation('/operations/recent-setups');
+        break;
     }
   };
 
@@ -118,7 +135,36 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
           <div className="p-2 space-y-1">
             {/* Primary Actions */}
             <div className="space-y-1">
-              {canManageUsers && (
+              {/* Operations Director Actions */}
+              {isOperationsDirector && (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('add-company')}
+                  >
+                    <Building2 className="h-4 w-4 text-blue-500" />
+                    <span>Add New Company</span>
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      OpsDir
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('onboard-admin')}
+                  >
+                    <UserPlus className="h-4 w-4 text-green-500" />
+                    <span>Onboard Administrator</span>
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      OpsDir
+                    </Badge>
+                  </Button>
+                </>
+              )}
+              
+              {/* Standard User Management */}
+              {canManageUsers && !isOperationsDirector && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 h-9 text-sm"
@@ -134,7 +180,7 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                 </Button>
               )}
               
-              {canCreateWorkOrders && (
+              {canCreateWorkOrders && !isOperationsDirector && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 h-9 text-sm"
@@ -154,56 +200,93 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                 </span>
               </div>
               
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-9 text-sm"
-                onClick={() => handleAction('view-priority-tasks')}
-              >
-                <Star className="h-4 w-4 text-amber-500" />
-                <span>Priority Tasks</span>
-                <Badge variant="outline" className="ml-auto text-xs">
-                  High
-                </Badge>
-              </Button>
+              {/* Operations Director Views */}
+              {isOperationsDirector && (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-companies')}
+                  >
+                    <Building2 className="h-4 w-4 text-blue-500" />
+                    <span>All Companies</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-admins')}
+                  >
+                    <Users className="h-4 w-4 text-purple-500" />
+                    <span>Active Administrators</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-recent-setups')}
+                  >
+                    <UserPlus className="h-4 w-4 text-orange-500" />
+                    <span>Recent Setups</span>
+                  </Button>
+                </>
+              )}
               
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-9 text-sm"
-                onClick={() => handleAction('view-active-issues')}
-              >
-                <AlertTriangle className="h-4 w-4 text-red-500" />
-                <span>Active Issues</span>
-                <Badge variant="destructive" className="ml-auto text-xs">
-                  Issues
-                </Badge>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-9 text-sm"
-                onClick={() => handleAction('view-team')}
-              >
-                <Users className="h-4 w-4 text-purple-500" />
-                <span>Team Overview</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-9 text-sm"
-                onClick={() => handleAction('view-work-orders')}
-              >
-                <ClipboardList className="h-4 w-4 text-blue-500" />
-                <span>All Work Orders</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-9 text-sm"
-                onClick={() => handleAction('view-calendar')}
-              >
-                <CalendarIcon className="h-4 w-4 text-indigo-500" />
-                <span>Calendar View</span>
-              </Button>
+              {/* Standard Role Views */}
+              {!isOperationsDirector && (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-priority-tasks')}
+                  >
+                    <Star className="h-4 w-4 text-amber-500" />
+                    <span>Priority Tasks</span>
+                    <Badge variant="outline" className="ml-auto text-xs">
+                      High
+                    </Badge>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-active-issues')}
+                  >
+                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                    <span>Active Issues</span>
+                    <Badge variant="destructive" className="ml-auto text-xs">
+                      Issues
+                    </Badge>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-team')}
+                  >
+                    <Users className="h-4 w-4 text-purple-500" />
+                    <span>Team Overview</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-work-orders')}
+                  >
+                    <ClipboardList className="h-4 w-4 text-blue-500" />
+                    <span>All Work Orders</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-calendar')}
+                  >
+                    <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                    <span>Calendar View</span>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           
