@@ -9,7 +9,7 @@ import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
 import OperationsCompanies from "@/pages/operations-companies";
 import OperationsActiveAdmins from "@/pages/operations-active-admins";
-import OperationsActiveCompanies from "@/pages/operations-active-companies";
+
 import OperationsRecentSetups from "@/pages/operations-recent-setups";
 import AdminDashboard from "@/pages/admin-dashboard";
 import ManagerDashboard from "@/pages/manager-dashboard";
@@ -83,9 +83,7 @@ function Router() {
             <Route path="/operations/active-admins">
               <OperationsActiveAdmins />
             </Route>
-            <Route path="/operations/active-companies">
-              <OperationsActiveCompanies />
-            </Route>
+
             <Route path="/operations/recent-setups">
               <OperationsRecentSetups />
             </Route>
