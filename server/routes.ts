@@ -1284,6 +1284,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get budget summary for operations dashboard
+  app.get('/api/operations/budget-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const workOrders = await storage.getAllWorkOrders();
+      let totalEarned = 0;
+      let todayEarning = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      for (const workOrder of workOrders) {
+        if (!workOrder.budgetType || !workOrder.budgetAmount) continue;
+
+        let calculatedBudget = parseFloat(workOrder.budgetAmount);
+
+        if (workOrder.budgetType === 'hourly') {
+          // Get total logged time for this work order  
+          const timeEntries = await storage.getTimeEntriesByWorkOrder(workOrder.id);
+          const totalHours = timeEntries.reduce((total: number, entry: any) => {
+            if (entry.endTime) {
+              const hours = (new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / (1000 * 60 * 60);
+              return total + hours;
+            }
+            return total;
+          }, 0);
+          calculatedBudget = parseFloat(workOrder.budgetAmount) * totalHours;
+        } else if (workOrder.budgetType === 'per_device') {
+          const devices = workOrder.devicesInstalled || 0;
+          calculatedBudget = parseFloat(workOrder.budgetAmount) * devices;
+        }
+
+        // Add to total if work order is completed
+        if (workOrder.status === 'completed') {
+          totalEarned += calculatedBudget;
+        }
+
+        // Add to today's earning if work order is due today
+        const dueDate = new Date(workOrder.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        if (dueDate.getTime() === today.getTime()) {
+          todayEarning += calculatedBudget;
+        }
+      }
+
+      res.json({
+        totalEarned: Math.round(totalEarned * 100) / 100,
+        todayEarning: Math.round(todayEarning * 100) / 100
+      });
+    } catch (error) {
+      console.error("Error fetching budget summary:", error);
+      res.status(500).json({ message: "Failed to fetch budget summary" });
+    }
+  });
+
   // Onboard admin for a company - restricted to operations directors
   app.post('/api/users/onboard-admin', isAuthenticated, async (req: any, res) => {
     try {

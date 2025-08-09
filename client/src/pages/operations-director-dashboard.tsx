@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Users, UserPlus, Settings } from "lucide-react";
+import { Building2, Users, UserPlus, Settings, DollarSign } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -40,6 +40,13 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/operations/stats'],
   });
 
+  const { data: budgetData = {} } = useQuery<{
+    totalEarned: number;
+    todayEarning: number;
+  }>({
+    queryKey: ['/api/operations/budget-summary'],
+  });
+
   if (showCompanyForm) {
     return <CompanyOnboardingForm onClose={() => setShowCompanyForm(false)} />;
   }
@@ -54,13 +61,36 @@ export default function OperationsDirectorDashboard() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Operations Director Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Manage IT service companies and onboard administrators
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Operations Director Dashboard
+            </h1>
+          </div>
+          
+          {/* Budget Indicator */}
+          <div className="flex items-center space-x-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="text-right">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Total Earned
+                </p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  ${(budgetData?.totalEarned || 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="h-8 w-px bg-gray-200 dark:bg-gray-700"></div>
+            <div className="text-right">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                Today's Earning
+              </p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                ${(budgetData?.todayEarning || 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Quick Stats */}
