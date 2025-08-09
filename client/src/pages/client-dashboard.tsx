@@ -237,23 +237,12 @@ export default function ClientDashboard() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Client Dashboard
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
-            </p>
-          </div>
-          <Button
-            onClick={() => setShowCreateWorkOrder(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Work Order
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Client Dashboard
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
