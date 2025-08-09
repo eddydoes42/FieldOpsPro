@@ -11,6 +11,7 @@ import { Plus, Calendar, MapPin, DollarSign, User, Star, CheckCircle, XCircle, C
 import { format } from "date-fns";
 import WorkOrderForm from "@/components/work-order-form";
 import { apiRequest } from "@/lib/queryClient";
+import Navigation from "@/components/navigation";
 
 interface WorkOrder {
   id: string;
@@ -74,25 +75,101 @@ export default function ClientDashboard() {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [responseNotes, setResponseNotes] = useState("");
 
-  // Fetch client's work orders
+  // Fetch client's work orders - with demo data for testing
   const { data: workOrders = [], isLoading: ordersLoading } = useQuery<WorkOrder[]>({
     queryKey: ["/api/client/work-orders"],
     retry: false,
+    meta: {
+      // Provide demo data when API fails (for role testing)
+      demoData: [
+        {
+          id: "demo-order-1",
+          title: "Network Infrastructure Upgrade",
+          description: "Upgrade office network to support new equipment",
+          location: "Seattle Office - Building A",
+          priority: "high",
+          status: "request_sent",
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          budgetType: "fixed",
+          budgetAmount: "$2,500",
+          requestStatus: "request_sent",
+          requestedAgent: {
+            id: "demo-agent-1",
+            firstName: "Alex",
+            lastName: "Johnson"
+          }
+        },
+        {
+          id: "demo-order-2",
+          title: "Server Maintenance",
+          description: "Quarterly server maintenance and updates",
+          location: "Data Center - Rack 15",
+          priority: "medium",
+          status: "pending_request",
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          budgetType: "hourly",
+          budgetAmount: "$85/hr"
+        }
+      ]
+    }
   });
 
-  // Fetch pending assignment requests
+  // Fetch pending assignment requests - with demo data for testing
   const { data: requests = [], isLoading: requestsLoading } = useQuery<AssignmentRequest[]>({
     queryKey: ["/api/client/assignment-requests"],
     retry: false,
+    meta: {
+      // Provide demo data when API fails (for role testing)
+      demoData: [
+        {
+          id: "demo-request-1",
+          workOrderId: "demo-order-1",
+          workOrder: {
+            title: "Network Infrastructure Upgrade",
+            description: "Upgrade office network to support new equipment"
+          },
+          requestedAgent: {
+            id: "demo-agent-1",
+            firstName: "Alex",
+            lastName: "Johnson"
+          },
+          requestedAt: new Date().toISOString(),
+          performance: [
+            {
+              id: "demo-perf-1",
+              agentId: "demo-agent-1",
+              agent: {
+                firstName: "Alex",
+                lastName: "Johnson"
+              },
+              workOrderId: "past-order-1",
+              completionSuccess: true,
+              timeliness: "on_time",
+              issuesReported: 0,
+              clientRating: 5,
+              clientFeedback: "Excellent work, very professional",
+              createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+            }
+          ]
+        }
+      ]
+    }
   });
 
   // Respond to assignment request mutation
   const respondToRequestMutation = useMutation({
     mutationFn: async (data: { requestId: string; action: 'accept' | 'decline'; notes: string }) => {
-      return apiRequest("/api/client/respond-request", {
+      const response = await fetch("/api/client/respond-request", {
         method: "POST",
-        body: data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
+      if (!response.ok) {
+        throw new Error("Failed to respond to request");
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client/assignment-requests"] });
@@ -152,8 +229,10 @@ export default function ClientDashboard() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
+    <div>
+      <Navigation />
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -488,6 +567,7 @@ export default function ClientDashboard() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
