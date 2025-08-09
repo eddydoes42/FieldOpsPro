@@ -33,6 +33,7 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
   const isManager = userRoles.includes('manager');
   const isDispatcher = userRoles.includes('dispatcher');
   const isOperationsDirector = userRoles.includes('operations_director');
+  const isCompanyAdmin = isAdmin && !isOperationsDirector; // Administrator but not operations director
   const canManageUsers = isAdmin || isManager;
   const canCreateWorkOrders = isAdmin || isManager || isDispatcher;
 
@@ -163,8 +164,8 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                 </>
               )}
               
-              {/* Standard User Management */}
-              {canManageUsers && !isOperationsDirector && (
+              {/* Company Admin User Management */}
+              {isCompanyAdmin && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 h-9 text-sm"
@@ -172,15 +173,29 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                 >
                   <UserPlus className="h-4 w-4 text-blue-500" />
                   <span>Add Team Member</span>
-                  {isAdmin && (
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      Admin
-                    </Badge>
-                  )}
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    Admin
+                  </Badge>
                 </Button>
               )}
               
-              {canCreateWorkOrders && !isOperationsDirector && (
+              {/* Manager User Management */}
+              {isManager && !isOperationsDirector && !isCompanyAdmin && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 h-9 text-sm"
+                  onClick={() => handleAction('add-team-member')}
+                >
+                  <UserPlus className="h-4 w-4 text-blue-500" />
+                  <span>Add Team Member</span>
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    Manager
+                  </Badge>
+                </Button>
+              )}
+              
+              {/* Work Order Creation for Company Admins, Managers, Dispatchers */}
+              {(isCompanyAdmin || (isManager && !isOperationsDirector) || (isDispatcher && !isOperationsDirector)) && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 h-9 text-sm"
@@ -232,8 +247,8 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                 </>
               )}
               
-              {/* Standard Role Views */}
-              {!isOperationsDirector && (
+              {/* Company Admin and Manager Views */}
+              {(isCompanyAdmin || (isManager && !isOperationsDirector)) && (
                 <>
                   <Button
                     variant="ghost"
@@ -275,6 +290,29 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                   >
                     <ClipboardList className="h-4 w-4 text-blue-500" />
                     <span>All Work Orders</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-calendar')}
+                  >
+                    <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                    <span>Calendar View</span>
+                  </Button>
+                </>
+              )}
+              
+              {/* Field Agent Views */}
+              {!isCompanyAdmin && !isManager && !isOperationsDirector && (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-9 text-sm"
+                    onClick={() => handleAction('view-work-orders')}
+                  >
+                    <ClipboardList className="h-4 w-4 text-blue-500" />
+                    <span>My Work Orders</span>
                   </Button>
                   
                   <Button
