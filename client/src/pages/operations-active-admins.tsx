@@ -54,9 +54,18 @@ export default function OperationsActiveAdmins() {
             </Button>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Administrators
-          </h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Administrators
+            </h1>
+            <Button 
+              onClick={() => setLocation('/operations-dashboard')}
+              className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Onboard New Admin
+            </Button>
+          </div>
         </div>
 
         {/* Stats Summary */}
@@ -122,18 +131,9 @@ export default function OperationsActiveAdmins() {
         {/* Admins List */}
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                Active Administrators
-              </CardTitle>
-              <Button 
-                onClick={() => setLocation('/operations-dashboard')}
-                className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Onboard New Admin
-              </Button>
-            </div>
+            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+              Active Administrators
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {activeAdmins.length === 0 ? (
