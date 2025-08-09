@@ -212,8 +212,10 @@ export default function TeamPage() {
 
   const getRoleCount = (role: string) => {
     if (!allUsers) return 0;
-    if (role === "all") return (allUsers as any[]).length;
-    return (allUsers as any[]).filter((user: any) => user.roles?.includes(role)).length;
+    // Filter out operations directors as they are not company team members
+    const filteredUsers = (allUsers as any[]).filter((user: any) => !user.roles?.includes('operations_director'));
+    if (role === "all") return filteredUsers.length;
+    return filteredUsers.filter((user: any) => user.roles?.includes(role)).length;
   };
 
   if (isLoading || !user) {
@@ -335,6 +337,7 @@ export default function TeamPage() {
             ) : (
               <div className="space-y-4">
                 {allUsers && (allUsers as any[])
+                  .filter((userData: any) => !userData.roles?.includes('operations_director')) // Exclude operations directors
                   .filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))
                   .map((userData: any): React.ReactElement => (
                   <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
