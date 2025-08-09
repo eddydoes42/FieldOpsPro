@@ -94,14 +94,29 @@ export default function OperationsCompanies() {
   });
 
   // Mock company details data - in a real app, this would come from API
+  // Use React Query to fetch real company statistics
+  const { data: companyStats } = useQuery({
+    queryKey: ['company-stats', selectedCompany?.id],
+    queryFn: async () => {
+      if (!selectedCompany?.id) return null;
+      const response = await fetch(`/api/companies/${selectedCompany.id}/stats`);
+      if (!response.ok) throw new Error('Failed to fetch company stats');
+      return response.json();
+    },
+    enabled: !!selectedCompany?.id
+  });
+
   const getCompanyDetails = (companyId: string) => {
-    const mockData = {
-      onboardedUsers: Math.floor(Math.random() * 50) + 5,
-      activeWorkOrders: Math.floor(Math.random() * 20) + 1,
-      completedWorkOrders: Math.floor(Math.random() * 100) + 10,
-      successRate: Math.floor(Math.random() * 30) + 70, // 70-100%
+    if (companyStats) {
+      return companyStats;
+    }
+    // Return real data defaults while loading
+    return {
+      onboardedUsers: 0,
+      activeWorkOrders: 0,
+      completedWorkOrders: 0,
+      successRate: 0,
     };
-    return mockData;
   };
 
   const handleToggleActive = (company: Company, e: React.MouseEvent) => {
@@ -633,7 +648,7 @@ export default function OperationsCompanies() {
                             >
                               <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                               <div className="text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">2</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">0</div>
                               </div>
                             </div>
                             
@@ -643,7 +658,7 @@ export default function OperationsCompanies() {
                             >
                               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                               <div className="text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">1</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">0</div>
                               </div>
                             </div>
                             
@@ -653,7 +668,7 @@ export default function OperationsCompanies() {
                             >
                               <Clipboard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                               <div className="text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">3</div>
+                                <div className="text-base font-bold text-gray-900 dark:text-white">0</div>
                               </div>
                             </div>
                           </>

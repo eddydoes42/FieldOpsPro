@@ -1301,6 +1301,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get company statistics - restricted to operations directors
+  app.get('/api/companies/:companyId/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const { companyId } = req.params;
+      const stats = await storage.getCompanyStats(companyId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching company stats:", error);
+      res.status(500).json({ message: "Failed to fetch company stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

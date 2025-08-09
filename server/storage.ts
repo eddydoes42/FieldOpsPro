@@ -52,6 +52,14 @@ export interface IStorage {
   }>;
   getOperationsAdmins(): Promise<any[]>;
   getRecentUsers(): Promise<any[]>;
+  
+  // Company statistics
+  getCompanyStats(companyId: string): Promise<{
+    onboardedUsers: number;
+    activeWorkOrders: number;
+    completedWorkOrders: number;
+    successRate: number;
+  }>;
 
   // Work Order operations
   createWorkOrder(workOrder: InsertWorkOrder): Promise<WorkOrder>;
@@ -807,6 +815,52 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return workOrder;
+  }
+
+  // Get real company statistics
+  async getCompanyStats(companyId: string): Promise<{
+    onboardedUsers: number;
+    activeWorkOrders: number;
+    completedWorkOrders: number;
+    successRate: number;
+  }> {
+    // Get users count for this company
+    const usersResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.companyId, companyId));
+    const onboardedUsers = usersResult[0]?.count || 0;
+
+    // Get active work orders count for this company
+    const activeOrdersResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(workOrders)
+      .where(and(
+        eq(workOrders.companyId, companyId),
+        sql`status IN ('scheduled', 'confirmed', 'in_progress', 'in_route', 'checked_in')`
+      ));
+    const activeWorkOrders = activeOrdersResult[0]?.count || 0;
+
+    // Get completed work orders count for this company
+    const completedOrdersResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(workOrders)
+      .where(and(
+        eq(workOrders.companyId, companyId),
+        eq(workOrders.status, 'completed')
+      ));
+    const completedWorkOrders = completedOrdersResult[0]?.count || 0;
+
+    // Calculate success rate (completed / total orders)
+    const totalOrders = activeWorkOrders + completedWorkOrders;
+    const successRate = totalOrders > 0 ? Math.round((completedWorkOrders / totalOrders) * 100) : 0;
+
+    return {
+      onboardedUsers,
+      activeWorkOrders,
+      completedWorkOrders,
+      successRate,
+    };
   }
 }
 
