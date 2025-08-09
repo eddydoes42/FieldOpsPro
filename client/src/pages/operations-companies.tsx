@@ -12,7 +12,7 @@ import { Building2, ArrowLeft, Plus, Search, Filter, Users, CheckCircle, Trendin
 import { toast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Company, User } from "../../../shared/schema";
 
 export default function OperationsCompanies() {
@@ -27,6 +27,16 @@ export default function OperationsCompanies() {
   const [showSuccessRatePopup, setShowSuccessRatePopup] = useState(false);
   const [showRecentAssignedPopup, setShowRecentAssignedPopup] = useState(false);
   const queryClient = useQueryClient();
+
+  // Check URL parameters for initial status filter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusParam = urlParams.get('status');
+    
+    if (statusParam && ['active', 'inactive'].includes(statusParam)) {
+      setStatusFilter(statusParam);
+    }
+  }, []);
 
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ['/api/companies'],
