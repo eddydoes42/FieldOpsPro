@@ -194,10 +194,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
         <CardContent className="flex-1 overflow-y-auto p-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-              {/* Work Order Details */}
-              <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Work Order Details</h3>
-                <div className="space-y-3">
+              {isClient ? (
+                // Simplified client form
+                <>
                   <FormField
                     control={form.control}
                     name="title"
@@ -219,7 +218,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                         <FormLabel>Description *</FormLabel>
                         <FormControl>
                           <Textarea 
-                            rows={4}
+                            rows={3}
                             placeholder="Describe the work to be performed" 
                             {...field} 
                           />
@@ -228,72 +227,6 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       </FormItem>
                     )}
                   />
-                </div>
-              </div>
-
-              {/* Work Details */}
-              <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Work Details</h3>
-                <div className="space-y-3">
-                  <FormField
-                    control={form.control}
-                    name="scopeOfWork"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Scope of Work</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            rows={3}
-                            placeholder="Detailed breakdown of tasks and responsibilities" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="requiredTools"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Required Tools & Equipment</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            rows={2}
-                            placeholder="List tools, equipment, and materials needed" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {!isClient && (
-                    <FormField
-                      control={form.control}
-                      name="pointOfContact"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Point of Contact</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Name and contact information of client/site contact" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Location & Scheduling */}
-              <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Location & Scheduling</h3>
-                <div className="space-y-3">
                   <FormField
                     control={form.control}
                     name="location"
@@ -343,28 +276,181 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="estimatedHours"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estimated Hours</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0.5" 
-                            max="40" 
-                            step="0.5"
-                            placeholder="Enter estimated hours" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+                </>
+              ) : (
+                // Full management form
+                <>
+                  {/* Work Order Details */}
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">Work Order Details</h3>
+                    <div className="space-y-3">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Title *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter work order title" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description *</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                rows={4}
+                                placeholder="Describe the work to be performed" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Work Details */}
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">Work Details</h3>
+                    <div className="space-y-3">
+                      <FormField
+                        control={form.control}
+                        name="scopeOfWork"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Scope of Work</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                rows={3}
+                                placeholder="Detailed breakdown of tasks and responsibilities" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="requiredTools"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Required Tools & Equipment</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                rows={2}
+                                placeholder="List tools, equipment, and materials needed" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="pointOfContact"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Point of Contact</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Name and contact information of client/site contact" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Location & Scheduling */}
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">Location & Scheduling</h3>
+                    <div className="space-y-3">
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Location *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter location details" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="priority"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Priority *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select priority" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Due Date</FormLabel>
+                            <FormControl>
+                              <Input type="datetime-local" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="estimatedHours"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Estimated Hours</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min="0.5" 
+                                max="40" 
+                                step="0.5"
+                                placeholder="Enter estimated hours" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Tasks Section - Only visible to management */}
               {!isClient && (
