@@ -55,7 +55,10 @@ export default function OperationsActiveAdmins() {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
+            onClick={() => setLocation('/team?role=administrator&status=active')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
@@ -71,7 +74,10 @@ export default function OperationsActiveAdmins() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
+            onClick={() => setLocation('/team?role=administrator')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />

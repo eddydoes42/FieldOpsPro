@@ -27,13 +27,20 @@ export default function TeamPage() {
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editedUser, setEditedUser] = useState<any>({});
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Check URL parameters for initial role filter
+  // Check URL parameters for initial role and status filters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const roleParam = urlParams.get('role');
+    const statusParam = urlParams.get('status');
+    
     if (roleParam && ['administrator', 'manager', 'dispatcher', 'field_agent'].includes(roleParam)) {
       setRoleFilter(roleParam);
+    }
+    
+    if (statusParam && ['active', 'inactive'].includes(statusParam)) {
+      setStatusFilter(statusParam);
     }
   }, []);
 
@@ -295,47 +302,78 @@ export default function TeamPage() {
                     Add Team Member
                   </Button>
                 )}
-                <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={roleFilter === "field_agent" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setRoleFilter("field_agent")}
-                  className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
-                >
-                  FA ({getRoleCount("field_agent")})
-                </Button>
-                <Button
-                  variant={roleFilter === "administrator" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setRoleFilter("administrator")}
-                  className={`text-xs ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
-                >
-                  <span className="hidden sm:inline">Admin</span><span className="sm:hidden">A</span> ({getRoleCount("administrator")})
-                </Button>
-                <Button
-                  variant={roleFilter === "manager" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setRoleFilter("manager")}
-                  className={`text-xs ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
-                >
-                  <span className="hidden sm:inline">Manager</span><span className="sm:hidden">M</span> ({getRoleCount("manager")})
-                </Button>
-                <Button
-                  variant={roleFilter === "dispatcher" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setRoleFilter("dispatcher")}
-                  className={`text-xs ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
-                >
-                  <span className="hidden sm:inline">Dispatcher</span><span className="sm:hidden">D</span> ({getRoleCount("dispatcher")})
-                </Button>
-                <Button
-                  variant={roleFilter === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setRoleFilter("all")}
-                  className="text-xs"
-                >
-                  All ({getRoleCount("all")})
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  {/* Role Filters */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={roleFilter === "field_agent" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRoleFilter("field_agent")}
+                      className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
+                    >
+                      FA ({getRoleCount("field_agent")})
+                    </Button>
+                    <Button
+                      variant={roleFilter === "administrator" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRoleFilter("administrator")}
+                      className={`text-xs ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
+                    >
+                      <span className="hidden sm:inline">Admin</span><span className="sm:hidden">A</span> ({getRoleCount("administrator")})
+                    </Button>
+                    <Button
+                      variant={roleFilter === "manager" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRoleFilter("manager")}
+                      className={`text-xs ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
+                    >
+                      <span className="hidden sm:inline">Manager</span><span className="sm:hidden">M</span> ({getRoleCount("manager")})
+                    </Button>
+                    <Button
+                      variant={roleFilter === "dispatcher" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRoleFilter("dispatcher")}
+                      className={`text-xs ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
+                    >
+                      <span className="hidden sm:inline">Dispatcher</span><span className="sm:hidden">D</span> ({getRoleCount("dispatcher")})
+                    </Button>
+                    <Button
+                      variant={roleFilter === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRoleFilter("all")}
+                      className="text-xs"
+                    >
+                      All ({getRoleCount("all")})
+                    </Button>
+                  </div>
+                  
+                  {/* Status Filters */}
+                  <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                    <Button
+                      variant={statusFilter === "active" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setStatusFilter("active")}
+                      className="text-xs"
+                    >
+                      Active
+                    </Button>
+                    <Button
+                      variant={statusFilter === "inactive" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setStatusFilter("inactive")}
+                      className="text-xs"
+                    >
+                      Inactive
+                    </Button>
+                    <Button
+                      variant={statusFilter === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setStatusFilter("all")}
+                      className="text-xs"
+                    >
+                      All Status
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -356,6 +394,12 @@ export default function TeamPage() {
                     return roles.some((r: string) => r !== 'operations_director');
                   })
                   .filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))
+                  .filter((userData: any) => {
+                    if (statusFilter === "all") return true;
+                    if (statusFilter === "active") return userData.isActive !== false;
+                    if (statusFilter === "inactive") return userData.isActive === false;
+                    return true;
+                  })
                   .map((userData: any): React.ReactElement => (
                   <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
                     <div 
