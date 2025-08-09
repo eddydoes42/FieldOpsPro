@@ -104,78 +104,7 @@ export default function OperationsActiveAdmins() {
           </Card>
         </div>
 
-        {/* Admins List */}
-        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                Active Administrators
-              </CardTitle>
-              <Button 
-                onClick={() => setLocation('/operations-dashboard')}
-                className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Onboard New Admin
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {activeAdmins.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  No active administrators found. Start by onboarding your first administrator.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activeAdmins.map((admin) => (
-                  <div 
-                    key={admin.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
-                          <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-                            {admin.firstName} {admin.lastName}
-                          </h3>
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                            Active
-                          </span>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <div>
-                            <span className="font-medium">Email:</span> {admin.email}
-                          </div>
-                          {admin.companyName && (
-                            <div>
-                              <span className="font-medium">Company:</span> {admin.companyName}
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-medium">Roles:</span> {admin.roles.join(', ')}
-                          </div>
-                          {admin.lastLoginAt && (
-                            <div>
-                              <span className="font-medium">Last Login:</span> {new Date(admin.lastLoginAt).toLocaleDateString()}
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-medium">Onboarded:</span> {new Date(admin.createdAt).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );
