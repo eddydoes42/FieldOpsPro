@@ -47,7 +47,6 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
 
   const handleResetToNormal = () => {
     onRoleSwitch('operations_director');
-    setSelectedRole('operations_director');
     setIsTestMode(false);
   };
 
@@ -87,8 +86,10 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
               <DropdownMenuItem
                 key={role.value}
                 onClick={() => {
-                  setSelectedRole(role.value);
-                  handleRoleSwitch();
+                  if (role.value !== currentRole) {
+                    onRoleSwitch(role.value);
+                    setIsTestMode(role.value !== 'operations_director');
+                  }
                 }}
                 disabled={role.value === currentRole}
                 className="cursor-pointer"
