@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { hasRole, hasAnyRole, isOperationsDirector, canViewJobNetwork, getPrimaryRole } from "../../shared/schema";
 import RoleSwitcher from "@/components/role-switcher";
+import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
 import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
 import OperationsCompanies from "@/pages/operations-companies";
@@ -34,9 +35,17 @@ function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
   const [testingRole, setTestingRole] = useState<string | null>(null);
+  const [permanentRole, setPermanentRole] = useState<string | null>(() => {
+    // Initialize permanent role from localStorage
+    return localStorage.getItem('selectedRole');
+  });
   
-  // Get the effective role for operations directors who are testing other roles
+  // Get the effective role for operations directors who are testing other roles or have permanent role selection
   const getEffectiveRole = () => {
+    // Permanent role takes precedence over testing role
+    if (permanentRole) {
+      return permanentRole;
+    }
     if (isOperationsDirector(user as any) && testingRole) {
       return testingRole;
     }
@@ -45,6 +54,13 @@ function Router() {
 
   const handleRoleSwitch = (role: string) => {
     setTestingRole(role);
+  };
+
+  const handlePermanentRoleSwitch = (role: string) => {
+    setPermanentRole(role);
+    localStorage.setItem('selectedRole', role);
+    // Clear any testing role when switching permanently
+    setTestingRole(null);
   };
   
 
@@ -78,7 +94,7 @@ function Router() {
                 const effectiveRole = getEffectiveRole();
                 
                 // If user has both operations director and admin roles and hasn't chosen, redirect to role selection
-                if (hasOpsDirector && hasAdmin && !selectedRole && !testingRole) {
+                if (hasOpsDirector && hasAdmin && !selectedRole && !testingRole && !permanentRole) {
                   setLocation('/choose-role');
                   return null;
                 }
@@ -106,6 +122,11 @@ function Router() {
 
                 return (
                   <div>
+                    {/* Permanent role switcher for dual-role users */}
+                    <PermanentRoleSwitcher 
+                      currentActiveRole={effectiveRole} 
+                      onRoleSwitch={handlePermanentRoleSwitch} 
+                    />
                     {/* Role switcher for operations directors */}
                     <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
                     <DashboardContent />
@@ -141,6 +162,11 @@ function Router() {
 
                 return (
                   <div>
+                    {/* Permanent role switcher for dual-role users */}
+                    <PermanentRoleSwitcher 
+                      currentActiveRole={effectiveRole} 
+                      onRoleSwitch={handlePermanentRoleSwitch} 
+                    />
                     <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
                     <DashboardContent />
                   </div>
@@ -149,12 +175,20 @@ function Router() {
             </Route>
             <Route path="/operations/companies">
               <div>
+                <PermanentRoleSwitcher 
+                  currentActiveRole={getEffectiveRole()} 
+                  onRoleSwitch={handlePermanentRoleSwitch} 
+                />
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <OperationsCompanies />
               </div>
             </Route>
             <Route path="/operations/active-admins">
               <div>
+                <PermanentRoleSwitcher 
+                  currentActiveRole={getEffectiveRole()} 
+                  onRoleSwitch={handlePermanentRoleSwitch} 
+                />
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <OperationsActiveAdmins />
               </div>
@@ -162,6 +196,10 @@ function Router() {
 
             <Route path="/operations/recent-setups">
               <div>
+                <PermanentRoleSwitcher 
+                  currentActiveRole={getEffectiveRole()} 
+                  onRoleSwitch={handlePermanentRoleSwitch} 
+                />
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 <OperationsRecentSetups />
               </div>
