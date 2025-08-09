@@ -34,8 +34,9 @@ export default function OperationsCompanies() {
     queryKey: ['/api/auth/user'],
   });
 
-  // Check if user is operations director
+  // Check if user is operations director or administrator
   const isOperationsDirector = user?.roles?.includes('operations_director') || false;
+  const isAdministrator = user?.roles?.includes('administrator') || false;
 
   // API mutations
   const updateCompanyMutation = useMutation({
@@ -128,6 +129,16 @@ export default function OperationsCompanies() {
 
   const handleDeleteCompany = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (!isAdministrator) {
+      toast({ 
+        title: "Access Denied", 
+        description: "Only Administrators can delete companies",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     setShowDeleteConfirm(true);
   };
 
@@ -563,14 +574,16 @@ export default function OperationsCompanies() {
 
                 {/* Action Buttons */}
                 <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleDeleteCompany}
-                    className="flex items-center space-x-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Delete Company</span>
-                  </Button>
+                  {isAdministrator && (
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleDeleteCompany}
+                      className="flex items-center space-x-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Delete Company</span>
+                    </Button>
+                  )}
                   
                   <div className="flex space-x-3">
                     <Button variant="outline" onClick={() => setSelectedCompany(null)}>
