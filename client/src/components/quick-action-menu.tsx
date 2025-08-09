@@ -32,8 +32,14 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
   const isAdmin = userRoles.includes('administrator');
   const isManager = userRoles.includes('manager');
   const isDispatcher = userRoles.includes('dispatcher');
-  const isOperationsDirector = userRoles.includes('operations_director');
-  const isCompanyAdmin = isAdmin && !isOperationsDirector; // Administrator but not operations director
+  const hasOperationsDirectorRole = userRoles.includes('operations_director');
+  
+  // Check if user is truly an operations director (has operations_director role AND no companyId)
+  const isOperationsDirector = hasOperationsDirectorRole && !(user as any)?.companyId;
+  
+  // Check if user is a company administrator (has admin role but has a companyId, or admin role without operations director role)
+  const isCompanyAdmin = isAdmin && ((user as any)?.companyId || !hasOperationsDirectorRole);
+  
   const canManageUsers = isAdmin || isManager;
   const canCreateWorkOrders = isAdmin || isManager || isDispatcher;
 

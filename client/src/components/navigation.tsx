@@ -54,7 +54,11 @@ export default function Navigation() {
     // Handle multiple roles by prioritizing highest privilege role
     const userRoles = (user as any)?.roles || [];
     const roles = Array.isArray(userRoles) ? userRoles : [userRoles];
-    const priorityRole = roles.includes('operations_director') ? 'operations_director' :
+    
+    // Check if user is truly an operations director (has operations_director role AND no companyId)
+    const isOperationsDirector = roles.includes('operations_director') && !(user as any)?.companyId;
+    
+    const priorityRole = isOperationsDirector ? 'operations_director' :
                         roles.includes('administrator') ? 'administrator' :
                         roles.includes('manager') ? 'manager' :
                         roles.includes('dispatcher') ? 'dispatcher' : 'field_agent';
