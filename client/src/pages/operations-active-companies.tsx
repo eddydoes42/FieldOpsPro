@@ -141,9 +141,9 @@ export default function OperationsActiveCompanies() {
                         )}
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          {company.contactEmail && (
+                          {company.email && (
                             <div>
-                              <span className="font-medium">Contact Email:</span> {company.contactEmail}
+                              <span className="font-medium">Contact Email:</span> {company.email}
                             </div>
                           )}
                           {company.phone && (
@@ -168,11 +168,7 @@ export default function OperationsActiveCompanies() {
                           <div>
                             <span className="font-medium">Active Since:</span> {new Date(company.createdAt || '').toLocaleDateString()}
                           </div>
-                          {company.industry && (
-                            <div>
-                              <span className="font-medium">Industry:</span> {company.industry}
-                            </div>
-                          )}
+
                         </div>
                       </div>
                     </div>
