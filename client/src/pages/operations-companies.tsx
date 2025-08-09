@@ -54,7 +54,8 @@ export default function OperationsCompanies() {
       setShowEditDialog(false);
       setSelectedCompany(null);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Update company error:", error);
       toast({ title: "Failed to update company", variant: "destructive" });
     }
   });
@@ -73,7 +74,8 @@ export default function OperationsCompanies() {
       setShowDeleteConfirm(false);
       setSelectedCompany(null);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Delete company error:", error);
       toast({ title: "Failed to delete company", variant: "destructive" });
     }
   });
