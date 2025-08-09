@@ -254,6 +254,25 @@ function Router() {
                 <Landing />
               )}
             </Route>
+            <Route path="/client/work-orders">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasClientAccess = hasRole(user as any, 'client') || effectiveRole === 'client';
+                
+                if (isAuthenticated && hasClientAccess) {
+                  const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                      )}
+                      <ClientWorkOrders />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
         </>
       )}
       <Route component={NotFound} />
