@@ -44,22 +44,19 @@ function Router() {
   const getEffectiveRole = () => {
     // Permanent role takes precedence over testing role
     if (permanentRole) {
-      console.log('App.tsx: Using permanent role:', permanentRole);
       return permanentRole;
     }
     if (isOperationsDirector(user as any) && testingRole) {
-      console.log('App.tsx: Using testing role:', testingRole);
       return testingRole;
     }
-    const primaryRole = getPrimaryRole(user as any);
-    console.log('App.tsx: Using primary role:', primaryRole);
-    return primaryRole;
+    return getPrimaryRole(user as any);
   };
 
   const handleRoleSwitch = (role: string) => {
-    console.log('App.tsx: handleRoleSwitch called with:', role);
+    // Clear permanent role when testing roles to allow testing role to take effect
+    setPermanentRole(null);
+    localStorage.removeItem('selectedRole');
     setTestingRole(role);
-    console.log('App.tsx: testingRole set to:', role);
   };
 
   const handlePermanentRoleSwitch = (role: string) => {
