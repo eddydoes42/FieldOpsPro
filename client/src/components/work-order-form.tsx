@@ -173,8 +173,8 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+      <Card className="max-w-4xl w-full my-4 max-h-none">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold text-gray-900">
@@ -189,10 +189,10 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
               <i className="fas fa-times text-xl"></i>
             </Button>
           </div>
-          <p className="text-gray-600">Create and assign a new work order to field agents</p>
+          <p className="text-gray-600">{isClient ? "Create a new work order request" : "Create and assign a new work order to field agents"}</p>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="max-h-[70vh] overflow-y-auto">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Work Order Details */}
