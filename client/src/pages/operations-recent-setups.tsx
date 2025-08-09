@@ -138,26 +138,7 @@ export default function OperationsRecentSetups() {
           </Card>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-4">
-          <Button 
-            onClick={() => setLocation('/operations-dashboard')}
-            variant="outline"
-            size="lg"
-            className="flex items-center space-x-2"
-          >
-            <Building2 className="h-5 w-5" />
-            <span>Add Company</span>
-          </Button>
-          <Button 
-            onClick={() => setLocation('/operations-dashboard')}
-            className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 flex items-center space-x-2"
-            size="lg"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Onboard Admin</span>
-          </Button>
-        </div>
+
       </div>
     </div>
   );
