@@ -375,6 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: `wo-${Date.now()}`, // Generate unique ID
         title: req.body.title,
         description: req.body.description,
+        companyId: 'default-company-id', // Add required companyId field
         location: req.body.location || '',
         priority: req.body.priority || 'medium',
         status: 'pending', // Default status for new work orders
@@ -385,6 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scopeOfWork: req.body.scopeOfWork || null,
         requiredTools: req.body.requiredTools || null,
         pointOfContact: isClientUser ? null : (req.body.pointOfContact || null), // Clients can't set POC
+        isClientCreated: isClientUser, // Mark client-created work orders
       };
       const workOrder = await storage.createWorkOrder(workOrderData);
       res.json(workOrder);
@@ -1327,10 +1329,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Add to today's earning if work order is due today
-        const dueDate = new Date(workOrder.dueDate);
-        dueDate.setHours(0, 0, 0, 0);
-        if (dueDate.getTime() === today.getTime()) {
-          todayEarning += calculatedBudget;
+        if (workOrder.dueDate) {
+          const dueDate = new Date(workOrder.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+          if (dueDate.getTime() === today.getTime()) {
+            todayEarning += calculatedBudget;
+          }
         }
       }
 
