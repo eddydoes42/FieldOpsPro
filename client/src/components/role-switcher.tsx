@@ -56,16 +56,10 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcher
     <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
       <div className="flex items-center space-x-3">
         <Settings className="h-4 w-4 text-purple-600" />
-        <span className="text-sm font-medium text-purple-900">Role Testing:</span>
         <Badge className={`${currentRoleInfo?.color} border text-xs px-2 py-1`}>
           <Eye className="h-3 w-3 mr-1" />
           {currentRoleInfo?.label}
         </Badge>
-        {isTestMode && (
-          <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300 text-xs">
-            Testing Mode
-          </Badge>
-        )}
       </div>
 
       <div className="flex items-center space-x-2">
