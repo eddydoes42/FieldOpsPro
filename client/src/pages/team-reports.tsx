@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
 import { useEffect, useState } from "react";
-import { Clock, MapPin, User, Calendar, ArrowLeft } from "lucide-react";
+import { Clock, MapPin, User, Calendar, ArrowLeft, Home } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface TeamReportsData {
@@ -170,8 +170,8 @@ export default function TeamReports() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
       <div className="max-w-7xl mx-auto p-6">
-        {/* Back to Dashboard Button */}
-        <div className="mb-4">
+        {/* Navigation */}
+        <div className="flex items-center space-x-2 mb-4">
           <Button
             variant="outline"
             size="sm"
@@ -185,10 +185,17 @@ export default function TeamReports() {
                 setLocation('/dashboard');
               }
             }}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-1"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.history.back()}
+            className="flex items-center space-x-1"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
           </Button>
         </div>
 

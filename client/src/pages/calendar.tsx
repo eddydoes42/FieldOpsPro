@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import { useState, useMemo } from "react";
 import { format, eachDayOfInterval, isSameDay, addWeeks, subWeeks, startOfWeek, endOfWeek, isToday, isSameWeek, addDays } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, ArrowLeft, Home } from "lucide-react";
 import { useLocation } from "wouter";
 import { hasAnyRole } from "../../../shared/schema";
 
@@ -90,7 +90,7 @@ export default function Calendar() {
       // Only include orders with due dates
       return !!order.dueDate;
     });
-  }, [workOrders, userRole, user, filterAgent, filterStatus, filterPriority, isFieldAgent, canViewAllOrders]);
+  }, [workOrders, user, filterAgent, filterStatus, filterPriority, isFieldAgent, canViewAllOrders]);
 
   // Weekly calendar calculations - 7-day week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Start on Sunday
@@ -166,10 +166,11 @@ export default function Calendar() {
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 mb-4">
             <Button
-              variant="ghost"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 const selectedRole = localStorage.getItem('selectedRole');
                 if (selectedRole === 'operations_director' || (user as any).roles?.includes('operations_director')) {
@@ -180,15 +181,22 @@ export default function Calendar() {
                   setLocation('/dashboard');
                 }
               }}
-              className="flex items-center gap-2"
+              className="flex items-center space-x-1"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center space-x-1"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
             </Button>
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-6 w-6 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Work Order Calendar</h1>
-            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-6 w-6 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">Work Order Calendar</h1>
           </div>
         </div>
 

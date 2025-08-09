@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX, Edit2, UserPlus } from "lucide-react";
+import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX, Edit2, UserPlus, Home } from "lucide-react";
 import { useLocation } from "wouter";
 import { hasAnyRole, canManageUsers } from "../../../shared/schema";
 
@@ -259,7 +259,7 @@ export default function TeamPage() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
+          <div className="flex items-center space-x-2 mb-4">
             <Button
               variant="outline"
               size="sm"
@@ -273,10 +273,17 @@ export default function TeamPage() {
                   setLocation('/dashboard');
                 }
               }}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-1"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center space-x-1"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to Dashboard</span>
             </Button>
           </div>
           <div className="text-center">

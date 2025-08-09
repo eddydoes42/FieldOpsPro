@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, ArrowLeft, Plus, Search, Filter, Users, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus, Clipboard } from "lucide-react";
+import { Building2, ArrowLeft, Plus, Search, Filter, Users, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus, Clipboard, Home } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
@@ -283,15 +283,24 @@ export default function OperationsCompanies() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setLocation('/operations-dashboard')}
-            className="mb-4 flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Operations Dashboard</span>
-          </Button>
+          <div className="flex items-center space-x-2 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLocation('/operations-dashboard')}
+              className="flex items-center space-x-1"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center space-x-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
           
           <div className="flex justify-between items-start mb-6">
             <div>

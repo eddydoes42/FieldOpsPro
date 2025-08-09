@@ -18,7 +18,7 @@ import WorkOrderTasks from "@/components/work-order-tasks";
 import PaymentStatusButton from "@/components/payment-status-button";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Trash2, ArrowLeft } from "lucide-react";
+import { Trash2, ArrowLeft, Home } from "lucide-react";
 import { hasAnyRole, canViewAllOrders } from "../../../shared/schema";
 
 interface WorkOrder {
@@ -1190,8 +1190,8 @@ export default function WorkOrders() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
       <div className="max-w-7xl mx-auto p-6">
-        {/* Back to Dashboard Button */}
-        <div className="mb-4">
+        {/* Navigation */}
+        <div className="flex items-center space-x-2 mb-4">
           <Button
             variant="outline"
             size="sm"
@@ -1205,10 +1205,17 @@ export default function WorkOrders() {
                 setLocation('/dashboard');
               }
             }}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-1"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.history.back()}
+            className="flex items-center space-x-1"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
           </Button>
         </div>
 
