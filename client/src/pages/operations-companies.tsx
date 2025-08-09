@@ -5,8 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { Building2, ArrowLeft, Plus, Search, Filter, Users, Briefcase, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Building2, ArrowLeft, Plus, Search, Filter, Users, Briefcase, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import { useState, useMemo } from "react";
@@ -18,9 +21,54 @@ export default function OperationsCompanies() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Partial<Company>>({});
+  const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ['/api/companies'],
+  });
+
+  // API mutations
+  const updateCompanyMutation = useMutation({
+    mutationFn: async (updates: { id: string; data: Partial<Company> }) => {
+      const response = await fetch(`/api/companies/${updates.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates.data),
+      });
+      if (!response.ok) throw new Error('Failed to update company');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+      toast({ title: "Company updated successfully" });
+      setShowEditDialog(false);
+      setSelectedCompany(null);
+    },
+    onError: () => {
+      toast({ title: "Failed to update company", variant: "destructive" });
+    }
+  });
+
+  const deleteCompanyMutation = useMutation({
+    mutationFn: async (companyId: string) => {
+      const response = await fetch(`/api/companies/${companyId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete company');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+      toast({ title: "Company deleted successfully" });
+      setShowDeleteConfirm(false);
+      setSelectedCompany(null);
+    },
+    onError: () => {
+      toast({ title: "Failed to delete company", variant: "destructive" });
+    }
   });
 
   // Mock company details data - in a real app, this would come from API
@@ -32,6 +80,42 @@ export default function OperationsCompanies() {
       successRate: Math.floor(Math.random() * 30) + 70, // 70-100%
     };
     return mockData;
+  };
+
+  const handleToggleActive = (company: Company, e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateCompanyMutation.mutate({
+      id: company.id,
+      data: { isActive: !company.isActive }
+    });
+  };
+
+  const handleEditCompany = (company: Company, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingCompany({
+      id: company.id,
+      name: company.name,
+      description: company.description,
+      email: company.email,
+      phone: company.phone,
+      website: company.website,
+      address: company.address,
+      city: company.city,
+      state: company.state,
+      zipCode: company.zipCode
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleDeleteCompany = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedCompany) {
+      deleteCompanyMutation.mutate(selectedCompany.id);
+    }
   };
 
   const filteredCompanies = useMemo(() => {
@@ -212,12 +296,15 @@ export default function OperationsCompanies() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              company.isActive 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                            }`}>
-                              {company.isActive ? 'Active' : 'Inactive'}
+                            <span 
+                              className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${
+                                company.isActive 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                              }`}
+                              onClick={(e) => handleToggleActive(company, e)}
+                            >
+                              {company.isActive ? 'Active' : 'Deactivated'}
                             </span>
                           </TableCell>
                           <TableCell>
@@ -294,8 +381,12 @@ export default function OperationsCompanies() {
               <DialogTitle className="flex items-center space-x-3">
                 <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 <span>{selectedCompany?.name}</span>
-                <Badge variant={selectedCompany?.isActive ? "default" : "secondary"}>
-                  {selectedCompany?.isActive ? "Active" : "Inactive"}
+                <Badge 
+                  variant={selectedCompany?.isActive ? "default" : "secondary"}
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={(e) => selectedCompany && handleToggleActive(selectedCompany, e)}
+                >
+                  {selectedCompany?.isActive ? "Active" : "Deactivated"}
                 </Badge>
               </DialogTitle>
             </DialogHeader>
@@ -304,9 +395,12 @@ export default function OperationsCompanies() {
               <div className="space-y-6">
                 {/* Company Overview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
+                  <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={(e) => selectedCompany && handleEditCompany(selectedCompany, e)}>
                     <CardHeader>
-                      <CardTitle className="text-lg">Company Information</CardTitle>
+                      <CardTitle className="text-lg flex items-center justify-between">
+                        Company Information
+                        <Edit className="h-4 w-4 text-gray-400" />
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {selectedCompany.description && (
@@ -443,16 +537,198 @@ export default function OperationsCompanies() {
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Button variant="outline" onClick={() => setSelectedCompany(null)}>
-                    Close
+                <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleDeleteCompany}
+                    className="flex items-center space-x-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete Company</span>
                   </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    View Full Dashboard
-                  </Button>
+                  
+                  <div className="flex space-x-3">
+                    <Button variant="outline" onClick={() => setSelectedCompany(null)}>
+                      Close
+                    </Button>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      View Full Dashboard
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Company Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Company Information</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="company-name">Company Name</Label>
+                <Input
+                  id="company-name"
+                  value={editingCompany.name || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter company name"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="company-description">Description</Label>
+                <Textarea
+                  id="company-description"
+                  value={editingCompany.description || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter company description"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="company-email">Email</Label>
+                  <Input
+                    id="company-email"
+                    type="email"
+                    value={editingCompany.email || ''}
+                    onChange={(e) => setEditingCompany(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="company@example.com"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="company-phone">Phone</Label>
+                  <Input
+                    id="company-phone"
+                    value={editingCompany.phone || ''}
+                    onChange={(e) => setEditingCompany(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="company-website">Website</Label>
+                <Input
+                  id="company-website"
+                  value={editingCompany.website || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, website: e.target.value }))}
+                  placeholder="https://company.com"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="company-address">Address</Label>
+                <Input
+                  id="company-address"
+                  value={editingCompany.address || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="123 Main Street"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="company-city">City</Label>
+                  <Input
+                    id="company-city"
+                    value={editingCompany.city || ''}
+                    onChange={(e) => setEditingCompany(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder="City"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="company-state">State</Label>
+                  <Input
+                    id="company-state"
+                    value={editingCompany.state || ''}
+                    onChange={(e) => setEditingCompany(prev => ({ ...prev, state: e.target.value }))}
+                    placeholder="State"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="company-zip">ZIP Code</Label>
+                  <Input
+                    id="company-zip"
+                    value={editingCompany.zipCode || ''}
+                    onChange={(e) => setEditingCompany(prev => ({ ...prev, zipCode: e.target.value }))}
+                    placeholder="12345"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-6">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editingCompany.id) {
+                    updateCompanyMutation.mutate({
+                      id: editingCompany.id,
+                      data: editingCompany
+                    });
+                  }
+                }}
+                disabled={updateCompanyMutation.isPending}
+              >
+                {updateCompanyMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Company Deletion</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Are you sure you want to delete <strong>{selectedCompany?.name}</strong>? 
+                This action cannot be undone and will permanently remove:
+              </p>
+              
+              <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                <li>All company information and settings</li>
+                <li>All associated work orders</li>
+                <li>All user accounts linked to this company</li>
+                <li>All historical data and reports</li>
+              </ul>
+              
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <span className="font-medium text-red-800 dark:text-red-200">
+                    This action is permanent and cannot be reversed
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-6">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={deleteCompanyMutation.isPending}
+              >
+                {deleteCompanyMutation.isPending ? 'Deleting...' : 'Delete Company'}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
