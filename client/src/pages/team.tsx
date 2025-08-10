@@ -414,30 +414,7 @@ export default function TeamPage() {
                     </Button>
                   </div>
 
-                  {/* Company Filters */}
-                  {companies && (companies as any[]).length > 0 && (
-                    <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
-                      {(companies as any[]).map((company: any) => (
-                        <Button
-                          key={company.id}
-                          variant={companyFilter === company.id ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCompanyFilter(company.id)}
-                          className="text-xs"
-                        >
-                          {company.name}
-                        </Button>
-                      ))}
-                      <Button
-                        variant={companyFilter === "all" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCompanyFilter("all")}
-                        className="text-xs"
-                      >
-                        All Companies
-                      </Button>
-                    </div>
-                  )}
+
                 </div>
               </div>
             </div>
