@@ -56,24 +56,7 @@ export default function JobNetwork() {
   const [requestNotes, setRequestNotes] = useState("");
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
 
-  // Check access
-  if (!canViewJobNetwork(user as any)) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You don't have permission to access the Job Network.</p>
-          <Link href="/dashboard">
-            <Button>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Access is already checked in App.tsx routing, so we can remove this duplicate check
 
   // Fetch client-created work orders
   const { data: workOrders = [], isLoading } = useQuery<WorkOrder[]>({

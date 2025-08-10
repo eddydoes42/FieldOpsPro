@@ -257,7 +257,7 @@ function Router() {
             <Route path="/job-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher'].includes(effectiveRole);
+                const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
                 
                 if (isAuthenticated && hasJobNetworkAccess) {
                   const JobNetwork = React.lazy(() => import('@/pages/job-network'));
@@ -276,16 +276,6 @@ function Router() {
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
                 {isAuthenticated ? <TimeTracking /> : <Landing />}
               </div>
-            </Route>
-            <Route path="/job-network">
-              {canViewJobNetwork(user as any) ? (
-                (() => {
-                  const JobNetwork = React.lazy(() => import('@/pages/job-network'));
-                  return <JobNetwork />;
-                })()
-              ) : (
-                <Landing />
-              )}
             </Route>
             <Route path="/client-dashboard">
               {(() => {
