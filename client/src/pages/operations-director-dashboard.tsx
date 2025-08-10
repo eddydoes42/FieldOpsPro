@@ -32,7 +32,7 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/companies'],
   });
 
-  const { data: stats = {} } = useQuery<{
+  const { data: stats = { totalAdmins: 0, activeCompanies: 0, recentSetups: 0 } } = useQuery<{
     totalAdmins: number;
     activeCompanies: number;
     recentSetups: number;
@@ -40,7 +40,7 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/operations/stats'],
   });
 
-  const { data: budgetData = {} } = useQuery<{
+  const { data: budgetData = { totalEarned: 0, todayEarning: 0 } } = useQuery<{
     totalEarned: number;
     todayEarning: number;
   }>({
@@ -83,7 +83,7 @@ export default function OperationsDirectorDashboard() {
                   Total Earned
                 </p>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  ${(budgetData?.totalEarned || 0).toLocaleString()}
+                  ${(budgetData.totalEarned || 0).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -93,7 +93,7 @@ export default function OperationsDirectorDashboard() {
                 Today's Earning
               </p>
               <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                ${(budgetData?.todayEarning || 0).toLocaleString()}
+                ${(budgetData.todayEarning || 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function OperationsDirectorDashboard() {
                     Active Admins
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats?.totalAdmins || 0}
+                    {stats.totalAdmins || 0}
                   </p>
                 </div>
               </div>
@@ -151,7 +151,7 @@ export default function OperationsDirectorDashboard() {
                     Active Companies
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats?.activeCompanies || 0}
+                    {stats.activeCompanies || 0}
                   </p>
                 </div>
               </div>
@@ -170,7 +170,7 @@ export default function OperationsDirectorDashboard() {
                     Recent Setups
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats?.recentSetups || 0}
+                    {stats.recentSetups || 0}
                   </p>
                 </div>
               </div>

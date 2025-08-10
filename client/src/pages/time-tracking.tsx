@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import TimeTracker from "@/components/time-tracker";
-import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Home } from "lucide-react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 
@@ -72,24 +72,27 @@ export default function TimeTracking() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const selectedRole = localStorage.getItem('selectedRole');
-                if (selectedRole === 'operations_director' || (user as any).roles?.includes('operations_director')) {
-                  setLocation('/operations-dashboard');
-                } else if ((user as any).roles?.includes('administrator')) {
-                  setLocation('/admin-dashboard');
-                } else {
-                  setLocation('/dashboard');
-                }
-              }}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Dashboard</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const selectedRole = localStorage.getItem('selectedRole');
+                  if (selectedRole === 'operations_director' || (user as any).roles?.includes('operations_director')) {
+                    setLocation('/operations-dashboard');
+                  } else if ((user as any).roles?.includes('administrator')) {
+                    setLocation('/admin-dashboard');
+                  } else {
+                    setLocation('/dashboard');
+                  }
+                }}
+              >
+                <Home className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => window.history.back()}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-foreground">Time Tracking</h1>

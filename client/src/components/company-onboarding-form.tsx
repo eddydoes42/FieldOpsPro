@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft, Building2, Home } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -89,14 +89,20 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
+        <div className="flex items-center mb-6 gap-2">
           <Button
             variant="ghost"
             onClick={onClose}
-            className="mr-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <Home className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Button>
         </div>
 

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, MapPin, AlertTriangle, User, Calendar, Plus, UserPlus } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, AlertTriangle, User, Calendar, Plus, UserPlus, Home } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
@@ -172,12 +172,16 @@ export default function ClientWorkOrders() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-4">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <Home className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
                 <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
               </Button>
-            </Link>
+            </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">My Work Orders</h1>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Track your submitted work order requests and assignments</p>

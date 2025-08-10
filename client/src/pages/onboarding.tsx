@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 
 interface OnboardingFormData {
   firstName: string;
@@ -213,26 +213,29 @@ export default function Onboarding() {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Navigation />
       <div className="max-w-4xl mx-auto p-6">
-        {/* Back to Dashboard Button */}
+        {/* Navigation Buttons */}
         <div className="mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const selectedRole = localStorage.getItem('selectedRole');
-              if (selectedRole === 'operations_director' || (user as any).roles?.includes('operations_director')) {
-                setLocation('/operations-dashboard');
-              } else if ((user as any).roles?.includes('administrator')) {
-                setLocation('/admin-dashboard');
-              } else {
-                setLocation('/dashboard');
-              }
-            }}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const selectedRole = localStorage.getItem('selectedRole');
+                if (selectedRole === 'operations_director' || (user as any).roles?.includes('operations_director')) {
+                  setLocation('/operations-dashboard');
+                } else if ((user as any).roles?.includes('administrator')) {
+                  setLocation('/admin-dashboard');
+                } else {
+                  setLocation('/dashboard');
+                }
+              }}
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => window.history.back()}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Header */}

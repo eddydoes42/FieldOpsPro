@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Building2, Calendar, Clock, DollarSign, MapPin, User, Users, AlertCircle, CheckCircle, Send, ArrowLeft } from "lucide-react";
+import { Building2, Calendar, Clock, DollarSign, MapPin, User, Users, AlertCircle, CheckCircle, Send, ArrowLeft, Home } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { canViewJobNetwork, hasAnyRole } from "@shared/schema";
@@ -139,11 +139,16 @@ export default function JobNetwork() {
             Review client-created work orders and assign them to field agents
           </p>
         </div>
-        <Link href="/dashboard">
-          <Button variant="outline" size="sm">
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard">
+            <Button variant="outline" size="sm">
+              <Home className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => window.history.back()}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-        </Link>
+        </div>
       </div>
 
       {/* Work Orders Grid */}
