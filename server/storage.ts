@@ -7,6 +7,8 @@ import {
   workOrderTasks,
   workOrderIssues,
   notifications,
+  clientServiceRatings,
+  serviceClientRatings,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -24,6 +26,10 @@ import {
   type InsertWorkOrderIssue,
   type Notification,
   type InsertNotification,
+  type ClientServiceRating,
+  type InsertClientServiceRating,
+  type ServiceClientRating,
+  type InsertServiceClientRating,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -144,6 +150,14 @@ export interface IStorage {
   respondToAssignmentRequest(requestId: string, action: 'accept' | 'decline', notes: string, clientId: string): Promise<any>;
   requestWorkOrderAssignment(workOrderId: string, agentId: string, requestedById: string, notes?: string): Promise<any>;
   getFieldAgents(): Promise<User[]>;
+
+  // Rating operations
+  createClientServiceRating(rating: InsertClientServiceRating): Promise<ClientServiceRating>;
+  createServiceClientRating(rating: InsertServiceClientRating): Promise<ServiceClientRating>;
+  getClientServiceRating(workOrderId: string, clientId: string): Promise<ClientServiceRating | undefined>;
+  getServiceClientRating(workOrderId: string, raterId: string): Promise<ServiceClientRating | undefined>;
+  getServiceCompanyRatings(companyId: string): Promise<ClientServiceRating[]>;
+  getClientRatings(clientId: string): Promise<ServiceClientRating[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1018,6 +1032,90 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(sql`'field_agent' = ANY(roles)`)
       .orderBy(users.firstName, users.lastName);
+  }
+
+  // Rating operations
+  async createClientServiceRating(rating: InsertClientServiceRating): Promise<ClientServiceRating> {
+    const [newRating] = await db
+      .insert(clientServiceRatings)
+      .values(rating)
+      .returning();
+    return newRating;
+  }
+
+  async createServiceClientRating(rating: InsertServiceClientRating): Promise<ServiceClientRating> {
+    const [newRating] = await db
+      .insert(serviceClientRatings)
+      .values(rating)
+      .returning();
+    return newRating;
+  }
+
+  async getClientServiceRating(workOrderId: string, clientId: string): Promise<ClientServiceRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(clientServiceRatings)
+      .where(and(
+        eq(clientServiceRatings.workOrderId, workOrderId),
+        eq(clientServiceRatings.clientId, clientId)
+      ));
+    return rating;
+  }
+
+  async getServiceClientRating(workOrderId: string, raterId: string): Promise<ServiceClientRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(serviceClientRatings)
+      .where(and(
+        eq(serviceClientRatings.workOrderId, workOrderId),
+        eq(serviceClientRatings.raterId, raterId)
+      ));
+    return rating;
+  }
+
+  async getServiceCompanyRatings(companyId: string): Promise<ClientServiceRating[]> {
+    return await db
+      .select({
+        ...clientServiceRatings,
+        workOrder: {
+          id: workOrders.id,
+          title: workOrders.title,
+          dueDate: workOrders.dueDate
+        },
+        client: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          clientCompanyName: users.clientCompanyName
+        }
+      })
+      .from(clientServiceRatings)
+      .leftJoin(workOrders, eq(clientServiceRatings.workOrderId, workOrders.id))
+      .leftJoin(users, eq(clientServiceRatings.clientId, users.id))
+      .where(eq(clientServiceRatings.companyId, companyId))
+      .orderBy(desc(clientServiceRatings.createdAt));
+  }
+
+  async getClientRatings(clientId: string): Promise<ServiceClientRating[]> {
+    return await db
+      .select({
+        ...serviceClientRatings,
+        workOrder: {
+          id: workOrders.id,
+          title: workOrders.title,
+          dueDate: workOrders.dueDate
+        },
+        rater: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName
+        }
+      })
+      .from(serviceClientRatings)
+      .leftJoin(workOrders, eq(serviceClientRatings.workOrderId, workOrders.id))
+      .leftJoin(users, eq(serviceClientRatings.raterId, users.id))
+      .where(eq(serviceClientRatings.clientId, clientId))
+      .orderBy(desc(serviceClientRatings.createdAt));
   }
 }
 

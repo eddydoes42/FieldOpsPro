@@ -16,8 +16,10 @@ import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import WorkOrderTasks from "@/components/work-order-tasks";
 import PaymentStatusButton from "@/components/payment-status-button";
+import RatingSystem from "@/components/rating-system";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useRatingTrigger } from "@/hooks/useRatingTrigger";
 import { Trash2, ArrowLeft, Home } from "lucide-react";
 import { hasAnyRole, canViewAllOrders } from "../../../shared/schema";
 
@@ -237,6 +239,11 @@ export default function WorkOrders() {
   const { data: workOrders, isLoading: ordersLoading, error: ordersError } = useQuery<WorkOrder[]>({
     queryKey: ["/api/work-orders"],
     retry: false,
+  });
+
+  // Rating trigger hook
+  const { ratingTrigger, closeRatingDialog, isRatingDialogOpen } = useRatingTrigger({
+    workOrders: workOrders || []
   });
 
   const { data: fieldAgents, isLoading: agentsLoading } = useQuery<User[]>({
@@ -2678,6 +2685,14 @@ export default function WorkOrders() {
           </DialogContent>
         </Dialog>
 
+        {/* Rating System Dialog */}
+        {ratingTrigger && (
+          <RatingSystem
+            workOrder={ratingTrigger.workOrder}
+            isOpen={isRatingDialogOpen}
+            onClose={closeRatingDialog}
+          />
+        )}
 
       </div>
     </div>

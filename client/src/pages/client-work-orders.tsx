@@ -8,6 +8,8 @@ import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import WorkOrderForm from "@/components/work-order-form";
+import RatingSystem from "@/components/rating-system";
+import { useRatingTrigger } from "@/hooks/useRatingTrigger";
 
 interface WorkOrder {
   id: string;
@@ -16,9 +18,14 @@ interface WorkOrder {
   location: string;
   priority: "low" | "medium" | "high" | "urgent";
   status: string;
+  workStatus?: string;
   dueDate?: string;
   assigneeId?: string;
   assignee?: {
+    firstName: string;
+    lastName: string;
+  };
+  createdBy?: {
     firstName: string;
     lastName: string;
   };
@@ -118,6 +125,11 @@ export default function ClientWorkOrders() {
         }
       ]
     }
+  });
+
+  // Rating trigger hook
+  const { ratingTrigger, closeRatingDialog, isRatingDialogOpen } = useRatingTrigger({
+    workOrders: workOrders || []
   });
 
   // Filter work orders to show only relevant ones for clients
@@ -300,6 +312,15 @@ export default function ClientWorkOrders() {
               setIsCreateDialogOpen(false);
               // Refresh work orders list - the query will automatically refetch
             }}
+          />
+        )}
+
+        {/* Rating System Dialog */}
+        {ratingTrigger && (
+          <RatingSystem
+            workOrder={ratingTrigger.workOrder}
+            isOpen={isRatingDialogOpen}
+            onClose={closeRatingDialog}
           />
         )}
       </div>

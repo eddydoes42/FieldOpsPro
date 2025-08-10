@@ -202,6 +202,47 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Client ratings for service companies (3 categories: Administration, Field Team, Overall)
+export const clientServiceRatings = pgTable("client_service_ratings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  clientId: varchar("client_id").notNull().references(() => users.id),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  // Rating categories (1-5 stars each)
+  administrationRating: integer("administration_rating").notNull(), // Rating for managers/dispatchers
+  fieldTeamRating: integer("field_team_rating").notNull(), // Rating for field agents
+  overallRating: integer("overall_rating").notNull(), // Overall satisfaction
+  // Optional feedback for each category
+  administrationFeedback: text("administration_feedback"),
+  fieldTeamFeedback: text("field_team_feedback"),
+  overallFeedback: text("overall_feedback"),
+  // Related users for context
+  managerId: varchar("manager_id").references(() => users.id), // Manager associated with work order
+  dispatcherId: varchar("dispatcher_id").references(() => users.id), // Dispatcher associated with work order
+  fieldAgentId: varchar("field_agent_id").references(() => users.id), // Field agent who completed work
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Service company ratings for clients (3 categories: Communication, Requirements Clarity, Payment Promptness)
+export const serviceClientRatings = pgTable("service_client_ratings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  raterId: varchar("rater_id").notNull().references(() => users.id), // Service company user giving rating
+  clientId: varchar("client_id").notNull().references(() => users.id),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  // Rating categories (1-5 stars each)
+  communicationRating: integer("communication_rating").notNull(), // How well client communicated
+  requirementsClarityRating: integer("requirements_clarity_rating").notNull(), // How clear client's requirements were
+  paymentRating: integer("payment_rating").notNull(), // Payment promptness and reliability
+  // Optional feedback for each category
+  communicationFeedback: text("communication_feedback"),
+  requirementsFeedback: text("requirements_feedback"),
+  paymentFeedback: text("payment_feedback"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
@@ -234,6 +275,8 @@ export const workOrdersRelations = relations(workOrders, ({ one, many }) => ({
   tasks: many(workOrderTasks),
   issues: many(workOrderIssues),
   notifications: many(notifications),
+  clientServiceRatings: many(clientServiceRatings),
+  serviceClientRatings: many(serviceClientRatings),
 }));
 
 export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
@@ -297,6 +340,52 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+export const clientServiceRatingsRelations = relations(clientServiceRatings, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [clientServiceRatings.workOrderId],
+    references: [workOrders.id],
+  }),
+  client: one(users, {
+    fields: [clientServiceRatings.clientId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [clientServiceRatings.companyId],
+    references: [companies.id],
+  }),
+  manager: one(users, {
+    fields: [clientServiceRatings.managerId],
+    references: [users.id],
+  }),
+  dispatcher: one(users, {
+    fields: [clientServiceRatings.dispatcherId],
+    references: [users.id],
+  }),
+  fieldAgent: one(users, {
+    fields: [clientServiceRatings.fieldAgentId],
+    references: [users.id],
+  }),
+}));
+
+export const serviceClientRatingsRelations = relations(serviceClientRatings, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [serviceClientRatings.workOrderId],
+    references: [workOrders.id],
+  }),
+  rater: one(users, {
+    fields: [serviceClientRatings.raterId],
+    references: [users.id],
+  }),
+  client: one(users, {
+    fields: [serviceClientRatings.clientId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [serviceClientRatings.companyId],
+    references: [companies.id],
+  }),
+}));
+
 // Role validation schema
 export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_agent', 'client'])).min(1);
 
@@ -350,6 +439,18 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   confirmedAt: true,
 });
 
+export const insertClientServiceRatingSchema = createInsertSchema(clientServiceRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertServiceClientRatingSchema = createInsertSchema(serviceClientRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
   createdAt: true,
@@ -380,6 +481,12 @@ export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type ClientServiceRating = typeof clientServiceRatings.$inferSelect;
+export type InsertClientServiceRating = z.infer<typeof insertClientServiceRatingSchema>;
+
+export type ServiceClientRating = typeof serviceClientRatings.$inferSelect;
+export type InsertServiceClientRating = z.infer<typeof insertServiceClientRatingSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
