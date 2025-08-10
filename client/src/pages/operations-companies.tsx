@@ -200,11 +200,11 @@ export default function OperationsCompanies() {
 
   // Navigation handlers for Performance Overview cards
   const handleOnboardedUsersClick = (companyId: string) => {
-    // Navigate to team management page
-    setLocation(`/team`);
+    // Navigate to team management page with company filter
+    setLocation(`/team?company=${companyId}`);
     toast({
       title: "Navigating to Team Management",
-      description: `Showing users for company: ${selectedCompany?.name || companyId}`,
+      description: `Showing users for company: ${selectedCompany?.name || 'Selected Company'}`,
     });
   };
 

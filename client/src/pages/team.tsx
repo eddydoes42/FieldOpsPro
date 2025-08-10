@@ -28,12 +28,14 @@ export default function TeamPage() {
   const [editedUser, setEditedUser] = useState<any>({});
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
 
-  // Check URL parameters for initial role and status filters
+  // Check URL parameters for initial role, status, and company filters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const roleParam = urlParams.get('role');
     const statusParam = urlParams.get('status');
+    const companyParam = urlParams.get('company');
     
     if (roleParam && ['administrator', 'manager', 'dispatcher', 'field_agent'].includes(roleParam)) {
       setRoleFilter(roleParam);
@@ -41,6 +43,10 @@ export default function TeamPage() {
     
     if (statusParam && ['active', 'inactive'].includes(statusParam)) {
       setStatusFilter(statusParam);
+    }
+    
+    if (companyParam) {
+      setCompanyFilter(companyParam);
     }
   }, []);
 
@@ -61,6 +67,11 @@ export default function TeamPage() {
 
   const { data: allUsers, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
+    enabled: !!user && canManageUsers(user as any),
+  });
+
+  const { data: companies } = useQuery({
+    queryKey: ["/api/companies"],
     enabled: !!user && canManageUsers(user as any),
   });
 
@@ -288,7 +299,28 @@ export default function TeamPage() {
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-foreground">Team Management</h1>
-            <p className="text-muted-foreground mt-2">Manage your team members and their accounts</p>
+            <p className="text-muted-foreground mt-2">
+              {companyFilter !== "all" && companies ? 
+                `Showing team members for ${(companies as any[]).find(c => c.id === companyFilter)?.name || 'Selected Company'}` :
+                "Manage your team members and their accounts"
+              }
+            </p>
+            {companyFilter !== "all" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setCompanyFilter("all");
+                  // Update URL to remove company parameter
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete('company');
+                  window.history.pushState({}, '', url.toString());
+                }}
+                className="mt-2"
+              >
+                Clear Company Filter
+              </Button>
+            )}
           </div>
         </div>
 
@@ -381,6 +413,31 @@ export default function TeamPage() {
                       All Status
                     </Button>
                   </div>
+
+                  {/* Company Filters */}
+                  {companies && (companies as any[]).length > 0 && (
+                    <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                      {(companies as any[]).map((company: any) => (
+                        <Button
+                          key={company.id}
+                          variant={companyFilter === company.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCompanyFilter(company.id)}
+                          className="text-xs"
+                        >
+                          {company.name}
+                        </Button>
+                      ))}
+                      <Button
+                        variant={companyFilter === "all" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCompanyFilter("all")}
+                        className="text-xs"
+                      >
+                        All Companies
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -406,6 +463,10 @@ export default function TeamPage() {
                     if (statusFilter === "active") return userData.isActive !== false;
                     if (statusFilter === "inactive") return userData.isActive === false;
                     return true;
+                  })
+                  .filter((userData: any) => {
+                    if (companyFilter === "all") return true;
+                    return userData.companyId === companyFilter;
                   })
                   .map((userData: any): React.ReactElement => (
                   <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
