@@ -189,24 +189,28 @@ export default function TalentNetwork() {
       </div>
 
       {/* Header */}
-      <div>
+      <div className="space-y-4">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Talent Network</h1>
+        
         {assignmentWorkOrderId ? (
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center gap-2">
-              <p className="text-blue-600 dark:text-blue-400 font-medium">
-                Assigning agent to: <span className="font-bold">"{assignmentWorkOrderTitle}"</span>
-              </p>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
-                Assignment Mode
-              </Badge>
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <p className="text-blue-700 dark:text-blue-300 font-medium">
+                  Assigning agent to:
+                </p>
+                <span className="font-bold text-gray-900 dark:text-white">"{assignmentWorkOrderTitle}"</span>
+                <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700 w-fit">
+                  Assigning
+                </Badge>
+              </div>
+              <Button variant="outline" onClick={cancelAssignment} className="w-fit">
+                Cancel
+              </Button>
             </div>
-            <Button variant="outline" onClick={cancelAssignment}>
-              Cancel Assignment
-            </Button>
           </div>
         ) : (
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-gray-600 dark:text-gray-400">
             Browse field agents from all partner companies
           </p>
         )}
