@@ -264,7 +264,9 @@ function Router() {
                   return (
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
-                      <JobNetwork />
+                      <Suspense fallback={<div className="p-4">Loading job network...</div>}>
+                        <JobNetwork />
+                      </Suspense>
                     </div>
                   );
                 }
