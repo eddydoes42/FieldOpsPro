@@ -441,73 +441,6 @@ export default function WorkOrderCardPopup({
             </CardContent>
           </Card>
 
-          {/* Additional Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Wrench className="h-4 w-4" />
-                Work Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="scopeOfWork">Scope of Work</Label>
-                {isEditing ? (
-                  <Textarea
-                    id="scopeOfWork"
-                    value={editForm.scopeOfWork}
-                    onChange={(e) => setEditForm({...editForm, scopeOfWork: e.target.value})}
-                    rows={3}
-                    placeholder="Describe the work to be performed..."
-                  />
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">
-                    {workOrder.scopeOfWork || 'No scope of work specified'}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="requiredTools">Required Tools</Label>
-                {isEditing ? (
-                  <Textarea
-                    id="requiredTools"
-                    value={editForm.requiredTools}
-                    onChange={(e) => setEditForm({...editForm, requiredTools: e.target.value})}
-                    rows={2}
-                    placeholder="List any special tools or equipment needed..."
-                  />
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">
-                    {workOrder.requiredTools || 'No special tools required'}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="pointOfContact">Point of Contact</Label>
-                {isEditing ? (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <Input
-                      id="pointOfContact"
-                      value={editForm.pointOfContact}
-                      onChange={(e) => setEditForm({...editForm, pointOfContact: e.target.value})}
-                      placeholder="Name and contact information"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 mt-1">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-300">
-                      {workOrder.pointOfContact || 'No point of contact specified'}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Budget Information */}
           <Card>
             <CardHeader>
@@ -614,6 +547,73 @@ export default function WorkOrderCardPopup({
                     </p>
                   )}
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Work Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Wrench className="h-4 w-4" />
+                Work Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="scopeOfWork">Scope of Work</Label>
+                {isEditing ? (
+                  <Textarea
+                    id="scopeOfWork"
+                    value={editForm.scopeOfWork}
+                    onChange={(e) => setEditForm({...editForm, scopeOfWork: e.target.value})}
+                    rows={3}
+                    placeholder="Describe the work to be performed..."
+                  />
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    {workOrder.scopeOfWork || 'No scope of work specified'}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="requiredTools">Required Tools</Label>
+                {isEditing ? (
+                  <Textarea
+                    id="requiredTools"
+                    value={editForm.requiredTools}
+                    onChange={(e) => setEditForm({...editForm, requiredTools: e.target.value})}
+                    rows={2}
+                    placeholder="List any special tools or equipment needed..."
+                  />
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    {workOrder.requiredTools || 'No special tools required'}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="pointOfContact">Point of Contact</Label>
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <Input
+                      id="pointOfContact"
+                      value={editForm.pointOfContact}
+                      onChange={(e) => setEditForm({...editForm, pointOfContact: e.target.value})}
+                      placeholder="Name and contact information"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-600 dark:text-gray-300">
+                      {workOrder.pointOfContact || 'No point of contact specified'}
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

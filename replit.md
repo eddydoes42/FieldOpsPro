@@ -29,14 +29,15 @@ The application features a modern design built on Tailwind CSS and shadcn/ui, pr
 ### Key Features
 - **Role-based Dashboards**: Administrator, Manager, Dispatcher, Field Agent, and Client specific interfaces.
 - **Work Order Management**: Creation, assignment, status tracking (Scheduled to Mark Complete), and task dependencies.
-- **Task Management System**: Pre-visit, on-site, and post-site task tracking for work orders.
+- **Task Management System**: Fully functional task creation, completion tracking, and category organization (Pre-visit, On-site, Post-site).
 - **Time Tracking System**: Real-time check-in/check-out, active timer display, and logged time calculation.
-- **Budget Management System**: Mandatory budget creation (fixed, hourly, per-device) for administrators and managers.
+- **Budget Management System**: Comprehensive budget creation (fixed, hourly, per-device, materials+labor) with dynamic total calculation.
 - **Client Management System**: Dedicated client dashboard for work order creation, job network access, and field agent request system.
 - **Bidirectional Star Rating System**: Comprehensive rating system between clients and service companies with auto-triggering and specific categories.
 - **Multiple Role Assignment**: Users can hold multiple roles simultaneously with priority logic.
 - **Restricted Authentication**: Login limited to pre-approved team members; no self-registration.
 - **Operations Director Role Testing Feature**: Advanced role switching for system testing.
+- **Interactive Work Order Popup**: Enhanced layout with Budget Information positioned above Work Details for improved workflow.
 
 ## External Dependencies
 
