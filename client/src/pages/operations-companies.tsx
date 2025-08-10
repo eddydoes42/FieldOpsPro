@@ -23,6 +23,7 @@ export default function OperationsCompanies() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Partial<Company>>({});
   const [showSuccessRatePopup, setShowSuccessRatePopup] = useState(false);
   const [showRecentAssignedPopup, setShowRecentAssignedPopup] = useState(false);
@@ -70,6 +71,28 @@ export default function OperationsCompanies() {
     onError: (error: any) => {
       console.error("Update company error:", error);
       toast({ title: "Failed to update company", variant: "destructive" });
+    }
+  });
+
+  const createCompanyMutation = useMutation({
+    mutationFn: async (companyData: Partial<Company>) => {
+      const response = await fetch('/api/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(companyData),
+      });
+      if (!response.ok) throw new Error('Failed to create company');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+      toast({ title: "Company created successfully" });
+      setShowCreateDialog(false);
+      setEditingCompany({});
+    },
+    onError: (error: any) => {
+      console.error("Create company error:", error);
+      toast({ title: "Failed to create company", variant: "destructive" });
     }
   });
 
@@ -306,7 +329,10 @@ export default function OperationsCompanies() {
             Service Companies
           </h1>
           <Button 
-            onClick={() => setLocation('/operations-dashboard')}
+            onClick={() => {
+              setEditingCompany({});
+              setShowCreateDialog(true);
+            }}
             className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -835,6 +861,137 @@ export default function OperationsCompanies() {
                 className="h-9"
               >
                 {updateCompanyMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Company Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader className="pb-3">
+              <DialogTitle>Add New Company</DialogTitle>
+            </DialogHeader>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="new-company-name" className="text-sm">Company Name *</Label>
+                <Input
+                  id="new-company-name"
+                  value={editingCompany.name || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter company name"
+                  className="h-9"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="new-company-email" className="text-sm">Email</Label>
+                <Input
+                  id="new-company-email"
+                  type="email"
+                  value={editingCompany.email || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="company@example.com"
+                  className="h-9"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="new-company-phone" className="text-sm">Phone</Label>
+                <Input
+                  id="new-company-phone"
+                  value={editingCompany.phone || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="(555) 123-4567"
+                  className="h-9"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="new-company-website" className="text-sm">Website</Label>
+                <Input
+                  id="new-company-website"
+                  value={editingCompany.website || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, website: e.target.value }))}
+                  placeholder="https://company.com"
+                  className="h-9"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <Label htmlFor="new-company-description" className="text-sm">Description</Label>
+                <Textarea
+                  id="new-company-description"
+                  value={editingCompany.description || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter company description"
+                  rows={2}
+                  className="resize-none"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <Label htmlFor="new-company-address" className="text-sm">Address</Label>
+                <Input
+                  id="new-company-address"
+                  value={editingCompany.address || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="123 Main Street"
+                  className="h-9"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="new-company-city" className="text-sm">City</Label>
+                <Input
+                  id="new-company-city"
+                  value={editingCompany.city || ''}
+                  onChange={(e) => setEditingCompany(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="City"
+                  className="h-9"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="new-company-state" className="text-sm">State</Label>
+                  <Input
+                    id="new-company-state"
+                    value={editingCompany.state || ''}
+                    onChange={(e) => setEditingCompany(prev => ({ ...prev, state: e.target.value }))}
+                    placeholder="State"
+                    className="h-9"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="new-company-zip" className="text-sm">ZIP Code</Label>
+                  <Input
+                    id="new-company-zip"
+                    value={editingCompany.zipCode || ''}
+                    onChange={(e) => setEditingCompany(prev => ({ ...prev, zipCode: e.target.value }))}
+                    placeholder="12345"
+                    className="h-9"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="h-9">
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editingCompany.name) {
+                    createCompanyMutation.mutate(editingCompany);
+                  }
+                }}
+                disabled={createCompanyMutation.isPending || !editingCompany.name}
+                className="h-9"
+              >
+                {createCompanyMutation.isPending ? 'Creating...' : 'Create Company'}
               </Button>
             </div>
           </DialogContent>

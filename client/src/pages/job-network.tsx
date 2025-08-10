@@ -304,7 +304,6 @@ export default function JobNetwork() {
                         </Button>
                       </div>
                     </div>
-                    </div>
                   </DialogContent>
                   </Dialog>
                 )}

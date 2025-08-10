@@ -581,7 +581,7 @@ export default function ClientDashboard() {
       {/* Work Order Details Popup */}
       {selectedWorkOrder && (
         <WorkOrderCardPopup
-          workOrder={selectedWorkOrder}
+          workOrder={selectedWorkOrder as any}
           isOpen={showWorkOrderPopup}
           onClose={() => {
             setShowWorkOrderPopup(false);
