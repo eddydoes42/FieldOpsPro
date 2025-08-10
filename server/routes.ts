@@ -368,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("canManageUsers:", canManageUsers(currentUser), "isClient:", isClient(currentUser));
       
       // Allow management users, clients, and operations directors to create work orders
-      if (!currentUser || (!canManageUsers(currentUser) && !isClient(currentUser) && !isOperationsDirector(currentUser))) {
+      if (!currentUser || (!canManageUsers(currentUser) && !isClient(currentUser) && !isOperationsDirector(currentUser || null))) {
         console.log("Permission denied for work order creation");
         return res.status(403).json({ message: "Insufficient permissions" });
       }
@@ -1520,7 +1520,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/client/work-orders', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !currentUser.roles.includes('client')) {
+      const isClientRole = currentUser?.roles.includes('client');
+      const isOperationsDirectorTesting = isOperationsDirector(currentUser || null) && req.headers['x-testing-role'] === 'client';
+      
+      if (!currentUser || (!isClientRole && !isOperationsDirectorTesting)) {
         return res.status(403).json({ message: "Access denied. Client role required." });
       }
 
@@ -1536,7 +1539,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/client/assignment-requests', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !currentUser.roles.includes('client')) {
+      const isClientRole = currentUser?.roles.includes('client');
+      const isOperationsDirectorTesting = isOperationsDirector(currentUser || null) && req.headers['x-testing-role'] === 'client';
+      
+      if (!currentUser || (!isClientRole && !isOperationsDirectorTesting)) {
         return res.status(403).json({ message: "Access denied. Client role required." });
       }
 

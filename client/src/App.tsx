@@ -58,6 +58,8 @@ function Router() {
     setPermanentRole(null);
     localStorage.removeItem('selectedRole');
     setTestingRole(role);
+    // Store testing role for API headers
+    localStorage.setItem('testingRole', role);
   };
 
   const handlePermanentRoleSwitch = (role: string) => {
@@ -65,6 +67,7 @@ function Router() {
     localStorage.setItem('selectedRole', role);
     // Clear any testing role when switching permanently
     setTestingRole(null);
+    localStorage.removeItem('testingRole');
   };
   
 

@@ -12,9 +12,12 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const baseHeaders = data ? { "Content-Type": "application/json" } : {};
+  const testingHeaders = getTestingRoleHeaders();
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: { ...baseHeaders, ...testingHeaders },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -24,13 +27,30 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+// Get testing role from localStorage for API headers
+function getTestingRoleHeaders(): Record<string, string> {
+  if (typeof window !== 'undefined') {
+    const testingRole = localStorage.getItem('testingRole');
+    const permanentRole = localStorage.getItem('selectedRole');
+    const effectiveTestingRole = permanentRole || testingRole;
+    
+    if (effectiveTestingRole) {
+      return { 'x-testing-role': effectiveTestingRole };
+    }
+  }
+  return {};
+}
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const headers = getTestingRoleHeaders();
+    
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
