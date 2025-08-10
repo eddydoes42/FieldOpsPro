@@ -23,7 +23,9 @@ import {
   UserCheck,
   Award,
   UserPlus,
-  CheckCircle
+  CheckCircle,
+  Home,
+  ArrowLeft
 } from "lucide-react";
 
 interface FieldAgent {
@@ -166,6 +168,26 @@ export default function TalentNetwork() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Navigation Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate('/dashboard')}
+          className="hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <Home className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => window.history.back()}
+          className="hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Talent Network</h1>

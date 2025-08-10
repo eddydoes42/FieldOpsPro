@@ -39,7 +39,7 @@ The application features a modern design built on Tailwind CSS and shadcn/ui, pr
 - **Operations Director Role Testing Feature**: Advanced role switching for system testing with proper dashboard navigation.
 - **Interactive Work Order Popup**: Enhanced layout with Budget Information positioned above Work Details for improved workflow.
 - **Talent Network Page**: New page accessible to clients showing field agent cards from all companies with clickable detailed agent profiles and company associations.
-- **Icon-Based Navigation**: Complete transition from text-based "Back to Dashboard" buttons to intuitive Home (🏠) and Back (←) icons across all pages.
+- **Icon-Based Navigation**: Complete transition from text-based "Back to Dashboard" buttons to intuitive Home (🏠) and Back (←) icons across all pages including Talent Network.
 
 ## External Dependencies
 
