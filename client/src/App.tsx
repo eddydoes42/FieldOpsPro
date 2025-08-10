@@ -31,6 +31,8 @@ import FloatingQuickAction from "@/components/floating-quick-action";
 // Lazy load ClientDashboard and ClientWorkOrders
 const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
 const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
+const JobNetwork = React.lazy(() => import('@/pages/job-network'));
+const TalentNetwork = React.lazy(() => import('@/pages/talent-network'));
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -242,25 +244,12 @@ function Router() {
                 </Suspense>
               </div>
             </Route>
-            <Route path="/messages">
-              <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
-                {isAuthenticated ? <Messages /> : <Landing />}
-              </div>
-            </Route>
-            <Route path="/calendar">
-              <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
-                {isAuthenticated ? <Calendar /> : <Landing />}
-              </div>
-            </Route>
             <Route path="/job-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
                 
                 if (isAuthenticated && hasJobNetworkAccess) {
-                  const JobNetwork = React.lazy(() => import('@/pages/job-network'));
                   return (
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
@@ -272,6 +261,36 @@ function Router() {
                 }
                 return <Landing />;
               })()}
+            </Route>
+            <Route path="/talent-network">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasTalentNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
+                
+                if (isAuthenticated && hasTalentNetworkAccess) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                      <Suspense fallback={<div className="p-4">Loading talent network...</div>}>
+                        <TalentNetwork />
+                      </Suspense>
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+            <Route path="/messages">
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                {isAuthenticated ? <Messages /> : <Landing />}
+              </div>
+            </Route>
+            <Route path="/calendar">
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                {isAuthenticated ? <Calendar /> : <Landing />}
+              </div>
             </Route>
             <Route path="/time-tracking">
               <div>

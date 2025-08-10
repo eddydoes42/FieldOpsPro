@@ -152,6 +152,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           links: [
             { path: '/client-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+            { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
             { path: '/client/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]

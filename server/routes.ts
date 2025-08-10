@@ -173,6 +173,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Field agents route - get all field agents for talent network (accessible to clients)
+  app.get('/api/users/field-agents', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Allow access to clients and service company roles
+      const hasAccess = hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client']) || 
+                       isClient(currentUser);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const fieldAgents = await storage.getFieldAgents();
+      res.json(fieldAgents);
+    } catch (error) {
+      console.error("Error fetching field agents:", error);
+      res.status(500).json({ message: "Failed to fetch field agents" });
+    }
+  });
+
   app.get('/api/users/role/:role', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);

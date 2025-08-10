@@ -41,6 +41,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUsersByRole(role: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
+  getFieldAgents(): Promise<User[]>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
 
   // Company operations
@@ -193,6 +194,63 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getFieldAgents(): Promise<User[]> {
+    // Get all users with field_agent role, including their company information
+    const fieldAgentsWithCompanies = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        phone: users.phone,
+        address: users.address,
+        city: users.city,
+        state: users.state,
+        zipCode: users.zipCode,
+        roles: users.roles,
+        isActive: users.isActive,
+        companyId: users.companyId,
+        companyName: companies.name,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
+      .from(users)
+      .leftJoin(companies, eq(users.companyId, companies.id))
+      .where(sql`'field_agent' = ANY(${users.roles})`)
+      .orderBy(users.firstName, users.lastName);
+
+    // Transform the data to include company information and additional agent details
+    return fieldAgentsWithCompanies.map(agent => ({
+      id: agent.id,
+      firstName: agent.firstName,
+      lastName: agent.lastName,
+      email: agent.email,
+      phone: agent.phone,
+      address: agent.address,
+      city: agent.city,
+      state: agent.state,
+      zipCode: agent.zipCode,
+      roles: agent.roles,
+      isActive: agent.isActive,
+      companyId: agent.companyId,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
+      company: agent.companyName ? {
+        id: agent.companyId,
+        name: agent.companyName
+      } : undefined,
+      // Add additional agent-specific fields for talent network
+      location: agent.city && agent.state ? `${agent.city}, ${agent.state}` : null,
+      specializations: ['Network Installation', 'Hardware Setup'], // TODO: Make this dynamic
+      rating: 4.8, // TODO: Calculate from actual ratings
+      completedJobs: Math.floor(Math.random() * 50) + 10, // TODO: Get from actual work orders
+      yearsExperience: Math.floor(Math.random() * 10) + 2, // TODO: Calculate or store
+      certifications: ['CompTIA Network+', 'Cisco CCNA'], // TODO: Make this dynamic
+      availability: agent.isActive ? 'Available' : 'Unavailable',
+      lastActive: agent.updatedAt?.toISOString() || agent.createdAt?.toISOString()
+    } as any));
   }
 
   async updateUser(id: string, updates: Partial<InsertUser>): Promise<User> {
