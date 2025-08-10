@@ -107,7 +107,15 @@ export default function ManagerDashboard() {
         currentActiveRole={localStorage.getItem('permanentRole') || 'manager'} 
         onPermanentRoleSwitch={(role) => {
           localStorage.setItem('permanentRole', role);
-          window.location.reload();
+          localStorage.setItem('selectedRole', role);
+          // Navigate to appropriate dashboard based on role
+          if (role === 'operations_director') {
+            window.location.href = '/operations-dashboard';
+          } else if (role === 'administrator') {
+            window.location.href = '/admin-dashboard';
+          } else {
+            window.location.href = '/dashboard';
+          }
         }}
       />
 
