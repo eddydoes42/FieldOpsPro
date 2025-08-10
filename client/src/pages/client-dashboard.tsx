@@ -557,6 +557,7 @@ export default function ClientDashboard() {
       {/* Create Work Order Dialog */}
       {showCreateWorkOrder && (
         <WorkOrderForm
+          isClient={true}
           onClose={() => setShowCreateWorkOrder(false)}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
