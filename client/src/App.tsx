@@ -28,8 +28,9 @@ import TimeTracking from "@/pages/time-tracking";
 import NotFound from "@/pages/not-found";
 import FloatingQuickAction from "@/components/floating-quick-action";
 
-// Lazy load ClientDashboard
+// Lazy load ClientDashboard and ClientWorkOrders
 const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
+const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -225,13 +226,30 @@ function Router() {
               )}
             </Route>
             <Route path="/work-orders">
-              {isAuthenticated ? <WorkOrders /> : <Landing />}
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                {isAuthenticated ? <WorkOrders /> : <Landing />}
+              </div>
+            </Route>
+            <Route path="/client/work-orders">
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <Suspense fallback={<div className="p-4">Loading...</div>}>
+                  <ClientWorkOrders />
+                </Suspense>
+              </div>
             </Route>
             <Route path="/messages">
-              {isAuthenticated ? <Messages /> : <Landing />}
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                {isAuthenticated ? <Messages /> : <Landing />}
+              </div>
             </Route>
             <Route path="/calendar">
-              {isAuthenticated ? <Calendar /> : <Landing />}
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                {isAuthenticated ? <Calendar /> : <Landing />}
+              </div>
             </Route>
             <Route path="/job-network">
               {(() => {
@@ -251,7 +269,10 @@ function Router() {
               })()}
             </Route>
             <Route path="/time-tracking">
-              {isAuthenticated ? <TimeTracking /> : <Landing />}
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                {isAuthenticated ? <TimeTracking /> : <Landing />}
+              </div>
             </Route>
             <Route path="/job-network">
               {canViewJobNetwork(user as any) ? (

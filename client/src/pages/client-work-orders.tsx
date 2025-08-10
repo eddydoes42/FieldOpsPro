@@ -153,26 +153,26 @@ export default function ClientWorkOrders() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-4">
-            <Link href="/client-dashboard">
+            <Link to="/dashboard">
               <Button variant="ghost" size="sm" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Dashboard
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Work Orders</h1>
-              <p className="text-gray-600 dark:text-gray-300">Track your submitted work order requests and assignments</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">My Work Orders</h1>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Track your submitted work order requests and assignments</p>
             </div>
           </div>
           
           {/* Create Work Order Button */}
           <Button 
             onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             Create Work Order
@@ -294,6 +294,7 @@ export default function ClientWorkOrders() {
         {/* Work Order Creation Dialog */}
         {isCreateDialogOpen && (
           <WorkOrderForm 
+            isClient={true}
             onClose={() => setIsCreateDialogOpen(false)}
             onSuccess={() => {
               setIsCreateDialogOpen(false);

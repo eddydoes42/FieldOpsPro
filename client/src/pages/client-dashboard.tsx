@@ -326,15 +326,12 @@ export default function ClientDashboard() {
                 <p className="text-gray-600 dark:text-gray-400 text-center mb-4">
                   Create your first work order to get started
                 </p>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowCreateWorkOrder(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  View Work Orders
-                </Button>
+                <Link to="/client/work-orders">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    View Work Orders
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ) : (
