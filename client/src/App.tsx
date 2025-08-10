@@ -119,17 +119,17 @@ function Router() {
     // Store testing role for API headers
     localStorage.setItem('testingRole', role);
     
-    // Force re-render by updating location if we're on a dashboard page
-    const currentPath = location;
-    if (currentPath.includes('dashboard') || currentPath.includes('operations') || currentPath.includes('admin')) {
-      // Navigate to the appropriate dashboard based on the new role
-      if (role === 'operations_director') {
-        setLocation('/operations-dashboard');
-      } else if (role === 'administrator') {
-        setLocation('/admin-dashboard');
-      } else {
-        setLocation('/dashboard');
-      }
+    // Navigate to the appropriate dashboard based on the new role
+    if (role === 'operations_director') {
+      setLocation('/operations-dashboard');
+    } else if (role === 'administrator') {
+      setLocation('/admin-dashboard');
+    } else if (role === 'manager') {
+      setLocation('/manager-dashboard');
+    } else if (role === 'client') {
+      setLocation('/client-dashboard');
+    } else {
+      setLocation('/dashboard');
     }
   };
 
