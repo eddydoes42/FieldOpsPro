@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, MapPin, AlertTriangle, User, Calendar, Plus } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, AlertTriangle, User, Calendar, Plus, UserPlus } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import WorkOrderForm from "@/components/work-order-form";
 import RatingSystem from "@/components/rating-system";
+import WorkOrderCardPopup from "@/components/work-order-card-popup";
 import { useRatingTrigger } from "@/hooks/useRatingTrigger";
 
 interface WorkOrder {
@@ -68,7 +69,9 @@ const getRequestStatusColor = (status?: string) => {
 
 export default function ClientWorkOrders() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
 
   // Fetch client's work orders
   const { data: workOrders = [], isLoading } = useQuery<WorkOrder[]>({
@@ -209,11 +212,15 @@ export default function ClientWorkOrders() {
         ) : (
           <div className="space-y-4">
             {filteredWorkOrders.map((order) => (
-              <Card key={order.id} className="border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+              <Card 
+                key={order.id} 
+                className="border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => setSelectedWorkOrder(order)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {order.title}
                       </CardTitle>
                       <div className="flex flex-wrap gap-2 mb-3">
@@ -229,6 +236,22 @@ export default function ClientWorkOrders() {
                           </Badge>
                         )}
                       </div>
+                    </div>
+
+                    {/* Assignment Status Indicator */}
+                    <div className="flex items-center gap-2 ml-4">
+                      {order.assignee ? (
+                        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
+                          <User className="h-4 w-4" />
+                          <span className="hidden sm:inline">{order.assignee.firstName} {order.assignee.lastName}</span>
+                          <span className="sm:hidden">Assigned</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                          <UserPlus className="h-4 w-4" />
+                          <span className="hidden sm:inline">Unassigned</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -248,13 +271,6 @@ export default function ClientWorkOrders() {
                       <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <Calendar className="h-4 w-4" />
                         <span>Due: {new Date(order.dueDate).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                    
-                    {order.assignee && (
-                      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                        <User className="h-4 w-4" />
-                        <span>Assigned to: {order.assignee.firstName} {order.assignee.lastName}</span>
                       </div>
                     )}
                     
@@ -297,6 +313,11 @@ export default function ClientWorkOrders() {
                       </p>
                     )}
                   </div>
+
+                  {/* Click to view details hint */}
+                  <div className="mt-3 text-xs text-gray-400 dark:text-gray-500 text-center group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
+                    Click to view details and edit
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -312,6 +333,20 @@ export default function ClientWorkOrders() {
               setIsCreateDialogOpen(false);
               // Refresh work orders list - the query will automatically refetch
             }}
+          />
+        )}
+
+        {/* Work Order Details Popup */}
+        {selectedWorkOrder && (
+          <WorkOrderCardPopup
+            workOrder={selectedWorkOrder}
+            isOpen={true}
+            onClose={() => setSelectedWorkOrder(null)}
+            onUpdate={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
+              setSelectedWorkOrder(null);
+            }}
+            canEdit={true}
           />
         )}
 

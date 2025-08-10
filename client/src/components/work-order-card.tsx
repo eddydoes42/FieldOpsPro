@@ -42,7 +42,7 @@ export default function WorkOrderCard({ workOrder, onStatusChange, showActions =
             <p className="text-sm text-gray-600 mt-1">{workOrder.description}</p>
           </div>
           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2 ${getStatusColor(workOrder.status)}`}>
-            {workOrder.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {workOrder.status?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
           </span>
         </div>
         
