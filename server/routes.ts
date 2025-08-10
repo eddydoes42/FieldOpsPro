@@ -1447,8 +1447,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/job-network/work-orders', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
-        return res.status(403).json({ message: "Access denied. Management role required." });
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+        return res.status(403).json({ message: "Access denied. Management or client role required." });
       }
 
       const workOrders = await storage.getJobNetworkWorkOrders();
@@ -1463,8 +1463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/job-network/request-assignment', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
-        return res.status(403).json({ message: "Access denied. Management role required." });
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+        return res.status(403).json({ message: "Access denied. Management or client role required." });
       }
 
       const { workOrderId, agentId, notes } = req.body;
@@ -1484,8 +1484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/users/field-agents', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
-        return res.status(403).json({ message: "Access denied. Management role required." });
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+        return res.status(403).json({ message: "Access denied. Management or client role required." });
       }
 
       const fieldAgents = await storage.getFieldAgents();
