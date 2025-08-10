@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -33,6 +33,59 @@ const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
 const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
 const JobNetwork = React.lazy(() => import('@/pages/job-network'));
 const TalentNetwork = React.lazy(() => import('@/pages/talent-network'));
+
+// Dashboard Route Component
+function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
+  const selectedRole = localStorage.getItem('selectedRole');
+  const hasOpsDirector = isOperationsDirector(user as any);
+  const hasAdmin = hasRole(user as any, 'administrator');
+  const effectiveRole = getEffectiveRole();
+  
+  // Handle redirect to role selection
+  useEffect(() => {
+    if (hasOpsDirector && hasAdmin && !selectedRole && !testingRole && !permanentRole) {
+      setLocation('/choose-role');
+    }
+  }, [hasOpsDirector, hasAdmin, selectedRole, testingRole, permanentRole, setLocation]);
+  
+  // If user needs to choose role, show loading until redirect
+  if (hasOpsDirector && hasAdmin && !selectedRole && !testingRole && !permanentRole) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  const DashboardContent = () => {
+    // Use effective role for dashboard rendering
+    if (effectiveRole === 'operations_director') {
+      return <OperationsDirectorDashboard />;
+    } else if (effectiveRole === 'administrator') {
+      return <AdminDashboard />;
+    } else if (effectiveRole === 'manager') {
+      return <ManagerDashboard />;
+    } else if (effectiveRole === 'field_agent') {
+      return <AgentDashboard />;
+    } else if (effectiveRole === 'client') {
+      return (
+        <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
+          <ClientDashboard />
+        </Suspense>
+      );
+    } else {
+      return <Landing />;
+    }
+  };
+
+  return (
+    <div>
+      {/* Role switcher for operations directors */}
+      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+      <DashboardContent />
+    </div>
+  );
+}
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -96,47 +149,14 @@ function Router() {
               <RoleSelection user={user} />
             </Route>
             <Route path="/dashboard">
-              {(() => {
-                const selectedRole = localStorage.getItem('selectedRole');
-                const hasOpsDirector = isOperationsDirector(user as any);
-                const hasAdmin = hasRole(user as any, 'administrator');
-                const effectiveRole = getEffectiveRole();
-                
-                // If user has both operations director and admin roles and hasn't chosen, redirect to role selection
-                if (hasOpsDirector && hasAdmin && !selectedRole && !testingRole && !permanentRole) {
-                  setLocation('/choose-role');
-                  return null;
-                }
-                
-                const DashboardContent = () => {
-                  // Use effective role for dashboard rendering
-                  if (effectiveRole === 'operations_director') {
-                    return <OperationsDirectorDashboard />;
-                  } else if (effectiveRole === 'administrator') {
-                    return <AdminDashboard />;
-                  } else if (effectiveRole === 'manager') {
-                    return <ManagerDashboard />;
-                  } else if (effectiveRole === 'field_agent') {
-                    return <AgentDashboard />;
-                  } else if (effectiveRole === 'client') {
-                    return (
-                      <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
-                        <ClientDashboard />
-                      </Suspense>
-                    );
-                  } else {
-                    return <Landing />;
-                  }
-                };
-
-                return (
-                  <div>
-                    {/* Role switcher for operations directors */}
-                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
-                    <DashboardContent />
-                  </div>
-                );
-              })()}
+              <DashboardRoute 
+                user={user}
+                getEffectiveRole={getEffectiveRole}
+                handleRoleSwitch={handleRoleSwitch}
+                testingRole={testingRole}
+                permanentRole={permanentRole}
+                setLocation={setLocation}
+              />
             </Route>
             <Route path="/operations-dashboard">
               {(() => {
