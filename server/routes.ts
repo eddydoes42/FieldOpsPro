@@ -87,7 +87,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: onboardingData.lastName,
         roles: onboardingData.roles || ['field_agent'],
         phone: onboardingData.phone || null,
-        profileImageUrl: null
+        profileImageUrl: null,
+        // Associate with company if provided
+        companyId: onboardingData.companyId || null
       };
 
       // Add manual login credentials if provided

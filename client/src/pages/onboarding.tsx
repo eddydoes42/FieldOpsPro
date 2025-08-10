@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { isAdmin } from "../../../shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
-import { useEffect } from "react";
+
 import { useLocation } from "wouter";
 import { ArrowLeft, Home } from "lucide-react";
 
@@ -43,6 +43,7 @@ export default function Onboarding() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<OnboardingFormData>({
     firstName: "",
@@ -66,6 +67,15 @@ export default function Onboarding() {
     clientRole: ""
   });
 
+  // Check for company parameter in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const companyParam = urlParams.get('company');
+    if (companyParam) {
+      setPreselectedCompanyId(companyParam);
+    }
+  }, []);
+
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -83,7 +93,12 @@ export default function Onboarding() {
 
   const onboardingMutation = useMutation({
     mutationFn: async (data: OnboardingFormData) => {
-      const response = await apiRequest('POST', '/api/users/onboard', data);
+      // Add company association if preselected
+      const submitData = preselectedCompanyId 
+        ? { ...data, companyId: preselectedCompanyId }
+        : data;
+      
+      const response = await apiRequest('POST', '/api/users/onboard', submitData);
       return await response.json();
     },
     onSuccess: () => {
@@ -241,6 +256,14 @@ export default function Onboarding() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Member Onboarding</h1>
+          {preselectedCompanyId && (
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-blue-700 dark:text-blue-300">
+                <i className="fas fa-info-circle mr-2"></i>
+                This user will be added to the selected company's team database.
+              </p>
+            </div>
+          )}
         </div>
 
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">

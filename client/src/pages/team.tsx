@@ -333,7 +333,11 @@ export default function TeamPage() {
                 {/* Add Team Member Button - Show only for administrators */}
                 {(user as any).roles?.includes('administrator') && (
                   <Button
-                    onClick={() => setLocation('/onboarding')}
+                    onClick={() => {
+                      // Pass company context if filtering by a specific company
+                      const url = companyFilter !== "all" ? `/onboarding?company=${companyFilter}` : '/onboarding';
+                      setLocation(url);
+                    }}
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
                     size="sm"
                   >
