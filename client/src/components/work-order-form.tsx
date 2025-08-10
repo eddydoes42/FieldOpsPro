@@ -119,7 +119,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
       setTasks([]);
       onSuccess();
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Work order creation error:", error);
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -131,15 +133,30 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
         }, 500);
         return;
       }
+      
+      // Try to extract specific error message
+      let errorMessage = "Failed to create work order.";
+      if (error?.response?.text) {
+        try {
+          const errorData = JSON.parse(error.response.text);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // Use default message if parsing fails
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create work order.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: any) => {
+    console.log("Submitting work order data:", { ...data, isClient, tasks });
     createWorkOrderMutation.mutate(data);
   };
 
