@@ -347,6 +347,7 @@ export default function ClientWorkOrders() {
               setSelectedWorkOrder(null);
             }}
             canEdit={true}
+            isClient={true}
           />
         )}
 

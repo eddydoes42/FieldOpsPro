@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import { 
   Edit, 
   Save, 
@@ -65,6 +66,7 @@ interface WorkOrderCardPopupProps {
   onClose: () => void;
   onUpdate?: () => void;
   canEdit?: boolean;
+  isClient?: boolean;
 }
 
 export default function WorkOrderCardPopup({ 
@@ -72,9 +74,11 @@ export default function WorkOrderCardPopup({
   isOpen, 
   onClose, 
   onUpdate,
-  canEdit = true 
+  canEdit = true,
+  isClient = false 
 }: WorkOrderCardPopupProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [, navigate] = useLocation();
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [newTaskForm, setNewTaskForm] = useState({
     title: '',
@@ -119,6 +123,17 @@ export default function WorkOrderCardPopup({
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Handle unassigned button click for clients
+  const handleUnassignedClick = () => {
+    if (isClient) {
+      // Store the work order ID in session storage for assignment flow
+      sessionStorage.setItem('assignmentWorkOrderId', workOrder.id);
+      sessionStorage.setItem('assignmentWorkOrderTitle', workOrder.title);
+      onClose(); // Close the popup
+      navigate('/talent-network'); // Navigate to talent network
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -318,10 +333,20 @@ export default function WorkOrderCardPopup({
                       <span>Assigned to: {workOrder.assignee.firstName} {workOrder.assignee.lastName}</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleUnassignedClick}
+                      disabled={!isClient}
+                      className={`flex items-center gap-2 text-sm h-auto px-3 py-2 rounded-lg ${
+                        isClient 
+                          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer' 
+                          : 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
+                      }`}
+                    >
                       <UserPlus className="h-4 w-4" />
                       <span>Unassigned</span>
-                    </div>
+                    </Button>
                   )}
                 </div>
               </div>

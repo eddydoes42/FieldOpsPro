@@ -587,10 +587,11 @@ export default function ClientDashboard() {
             setShowWorkOrderPopup(false);
             setSelectedWorkOrder(null);
           }}
-          onSave={(updatedWorkOrder: any) => {
-            // Handle work order updates if needed for client view
+          onUpdate={() => {
             queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
           }}
+          canEdit={false}
+          isClient={true}
         />
       )}
       </div>

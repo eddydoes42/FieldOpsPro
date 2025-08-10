@@ -1636,6 +1636,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct work order assignment endpoint - for immediate assignment
+  app.patch('/api/work-orders/:workOrderId/assign', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+        return res.status(403).json({ message: "Access denied. Management or client role required." });
+      }
+
+      const { workOrderId } = req.params;
+      const { assigneeId } = req.body;
+
+      if (!assigneeId) {
+        return res.status(400).json({ message: "Assignee ID is required" });
+      }
+
+      // Update the work order with the direct assignment
+      const result = await storage.assignWorkOrderAgent(workOrderId, assigneeId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error assigning work order:", error);
+      res.status(500).json({ message: "Failed to assign work order" });
+    }
+  });
+
   // Get field agents for assignment selection
   app.get('/api/users/field-agents', isAuthenticated, async (req: any, res) => {
     try {

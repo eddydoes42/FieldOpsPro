@@ -77,6 +77,7 @@ export interface IStorage {
   updateWorkOrder(id: string, updates: Partial<InsertWorkOrder>): Promise<WorkOrder>;
   updateWorkOrderStatus(id: string, updateData: any): Promise<WorkOrder>;
   deleteWorkOrder(id: string): Promise<void>;
+  assignWorkOrderAgent(workOrderId: string, assigneeId: string): Promise<WorkOrder>;
 
   // Time Entry operations
   createTimeEntry(timeEntry: InsertTimeEntry): Promise<TimeEntry>;
@@ -1082,6 +1083,24 @@ export class DatabaseStorage implements IStorage {
         requestedAgentId: agentId,
         requestedById: requestedById,
         requestedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(workOrders.id, workOrderId))
+      .returning();
+
+    return updatedWorkOrder;
+  }
+
+  async assignWorkOrderAgent(workOrderId: string, assigneeId: string): Promise<WorkOrder> {
+    // Direct assignment - update work order with assignee
+    const [updatedWorkOrder] = await db
+      .update(workOrders)
+      .set({
+        assigneeId: assigneeId,
+        requestStatus: null,
+        requestedAgentId: null,
+        requestedById: null,
+        requestedAt: null,
         updatedAt: new Date()
       })
       .where(eq(workOrders.id, workOrderId))

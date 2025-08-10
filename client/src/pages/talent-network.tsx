@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import { 
   User, 
   MapPin, 
@@ -18,7 +21,9 @@ import {
   Search,
   Filter,
   UserCheck,
-  Award
+  Award,
+  UserPlus,
+  CheckCircle
 } from "lucide-react";
 
 interface FieldAgent {
@@ -45,6 +50,21 @@ export default function TalentNetwork() {
   const [selectedAgent, setSelectedAgent] = useState<FieldAgent | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [companyFilter, setCompanyFilter] = useState("all");
+  const [assignmentWorkOrderId, setAssignmentWorkOrderId] = useState<string | null>(null);
+  const [assignmentWorkOrderTitle, setAssignmentWorkOrderTitle] = useState<string>('');
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Check if we're in assignment mode
+  useEffect(() => {
+    const workOrderId = sessionStorage.getItem('assignmentWorkOrderId');
+    const workOrderTitle = sessionStorage.getItem('assignmentWorkOrderTitle');
+    if (workOrderId) {
+      setAssignmentWorkOrderId(workOrderId);
+      setAssignmentWorkOrderTitle(workOrderTitle || '');
+    }
+  }, []);
 
   // Fetch field agents from all companies
   const { data: fieldAgents, isLoading } = useQuery({
@@ -75,6 +95,57 @@ export default function TalentNetwork() {
     setSelectedAgent(null);
   };
 
+  // Assign agent mutation
+  const assignAgentMutation = useMutation({
+    mutationFn: async (agentId: string) => {
+      return apiRequest(`/api/work-orders/${assignmentWorkOrderId}/assign`, {
+        method: 'PATCH',
+        body: JSON.stringify({ assigneeId: agentId }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Assignment Successful",
+        description: `Agent assigned to "${assignmentWorkOrderTitle}" successfully.`,
+      });
+      
+      // Clear assignment session data
+      sessionStorage.removeItem('assignmentWorkOrderId');
+      sessionStorage.removeItem('assignmentWorkOrderTitle');
+      setAssignmentWorkOrderId(null);
+      setAssignmentWorkOrderTitle('');
+      
+      // Invalidate work orders cache to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/client/work-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
+      
+      // Navigate back to work orders or dashboard
+      navigate('/client/work-orders');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Assignment Failed",
+        description: error.message || "Failed to assign agent to work order.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle agent assignment
+  const handleAssignAgent = (agentId: string, agentName: string) => {
+    if (assignmentWorkOrderId) {
+      assignAgentMutation.mutate(agentId);
+    }
+  };
+
+  // Cancel assignment mode
+  const cancelAssignment = () => {
+    sessionStorage.removeItem('assignmentWorkOrderId');
+    sessionStorage.removeItem('assignmentWorkOrderTitle');
+    setAssignmentWorkOrderId(null);
+    setAssignmentWorkOrderTitle('');
+  };
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -98,9 +169,25 @@ export default function TalentNetwork() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Talent Network</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Browse field agents from all partner companies
-        </p>
+        {assignmentWorkOrderId ? (
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-2">
+              <p className="text-blue-600 dark:text-blue-400 font-medium">
+                Assigning agent to: <span className="font-bold">"{assignmentWorkOrderTitle}"</span>
+              </p>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                Assignment Mode
+              </Badge>
+            </div>
+            <Button variant="outline" onClick={cancelAssignment}>
+              Cancel Assignment
+            </Button>
+          </div>
+        ) : (
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Browse field agents from all partner companies
+          </p>
+        )}
       </div>
 
       {/* Search and Filter Controls */}
@@ -142,9 +229,34 @@ export default function TalentNetwork() {
         {filteredAgents.map((agent: FieldAgent) => (
           <Card
             key={agent.id}
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-l-4 border-l-blue-500"
+            className={`cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-l-4 relative ${
+              assignmentWorkOrderId 
+                ? 'border-l-green-500 hover:border-l-green-600' 
+                : 'border-l-blue-500'
+            }`}
             onClick={() => handleAgentClick(agent)}
           >
+            {/* Assignment Mode - Green Plus Icon */}
+            {assignmentWorkOrderId && (
+              <div className="absolute top-2 right-2 z-10">
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    handleAssignAgent(agent.id, `${agent.firstName} ${agent.lastName}`);
+                  }}
+                  disabled={assignAgentMutation.isPending}
+                  className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-700 text-white p-0 shadow-lg"
+                >
+                  {assignAgentMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  ) : (
+                    <UserPlus className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            )}
+            
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
