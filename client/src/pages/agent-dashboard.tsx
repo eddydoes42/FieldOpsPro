@@ -8,6 +8,7 @@ import Navigation from "@/components/navigation";
 import TimeTracker from "@/components/time-tracker";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { hasRole, isOperationsDirector } from "../../../shared/schema";
 
 export default function AgentDashboard() {
   const { toast } = useToast();
@@ -93,7 +94,13 @@ export default function AgentDashboard() {
     );
   }
 
-  if ((user as any).role !== 'field_agent') {
+  // Check if user can access field agent dashboard (either actual field agent or operations director testing)
+  const testingRole = localStorage.getItem('testingRole');
+  const canAccessAgentDashboard = hasRole(user as any, 'field_agent') || 
+    (isOperationsDirector(user as any) && testingRole === 'field_agent') ||
+    testingRole === 'field_agent';
+
+  if (!canAccessAgentDashboard) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
