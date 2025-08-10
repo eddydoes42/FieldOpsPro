@@ -364,13 +364,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/work-orders', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      // Allow both management users and clients to create work orders
-      if (!currentUser || (!canManageUsers(currentUser) && !isClient(currentUser))) {
+      console.log("Work order creation - User:", currentUser?.email, "Roles:", currentUser?.roles);
+      console.log("canManageUsers:", canManageUsers(currentUser), "isClient:", isClient(currentUser));
+      
+      // Allow management users, clients, and operations directors to create work orders
+      if (!currentUser || (!canManageUsers(currentUser) && !isClient(currentUser) && !isOperationsDirector(currentUser))) {
+        console.log("Permission denied for work order creation");
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
       // Transform the data to match schema expectations
-      const isClientUser = isClient(currentUser);
+      // Check if this should be treated as a client-created work order
+      // (either user is actual client OR operations director testing client role via UI)
+      const isClientUser = isClient(currentUser) || (isOperationsDirector(currentUser) && req.body.isClientCreated);
       const workOrderData = {
         id: `wo-${Date.now()}`, // Generate unique ID
         title: req.body.title,
