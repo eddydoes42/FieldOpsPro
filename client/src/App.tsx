@@ -90,7 +90,10 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
-  const [testingRole, setTestingRole] = useState<string | null>(null);
+  const [testingRole, setTestingRole] = useState<string | null>(() => {
+    // Initialize testing role from localStorage
+    return localStorage.getItem('testingRole');
+  });
   const [permanentRole, setPermanentRole] = useState<string | null>(() => {
     // Initialize permanent role from localStorage
     return localStorage.getItem('selectedRole');
@@ -115,6 +118,19 @@ function Router() {
     setTestingRole(role);
     // Store testing role for API headers
     localStorage.setItem('testingRole', role);
+    
+    // Force re-render by updating location if we're on a dashboard page
+    const currentPath = location;
+    if (currentPath.includes('dashboard') || currentPath.includes('operations') || currentPath.includes('admin')) {
+      // Navigate to the appropriate dashboard based on the new role
+      if (role === 'operations_director') {
+        setLocation('/operations-dashboard');
+      } else if (role === 'administrator') {
+        setLocation('/admin-dashboard');
+      } else {
+        setLocation('/dashboard');
+      }
+    }
   };
 
   const handlePermanentRoleSwitch = (role: string) => {
