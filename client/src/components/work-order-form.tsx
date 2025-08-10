@@ -378,6 +378,111 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       )}
                     </div>
                   </div>
+
+                  {/* Task Management for Client */}
+                  <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">📋 Add Tasks (Optional)</h4>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Category</label>
+                          <Select 
+                            value={newTask.category} 
+                            onValueChange={(value) => setNewTask({ ...newTask, category: value as any })}
+                          >
+                            <SelectTrigger className="mt-1 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pre_visit">🚗 Pre-Site</SelectItem>
+                              <SelectItem value="on_site">🔧 On-Site</SelectItem>
+                              <SelectItem value="post_site">📋 Post-Site</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Task Title</label>
+                          <Input
+                            value={newTask.title}
+                            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                            placeholder="Enter task title"
+                            className="mt-1 h-8"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
+                        <Textarea
+                          value={newTask.description}
+                          onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                          placeholder="Enter task description"
+                          rows={1}
+                          className="mt-1 min-h-[32px]"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleAddTask}
+                        size="sm"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Task to Work Order
+                      </Button>
+                    </div>
+
+                    {/* Tasks List for Client */}
+                    {tasks.length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        {['pre_visit', 'on_site', 'post_site'].map(category => {
+                          const categoryTasks = tasks.filter(task => task.category === category);
+                          if (categoryTasks.length === 0) return null;
+                          
+                          return (
+                            <div key={category}>
+                              <h5 className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-1">
+                                {getCategoryLabel(category)} ({categoryTasks.length})
+                              </h5>
+                              <div className="space-y-1">
+                                {categoryTasks.map((task, index) => {
+                                  const globalIndex = tasks.findIndex(t => t === task);
+                                  return (
+                                    <div
+                                      key={globalIndex}
+                                      className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <Badge className={getCategoryColor(task.category)} variant="secondary">
+                                            {getCategoryLabel(task.category)}
+                                          </Badge>
+                                          <span className="font-medium text-sm">{task.title}</span>
+                                        </div>
+                                        {task.description && (
+                                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            {task.description}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRemoveTask(globalIndex)}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </>
               ) : (
                 // Full management form
