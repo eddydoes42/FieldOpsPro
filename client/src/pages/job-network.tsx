@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Building2, Calendar, Clock, DollarSign, MapPin, User, Users, AlertCircle, CheckCircle, Send, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
-import { canViewJobNetwork } from "@shared/schema";
+import { canViewJobNetwork, hasAnyRole } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 interface WorkOrder {
@@ -55,6 +55,9 @@ export default function JobNetwork() {
   const [selectedAgent, setSelectedAgent] = useState<string>("");
   const [requestNotes, setRequestNotes] = useState("");
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+
+  // Check if user can request assignments (service company roles only)
+  const canRequestAssignment = hasAnyRole(user as any, ['administrator', 'manager', 'dispatcher']);
 
   // Access is already checked in App.tsx routing, so we can remove this duplicate check
 
@@ -137,9 +140,8 @@ export default function JobNetwork() {
           </p>
         </div>
         <Link href="/dashboard">
-          <Button variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
       </div>
@@ -223,26 +225,27 @@ export default function JobNetwork() {
                   </div>
                 )}
 
-                {/* Action Button */}
-                <Dialog open={isRequestDialogOpen && selectedWorkOrder?.id === workOrder.id} 
-                       onOpenChange={(open) => {
-                         setIsRequestDialogOpen(open);
-                         if (!open) {
-                           setSelectedWorkOrder(null);
-                           setSelectedAgent("");
-                           setRequestNotes("");
-                         }
-                       }}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      className="w-full"
-                      disabled={workOrder.requestStatus === 'request_sent' || workOrder.requestStatus === 'request_accepted'}
-                      onClick={() => setSelectedWorkOrder(workOrder)}
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      {workOrder.requestStatus ? 'View Request' : 'Request Assignment'}
-                    </Button>
-                  </DialogTrigger>
+                {/* Action Button - Only for service company roles */}
+                {canRequestAssignment && (
+                  <Dialog open={isRequestDialogOpen && selectedWorkOrder?.id === workOrder.id} 
+                         onOpenChange={(open) => {
+                           setIsRequestDialogOpen(open);
+                           if (!open) {
+                             setSelectedWorkOrder(null);
+                             setSelectedAgent("");
+                             setRequestNotes("");
+                           }
+                         }}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        className="w-full"
+                        disabled={workOrder.requestStatus === 'request_sent' || workOrder.requestStatus === 'request_accepted'}
+                        onClick={() => setSelectedWorkOrder(workOrder)}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        {workOrder.requestStatus ? 'View Request' : 'Request Assignment'}
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Request Field Agent Assignment</DialogTitle>
@@ -301,8 +304,10 @@ export default function JobNetwork() {
                         </Button>
                       </div>
                     </div>
+                    </div>
                   </DialogContent>
-                </Dialog>
+                  </Dialog>
+                )}
               </CardContent>
             </Card>
           ))}

@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import WorkOrderForm from "@/components/work-order-form";
+import WorkOrderCardPopup from "@/components/work-order-card-popup";
 
 interface WorkOrder {
   id: string;
@@ -31,6 +32,8 @@ interface WorkOrder {
     firstName: string;
     lastName: string;
   };
+  isClientCreated?: boolean;
+  createdAt?: string;
 }
 
 interface AgentPerformance {
@@ -72,6 +75,8 @@ interface AssignmentRequest {
 export default function ClientDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
+  const [showWorkOrderPopup, setShowWorkOrderPopup] = useState(false);
 
   const [selectedRequest, setSelectedRequest] = useState<AssignmentRequest | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -337,7 +342,14 @@ export default function ClientDashboard() {
           ) : (
             <div className="grid gap-4">
               {workOrders.map((workOrder) => (
-                <Card key={workOrder.id}>
+                <Card 
+                  key={workOrder.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => {
+                    setSelectedWorkOrder(workOrder);
+                    setShowWorkOrderPopup(true);
+                  }}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg">{workOrder.title}</CardTitle>
@@ -562,6 +574,22 @@ export default function ClientDashboard() {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
             setShowCreateWorkOrder(false);
+          }}
+        />
+      )}
+
+      {/* Work Order Details Popup */}
+      {selectedWorkOrder && (
+        <WorkOrderCardPopup
+          workOrder={selectedWorkOrder}
+          isOpen={showWorkOrderPopup}
+          onClose={() => {
+            setShowWorkOrderPopup(false);
+            setSelectedWorkOrder(null);
+          }}
+          onSave={(updatedWorkOrder: any) => {
+            // Handle work order updates if needed for client view
+            queryClient.invalidateQueries({ queryKey: ["/api/client/work-orders"] });
           }}
         />
       )}
