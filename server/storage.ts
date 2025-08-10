@@ -508,10 +508,23 @@ export class DatabaseStorage implements IStorage {
     return timeEntry;
   }
 
-  async getActiveTimeEntry(userId: string): Promise<TimeEntry | undefined> {
+  async getActiveTimeEntry(userId: string): Promise<any> {
     const [activeEntry] = await db
-      .select()
+      .select({
+        id: timeEntries.id,
+        userId: timeEntries.userId,
+        workOrderId: timeEntries.workOrderId,
+        startTime: timeEntries.startTime,
+        endTime: timeEntries.endTime,
+        breakDuration: timeEntries.breakDuration,
+        notes: timeEntries.notes,
+        isActive: timeEntries.isActive,
+        createdAt: timeEntries.createdAt,
+        updatedAt: timeEntries.updatedAt,
+        workOrderTitle: workOrders.title,
+      })
       .from(timeEntries)
+      .leftJoin(workOrders, eq(timeEntries.workOrderId, workOrders.id))
       .where(and(eq(timeEntries.userId, userId), eq(timeEntries.isActive, true)));
     return activeEntry;
   }
