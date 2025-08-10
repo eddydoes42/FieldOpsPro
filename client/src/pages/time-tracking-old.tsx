@@ -197,11 +197,10 @@ export default function TimeTracking() {
                   {activeTimeEntry ? 'Active' : 'Inactive'}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {activeTimeEntry ? 'Currently tracking time' : 'Not tracking time'}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+                {activeTimeEntry ? 'Currently tracking time' : 'Not tracking time'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Work Order Breakdown */}

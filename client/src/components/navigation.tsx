@@ -140,10 +140,10 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
         return {
           badge: { text: roleDisplay, icon: 'fas fa-tools', color: 'bg-orange-900/30 text-orange-300 border-orange-800/50' },
           links: [
-            { path: '/agent-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
-            { path: '/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
-            { path: '/calendar', label: 'Schedule', icon: 'fas fa-calendar-alt' },
-            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+            { path: '/field-agent/my-work', label: 'My Work', icon: 'fas fa-clipboard-list' },
+            { path: '/time-tracking', label: 'Time', icon: 'fas fa-clock' },
+            { path: '/team', label: 'My Team', icon: 'fas fa-users' },
+            { path: '/field-agent/settings', label: 'Settings', icon: 'fas fa-cog' },
           ]
         };
       case 'client':
@@ -161,10 +161,10 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
         return {
           badge: { text: 'Field Agent', icon: 'fas fa-tools', color: 'bg-gray-900/30 text-gray-300 border-gray-800/50' },
           links: [
-            { path: '/agent-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
-            { path: '/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
-            { path: '/calendar', label: 'Schedule', icon: 'fas fa-calendar-alt' },
-            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+            { path: '/field-agent/my-work', label: 'My Work', icon: 'fas fa-clipboard-list' },
+            { path: '/time-tracking', label: 'Time', icon: 'fas fa-clock' },
+            { path: '/team', label: 'My Team', icon: 'fas fa-users' },
+            { path: '/field-agent/settings', label: 'Settings', icon: 'fas fa-cog' },
           ]
         };
     }

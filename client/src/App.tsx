@@ -27,6 +27,8 @@ import Calendar from "@/pages/calendar";
 import TimeTracking from "@/pages/time-tracking";
 import NotFound from "@/pages/not-found";
 import FloatingQuickAction from "@/components/floating-quick-action";
+import FieldAgentWork from "@/pages/field-agent-work";
+import FieldAgentSettings from "@/pages/field-agent-settings";
 
 // Lazy load ClientDashboard and ClientWorkOrders
 const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
@@ -375,6 +377,42 @@ function Router() {
                         })()}
                       </div>
                     </Suspense>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+            <Route path="/field-agent/my-work">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const isFieldAgent = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent';
+                
+                if (isAuthenticated && isFieldAgent) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                      )}
+                      <FieldAgentWork />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+            <Route path="/field-agent/settings">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const isFieldAgent = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent';
+                
+                if (isAuthenticated && isFieldAgent) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                      )}
+                      <FieldAgentSettings />
+                    </div>
                   );
                 }
                 return <Landing />;
