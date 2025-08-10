@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +75,12 @@ export default function WorkOrderCardPopup({
   canEdit = true 
 }: WorkOrderCardPopupProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [showAddTaskForm, setShowAddTaskForm] = useState(false);
+  const [newTaskForm, setNewTaskForm] = useState({
+    title: '',
+    description: '',
+    category: 'on_site' as 'pre_visit' | 'on_site' | 'post_site'
+  });
 
   // Calculate total available budget based on budget type
   const calculateTotalBudget = () => {
@@ -130,6 +136,50 @@ export default function WorkOrderCardPopup({
         title: "Update failed",
         description: error.message || "Failed to update work order",
         variant: "destructive"
+      });
+    }
+  });
+
+  // Fetch work order tasks
+  const { data: tasks, refetch: refetchTasks } = useQuery({
+    queryKey: [`/api/work-orders/${workOrder.id}/tasks`],
+    enabled: isOpen,
+  });
+
+  // Create task mutation
+  const createTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
+      return apiRequest("POST", `/api/work-orders/${workOrder.id}/tasks`, taskData);
+    },
+    onSuccess: () => {
+      refetchTasks();
+      setShowAddTaskForm(false);
+      setNewTaskForm({ title: '', description: '', category: 'on_site' });
+      toast({ title: "Task created successfully!" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create task",
+        description: error.message || "Could not create task",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Toggle task completion mutation
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ taskId, isCompleted }: { taskId: string; isCompleted: boolean }) => {
+      return apiRequest("PATCH", `/api/work-order-tasks/${taskId}`, { isCompleted });
+    },
+    onSuccess: () => {
+      refetchTasks();
+      toast({ title: "Task updated successfully!" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update task",
+        description: error.message || "Could not update task",
+        variant: "destructive",
       });
     }
   });
@@ -580,10 +630,8 @@ export default function WorkOrderCardPopup({
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => {
-                      // TODO: Implement add task functionality
-                      toast({ title: "Add task functionality coming soon!" });
-                    }}
+                    onClick={() => setShowAddTaskForm(true)}
+                    disabled={showAddTaskForm}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task
@@ -593,32 +641,113 @@ export default function WorkOrderCardPopup({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {/* Sample tasks - in real implementation, these would come from API */}
-                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                  <div className="flex items-center gap-2 mt-1">
-                    <Square className="h-4 w-4 text-gray-400" />
+                {/* Add Task Form */}
+                {showAddTaskForm && (
+                  <div className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="taskTitle">Task Title</Label>
+                        <Input
+                          id="taskTitle"
+                          value={newTaskForm.title}
+                          onChange={(e) => setNewTaskForm({...newTaskForm, title: e.target.value})}
+                          placeholder="Enter task title"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="taskDescription">Description</Label>
+                        <Input
+                          id="taskDescription"
+                          value={newTaskForm.description}
+                          onChange={(e) => setNewTaskForm({...newTaskForm, description: e.target.value})}
+                          placeholder="Enter task description"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="taskCategory">Category</Label>
+                        <Select
+                          value={newTaskForm.category}
+                          onValueChange={(value) => setNewTaskForm({...newTaskForm, category: value as 'pre_visit' | 'on_site' | 'post_site'})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pre_visit">Pre-Visit</SelectItem>
+                            <SelectItem value="on_site">On-Site</SelectItem>
+                            <SelectItem value="post_site">Post-Site</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => createTaskMutation.mutate(newTaskForm)}
+                          disabled={!newTaskForm.title || createTaskMutation.isPending}
+                          size="sm"
+                        >
+                          Create Task
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowAddTaskForm(false);
+                            setNewTaskForm({ title: '', description: '', category: 'on_site' });
+                          }}
+                          size="sm"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">Pre-visit site survey</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Complete before arriving on-site</p>
-                  </div>
-                  <Badge variant="outline" className="text-xs">Pending</Badge>
-                </div>
+                )}
 
-                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                  <div className="flex items-center gap-2 mt-1">
-                    <CheckSquare className="h-4 w-4 text-green-600 dark:text-green-400" />
+                {/* Existing Tasks */}
+                {tasks && tasks.length > 0 ? (
+                  tasks.map((task: any) => (
+                    <div key={task.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 mt-1">
+                        <button
+                          onClick={() => toggleTaskMutation.mutate({ taskId: task.id, isCompleted: !task.isCompleted })}
+                          disabled={toggleTaskMutation.isPending}
+                        >
+                          {task.isCompleted ? (
+                            <CheckSquare className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <Square className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">{task.title}</h4>
+                        {task.description && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{task.description}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {task.category === 'pre_visit' ? 'Pre-Visit' : 
+                             task.category === 'on_site' ? 'On-Site' : 'Post-Site'}
+                          </Badge>
+                          {task.isCompleted && task.completedAt && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              Completed {new Date(task.completedAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Badge 
+                        variant={task.isCompleted ? "secondary" : "outline"} 
+                        className={`text-xs ${task.isCompleted ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : ''}`}
+                      >
+                        {task.isCompleted ? 'Completed' : 'Pending'}
+                      </Badge>
+                    </div>
+                  ))
+                ) : !showAddTaskForm ? (
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                    No tasks added yet. Click "Add Task" to create one.
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">Equipment inventory check</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Verify all required equipment is available</p>
-                  </div>
-                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Completed</Badge>
-                </div>
-
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                  Full task management system coming soon
-                </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>
