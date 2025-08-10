@@ -91,9 +91,9 @@ export const workOrders = pgTable("work_orders", {
   completedAt: timestamp("completed_at"),
   confirmedAt: timestamp("confirmed_at"), // when agent confirms the work order
   // Budget tracking fields
-  budgetType: varchar("budget_type"), // fixed, hourly, per_device
+  budgetType: varchar("budget_type"), // fixed, hourly, per_device, materials_plus_labor
   budgetAmount: decimal("budget_amount", { precision: 10, scale: 2 }), // base budget amount
-  devicesInstalled: integer("devices_installed"), // only used when budget_type is per_device
+  devicesInstalled: integer("devices_installed"), // number of devices for per_device budget type
   budgetCreatedById: varchar("budget_created_by_id").references(() => users.id),
   budgetCreatedAt: timestamp("budget_created_at"),
   // Payment workflow fields

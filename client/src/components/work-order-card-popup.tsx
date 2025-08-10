@@ -56,6 +56,7 @@ interface WorkOrder {
   budgetType?: string;
   budgetAmount?: string;
   estimatedHours?: number;
+  devicesInstalled?: number;
 }
 
 interface WorkOrderCardPopupProps {
@@ -74,6 +75,27 @@ export default function WorkOrderCardPopup({
   canEdit = true 
 }: WorkOrderCardPopupProps) {
   const [isEditing, setIsEditing] = useState(false);
+
+  // Calculate total available budget based on budget type
+  const calculateTotalBudget = () => {
+    const budgetAmount = parseFloat(editForm.budgetAmount || workOrder.budgetAmount || '0');
+    const estimatedHours = parseFloat(editForm.estimatedHours || workOrder.estimatedHours?.toString() || '0');
+    const devicesInstalled = parseInt(editForm.devicesInstalled || workOrder.devicesInstalled?.toString() || '0');
+    const budgetType = editForm.budgetType || workOrder.budgetType;
+
+    switch (budgetType) {
+      case 'fixed':
+        return budgetAmount;
+      case 'hourly':
+        return budgetAmount * estimatedHours;
+      case 'per_device':
+        return budgetAmount * devicesInstalled;
+      case 'materials_plus_labor':
+        return budgetAmount; // Base amount for materials + labor
+      default:
+        return budgetAmount;
+    }
+  };
   const [editForm, setEditForm] = useState({
     title: workOrder.title || '',
     description: workOrder.description || '',
@@ -82,6 +104,7 @@ export default function WorkOrderCardPopup({
     dueDate: workOrder.dueDate ? workOrder.dueDate.split('T')[0] : '',
     budgetType: workOrder.budgetType || '',
     budgetAmount: workOrder.budgetAmount || '',
+    devicesInstalled: workOrder.devicesInstalled?.toString() || '',
     scopeOfWork: workOrder.scopeOfWork || '',
     requiredTools: workOrder.requiredTools || '',
     pointOfContact: workOrder.pointOfContact || '',
@@ -116,6 +139,7 @@ export default function WorkOrderCardPopup({
       ...editForm,
       estimatedHours: editForm.estimatedHours ? parseFloat(editForm.estimatedHours) : null,
       budgetAmount: editForm.budgetAmount ? parseFloat(editForm.budgetAmount) : null,
+      devicesInstalled: editForm.devicesInstalled ? parseInt(editForm.devicesInstalled) : null,
     };
     updateMutation.mutate(updateData);
   };
@@ -128,6 +152,7 @@ export default function WorkOrderCardPopup({
       priority: (workOrder.priority as "low" | "medium" | "high" | "urgent") || 'medium',
       budgetType: workOrder.budgetType || '',
       budgetAmount: workOrder.budgetAmount || '',
+      devicesInstalled: workOrder.devicesInstalled?.toString() || '',
       dueDate: workOrder.dueDate ? workOrder.dueDate.split('T')[0] : '',
       scopeOfWork: workOrder.scopeOfWork || '',
       requiredTools: workOrder.requiredTools || '',
@@ -488,6 +513,55 @@ export default function WorkOrderCardPopup({
                         {workOrder.budgetAmount ? `$${workOrder.budgetAmount}` : 'Not specified'}
                       </span>
                     </div>
+                  )}
+                </div>
+
+                {/* Devices Field - only show for per_device budget type */}
+                {(editForm.budgetType === 'per_device' || workOrder.budgetType === 'per_device') && (
+                  <div className="grid grid-cols-1 gap-4 mt-4">
+                    <div>
+                      <Label htmlFor="devicesInstalled">Number of Devices</Label>
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-gray-400" />
+                          <Input
+                            id="devicesInstalled"
+                            type="number"
+                            min="0"
+                            value={editForm.devicesInstalled}
+                            onChange={(e) => setEditForm({...editForm, devicesInstalled: e.target.value})}
+                            placeholder="0"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 mt-1">
+                          <DollarSign className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-600 dark:text-gray-300">
+                            {workOrder.devicesInstalled || 'Not specified'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Total Available Budget Display */}
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">Total Available Budget:</span>
+                    <span className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                      ${calculateTotalBudget().toFixed(2)}
+                    </span>
+                  </div>
+                  {(editForm.budgetType === 'hourly' || workOrder.budgetType === 'hourly') && (
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                      ${editForm.budgetAmount || workOrder.budgetAmount || '0'}/hour × {editForm.estimatedHours || workOrder.estimatedHours || '0'} hours
+                    </p>
+                  )}
+                  {(editForm.budgetType === 'per_device' || workOrder.budgetType === 'per_device') && (
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                      ${editForm.budgetAmount || workOrder.budgetAmount || '0'}/device × {editForm.devicesInstalled || workOrder.devicesInstalled || '0'} devices
+                    </p>
                   )}
                 </div>
               </div>
