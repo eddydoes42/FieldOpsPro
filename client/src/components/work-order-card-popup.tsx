@@ -23,7 +23,10 @@ import {
   FileText,
   Wrench,
   Phone,
-  DollarSign
+  DollarSign,
+  Plus,
+  CheckSquare,
+  Square
 } from "lucide-react";
 
 interface WorkOrder {
@@ -75,8 +78,10 @@ export default function WorkOrderCardPopup({
     title: workOrder.title || '',
     description: workOrder.description || '',
     location: workOrder.location || '',
-    priority: workOrder.priority || 'medium',
-    dueDate: workOrder.dueDate ? new Date(workOrder.dueDate).toISOString().split('T')[0] : '',
+    priority: (workOrder.priority as "low" | "medium" | "high" | "urgent") || 'medium',
+    dueDate: workOrder.dueDate ? workOrder.dueDate.split('T')[0] : '',
+    budgetType: workOrder.budgetType || '',
+    budgetAmount: workOrder.budgetAmount || '',
     scopeOfWork: workOrder.scopeOfWork || '',
     requiredTools: workOrder.requiredTools || '',
     pointOfContact: workOrder.pointOfContact || '',
@@ -110,6 +115,7 @@ export default function WorkOrderCardPopup({
     const updateData = {
       ...editForm,
       estimatedHours: editForm.estimatedHours ? parseFloat(editForm.estimatedHours) : null,
+      budgetAmount: editForm.budgetAmount ? parseFloat(editForm.budgetAmount) : null,
     };
     updateMutation.mutate(updateData);
   };
@@ -119,8 +125,10 @@ export default function WorkOrderCardPopup({
       title: workOrder.title || '',
       description: workOrder.description || '',
       location: workOrder.location || '',
-      priority: workOrder.priority || 'medium',
-      dueDate: workOrder.dueDate ? new Date(workOrder.dueDate).toISOString().split('T')[0] : '',
+      priority: (workOrder.priority as "low" | "medium" | "high" | "urgent") || 'medium',
+      budgetType: workOrder.budgetType || '',
+      budgetAmount: workOrder.budgetAmount || '',
+      dueDate: workOrder.dueDate ? workOrder.dueDate.split('T')[0] : '',
       scopeOfWork: workOrder.scopeOfWork || '',
       requiredTools: workOrder.requiredTools || '',
       pointOfContact: workOrder.pointOfContact || '',
@@ -426,28 +434,120 @@ export default function WorkOrderCardPopup({
           </Card>
 
           {/* Budget Information */}
-          {(workOrder.budgetType || workOrder.budgetAmount) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <DollarSign className="h-4 w-4" />
-                  Budget Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Budget Type:</span>
-                    <span className="text-gray-600 dark:text-gray-300">{workOrder.budgetType || 'Not specified'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Budget Amount:</span>
-                    <span className="text-gray-600 dark:text-gray-300">${workOrder.budgetAmount || 'Not specified'}</span>
-                  </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <DollarSign className="h-4 w-4" />
+                Budget Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="budgetType">Budget Type</Label>
+                  {isEditing ? (
+                    <Select value={editForm.budgetType} onValueChange={(value) => setEditForm({...editForm, budgetType: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select budget type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fixed">Fixed</SelectItem>
+                        <SelectItem value="hourly">Hourly Rate</SelectItem>
+                        <SelectItem value="per_device">Per Device</SelectItem>
+                        <SelectItem value="materials_plus_labor">Materials + Labor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <DollarSign className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-600 dark:text-gray-300">
+                        {workOrder.budgetType || 'Not specified'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+
+                <div>
+                  <Label htmlFor="budgetAmount">Budget Amount</Label>
+                  {isEditing ? (
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-gray-400" />
+                      <Input
+                        id="budgetAmount"
+                        type="number"
+                        step="0.01"
+                        value={editForm.budgetAmount}
+                        onChange={(e) => setEditForm({...editForm, budgetAmount: e.target.value})}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <DollarSign className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-600 dark:text-gray-300">
+                        {workOrder.budgetAmount ? `$${workOrder.budgetAmount}` : 'Not specified'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tasks Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-base">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  Tasks
+                </div>
+                {canEdit && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // TODO: Implement add task functionality
+                      toast({ title: "Add task functionality coming soon!" });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Task
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {/* Sample tasks - in real implementation, these would come from API */}
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  <div className="flex items-center gap-2 mt-1">
+                    <Square className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">Pre-visit site survey</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Complete before arriving on-site</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Pending</Badge>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  <div className="flex items-center gap-2 mt-1">
+                    <CheckSquare className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">Equipment inventory check</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Verify all required equipment is available</p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Completed</Badge>
+                </div>
+
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                  Full task management system coming soon
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Metadata */}
           <Card>

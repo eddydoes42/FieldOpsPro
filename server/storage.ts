@@ -409,9 +409,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateWorkOrder(id: string, updates: Partial<InsertWorkOrder>): Promise<WorkOrder> {
+    // Handle date string conversion
+    const processedUpdates = { ...updates };
+    if (processedUpdates.dueDate && typeof processedUpdates.dueDate === 'string') {
+      processedUpdates.dueDate = new Date(processedUpdates.dueDate);
+    }
+    
     const [workOrder] = await db
       .update(workOrders)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...processedUpdates, updatedAt: new Date() })
       .where(eq(workOrders.id, id))
       .returning();
     return workOrder;
