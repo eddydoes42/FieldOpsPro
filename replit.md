@@ -9,6 +9,9 @@ Preferred communication style: Simple, everyday language.
 ## Terminology
 - **Role Tester**: The white bar at the top of the interface
 - **Role Switcher**: The permanent dropdown button that allows users to switch between Operations Director and Admin roles for EDE
+- **Company Creation Form**: Form used to create new companies
+- **User Creation Form**: General form with selectable role categories (like /onboarding) for creating users
+- **Administrator Creation Form**: Specific form for creating administrators
 
 ## System Architecture
 
