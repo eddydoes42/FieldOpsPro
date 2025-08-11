@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, Users, UserPlus, Settings, DollarSign } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
-import RoleSwitcher from "@/components/role-switcher";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
