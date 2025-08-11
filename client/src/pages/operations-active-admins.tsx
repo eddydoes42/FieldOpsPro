@@ -82,10 +82,23 @@ export default function OperationsActiveAdmins() {
   });
 
   const createAdminMutation = useMutation({
-    mutationFn: (data: AdminFormData) => apiRequest('/api/users/onboard', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async (data: AdminFormData) => {
+      const response = await fetch('/api/users/onboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create admin');
+      }
+
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Admin Created Successfully",
@@ -105,7 +118,13 @@ export default function OperationsActiveAdmins() {
   });
 
   const handleSubmit = (data: AdminFormData) => {
-    createAdminMutation.mutate(data);
+    // Transform data before submission
+    const submissionData = {
+      ...data,
+      companyId: data.companyId === 'none' ? null : data.companyId,
+      phone: data.phone || null
+    };
+    createAdminMutation.mutate(submissionData);
   };
 
   return (
