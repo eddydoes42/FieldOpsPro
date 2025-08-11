@@ -146,7 +146,7 @@ export default function OperationsActiveAdmins() {
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card 
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
             onClick={() => setLocation('/team?role=administrator&status=active')}
@@ -179,25 +179,6 @@ export default function OperationsActiveAdmins() {
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {admins.filter(admin => admin.roles.includes('administrator')).length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-750"
-            onClick={() => setLocation('/operations/companies?status=active')}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                <Building2 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Companies Managed
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {new Set(activeAdmins.map(admin => admin.companyId).filter(Boolean)).size}
                   </p>
                 </div>
               </div>
@@ -362,7 +343,7 @@ export default function OperationsActiveAdmins() {
                       <SelectValue placeholder="Select a company (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Company Assignment</SelectItem>
+                      <SelectItem value="none">No Company Assignment</SelectItem>
                       {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name} {!company.isActive && '(Inactive)'}
