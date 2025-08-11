@@ -50,6 +50,7 @@ interface FieldAgent {
 
 export default function TalentNetwork() {
   const [selectedAgent, setSelectedAgent] = useState<FieldAgent | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [companyFilter, setCompanyFilter] = useState("all");
   const [assignmentWorkOrderId, setAssignmentWorkOrderId] = useState<string | null>(null);
@@ -74,21 +75,51 @@ export default function TalentNetwork() {
     queryKey: ['/api/users/field-agents'],
   });
 
-  // Get unique companies for filter dropdown
-  const companies = fieldAgents ? 
-    [...new Set(fieldAgents.map((agent: FieldAgent) => agent.company?.name).filter(Boolean))] : [];
+  // Get unique companies with agent counts
+  const companiesWithAgents = fieldAgents ? 
+    fieldAgents.reduce((acc: any[], agent: FieldAgent) => {
+      if (!agent.company) return acc;
+      
+      const existingCompany = acc.find(c => c.name === agent.company!.name);
+      if (existingCompany) {
+        existingCompany.agents.push(agent);
+        existingCompany.agentCount++;
+      } else {
+        acc.push({
+          id: agent.company.id,
+          name: agent.company.name,
+          agents: [agent],
+          agentCount: 1
+        });
+      }
+      return acc;
+    }, []) : [];
 
-  // Filter agents based on search term and company
-  const filteredAgents = fieldAgents?.filter((agent: FieldAgent) => {
-    const matchesSearch = !searchTerm || 
-      `${agent.firstName} ${agent.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agent.specializations?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCompany = companyFilter === "all" || agent.company?.name === companyFilter;
-    
-    return matchesSearch && matchesCompany;
-  }) || [];
+  // Get agents for selected company
+  const selectedCompanyAgents = selectedCompany 
+    ? companiesWithAgents.find(c => c.name === selectedCompany)?.agents || []
+    : [];
+
+  // Filter agents based on search term and company for company view
+  const filteredAgents = selectedCompany 
+    ? selectedCompanyAgents.filter((agent: FieldAgent) => {
+        return !searchTerm || 
+          `${agent.firstName} ${agent.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          agent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          agent.specializations?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()));
+      })
+    : [];
+
+  // Filter companies based on search term
+  const filteredCompanies = companiesWithAgents.filter((company: any) => {
+    return !searchTerm || 
+      company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.agents.some((agent: FieldAgent) => 
+        `${agent.firstName} ${agent.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        agent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        agent.specializations?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+  });
 
   const handleAgentClick = (agent: FieldAgent) => {
     setSelectedAgent(agent);
@@ -96,6 +127,14 @@ export default function TalentNetwork() {
 
   const closeAgentDetails = () => {
     setSelectedAgent(null);
+  };
+
+  const handleCompanyClick = (companyName: string) => {
+    setSelectedCompany(companyName);
+  };
+
+  const backToCompanies = () => {
+    setSelectedCompany(null);
   };
 
   // Assign agent mutation
@@ -204,7 +243,21 @@ export default function TalentNetwork() {
 
       {/* Header */}
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Talent Network</h1>
+        <div className="flex items-center gap-4">
+          {selectedCompany && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={backToCompanies}
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {selectedCompany ? `${selectedCompany} - Field Agents` : 'Talent Network'}
+          </h1>
+        </div>
         
         {assignmentWorkOrderId ? (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -225,48 +278,101 @@ export default function TalentNetwork() {
           </div>
         ) : (
           <p className="text-gray-600 dark:text-gray-400">
-            Browse field agents from all partner companies
+            {selectedCompany 
+              ? `Browse field agents from ${selectedCompany}` 
+              : 'Browse field agents from all partner companies'
+            }
           </p>
         )}
       </div>
 
-      {/* Search and Filter Controls */}
+      {/* Search Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Search agents by name, email, or specialization..."
+            placeholder={selectedCompany 
+              ? "Search agents by name, email, or specialization..." 
+              : "Search companies or agents..."
+            }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
-        
-        <div className="relative min-w-[200px]">
-          <Filter className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <select
-            value={companyFilter}
-            onChange={(e) => setCompanyFilter(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">All Companies</option>
-            {companies.map((company) => (
-              <option key={company} value={company}>
-                {company}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* Results Count */}
       <div className="text-sm text-gray-600 dark:text-gray-400">
-        Showing {filteredAgents.length} field agent{filteredAgents.length !== 1 ? 's' : ''}
+        {selectedCompany 
+          ? `Showing ${filteredAgents.length} field agent${filteredAgents.length !== 1 ? 's' : ''} from ${selectedCompany}`
+          : `Showing ${filteredCompanies.length} compan${filteredCompanies.length !== 1 ? 'ies' : 'y'}`
+        }
       </div>
 
-      {/* Field Agent Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredAgents.map((agent: FieldAgent) => (
+      {/* Company Cards or Field Agent Cards Grid */}
+      {!selectedCompany ? (
+        /* Company Cards */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredCompanies.map((company: any) => (
+            <Card
+              key={company.id}
+              className={`cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-l-4 ${
+                assignmentWorkOrderId 
+                  ? 'border-l-green-500 hover:border-l-green-600' 
+                  : 'border-l-blue-500'
+              }`}
+              onClick={() => handleCompanyClick(company.name)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-lg">
+                      <Building className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base leading-tight">
+                        {company.name}
+                      </CardTitle>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {company.agentCount} field agent{company.agentCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                  {assignmentWorkOrderId && (
+                    <Badge variant="secondary" className="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
+                      Select Company
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <UserCheck className="h-4 w-4" />
+                    <span>Active field agents available</span>
+                  </div>
+                  
+                  {/* Show top skills from agents in this company */}
+                  {company.agents && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {Array.from(new Set(company.agents.flatMap((agent: FieldAgent) => agent.specializations || []))).slice(0, 3).map((skill: string) => (
+                        <Badge key={skill} variant="outline" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        /* Field Agent Cards */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredAgents.map((agent: FieldAgent) => (
           <Card
             key={agent.id}
             className={`cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-l-4 relative ${
@@ -378,16 +484,30 @@ export default function TalentNetwork() {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
-      {filteredAgents.length === 0 && (
+      {/* Empty States */}
+      {!selectedCompany && filteredCompanies.length === 0 && (
+        <div className="text-center py-12">
+          <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+            <Building className="h-12 w-12 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No companies found</h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Try adjusting your search criteria.
+          </p>
+        </div>
+      )}
+
+      {selectedCompany && filteredAgents.length === 0 && (
         <div className="text-center py-12">
           <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
             <User className="h-12 w-12 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No field agents found</h3>
           <p className="text-gray-500 dark:text-gray-400">
-            Try adjusting your search criteria or filters.
+            No agents available in {selectedCompany} matching your search criteria.
           </p>
         </div>
       )}
