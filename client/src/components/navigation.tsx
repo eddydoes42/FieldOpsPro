@@ -70,19 +70,14 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   };
 
   const getConfigForRoles = (roles: string[]) => {
-    console.log('Navigation - User roles:', roles, 'User companyId:', (user as any)?.companyId);
-    
-    // Check if user is truly an operations director (has operations_director role AND no companyId)
-    const isOperationsDirector = roles.includes('operations_director') && !(user as any)?.companyId;
-    console.log('Navigation - isOperationsDirector:', isOperationsDirector);
+    // Check if user has operations_director role (companyId doesn't matter for navigation)
+    const isOperationsDirector = roles.includes('operations_director');
     
     const priorityRole = isOperationsDirector ? 'operations_director' :
                         roles.includes('administrator') ? 'administrator' :
                         roles.includes('manager') ? 'manager' :
                         roles.includes('dispatcher') ? 'dispatcher' :
                         roles.includes('client') ? 'client' : 'field_agent';
-    
-    console.log('Navigation - Selected priority role:', priorityRole);
 
     // Create combined role badge for multiple roles
     const roleDisplay = roles.length > 1 ? 
