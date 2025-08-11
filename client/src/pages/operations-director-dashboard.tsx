@@ -73,20 +73,12 @@ export default function OperationsDirectorDashboard() {
         }}
       />
       
-      {/* Role Tester - White Bar for Operations Director */}
-      <RoleSwitcher
-        currentRole={testingRole}
-        onRoleSwitch={(role) => {
-          setTestingRole(role);
-          // Role testing is temporary - doesn't navigate or change permanent role
-        }}
-        currentActiveRole={currentActiveRole}
-      />
+
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-start">
-          <div className="flex items-center space-x-4">
+        <div className="mb-8">
+          <div className="flex justify-between items-start mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Operations Director Dashboard
@@ -101,38 +93,34 @@ export default function OperationsDirectorDashboard() {
                 localStorage.setItem('permanentRole', role);
                 localStorage.setItem('selectedRole', role);
                 // Navigate to appropriate dashboard based on role
-                if (role === 'operations_director') {
-                  window.location.href = '/dashboard';
-                } else if (role === 'administrator') {
-                  window.location.href = '/dashboard';
-                } else {
-                  window.location.href = '/dashboard';
-                }
+                window.location.href = '/dashboard';
               }}
             />
           </div>
           
           {/* Budget Indicator */}
-          <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-            <div className="flex items-center space-x-2">
-              <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="flex justify-end">
+            <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+              <div className="flex items-center space-x-2">
+                <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="text-right">
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Total Earned
+                  </p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                    ${(budgetData.totalEarned || 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
               <div className="text-right">
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Total Earned
+                  Today's Earning
                 </p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  ${(budgetData.totalEarned || 0).toLocaleString()}
+                <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                  ${(budgetData.todayEarning || 0).toLocaleString()}
                 </p>
               </div>
-            </div>
-            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
-            <div className="text-right">
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Today's Earning
-              </p>
-              <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                ${(budgetData.todayEarning || 0).toLocaleString()}
-              </p>
             </div>
           </div>
         </div>
