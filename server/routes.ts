@@ -713,6 +713,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset today's active time entries (for testing)
+  app.patch('/api/time-entries/reset-today', isAuthenticated, async (req: any, res) => {
+    try {
+      const today = new Date().toDateString();
+      const activeEntries = await storage.getActiveTimeEntries();
+      
+      for (const entry of activeEntries) {
+        const entryDate = new Date(entry.startTime).toDateString();
+        if (entryDate === today) {
+          await storage.endTimeEntry(entry.id, new Date());
+        }
+      }
+      
+      res.json({ message: 'Today\'s active time entries have been reset' });
+    } catch (error) {
+      console.error('Error resetting today\'s time entries:', error);
+      res.status(500).json({ message: 'Failed to reset today\'s time entries' });
+    }
+  });
+
   // Message routes
   app.post('/api/messages', isAuthenticated, async (req: any, res) => {
     try {

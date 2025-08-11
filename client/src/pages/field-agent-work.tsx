@@ -8,7 +8,8 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { useState } from "react";
-import { Home, ArrowLeft, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Home, ArrowLeft, Clock, CheckCircle, AlertCircle, MessageCircle, MapPin, Calendar, User } from "lucide-react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 
@@ -34,6 +35,7 @@ export default function FieldAgentWork() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
+  const [isWorkOrderDialogOpen, setIsWorkOrderDialogOpen] = useState(false);
 
   // Fetch work orders assigned to the current field agent
   const { data: workOrders = [], isLoading: workOrdersLoading } = useQuery<WorkOrder[]>({
@@ -174,7 +176,14 @@ export default function FieldAgentWork() {
         {/* Work Orders Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {myWorkOrders.map((order) => (
-            <Card key={order.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card 
+              key={order.id} 
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => {
+                setSelectedWorkOrder(order);
+                setIsWorkOrderDialogOpen(true);
+              }}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white truncate">
@@ -216,7 +225,10 @@ export default function FieldAgentWork() {
                     <Button
                       size="sm"
                       className="w-full"
-                      onClick={() => handleStatusUpdate(order.id, 'in_route')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusUpdate(order.id, 'in_route');
+                      }}
                       disabled={updateWorkOrderStatusMutation.isPending}
                     >
                       Start Route
@@ -227,7 +239,10 @@ export default function FieldAgentWork() {
                     <Button
                       size="sm"
                       className="w-full"
-                      onClick={() => handleStatusUpdate(order.id, 'checked_in')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusUpdate(order.id, 'checked_in');
+                      }}
                       disabled={updateWorkOrderStatusMutation.isPending}
                     >
                       Check In
@@ -239,7 +254,10 @@ export default function FieldAgentWork() {
                       size="sm"
                       variant="outline"
                       className="w-full"
-                      onClick={() => handleStatusUpdate(order.id, 'checked_out')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusUpdate(order.id, 'checked_out');
+                      }}
                       disabled={updateWorkOrderStatusMutation.isPending}
                     >
                       Check Out
@@ -251,12 +269,29 @@ export default function FieldAgentWork() {
                       size="sm"
                       variant="default"
                       className="w-full bg-green-600 hover:bg-green-700"
-                      onClick={() => handleStatusUpdate(order.id, 'completed')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusUpdate(order.id, 'completed');
+                      }}
                       disabled={updateWorkOrderStatusMutation.isPending}
                     >
                       Mark Complete
                     </Button>
                   )}
+                  
+                  {/* Message Team Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/messages');
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message Team
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -300,6 +335,156 @@ export default function FieldAgentWork() {
           </div>
         )}
       </div>
+
+      {/* Work Order Details Dialog */}
+      <Dialog open={isWorkOrderDialogOpen} onOpenChange={setIsWorkOrderDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <span>{selectedWorkOrder?.title}</span>
+              {selectedWorkOrder && getPriorityBadge(selectedWorkOrder.priority)}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedWorkOrder && (
+            <div className="space-y-6">
+              {/* Status and Work Status */}
+              <div className="flex items-center space-x-4">
+                {getStatusBadge(selectedWorkOrder.status)}
+                {getWorkStatusBadge(selectedWorkOrder.workStatus)}
+              </div>
+
+              {/* Description */}
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Description</h4>
+                <p className="text-sm text-muted-foreground">
+                  {selectedWorkOrder.description || "No description provided"}
+                </p>
+              </div>
+
+              {/* Work Details */}
+              <div className="grid grid-cols-2 gap-4">
+                {selectedWorkOrder.dueDate && (
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Due Date</p>
+                      <p className="text-sm font-medium">
+                        {format(new Date(selectedWorkOrder.dueDate), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedWorkOrder.estimatedHours && (
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Estimated Hours</p>
+                      <p className="text-sm font-medium">{selectedWorkOrder.estimatedHours}h</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Details */}
+              {selectedWorkOrder.scopeOfWork && (
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">Scope of Work</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {selectedWorkOrder.scopeOfWork}
+                  </p>
+                </div>
+              )}
+
+              {selectedWorkOrder.requiredTools && (
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">Required Tools</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedWorkOrder.requiredTools}
+                  </p>
+                </div>
+              )}
+
+              {selectedWorkOrder.pointOfContact && (
+                <div className="flex items-center space-x-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Point of Contact</p>
+                    <p className="text-sm font-medium">{selectedWorkOrder.pointOfContact}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => navigate('/messages')}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Message Team
+                </Button>
+                
+                {/* Status Update Button */}
+                {selectedWorkOrder.workStatus === 'not_started' && (
+                  <Button
+                    className="flex-1"
+                    onClick={() => {
+                      handleStatusUpdate(selectedWorkOrder.id, 'in_route');
+                      setIsWorkOrderDialogOpen(false);
+                    }}
+                    disabled={updateWorkOrderStatusMutation.isPending}
+                  >
+                    Start Route
+                  </Button>
+                )}
+                
+                {selectedWorkOrder.workStatus === 'in_route' && (
+                  <Button
+                    className="flex-1"
+                    onClick={() => {
+                      handleStatusUpdate(selectedWorkOrder.id, 'checked_in');
+                      setIsWorkOrderDialogOpen(false);
+                    }}
+                    disabled={updateWorkOrderStatusMutation.isPending}
+                  >
+                    Check In
+                  </Button>
+                )}
+                
+                {selectedWorkOrder.workStatus === 'checked_in' && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      handleStatusUpdate(selectedWorkOrder.id, 'checked_out');
+                      setIsWorkOrderDialogOpen(false);
+                    }}
+                    disabled={updateWorkOrderStatusMutation.isPending}
+                  >
+                    Check Out
+                  </Button>
+                )}
+                
+                {selectedWorkOrder.workStatus === 'checked_out' && (
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      handleStatusUpdate(selectedWorkOrder.id, 'completed');
+                      setIsWorkOrderDialogOpen(false);
+                    }}
+                    disabled={updateWorkOrderStatusMutation.isPending}
+                  >
+                    Mark Complete
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

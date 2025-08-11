@@ -51,6 +51,7 @@ export default function TimeTracker({ activeTimeEntry }: TimeTrackerProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
       setShowWorkOrderDialog(false);
       setSelectedWorkOrderId("");
@@ -85,6 +86,7 @@ export default function TimeTracker({ activeTimeEntry }: TimeTrackerProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries/active"] });
       toast({
         title: "Success",
         description: "Time tracking stopped.",
