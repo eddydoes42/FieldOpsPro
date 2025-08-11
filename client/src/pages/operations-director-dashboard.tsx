@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Users, UserPlus, Settings, DollarSign } from "lucide-react";
+import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
-import RoleSwitcher from "@/components/role-switcher";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
@@ -19,6 +19,7 @@ export default function OperationsDirectorDashboard() {
     localStorage.getItem('permanentRole') || 'operations_director'
   );
   const [testingRole, setTestingRole] = useState<string>('administrator');
+  const [selectedTestRole, setSelectedTestRole] = useState<string>('administrator');
 
   // Listen for custom events from quick action menu
   useEffect(() => {
@@ -61,28 +62,65 @@ export default function OperationsDirectorDashboard() {
     return <AdminOnboardingForm onClose={() => setShowAdminForm(false)} />;
   }
 
+  const availableRoles = [
+    { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
+    { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
+    { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' },
+    { value: 'field_agent', label: 'Field Agent', shortLabel: 'Field Agent' },
+    { value: 'client', label: 'Client', shortLabel: 'Client' }
+  ];
+
+  const handleStartTesting = (role: string) => {
+    localStorage.setItem('testingRole', role);
+    // Navigate to appropriate dashboard based on role
+    if (role === 'administrator') {
+      window.location.href = '/admin-dashboard';
+    } else if (role === 'manager') {
+      window.location.href = '/manager-dashboard';
+    } else if (role === 'dispatcher') {
+      window.location.href = '/dispatcher-dashboard';
+    } else if (role === 'field_agent') {
+      window.location.href = '/agent-dashboard';
+    } else if (role === 'client') {
+      window.location.href = '/client-dashboard';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Role Tester - always visible on Operations Director dashboard */}
-      <RoleSwitcher 
-        currentRole="operations_director"
-        onRoleSwitch={(role) => {
-          localStorage.setItem('testingRole', role);
-          // Navigate to appropriate dashboard based on role
-          if (role === 'administrator') {
-            window.location.href = '/admin-dashboard';
-          } else if (role === 'manager') {
-            window.location.href = '/manager-dashboard';
-          } else if (role === 'dispatcher') {
-            window.location.href = '/dispatcher-dashboard';
-          } else if (role === 'field_agent') {
-            window.location.href = '/agent-dashboard';
-          } else if (role === 'client') {
-            window.location.href = '/client-dashboard';
-          }
-        }}
-        currentActiveRole={localStorage.getItem('permanentRole') || 'operations_director'}
-      />
+      {/* Role Tester for Operations Director */}
+      <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3 mx-4 mt-4">
+        <div className="flex items-center">
+          <span className="text-sm text-purple-700 font-medium mr-3">Role Tester</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
+                <User className="h-3 w-3 mr-2" />
+                {availableRoles.find(role => role.value === selectedTestRole)?.shortLabel || 'Switch Role'}
+                <ChevronDown className="h-3 w-3 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-purple-900">
+                Available Roles
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableRoles.map((role) => (
+                <DropdownMenuItem
+                  key={role.value}
+                  onClick={() => handleStartTesting(role.value)}
+                  className="cursor-pointer"
+                >
+                  <User className="h-3 w-3 mr-2" />
+                  {role.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
       
       <Navigation 
         currentActiveRole={localStorage.getItem('permanentRole') || 'operations_director'} 
