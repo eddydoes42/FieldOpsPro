@@ -235,11 +235,28 @@ export default function TeamPage() {
   const getRoleCount = (role: string) => {
     if (!allUsers) return 0;
     // Filter out users who ONLY have operations_director role (not company team members)
-    const filteredUsers = (allUsers as any[]).filter((user: any) => {
+    let filteredUsers = (allUsers as any[]).filter((user: any) => {
       const roles = user.roles || [];
       // Include if user has other roles besides operations_director
       return roles.some((r: string) => r !== 'operations_director');
     });
+
+    // Apply company filter if set
+    if (companyFilter !== "all") {
+      filteredUsers = filteredUsers.filter((user: any) => user.companyId === companyFilter);
+    }
+
+    // Apply field agent restrictions if current user is field agent
+    if (isFieldAgent && userCompanyId) {
+      filteredUsers = filteredUsers.filter((user: any) => user.companyId === userCompanyId);
+      filteredUsers = filteredUsers.filter((user: any) => {
+        const userRoles = user.roles || [];
+        return userRoles.some((userRole: string) => 
+          ['field_agent', 'dispatcher', 'manager', 'administrator'].includes(userRole)
+        );
+      });
+    }
+
     if (role === "all") return filteredUsers.length;
     return filteredUsers.filter((user: any) => user.roles?.includes(role)).length;
   };
@@ -454,10 +471,15 @@ export default function TeamPage() {
                     // For field agents, only show field agents, dispatchers, managers, and admins
                     if (isFieldAgent) {
                       const userRoles = userData.roles || [];
-                      return userRoles.some((role: string) => 
+                      const allowedRoles = userRoles.some((role: string) => 
                         ['field_agent', 'dispatcher', 'manager', 'administrator'].includes(role)
                       );
+                      if (!allowedRoles) return false;
+                      
+                      // Apply role filter for field agents too
+                      return roleFilter === "all" || userData.roles?.includes(roleFilter);
                     }
+                    // For non-field agents (admins, managers), apply role filter normally
                     return roleFilter === "all" || userData.roles?.includes(roleFilter);
                   })
                   .filter((userData: any) => {
