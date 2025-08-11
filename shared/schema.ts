@@ -553,7 +553,7 @@ export function canRequestWorkOrder(user: User | null): boolean {
 }
 
 export function isOperationsDirector(user: User | null): boolean {
-  return hasRole(user, 'operations_director') && !(user as any)?.companyId;
+  return hasRole(user, 'operations_director');
 }
 
 export function canManageUsers(user: User | null): boolean {
