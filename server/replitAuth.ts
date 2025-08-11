@@ -61,7 +61,38 @@ async function authenticateExistingUser(
   const existingUser = await storage.getUser(claims["sub"]);
   
   if (!existingUser) {
-    // User doesn't exist in our system - deny access
+    // Check if this is the first user accessing the system
+    const allUsers = await storage.getAllUsers();
+    console.log("Authentication attempt - User count:", allUsers.length, "Claims:", claims);
+    
+    // Check if there's already an Operations Director
+    const hasOperationsDirector = allUsers.some(u => u.roles?.includes('operations_director'));
+    console.log("Has Operations Director:", hasOperationsDirector);
+    
+    if (!hasOperationsDirector) {
+      // No Operations Director exists - create this user as Operations Director
+      console.log("Creating Operations Director for:", claims["email"]);
+      const operationsDirectorData = {
+        id: claims["sub"],
+        email: claims["email"] || "operations@fieldopspro.com",
+        firstName: claims["first_name"] || "Operations",
+        lastName: claims["last_name"] || "Director",
+        phone: "(555) 000-0001",
+        roles: ['operations_director' as const],
+        companyId: null, // Operations Directors are not associated with any service company
+        isActive: true,
+        profileImageUrl: claims["profile_image_url"] || null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await storage.createUser(operationsDirectorData);
+      console.log("Successfully created Operations Director user:", claims["email"]);
+      return;
+    }
+    
+    // User doesn't exist in our system and Operations Director already exists - deny access
+    console.log("Access denied - user not found and Operations Director exists");
     throw new Error("Access denied: User not found in system. Please contact your administrator to be added to the team.");
   }
   
