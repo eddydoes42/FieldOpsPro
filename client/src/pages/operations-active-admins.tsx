@@ -40,7 +40,7 @@ const adminFormSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Valid email is required"),
   phone: z.string().optional(),
-  companyId: z.string().optional(),
+  companyId: z.string().min(1, "Company assignment is required").refine(val => val !== "none", "Please select a company"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   temporaryPassword: z.boolean().default(false),
@@ -337,13 +337,12 @@ export default function OperationsActiveAdmins() {
                 </h3>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="companyId">Assign to Company</Label>
+                  <Label htmlFor="companyId">Assign to Company *</Label>
                   <Select onValueChange={(value) => form.setValue('companyId', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a company (optional)" />
+                    <SelectTrigger className={form.formState.errors.companyId ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="Select a company" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Company Assignment</SelectItem>
                       {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name} {!company.isActive && '(Inactive)'}
@@ -351,8 +350,11 @@ export default function OperationsActiveAdmins() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {form.formState.errors.companyId && (
+                    <p className="text-red-500 text-sm">{form.formState.errors.companyId.message}</p>
+                  )}
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Administrators can be assigned to manage specific companies, including inactive ones.
+                    Administrators must be assigned to manage a specific company, including inactive ones.
                   </p>
                 </div>
               </div>
