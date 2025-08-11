@@ -6,6 +6,10 @@ FieldOps Pro is a comprehensive field operations management platform that empowe
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Terminology
+- **Role Tester**: The white bar at the top of the interface
+- **Role Switcher**: The permanent dropdown button that allows users to switch between Operations Director and Admin roles for EDE
+
 ## System Architecture
 
 ### Frontend Architecture
