@@ -30,7 +30,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
-      const stats = await storage.getDashboardStats();
+      // Pass companyId for company-specific stats (Operations Directors see all, Admins see their company only)
+      const companyId = isOperationsDirector(currentUser) ? undefined : currentUser.companyId;
+      const stats = await storage.getDashboardStats(companyId);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);

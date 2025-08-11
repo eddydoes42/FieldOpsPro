@@ -679,12 +679,17 @@ export class DatabaseStorage implements IStorage {
 
 
 
-  async getDashboardStats() {
-    // Get total users count
-    const totalUsersResult = await db.select({ count: count() }).from(users);
+  async getDashboardStats(companyId?: string) {
+    // Apply company filter if provided
+    const companyFilter = companyId ? eq(users.companyId, companyId) : undefined;
+    
+    // Get total users count (filtered by company if applicable)
+    const totalUsersResult = companyFilter 
+      ? await db.select({ count: count() }).from(users).where(companyFilter)
+      : await db.select({ count: count() }).from(users);
     const totalUsers = totalUsersResult[0]?.count || 0;
 
-    // Get work order counts
+    // Get work order counts (for now, work orders are not company-specific, but could be filtered later)
     const totalOrdersResult = await db.select({ count: count() }).from(workOrders);
     const totalOrders = totalOrdersResult[0]?.count || 0;
 
@@ -694,17 +699,30 @@ export class DatabaseStorage implements IStorage {
     const activeOrdersResult = await db.select({ count: count() }).from(workOrders).where(or(eq(workOrders.status, 'pending'), eq(workOrders.status, 'in_progress')));
     const activeOrders = activeOrdersResult[0]?.count || 0;
 
-    // Get user role counts
-    const adminCountResult = await db.select({ count: count() }).from(users).where(sql`'administrator' = ANY(${users.roles})`);
+    // Get user role counts (filtered by company if applicable)
+    const adminCountResult = companyFilter 
+      ? await db.select({ count: count() }).from(users).where(and(sql`'administrator' = ANY(${users.roles})`, companyFilter))
+      : await db.select({ count: count() }).from(users).where(sql`'administrator' = ANY(${users.roles})`);
     const adminCount = adminCountResult[0]?.count || 0;
 
-    const managerCountResult = await db.select({ count: count() }).from(users).where(sql`'manager' = ANY(${users.roles})`);
+    const managerCountResult = companyFilter 
+      ? await db.select({ count: count() }).from(users).where(and(sql`'manager' = ANY(${users.roles})`, companyFilter))
+      : await db.select({ count: count() }).from(users).where(sql`'manager' = ANY(${users.roles})`);
     const managerCount = managerCountResult[0]?.count || 0;
 
-    const agentCountResult = await db.select({ count: count() }).from(users).where(sql`'field_agent' = ANY(${users.roles})`);
+    const dispatcherCountResult = companyFilter 
+      ? await db.select({ count: count() }).from(users).where(and(sql`'dispatcher' = ANY(${users.roles})`, companyFilter))
+      : await db.select({ count: count() }).from(users).where(sql`'dispatcher' = ANY(${users.roles})`);
+    const dispatcherCount = dispatcherCountResult[0]?.count || 0;
+
+    const agentCountResult = companyFilter 
+      ? await db.select({ count: count() }).from(users).where(and(sql`'field_agent' = ANY(${users.roles})`, companyFilter))
+      : await db.select({ count: count() }).from(users).where(sql`'field_agent' = ANY(${users.roles})`);
     const agentCount = agentCountResult[0]?.count || 0;
 
-    const clientCountResult = await db.select({ count: count() }).from(users).where(sql`'client' = ANY(${users.roles})`);
+    const clientCountResult = companyFilter 
+      ? await db.select({ count: count() }).from(users).where(and(sql`'client' = ANY(${users.roles})`, companyFilter))
+      : await db.select({ count: count() }).from(users).where(sql`'client' = ANY(${users.roles})`);
     const clientCount = clientCountResult[0]?.count || 0;
 
     return {
@@ -714,6 +732,7 @@ export class DatabaseStorage implements IStorage {
       totalOrders,
       adminCount,
       managerCount,
+      dispatcherCount,
       agentCount,
       clientCount,
     };
