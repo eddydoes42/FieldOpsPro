@@ -206,6 +206,7 @@ export interface IStorage {
   // Exclusive Network operations
   createExclusiveNetworkMember(member: InsertExclusiveNetworkMember): Promise<ExclusiveNetworkMember>;
   getExclusiveNetworkMembers(clientCompanyId: string): Promise<ExclusiveNetworkMember[]>;
+  getAllExclusiveNetworkMembers(): Promise<ExclusiveNetworkMember[]>;
   updateExclusiveNetworkMember(id: string, updates: Partial<InsertExclusiveNetworkMember>): Promise<ExclusiveNetworkMember>;
   checkExclusiveNetworkEligibility(clientCompanyId: string, serviceCompanyId: string): Promise<boolean>;
 }
@@ -1510,6 +1511,36 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(exclusiveNetworkMembers)
       .where(eq(exclusiveNetworkMembers.clientCompanyId, clientCompanyId))
+      .orderBy(desc(exclusiveNetworkMembers.createdAt));
+  }
+
+  async getAllExclusiveNetworkMembers(): Promise<ExclusiveNetworkMember[]> {
+    const serviceCompanies = companies;
+    return await db
+      .select({
+        id: exclusiveNetworkMembers.id,
+        clientCompany: {
+          id: companies.id,
+          name: companies.name,
+          type: companies.type
+        },
+        serviceCompany: {
+          id: serviceCompanies.id,
+          name: serviceCompanies.name,
+          type: serviceCompanies.type
+        },
+        completedWorkOrders: exclusiveNetworkMembers.completedWorkOrders,
+        averageRating: exclusiveNetworkMembers.averageRating,
+        qualifiesForExclusive: exclusiveNetworkMembers.qualifiesForExclusive,
+        isActive: exclusiveNetworkMembers.isActive,
+        addedAt: exclusiveNetworkMembers.addedAt,
+        lastWorkOrderAt: exclusiveNetworkMembers.lastWorkOrderAt,
+        createdAt: exclusiveNetworkMembers.createdAt,
+        updatedAt: exclusiveNetworkMembers.updatedAt
+      })
+      .from(exclusiveNetworkMembers)
+      .leftJoin(companies, eq(exclusiveNetworkMembers.clientCompanyId, companies.id))
+      .leftJoin(serviceCompanies, eq(exclusiveNetworkMembers.serviceCompanyId, serviceCompanies.id))
       .orderBy(desc(exclusiveNetworkMembers.createdAt));
   }
 

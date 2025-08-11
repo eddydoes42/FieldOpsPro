@@ -2041,8 +2041,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/exclusive-network-posts', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
-        return res.status(403).json({ message: "Access denied. Admin team role required." });
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher']))) {
+        return res.status(403).json({ message: "Access denied. Admin team role or Operations Director required." });
       }
 
       const posts = await storage.getExclusiveNetworkPosts();
@@ -2096,7 +2096,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/exclusive-network/eligibility/:clientCompanyId/:serviceCompanyId', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || (!isClient(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+      if (!currentUser || (!isOperationsDirector(currentUser) && !isClient(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
         return res.status(403).json({ message: "Access denied." });
       }
 
@@ -2106,6 +2106,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error checking exclusive network eligibility:", error);
       res.status(500).json({ message: "Failed to check eligibility" });
+    }
+  });
+
+  // Operations Director specific routes for exclusive network management
+  app.get('/api/operations/exclusive-network-members', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Operations Director role required." });
+      }
+
+      const members = await storage.getAllExclusiveNetworkMembers();
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching all exclusive network members:", error);
+      res.status(500).json({ message: "Failed to fetch exclusive network members" });
+    }
+  });
+
+  app.get('/api/operations/exclusive-network-posts', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Operations Director role required." });
+      }
+
+      const posts = await storage.getExclusiveNetworkPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching exclusive network posts for operations:", error);
+      res.status(500).json({ message: "Failed to fetch exclusive network posts" });
     }
   });
 

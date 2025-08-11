@@ -12,6 +12,7 @@ import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
 import OperationsCompanies from "@/pages/operations-companies";
 import OperationsActiveAdmins from "@/pages/operations-active-admins";
+import OperationsExclusiveNetwork from "@/pages/operations-exclusive-network";
 
 import OperationsRecentSetups from "@/pages/operations-recent-setups";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -231,6 +232,12 @@ function Router() {
                 <OperationsRecentSetups />
               </div>
             </Route>
+            <Route path="/operations/exclusive-network">
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                <OperationsExclusiveNetwork />
+              </div>
+            </Route>
             <Route path="/admin-dashboard">
               <AdminDashboard />
             </Route>
@@ -308,7 +315,7 @@ function Router() {
             <Route path="/talent-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasTalentNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
+                const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
                 
                 if (isAuthenticated && hasTalentNetworkAccess) {
                   return <TalentNetworkPage />;
