@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Building2, Home } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Building2, Home, UserPlus, User, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -20,6 +22,14 @@ interface CompanyFormData {
   email: string;
   website: string;
   description: string;
+  adminId?: string;
+}
+
+interface AdminFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 }
 
 interface CompanyOnboardingFormProps {
@@ -39,8 +49,18 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
     phone: "",
     email: "",
     website: "",
-    description: ""
+    description: "",
+    adminId: undefined
   });
+
+  const [assignedAdmin, setAssignedAdmin] = useState<{ id: string; firstName: string; lastName: string; email: string } | null>(null);
+  const [adminFormData, setAdminFormData] = useState<AdminFormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: ""
+  });
+  const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
 
   const companyMutation = useMutation({
     mutationFn: async (data: CompanyFormData) => {
@@ -65,11 +85,77 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
     },
   });
 
+  const adminMutation = useMutation({
+    mutationFn: async (data: AdminFormData) => {
+      const adminData = {
+        ...data,
+        roles: ['administrator'],
+        isActive: true
+      };
+      const response = await apiRequest('POST', '/api/users/onboard', adminData);
+      return await response.json();
+    },
+    onSuccess: (createdAdmin) => {
+      setAssignedAdmin({
+        id: createdAdmin.id,
+        firstName: createdAdmin.firstName,
+        lastName: createdAdmin.lastName,
+        email: createdAdmin.email
+      });
+      setFormData(prev => ({ ...prev, adminId: createdAdmin.id }));
+      setIsAdminDialogOpen(false);
+      setAdminFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: ""
+      });
+      toast({
+        title: "Success",
+        description: "Administrator created successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create administrator. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleInputChange = (field: keyof CompanyFormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleAdminInputChange = (field: keyof AdminFormData, value: string) => {
+    setAdminFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleCreateAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!adminFormData.firstName.trim() || !adminFormData.lastName.trim() || !adminFormData.email.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "First name, last name, and email are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    adminMutation.mutate(adminFormData);
+  };
+
+  const handleRemoveAdmin = () => {
+    setAssignedAdmin(null);
+    setFormData(prev => ({ ...prev, adminId: undefined }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -225,6 +311,140 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
                     placeholder="Brief description of the company and services"
                     rows={3}
                   />
+                </div>
+
+                {/* Admin Assignment Section */}
+                <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Admin Assignment
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <Label>Assign Admin</Label>
+                    <div className="flex items-center space-x-3">
+                      {assignedAdmin ? (
+                        <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-1">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                            <User className="h-4 w-4 text-purple-600 dark:text-purple-300" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {assignedAdmin.firstName} {assignedAdmin.lastName}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {assignedAdmin.email}
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                            Administrator
+                          </Badge>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveAdmin}
+                            className="text-gray-400 hover:text-red-500"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Dialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="flex items-center space-x-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                              <UserPlus className="h-4 w-4" />
+                              <span>Assign Admin</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Create New Administrator</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleCreateAdmin} className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="adminFirstName">First Name *</Label>
+                                  <Input
+                                    id="adminFirstName"
+                                    type="text"
+                                    value={adminFormData.firstName}
+                                    onChange={(e) => handleAdminInputChange('firstName', e.target.value)}
+                                    placeholder="First name"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="adminLastName">Last Name *</Label>
+                                  <Input
+                                    id="adminLastName"
+                                    type="text"
+                                    value={adminFormData.lastName}
+                                    onChange={(e) => handleAdminInputChange('lastName', e.target.value)}
+                                    placeholder="Last name"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="adminEmail">Email *</Label>
+                                <Input
+                                  id="adminEmail"
+                                  type="email"
+                                  value={adminFormData.email}
+                                  onChange={(e) => handleAdminInputChange('email', e.target.value)}
+                                  placeholder="admin@company.com"
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="adminPhone">Phone</Label>
+                                <Input
+                                  id="adminPhone"
+                                  type="tel"
+                                  value={adminFormData.phone}
+                                  onChange={(e) => {
+                                    const formatted = formatPhoneNumber(e.target.value);
+                                    handleAdminInputChange('phone', formatted);
+                                  }}
+                                  placeholder="(555) 123-4567"
+                                />
+                              </div>
+                              <div className="flex justify-end space-x-2 pt-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => setIsAdminDialogOpen(false)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  disabled={adminMutation.isPending}
+                                  className="bg-purple-600 hover:bg-purple-700"
+                                >
+                                  {adminMutation.isPending ? (
+                                    <div className="flex items-center">
+                                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                                      Creating...
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center">
+                                      <UserPlus className="h-4 w-4 mr-2" />
+                                      Create
+                                    </div>
+                                  )}
+                                </Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
