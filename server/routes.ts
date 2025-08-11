@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -1788,6 +1788,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching field agents:", error);
       res.status(500).json({ message: "Failed to fetch field agents" });
+    }
+  });
+
+  // Work Order Request Routes
+  
+  // Create work order request from job network
+  app.post('/api/work-order-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Admin team role required." });
+      }
+
+      const requestData = insertWorkOrderRequestSchema.parse(req.body);
+      const request = await storage.createWorkOrderRequest(requestData);
+      res.json(request);
+    } catch (error) {
+      console.error("Error creating work order request:", error);
+      res.status(500).json({ message: "Failed to create work order request" });
+    }
+  });
+
+  // Get work order requests for client company
+  app.get('/api/work-order-requests/client/:clientCompanyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+        return res.status(403).json({ message: "Access denied. Admin team or client role required." });
+      }
+
+      const { clientCompanyId } = req.params;
+      
+      // Ensure user can only access their own company's requests
+      if (currentUser.companyId !== clientCompanyId && !hasAnyRole(currentUser, ['operations_director'])) {
+        return res.status(403).json({ message: "Access denied. Can only view your company's requests." });
+      }
+
+      const requests = await storage.getWorkOrderRequestsByClient(clientCompanyId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching client work order requests:", error);
+      res.status(500).json({ message: "Failed to fetch work order requests" });
+    }
+  });
+
+  // Get work order requests for service company
+  app.get('/api/work-order-requests/service/:serviceCompanyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Service company admin team role required." });
+      }
+
+      const { serviceCompanyId } = req.params;
+      
+      // Ensure user can only access their own company's requests
+      if (currentUser.companyId !== serviceCompanyId && !hasAnyRole(currentUser, ['operations_director'])) {
+        return res.status(403).json({ message: "Access denied. Can only view your company's requests." });
+      }
+
+      const requests = await storage.getWorkOrderRequestsByServiceCompany(serviceCompanyId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching service company work order requests:", error);
+      res.status(500).json({ message: "Failed to fetch work order requests" });
+    }
+  });
+
+  // Respond to work order request
+  app.patch('/api/work-order-requests/:requestId/respond', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+        return res.status(403).json({ message: "Access denied. Admin team or client role required." });
+      }
+
+      const { requestId } = req.params;
+      const { status, clientResponse } = req.body;
+
+      if (!['approved', 'declined'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be 'approved' or 'declined'." });
+      }
+
+      const updatedRequest = await storage.respondToWorkOrderRequest(
+        requestId, 
+        status, 
+        currentUser.id, 
+        clientResponse
+      );
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error responding to work order request:", error);
+      res.status(500).json({ message: "Failed to respond to work order request" });
+    }
+  });
+
+  // Get job network posts
+  app.get('/api/job-network-posts', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+        return res.status(403).json({ message: "Access denied. Admin team or client role required." });
+      }
+
+      const posts = await storage.getJobNetworkPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching job network posts:", error);
+      res.status(500).json({ message: "Failed to fetch job network posts" });
+    }
+  });
+
+  // Get exclusive network posts
+  app.get('/api/exclusive-network-posts', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Admin team role required." });
+      }
+
+      const posts = await storage.getExclusiveNetworkPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching exclusive network posts:", error);
+      res.status(500).json({ message: "Failed to fetch exclusive network posts" });
     }
   });
 

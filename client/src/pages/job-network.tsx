@@ -37,6 +37,16 @@ const createJobSchema = insertJobNetworkPostSchema.extend({
   requiredSkills: z.array(z.string()).optional(),
 });
 
+const requestJobSchema = z.object({
+  workOrderId: z.string(),
+  workOrderTitle: z.string(),
+  clientCompanyId: z.string(),
+  requestingCompanyId: z.string(),
+  requestedById: z.string(),
+  message: z.string().optional(),
+  proposedAgentId: z.string().optional(),
+});
+
 interface JobNetworkProps {
   user: User;
 }
@@ -44,6 +54,8 @@ interface JobNetworkProps {
 export default function JobNetwork({ user }: JobNetworkProps) {
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [isRequestJobOpen, setIsRequestJobOpen] = useState(false);
+  const [selectedJobForRequest, setSelectedJobForRequest] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const queryClient = useQueryClient();
@@ -67,23 +79,39 @@ export default function JobNetwork({ user }: JobNetworkProps) {
     },
   });
 
+  const requestForm = useForm({
+    resolver: zodResolver(requestJobSchema),
+    defaultValues: {
+      workOrderId: '',
+      workOrderTitle: '',
+      clientCompanyId: '',
+      requestingCompanyId: user.companyId || '',
+      requestedById: user.id,
+      message: '',
+      proposedAgentId: '',
+    },
+  });
+
   // Query for job network posts
-  const { data: jobPosts = [], isLoading } = useQuery({
+  const { data: jobPosts = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/job-network'],
   });
 
   // Query for service companies
-  const { data: serviceCompanies = [] } = useQuery({
+  const { data: serviceCompanies = [] } = useQuery<any[]>({
     queryKey: ['/api/companies/service'],
+  });
+
+  // Query for field agents (for service companies to propose agents)
+  const { data: fieldAgents = [] } = useQuery<any[]>({
+    queryKey: ['/api/users/field-agents'],
+    enabled: isAdminTeam(user),
   });
 
   // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/job-network', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('/api/job-network', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/job-network'] });
@@ -103,12 +131,35 @@ export default function JobNetwork({ user }: JobNetworkProps) {
     },
   });
 
+  // Request job mutation
+  const requestJobMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('/api/work-order-requests', 'POST', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-order-requests'] });
+      setIsRequestJobOpen(false);
+      requestForm.reset();
+      toast({
+        title: 'Success',
+        description: 'Work order request sent successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to send request',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Assign job mutation
   const assignJobMutation = useMutation({
     mutationFn: async ({ jobId, companyId }: { jobId: string; companyId: string }) => {
-      return apiRequest(`/api/job-network/${jobId}/assign`, {
-        method: 'PATCH',
-        body: JSON.stringify({ assignedToCompanyId: companyId, assignedById: user.id }),
+      return apiRequest(`/api/job-network/${jobId}/assign`, 'PATCH', { 
+        assignedToCompanyId: companyId, 
+        assignedById: user.id 
       });
     },
     onSuccess: () => {
@@ -135,6 +186,18 @@ export default function JobNetwork({ user }: JobNetworkProps) {
     });
   };
 
+  const onRequestSubmit = (data: any) => {
+    requestJobMutation.mutate(data);
+  };
+
+  const handleRequestJob = (job: any) => {
+    setSelectedJobForRequest(job);
+    requestForm.setValue('workOrderId', job.id);
+    requestForm.setValue('workOrderTitle', job.title);
+    requestForm.setValue('clientCompanyId', job.clientCompanyId);
+    setIsRequestJobOpen(true);
+  };
+
   const filteredJobs = jobPosts.filter((job: any) => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -145,7 +208,7 @@ export default function JobNetwork({ user }: JobNetworkProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navigation user={user} />
+      <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -454,14 +517,26 @@ export default function JobNetwork({ user }: JobNetworkProps) {
                     {isAdminTeam(user) && job.status === 'open' && !job.assignedToCompanyId && (
                       <Button
                         size="sm"
-                        onClick={() => assignJobMutation.mutate({ 
-                          jobId: job.id, 
-                          companyId: user.companyId || '' 
-                        })}
-                        disabled={assignJobMutation.isPending}
+                        onClick={() => handleRequestJob(job)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        {assignJobMutation.isPending ? 'Assigning...' : 'Accept Job'}
+                        Request Job
                       </Button>
+                    )}
+                    
+                    {isClient(user) && job.createdById === user.id && job.status === 'open' && !job.assignedToCompanyId && (
+                      <Select onValueChange={(companyId) => assignJobMutation.mutate({ jobId: job.id, companyId })}>
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Assign to..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {serviceCompanies.map((company: any) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </div>
                 </CardContent>
@@ -469,116 +544,177 @@ export default function JobNetwork({ user }: JobNetworkProps) {
             ))}
           </div>
         ) : (
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <CardContent className="text-center py-12">
+          <Card>
+            <CardContent className="p-12 text-center">
               <Network className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No Jobs Found
+                No Jobs Available
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-gray-600 dark:text-gray-400">
                 {searchTerm || statusFilter !== 'all' 
-                  ? 'No jobs match your current filters.' 
+                  ? 'No jobs match your search criteria.' 
                   : 'No jobs have been posted to the network yet.'
                 }
               </p>
-              {canPostToJobNetwork(user) && (
-                <Button onClick={() => setIsCreateJobOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Post First Job
-                </Button>
-              )}
             </CardContent>
           </Card>
         )}
 
+        {/* Request Job Dialog */}
+        <Dialog open={isRequestJobOpen} onOpenChange={setIsRequestJobOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Request Work Order</DialogTitle>
+            </DialogHeader>
+            <Form {...requestForm}>
+              <form onSubmit={requestForm.handleSubmit(onRequestSubmit)} className="space-y-6">
+                {selectedJobForRequest && (
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                      Requesting: {selectedJobForRequest.title}
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedJobForRequest.description}
+                    </p>
+                  </div>
+                )}
+
+                <FormField
+                  control={requestForm.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message to Client (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Explain why your company is the best fit for this job..."
+                          className="min-h-[100px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={requestForm.control}
+                  name="proposedAgentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Proposed Field Agent (Optional)</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an agent to propose for this job" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fieldAgents.map((agent: any) => (
+                              <SelectItem key={agent.id} value={agent.id}>
+                                {agent.firstName} {agent.lastName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-3">
+                  <Button type="button" variant="outline" onClick={() => setIsRequestJobOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={requestJobMutation.isPending}>
+                    {requestJobMutation.isPending ? 'Sending Request...' : 'Send Request'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
         {/* Job Details Modal */}
         {selectedJob && (
           <Dialog open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[700px]">
               <DialogHeader>
-                <DialogTitle className="flex items-center justify-between">
-                  <span>{selectedJob.title}</span>
-                  <Badge variant={selectedJob.status === 'open' ? 'default' : 'secondary'}>
+                <DialogTitle>{selectedJob.title}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <Badge 
+                    variant={selectedJob.status === 'open' ? 'default' : selectedJob.status === 'assigned' ? 'secondary' : 'outline'}
+                    className={
+                      selectedJob.priority === 'urgent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                      selectedJob.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                      ''
+                    }
+                  >
                     {selectedJob.status}
                   </Badge>
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-6">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Priority: {selectedJob.priority}
+                  </span>
+                </div>
+
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">Description</h4>
                   <p className="text-gray-600 dark:text-gray-400">{selectedJob.description}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">Location</h4>
-                    <p className="text-gray-600 dark:text-gray-400">{selectedJob.location}</p>
+                    <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      {selectedJob.location}
+                    </p>
                   </div>
-                  
+
                   {selectedJob.budget && (
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-2">Budget</h4>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                        <DollarSign className="h-4 w-4 mr-2" />
                         ${selectedJob.budget} ({selectedJob.budgetType})
                       </p>
                     </div>
                   )}
-                </div>
 
-                <div className="grid grid-cols-2 gap-6">
                   {selectedJob.scheduledDate && (
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-2">Scheduled Date</h4>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
                         {new Date(selectedJob.scheduledDate).toLocaleDateString()}
                       </p>
                     </div>
                   )}
-                  
+
                   {selectedJob.estimatedDuration && (
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h4>
-                      <p className="text-gray-600 dark:text-gray-400">{selectedJob.estimatedDuration}</p>
+                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        {selectedJob.estimatedDuration}
+                      </p>
                     </div>
                   )}
                 </div>
 
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Priority</h4>
-                  <Badge variant={selectedJob.priority === 'urgent' ? 'destructive' : selectedJob.priority === 'high' ? 'default' : 'secondary'}>
-                    {selectedJob.priority}
-                  </Badge>
-                </div>
-
                 {selectedJob.assignedToCompanyId && (
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">Assignment Status</h4>
-                    <p className="text-green-700 dark:text-green-300">
-                      This job has been assigned to a service company.
-                    </p>
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Assignment Status</h4>
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <div className="flex items-center text-green-700 dark:text-green-300">
+                        <Building2 className="h-4 w-4 mr-2" />
+                        <span>Assigned to Service Company</span>
+                      </div>
+                    </div>
                   </div>
                 )}
-
-                <div className="flex justify-end space-x-3">
-                  <Button variant="outline" onClick={() => setSelectedJob(null)}>
-                    Close
-                  </Button>
-                  {isAdminTeam(user) && selectedJob.status === 'open' && !selectedJob.assignedToCompanyId && (
-                    <Button
-                      onClick={() => {
-                        assignJobMutation.mutate({ 
-                          jobId: selectedJob.id, 
-                          companyId: user.companyId || '' 
-                        });
-                        setSelectedJob(null);
-                      }}
-                      disabled={assignJobMutation.isPending}
-                    >
-                      {assignJobMutation.isPending ? 'Assigning...' : 'Accept Job'}
-                    </Button>
-                  )}
-                </div>
               </div>
             </DialogContent>
           </Dialog>

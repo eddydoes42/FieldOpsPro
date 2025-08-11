@@ -10,6 +10,9 @@ import {
   clientServiceRatings,
   serviceClientRatings,
   issues,
+  jobNetworkPosts,
+  exclusiveNetworkPosts,
+  workOrderRequests,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -33,6 +36,12 @@ import {
   type InsertServiceClientRating,
   type Issue,
   type InsertIssue,
+  type JobNetworkPost,
+  type InsertJobNetworkPost,
+  type ExclusiveNetworkPost,
+  type InsertExclusiveNetworkPost,
+  type WorkOrderRequest,
+  type InsertWorkOrderRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -164,6 +173,14 @@ export interface IStorage {
   respondToAssignmentRequest(requestId: string, action: 'accept' | 'decline', notes: string, clientId: string): Promise<any>;
   requestWorkOrderAssignment(workOrderId: string, agentId: string, requestedById: string, notes?: string): Promise<any>;
   getFieldAgents(): Promise<User[]>;
+
+  // Work Order Request operations
+  createWorkOrderRequest(request: InsertWorkOrderRequest): Promise<WorkOrderRequest>;
+  getWorkOrderRequestsByClient(clientCompanyId: string): Promise<WorkOrderRequest[]>;
+  getWorkOrderRequestsByServiceCompany(serviceCompanyId: string): Promise<WorkOrderRequest[]>;
+  respondToWorkOrderRequest(requestId: string, status: 'approved' | 'declined', reviewedById: string, clientResponse?: string): Promise<WorkOrderRequest>;
+  getJobNetworkPosts(): Promise<JobNetworkPost[]>;
+  getExclusiveNetworkPosts(): Promise<ExclusiveNetworkPost[]>;
 
   // Rating operations
   createClientServiceRating(rating: InsertClientServiceRating): Promise<ClientServiceRating>;
@@ -1141,7 +1158,124 @@ export class DatabaseStorage implements IStorage {
     return updatedWorkOrder;
   }
 
+  // Work Order Request operations
+  async createWorkOrderRequest(request: InsertWorkOrderRequest): Promise<WorkOrderRequest> {
+    const [newRequest] = await db
+      .insert(workOrderRequests)
+      .values(request)
+      .returning();
+    return newRequest;
+  }
 
+  async getWorkOrderRequestsByClient(clientCompanyId: string): Promise<WorkOrderRequest[]> {
+    return await db
+      .select({
+        ...workOrderRequests,
+        requestingCompany: {
+          id: companies.id,
+          name: companies.name
+        },
+        requestedBy: {
+          firstName: users.firstName,
+          lastName: users.lastName
+        },
+        proposedAgent: sql`CASE 
+          WHEN work_order_requests.proposed_agent_id IS NOT NULL THEN 
+            json_build_object(
+              'id', pa.id,
+              'firstName', pa.first_name,
+              'lastName', pa.last_name
+            )
+          ELSE NULL
+        END`.as('proposedAgent')
+      })
+      .from(workOrderRequests)
+      .leftJoin(companies, eq(workOrderRequests.requestingCompanyId, companies.id))
+      .leftJoin(users, eq(workOrderRequests.requestedById, users.id))
+      .leftJoin(sql`users pa`, sql`pa.id = work_order_requests.proposed_agent_id`)
+      .where(eq(workOrderRequests.clientCompanyId, clientCompanyId))
+      .orderBy(desc(workOrderRequests.createdAt));
+  }
+
+  async getWorkOrderRequestsByServiceCompany(serviceCompanyId: string): Promise<WorkOrderRequest[]> {
+    return await db
+      .select({
+        ...workOrderRequests,
+        clientCompany: {
+          id: companies.id,
+          name: companies.name
+        },
+        requestedBy: {
+          firstName: users.firstName,
+          lastName: users.lastName
+        }
+      })
+      .from(workOrderRequests)
+      .leftJoin(companies, eq(workOrderRequests.clientCompanyId, companies.id))
+      .leftJoin(users, eq(workOrderRequests.requestedById, users.id))
+      .where(eq(workOrderRequests.requestingCompanyId, serviceCompanyId))
+      .orderBy(desc(workOrderRequests.createdAt));
+  }
+
+  async respondToWorkOrderRequest(
+    requestId: string, 
+    status: 'approved' | 'declined', 
+    reviewedById: string, 
+    clientResponse?: string
+  ): Promise<WorkOrderRequest> {
+    const [updatedRequest] = await db
+      .update(workOrderRequests)
+      .set({
+        status,
+        reviewedById,
+        reviewedAt: new Date(),
+        clientResponse,
+        updatedAt: new Date()
+      })
+      .where(eq(workOrderRequests.id, requestId))
+      .returning();
+
+    return updatedRequest;
+  }
+
+  async getJobNetworkPosts(): Promise<JobNetworkPost[]> {
+    return await db
+      .select({
+        ...jobNetworkPosts,
+        clientCompany: {
+          id: companies.id,
+          name: companies.name
+        },
+        postedBy: {
+          firstName: users.firstName,
+          lastName: users.lastName
+        }
+      })
+      .from(jobNetworkPosts)
+      .leftJoin(companies, eq(jobNetworkPosts.clientCompanyId, companies.id))
+      .leftJoin(users, eq(jobNetworkPosts.postedById, users.id))
+      .where(eq(jobNetworkPosts.isPublic, true))
+      .orderBy(desc(jobNetworkPosts.createdAt));
+  }
+
+  async getExclusiveNetworkPosts(): Promise<ExclusiveNetworkPost[]> {
+    return await db
+      .select({
+        ...exclusiveNetworkPosts,
+        clientCompany: {
+          id: companies.id,
+          name: companies.name
+        },
+        postedBy: {
+          firstName: users.firstName,
+          lastName: users.lastName
+        }
+      })
+      .from(exclusiveNetworkPosts)
+      .leftJoin(companies, eq(exclusiveNetworkPosts.clientCompanyId, companies.id))
+      .leftJoin(users, eq(exclusiveNetworkPosts.postedById, users.id))
+      .orderBy(desc(exclusiveNetworkPosts.createdAt));
+  }
 
   // Rating operations
   async createClientServiceRating(rating: InsertClientServiceRating): Promise<ClientServiceRating> {

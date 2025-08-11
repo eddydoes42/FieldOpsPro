@@ -316,6 +316,30 @@ export const exclusiveNetworkPosts = pgTable("exclusive_network_posts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Work Order Requests - For tracking requests from service companies to clients
+export const workOrderRequests = pgTable("work_order_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobNetworkPostId: varchar("job_network_post_id").references(() => jobNetworkPosts.id),
+  exclusiveNetworkPostId: varchar("exclusive_network_post_id").references(() => exclusiveNetworkPosts.id),
+  // Requesting service company info
+  requestingCompanyId: varchar("requesting_company_id").notNull().references(() => companies.id),
+  requestedById: varchar("requested_by_id").notNull().references(() => users.id), // Admin team member who made request
+  // Client company info
+  clientCompanyId: varchar("client_company_id").notNull().references(() => companies.id),
+  // Request details
+  message: text("message"), // Optional message from requesting company
+  proposedAgentId: varchar("proposed_agent_id").references(() => users.id), // Field agent they propose to assign
+  status: varchar("status").notNull().default("pending"), // pending, approved, declined, assigned
+  // Response from client
+  reviewedById: varchar("reviewed_by_id").references(() => users.id), // Client admin who reviewed
+  reviewedAt: timestamp("reviewed_at"),
+  clientResponse: text("client_response"),
+  // Work order creation when approved
+  workOrderId: varchar("work_order_id").references(() => workOrders.id), // Created work order if approved
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
@@ -551,6 +575,13 @@ export const insertExclusiveNetworkPostSchema = createInsertSchema(exclusiveNetw
   assignedAt: true,
 });
 
+export const insertWorkOrderRequestSchema = createInsertSchema(workOrderRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -590,6 +621,9 @@ export type InsertJobNetworkPost = z.infer<typeof insertJobNetworkPostSchema>;
 
 export type ExclusiveNetworkPost = typeof exclusiveNetworkPosts.$inferSelect;
 export type InsertExclusiveNetworkPost = z.infer<typeof insertExclusiveNetworkPostSchema>;
+
+export type WorkOrderRequest = typeof workOrderRequests.$inferSelect;
+export type InsertWorkOrderRequest = z.infer<typeof insertWorkOrderRequestSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
