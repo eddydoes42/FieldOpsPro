@@ -104,17 +104,7 @@ export default function OperationsDirectorDashboard() {
               </h1>
             </div>
             
-            {/* Role Switcher */}
-            <PermanentRoleSwitcher
-              currentActiveRole={currentActiveRole}
-              onRoleSwitch={(role) => {
-                setCurrentActiveRole(role);
-                localStorage.setItem('permanentRole', role);
-                localStorage.setItem('selectedRole', role);
-                // Navigate to appropriate dashboard based on role
-                window.location.href = '/dashboard';
-              }}
-            />
+
           </div>
           
           {/* Budget Indicator */}
