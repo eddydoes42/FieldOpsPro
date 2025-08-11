@@ -24,7 +24,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
-  // Only show for operations directors when they are testing a role OR explicitly on operations dashboard
+  // Only show for operations directors when they are testing a role on OTHER pages (not operations dashboard)
   const isTestingRole = localStorage.getItem('testingRole');
   const isOnOperationsDashboard = window.location.pathname === '/operations-dashboard';
   
@@ -33,13 +33,13 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
     return null;
   }
   
-  // On operations dashboard, only show if currentRole is operations_director
-  if (isOnOperationsDashboard && currentRole !== 'operations_director') {
+  // NEVER show on operations dashboard (we have a dedicated role tester there)
+  if (isOnOperationsDashboard) {
     return null;
   }
   
   // On other pages, only show if testing a role
-  if (!isOnOperationsDashboard && !isTestingRole) {
+  if (!isTestingRole) {
     return null;
   }
 
@@ -59,43 +59,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
     onRoleSwitch(selectedRole);
   };
 
-  // Different layout when on operations dashboard vs when testing
-  if (isOnOperationsDashboard && !isTestingRole) {
-    return (
-      <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
-        <div className="flex items-center">
-          <span className="text-sm text-purple-700 font-medium mr-3">Role Tester</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
-                <User className="h-3 w-3 mr-2" />
-                {availableRoles.find(role => role.value === selectedRole)?.shortLabel || 'Switch Role'}
-                <ChevronDown className="h-3 w-3 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-purple-900">
-                Available Roles
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {availableRoles.map((role) => (
-                <DropdownMenuItem
-                  key={role.value}
-                  onClick={() => onRoleSwitch(role.value)}
-                  className="cursor-pointer"
-                >
-                  <User className="h-3 w-3 mr-2" />
-                  {role.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-    );
-  }
+  // This component only shows when testing roles on other dashboards (never on operations dashboard)
 
   return (
     <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
