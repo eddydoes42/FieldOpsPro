@@ -117,6 +117,18 @@ export default function OperationsDirectorDashboard() {
                   {role.label}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  localStorage.removeItem('testingRole');
+                  setSelectedTestRole('administrator'); // Reset to default
+                  window.location.reload(); // Refresh to clear any testing state
+                }}
+                className="cursor-pointer text-red-600 hover:text-red-700 focus:text-red-700"
+              >
+                <span className="text-red-600 mr-2">✕</span>
+                Stop Testing
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
