@@ -9,6 +9,7 @@ import { isOperationsDirector } from "@shared/schema";
 interface RoleSwitcherProps {
   currentRole: string;
   onRoleSwitch: (role: string) => void;
+  currentActiveRole?: string;
 }
 
 const availableRoles = [
@@ -20,12 +21,12 @@ const availableRoles = [
   { value: 'client', label: 'Client', color: 'bg-pink-100 text-pink-800' }
 ];
 
-export default function RoleSwitcher({ currentRole, onRoleSwitch }: RoleSwitcherProps) {
+export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveRole }: RoleSwitcherProps) {
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
-  // Only show for operations directors
-  if (!isOperationsDirector(user as any)) {
+  // Only show for operations directors AND when current active role is operations_director
+  if (!isOperationsDirector(user as any) || (currentActiveRole && currentActiveRole !== 'operations_director')) {
     return null;
   }
 

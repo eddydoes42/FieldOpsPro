@@ -83,7 +83,7 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
   return (
     <div>
       {/* Role switcher for operations directors */}
-      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || getPrimaryRole(user as any)} />
       <DashboardContent />
     </div>
   );
@@ -204,7 +204,7 @@ function Router() {
 
                 return (
                   <div>
-                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                     <DashboardContent />
                   </div>
                 );
@@ -212,20 +212,20 @@ function Router() {
             </Route>
             <Route path="/operations/companies">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 <OperationsCompanies />
               </div>
             </Route>
             <Route path="/operations/active-admins">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 <OperationsActiveAdmins />
               </div>
             </Route>
 
             <Route path="/operations/recent-setups">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 <OperationsRecentSetups />
               </div>
             </Route>
@@ -270,13 +270,13 @@ function Router() {
             </Route>
             <Route path="/work-orders">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <WorkOrders /> : <Landing />}
               </div>
             </Route>
             <Route path="/client/work-orders">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 <Suspense fallback={<div className="p-4">Loading...</div>}>
                   <ClientWorkOrders />
                 </Suspense>
@@ -290,7 +290,7 @@ function Router() {
                 if (isAuthenticated && hasJobNetworkAccess) {
                   return (
                     <div>
-                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                       <Suspense fallback={<div className="p-4">Loading job network...</div>}>
                         <JobNetwork />
                       </Suspense>
@@ -308,7 +308,7 @@ function Router() {
                 if (isAuthenticated && hasTalentNetworkAccess) {
                   return (
                     <div>
-                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                       <Suspense fallback={<div className="p-4">Loading talent network...</div>}>
                         <TalentNetwork />
                       </Suspense>
@@ -320,19 +320,19 @@ function Router() {
             </Route>
             <Route path="/messages">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <Messages /> : <Landing />}
               </div>
             </Route>
             <Route path="/calendar">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <Calendar /> : <Landing />}
               </div>
             </Route>
             <Route path="/time-tracking">
               <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} />
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <TimeTracking /> : <Landing />}
               </div>
             </Route>
@@ -346,7 +346,7 @@ function Router() {
                     <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
                       <div>
                         {isOperationsDirector(user as any) && (
-                          <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                          <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                         )}
                         {(() => {
                           const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
@@ -369,7 +369,7 @@ function Router() {
                     <Suspense fallback={<div className="p-4">Loading client work orders...</div>}>
                       <div>
                         {isOperationsDirector(user as any) && (
-                          <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                          <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                         )}
                         {(() => {
                           const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
@@ -391,7 +391,7 @@ function Router() {
                   return (
                     <div>
                       {isOperationsDirector(user as any) && (
-                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} />
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                       )}
                       <FieldAgentWork />
                     </div>

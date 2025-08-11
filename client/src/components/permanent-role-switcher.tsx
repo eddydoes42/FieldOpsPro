@@ -21,14 +21,16 @@ interface PermanentRoleSwitcherProps {
 const availableRoles = [
   { 
     value: 'operations_director', 
-    label: 'Operations Director', 
+    label: 'Operations Director',
+    shortLabel: 'Ops Dir',
     icon: Building2,
     color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
     description: 'Platform oversight and company management'
   },
   { 
     value: 'administrator', 
-    label: 'Service Admin', 
+    label: 'Service Admin',
+    shortLabel: 'Admin',
     icon: Shield,
     color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     description: 'Service company administration'
@@ -60,8 +62,8 @@ export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch 
             className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl transition-shadow"
           >
             <CurrentIcon className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">{currentRoleInfo?.label || 'Switch Role'}</span>
-            <span className="sm:hidden">Role</span>
+            <span className="hidden sm:inline">{currentRoleInfo?.shortLabel || 'Switch Role'}</span>
+            <span className="sm:hidden">{currentRoleInfo?.shortLabel || 'Role'}</span>
             <ChevronDown className="h-3 w-3 ml-2" />
           </Button>
         </DropdownMenuTrigger>

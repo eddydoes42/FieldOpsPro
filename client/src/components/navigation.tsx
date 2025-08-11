@@ -8,6 +8,7 @@ import QuickActionMenu from "@/components/quick-action-menu";
 import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
 import { Zap } from "lucide-react";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
+import RoleSwitcher from "@/components/role-switcher";
 
 interface NavigationProps {
   testingRole?: string;
