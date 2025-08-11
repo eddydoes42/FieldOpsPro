@@ -50,6 +50,13 @@ export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch 
   const currentRoleInfo = availableRoles.find(role => role.value === currentActiveRole);
   const CurrentIcon = currentRoleInfo?.icon || User;
 
+  // Debug logging to understand what's happening
+  console.log("PermanentRoleSwitcher Debug:", {
+    currentActiveRole,
+    currentRoleInfo,
+    availableRoles: availableRoles.map(r => r.value)
+  });
+
   return (
     <div className="flex items-center">
       <DropdownMenu>
