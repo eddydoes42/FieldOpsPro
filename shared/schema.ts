@@ -29,6 +29,7 @@ export const sessions = pgTable(
 export const companies = pgTable("companies", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
+  type: varchar("type").notNull().default("service"), // "service" or "client"
   address: text("address"),
   city: varchar("city"),
   state: varchar("state"),
@@ -262,6 +263,59 @@ export const serviceClientRatings = pgTable("service_client_ratings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Job Network - Public work order postings visible to all Admin Teams
+export const jobNetworkPosts = pgTable("job_network_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  location: text("location"),
+  budget: decimal("budget"),
+  budgetType: varchar("budget_type"), // fixed, hourly, per_device, materials_labor
+  priority: varchar("priority").default("normal"), // normal, high, urgent
+  requiredSkills: text("required_skills").array(),
+  estimatedDuration: varchar("estimated_duration"),
+  scheduledDate: timestamp("scheduled_date"),
+  status: varchar("status").default("open"), // open, assigned, in_progress, completed, cancelled
+  // Posting company info
+  clientCompanyId: varchar("client_company_id").notNull().references(() => companies.id),
+  postedById: varchar("posted_by_id").notNull().references(() => users.id),
+  // Assignment info
+  assignedToCompanyId: varchar("assigned_to_company_id").references(() => companies.id),
+  assignedById: varchar("assigned_by_id").references(() => users.id),
+  assignedAt: timestamp("assigned_at"),
+  // Direct routing option
+  routedToCompanyId: varchar("routed_to_company_id").references(() => companies.id), // For direct routing to specific service company
+  isPublic: boolean("is_public").default(true), // false for routed jobs
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Exclusive Network - Private work order postings for Admin Teams only
+export const exclusiveNetworkPosts = pgTable("exclusive_network_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  location: text("location"),
+  budget: decimal("budget"),
+  budgetType: varchar("budget_type"), // fixed, hourly, per_device, materials_labor
+  priority: varchar("priority").default("normal"), // normal, high, urgent
+  requiredSkills: text("required_skills").array(),
+  estimatedDuration: varchar("estimated_duration"),
+  scheduledDate: timestamp("scheduled_date"),
+  status: varchar("status").default("open"), // open, assigned, in_progress, completed, cancelled
+  // Posting company info
+  clientCompanyId: varchar("client_company_id").notNull().references(() => companies.id),
+  postedById: varchar("posted_by_id").notNull().references(() => users.id),
+  // Assignment info
+  assignedToCompanyId: varchar("assigned_to_company_id").references(() => companies.id),
+  assignedById: varchar("assigned_by_id").references(() => users.id),
+  assignedAt: timestamp("assigned_at"),
+  // Access control - only visible to Admin Teams
+  visibleToAdminTeamsOnly: boolean("visible_to_admin_teams_only").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
@@ -483,6 +537,20 @@ export const insertCompanySchema = createInsertSchema(companies).omit({
   updatedAt: true,
 });
 
+export const insertJobNetworkPostSchema = createInsertSchema(jobNetworkPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  assignedAt: true,
+});
+
+export const insertExclusiveNetworkPostSchema = createInsertSchema(exclusiveNetworkPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  assignedAt: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -516,6 +584,12 @@ export type InsertServiceClientRating = z.infer<typeof insertServiceClientRating
 
 export type Issue = typeof issues.$inferSelect;
 export type InsertIssue = z.infer<typeof insertIssueSchema>;
+
+export type JobNetworkPost = typeof jobNetworkPosts.$inferSelect;
+export type InsertJobNetworkPost = z.infer<typeof insertJobNetworkPostSchema>;
+
+export type ExclusiveNetworkPost = typeof exclusiveNetworkPosts.$inferSelect;
+export type InsertExclusiveNetworkPost = z.infer<typeof insertExclusiveNetworkPostSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
@@ -591,4 +665,25 @@ export function getPrimaryRole(user: User | null): string {
   if (user.roles.includes('field_agent')) return 'field_agent';
   if (user.roles.includes('client')) return 'client';
   return 'field_agent';
+}
+
+// Admin Team and Chief Team utility functions
+export function isAdminTeam(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
+}
+
+export function isChiefTeam(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'manager']);
+}
+
+export function canPostToJobNetwork(user: User | null): boolean {
+  return isAdminTeam(user) || isClient(user);
+}
+
+export function canViewExclusiveNetwork(user: User | null): boolean {
+  return isAdminTeam(user);
+}
+
+export function canAssignWorkOrders(user: User | null): boolean {
+  return isAdminTeam(user);
 }

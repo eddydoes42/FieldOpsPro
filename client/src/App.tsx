@@ -31,11 +31,9 @@ import FieldAgentWork from "@/pages/field-agent-work";
 import FieldAgentSettings from "@/pages/field-agent-settings";
 import MyWork from "@/pages/mywork";
 
-// Lazy load ClientDashboard and ClientWorkOrders
+// Lazy load Client pages
 const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
-const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
 const JobNetwork = React.lazy(() => import('@/pages/job-network'));
-const TalentNetwork = React.lazy(() => import('@/pages/talent-network'));
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -73,7 +71,7 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
     } else if (effectiveRole === 'client') {
       return (
         <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
-          <ClientDashboard />
+          <ClientDashboard user={user} />
         </Suspense>
       );
     } else {
@@ -195,7 +193,7 @@ function Router() {
                   } else if (effectiveRole === 'client') {
                     return (
                       <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
-                        <ClientDashboard />
+                        <ClientDashboard user={user} />
                       </Suspense>
                     );
                   } else {
@@ -276,20 +274,14 @@ function Router() {
                 <Landing />
               )}
             </Route>
+
             <Route path="/work-orders">
               <div>
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <WorkOrders /> : <Landing />}
               </div>
             </Route>
-            <Route path="/client/work-orders">
-              <div>
-                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
-                <Suspense fallback={<div className="p-4">Loading...</div>}>
-                  <ClientWorkOrders />
-                </Suspense>
-              </div>
-            </Route>
+
             <Route path="/job-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
@@ -300,7 +292,7 @@ function Router() {
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                       <Suspense fallback={<div className="p-4">Loading job network...</div>}>
-                        <JobNetwork />
+                        <JobNetwork user={user} />
                       </Suspense>
                     </div>
                   );
@@ -308,24 +300,7 @@ function Router() {
                 return <Landing />;
               })()}
             </Route>
-            <Route path="/talent-network">
-              {(() => {
-                const effectiveRole = getEffectiveRole();
-                const hasTalentNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
-                
-                if (isAuthenticated && hasTalentNetworkAccess) {
-                  return (
-                    <div>
-                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
-                      <Suspense fallback={<div className="p-4">Loading talent network...</div>}>
-                        <TalentNetwork />
-                      </Suspense>
-                    </div>
-                  );
-                }
-                return <Landing />;
-              })()}
-            </Route>
+
             <Route path="/messages">
               <div>
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
@@ -358,7 +333,7 @@ function Router() {
                         )}
                         {(() => {
                           const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
-                          return <ClientDashboard />;
+                          return <ClientDashboard user={user} />;
                         })()}
                       </div>
                     </Suspense>
@@ -367,29 +342,7 @@ function Router() {
                 return <Landing />;
               })()}
             </Route>
-            <Route path="/client/work-orders">
-              {(() => {
-                const effectiveRole = getEffectiveRole();
-                const hasClientAccess = hasRole(user as any, 'client') || effectiveRole === 'client';
-                
-                if (isAuthenticated && hasClientAccess) {
-                  return (
-                    <Suspense fallback={<div className="p-4">Loading client work orders...</div>}>
-                      <div>
-                        {isOperationsDirector(user as any) && (
-                          <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
-                        )}
-                        {(() => {
-                          const ClientWorkOrders = React.lazy(() => import('@/pages/client-work-orders'));
-                          return <ClientWorkOrders />;
-                        })()}
-                      </div>
-                    </Suspense>
-                  );
-                }
-                return <Landing />;
-              })()}
-            </Route>
+
             <Route path="/field-agent/my-work">
               {(() => {
                 const effectiveRole = getEffectiveRole();

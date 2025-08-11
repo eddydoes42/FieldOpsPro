@@ -14,6 +14,11 @@ Terminology preference: Organizations providing IT services should be referred t
 - **User Creation Form**: General form with selectable role categories (like /onboarding) for creating users
 - **Administrator Creation Form**: Specific form for creating administrators
 - **Service Companies**: Organizations like EDE and Test Company that provide IT field services
+- **Client Companies**: Organizations that require IT services (cannot have Field Agents)
+- **Admin Team**: Users with Dispatcher, Manager, and Administrator roles (workflow designation)
+- **Chief Team**: Users with Manager and Administrator roles (escalation designation)
+- **Job Network**: Public work order posting page accessible to Admin Teams of both Service Companies and Client Companies
+- **Exclusive Network**: Private work order posting page accessible only to Admin Teams
 
 ## System Architecture
 
