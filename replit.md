@@ -5,13 +5,15 @@ FieldOps Pro is a comprehensive field operations management platform that empowe
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies").
 
 ## Terminology
 - **Role Tester**: The white bar at the top of the interface
 - **Role Switcher**: The permanent dropdown button that allows users to switch between Operations Director and Admin roles for EDE
-- **Company Creation Form**: Form used to create new companies
+- **Service Company Creation Form**: Form used to create new service companies
 - **User Creation Form**: General form with selectable role categories (like /onboarding) for creating users
 - **Administrator Creation Form**: Specific form for creating administrators
+- **Service Companies**: Organizations like EDE and Test Company that provide IT field services
 
 ## System Architecture
 
@@ -29,20 +31,20 @@ Authentication uses Replit's OAuth with session management via connect-pg-simple
 
 **Operations Director (God Mode):**
 - Complete system oversight and control
-- Only role that can create/delete companies, clients, and administrators
-- Can perform any function across all companies
+- Only role that can create/delete service companies, clients, and administrators
+- Can perform any function across all service companies
 - Role Testing: When using Role Tester (white bar), restricted to selected role's capabilities
-- Not associated with any company
+- Not associated with any service company
 - Oversees unresolved issues and app functionality
 
-**Company Hierarchy (within each company):**
+**Service Company Hierarchy (within each service company):**
 1. **Administrator**: User account creation/editing/deletion; work order CRUD and assignment; Job Network access; issue resolution; user suspension/deactivation; messaging
 2. **Manager**: Same as Administrator, EXCEPT Administrator can delete Manager but not vice versa
 3. **Dispatcher**: Same as Manager, EXCEPT cannot create/delete/edit user accounts
 4. **Field Agent**: View/complete assigned work orders only; message team members; edit own contact info; access /mywork dashboard
 
-**Test Company Structure:**
-- Test Company exists with full team for role testing
+**Test Service Company Structure:**
+- Test Service Company exists with full team for role testing
 - Test Admin, Test Manager, Test Dispatcher, Test Field Agent users
 
 ### State Management
@@ -54,13 +56,13 @@ The application features a modern design built on Tailwind CSS and shadcn/ui, pr
 ### Key Features
 - **Hierarchical Role System**: Operations Director (god mode), Administrator, Manager, Dispatcher, Field Agent with strict access controls
 - **Operations Director God Mode**: Complete system oversight with role testing capabilities via Role Tester (white bar)
-- **Company Management**: Operations Director exclusive company/client/administrator creation and deletion
+- **Service Company Management**: Operations Director exclusive service company/client/administrator creation and deletion
 - **Role-based Dashboards**: Operations Director, Administrator, Manager, Dispatcher, Field Agent, and Client specific interfaces
 - **Work Order Management**: Creation, assignment, status tracking (Scheduled to Mark Complete), task dependencies, and integrated issue reporting
 - **Issue Reporting System**: "Create Issue" function on work orders creates hazard alerts requiring Manager+ approval
 - **Field Agent Dashboard**: /mywork page displaying cards with work orders assigned to specific Field Agent
 - **User Management Hierarchy**: Administrator > Manager > Dispatcher > Field Agent with appropriate CRUD permissions
-- **Test Company Structure**: Complete test team (Test Admin, Test Manager, Test Dispatcher, Test Field Agent) for role testing
+- **Test Service Company Structure**: Complete test team (Test Admin, Test Manager, Test Dispatcher, Test Field Agent) for role testing
 - **Task Management System**: Fully functional task creation, completion tracking, and category organization (Pre-visit, On-site, Post-site)
 - **Time Tracking System**: Real-time check-in/check-out, active timer display, and logged time calculation
 - **Budget Management System**: Comprehensive budget creation (fixed, hourly, per-device, materials+labor) with dynamic total calculation

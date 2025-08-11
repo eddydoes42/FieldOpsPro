@@ -422,7 +422,7 @@ export default function OperationsCompanies() {
             className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add New Company
+            Add New Service Company
           </Button>
         </div>
 
@@ -431,7 +431,7 @@ export default function OperationsCompanies() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search companies..."
+              placeholder="Search service companies..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -461,7 +461,7 @@ export default function OperationsCompanies() {
           </Select>
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
             <Filter className="h-4 w-4 mr-2" />
-            Showing {filteredCompanies.length} of {companies.length} companies
+            Showing {filteredCompanies.length} of {companies.length} service companies
           </div>
         </div>
 
@@ -469,7 +469,7 @@ export default function OperationsCompanies() {
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-              Companies Directory
+              Service Companies Directory
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -633,7 +633,7 @@ export default function OperationsCompanies() {
                   <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" onClick={(e) => selectedCompany && handleEditCompany(selectedCompany, e)}>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base flex items-center justify-between">
-                        Company Information
+                        Service Company Information
                         <Edit className="h-4 w-4 text-gray-400" />
                       </CardTitle>
                     </CardHeader>
@@ -822,12 +822,12 @@ export default function OperationsCompanies() {
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader className="pb-3">
-              <DialogTitle>Edit Company Information</DialogTitle>
+              <DialogTitle>Edit Service Company Information</DialogTitle>
             </DialogHeader>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="company-name" className="text-sm">Company Name</Label>
+                <Label htmlFor="company-name" className="text-sm">Service Company Name</Label>
                 <Input
                   id="company-name"
                   value={editingCompany.name || ''}
@@ -960,12 +960,12 @@ export default function OperationsCompanies() {
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader className="pb-3">
-              <DialogTitle>Add New Company</DialogTitle>
+              <DialogTitle>Add New Service Company</DialogTitle>
             </DialogHeader>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="new-company-name" className="text-sm">Company Name *</Label>
+                <Label htmlFor="new-company-name" className="text-sm">Service Company Name *</Label>
                 <Input
                   id="new-company-name"
                   value={editingCompany.name || ''}
@@ -1238,7 +1238,7 @@ export default function OperationsCompanies() {
         <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Confirm Company Deletion</DialogTitle>
+              <DialogTitle>Confirm Service Company Deletion</DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
