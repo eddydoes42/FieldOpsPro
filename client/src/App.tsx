@@ -35,6 +35,9 @@ import MyWork from "@/pages/mywork";
 const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
 const JobNetwork = React.lazy(() => import('@/pages/job-network'));
 
+// Import Talent Network
+import { TalentNetworkPage } from './components/talent-network';
+
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
   const selectedRole = localStorage.getItem('selectedRole');
@@ -297,6 +300,18 @@ function Router() {
                       />
                     </Suspense>
                   );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+
+            <Route path="/talent-network">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasTalentNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
+                
+                if (isAuthenticated && hasTalentNetworkAccess) {
+                  return <TalentNetworkPage />;
                 }
                 return <Landing />;
               })()}

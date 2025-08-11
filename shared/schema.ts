@@ -39,6 +39,9 @@ export const companies = pgTable("companies", {
   website: varchar("website"),
   description: text("description"),
   isActive: boolean("is_active").default(true),
+  // Company rating system
+  overallRating: decimal("overall_rating", { precision: 3, scale: 2 }).default("0.00"), // average of all user ratings
+  totalRatings: integer("total_ratings").default(0), // total number of ratings received
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -68,6 +71,19 @@ export const users = pgTable("users", {
   lastLoginAt: timestamp("last_login_at"),
   isActive: boolean("is_active").default(true),
   isSuspended: boolean("is_suspended").default(false),
+  // Rating system fields
+  overallRating: decimal("overall_rating", { precision: 3, scale: 2 }).default("0.00"), // average of all ratings received
+  totalRatings: integer("total_ratings").default(0), // total number of ratings received
+  // Field Agent specific ratings
+  communicationRating: decimal("communication_rating", { precision: 3, scale: 2 }).default("0.00"),
+  timelinessRating: decimal("timeliness_rating", { precision: 3, scale: 2 }).default("0.00"), 
+  workSatisfactionRating: decimal("work_satisfaction_rating", { precision: 3, scale: 2 }).default("0.00"),
+  // Dispatcher specific ratings  
+  managementRating: decimal("management_rating", { precision: 3, scale: 2 }).default("0.00"),
+  fieldAgentRating: decimal("field_agent_rating", { precision: 3, scale: 2 }).default("0.00"),
+  // Client specific ratings
+  clearScopeRating: decimal("clear_scope_rating", { precision: 3, scale: 2 }).default("0.00"),
+  overallSatisfactionRating: decimal("overall_satisfaction_rating", { precision: 3, scale: 2 }).default("0.00"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -226,43 +242,59 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Client ratings for service companies (3 categories: Administration, Field Team, Overall)
-export const clientServiceRatings = pgTable("client_service_ratings", {
+// Client ratings for Field Agents (3-tier: Communication, Timeliness, Work Satisfaction)
+export const clientFieldAgentRatings = pgTable("client_field_agent_ratings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
   clientId: varchar("client_id").notNull().references(() => users.id),
+  fieldAgentId: varchar("field_agent_id").notNull().references(() => users.id),
   companyId: varchar("company_id").notNull().references(() => companies.id),
-  // Rating categories (1-5 stars each)
-  administrationRating: integer("administration_rating").notNull(), // Rating for managers/dispatchers
-  fieldTeamRating: integer("field_team_rating").notNull(), // Rating for field agents
-  overallRating: integer("overall_rating").notNull(), // Overall satisfaction
-  // Optional feedback for each category
-  administrationFeedback: text("administration_feedback"),
-  fieldTeamFeedback: text("field_team_feedback"),
-  overallFeedback: text("overall_feedback"),
-  // Related users for context
-  managerId: varchar("manager_id").references(() => users.id), // Manager associated with work order
-  dispatcherId: varchar("dispatcher_id").references(() => users.id), // Dispatcher associated with work order
-  fieldAgentId: varchar("field_agent_id").references(() => users.id), // Field agent who completed work
+  // 3-tier rating system (0-5 stars each)
+  communicationRating: integer("communication_rating").notNull(),
+  timelinessRating: integer("timeliness_rating").notNull(),
+  workSatisfactionRating: integer("work_satisfaction_rating").notNull(),
+  // Optional feedback for each tier
+  communicationFeedback: text("communication_feedback"),
+  timelinessFeedback: text("timeliness_feedback"),
+  workSatisfactionFeedback: text("work_satisfaction_feedback"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Service company ratings for clients (3 categories: Communication, Requirements Clarity, Payment Promptness)
+// Client ratings for Dispatchers (3-tier: Communication, Management, Field Agent)
+export const clientDispatcherRatings = pgTable("client_dispatcher_ratings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  clientId: varchar("client_id").notNull().references(() => users.id),
+  dispatcherId: varchar("dispatcher_id").notNull().references(() => users.id),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  // 3-tier rating system (0-5 stars each)  
+  communicationRating: integer("communication_rating").notNull(),
+  managementRating: integer("management_rating").notNull(),
+  fieldAgentRating: integer("field_agent_rating").notNull(),
+  // Optional feedback for each tier
+  communicationFeedback: text("communication_feedback"),
+  managementFeedback: text("management_feedback"),
+  fieldAgentFeedback: text("field_agent_feedback"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Service company ratings for clients (3-tier: Clear/Correct Scope, Communication, Overall Satisfaction)
 export const serviceClientRatings = pgTable("service_client_ratings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
-  raterId: varchar("rater_id").notNull().references(() => users.id), // Service company user giving rating
+  raterId: varchar("rater_id").notNull().references(() => users.id), // Dispatcher or Field Agent giving rating
   clientId: varchar("client_id").notNull().references(() => users.id),
   companyId: varchar("company_id").notNull().references(() => companies.id),
-  // Rating categories (1-5 stars each)
-  communicationRating: integer("communication_rating").notNull(), // How well client communicated
-  requirementsClarityRating: integer("requirements_clarity_rating").notNull(), // How clear client's requirements were
-  paymentRating: integer("payment_rating").notNull(), // Payment promptness and reliability
-  // Optional feedback for each category
+  // 3-tier rating system (0-5 stars each)
+  clearScopeRating: integer("clear_scope_rating").notNull(), // Clear/Correct Scope
+  communicationRating: integer("communication_rating").notNull(), // Communication
+  overallSatisfactionRating: integer("overall_satisfaction_rating").notNull(), // Overall Satisfaction
+  // Optional feedback for each tier
+  clearScopeFeedback: text("clear_scope_feedback"),
   communicationFeedback: text("communication_feedback"),
-  requirementsFeedback: text("requirements_feedback"),
-  paymentFeedback: text("payment_feedback"),
+  overallSatisfactionFeedback: text("overall_satisfaction_feedback"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -344,6 +376,23 @@ export const workOrderRequests = pgTable("work_order_requests", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Exclusive Network Members - Tracks which service companies clients have added to their exclusive network
+export const exclusiveNetworkMembers = pgTable("exclusive_network_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientCompanyId: varchar("client_company_id").notNull().references(() => companies.id),
+  serviceCompanyId: varchar("service_company_id").notNull().references(() => companies.id),
+  // Tracking completion criteria
+  completedWorkOrders: integer("completed_work_orders").default(0), // Count of completed work orders 
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default("0.00"), // Average rating from completed work orders
+  qualifiesForExclusive: boolean("qualifies_for_exclusive").default(false), // True when 5+ work orders with 4+ stars
+  // Status tracking
+  isActive: boolean("is_active").default(true), // Client can activate/deactivate
+  addedAt: timestamp("added_at").defaultNow(),
+  lastWorkOrderAt: timestamp("last_work_order_at"), // Last completed work order timestamp
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
@@ -376,7 +425,8 @@ export const workOrdersRelations = relations(workOrders, ({ one, many }) => ({
   tasks: many(workOrderTasks),
   issues: many(workOrderIssues),
   notifications: many(notifications),
-  clientServiceRatings: many(clientServiceRatings),
+  clientFieldAgentRatings: many(clientFieldAgentRatings),
+  clientDispatcherRatings: many(clientDispatcherRatings),
   serviceClientRatings: many(serviceClientRatings),
 }));
 
@@ -441,30 +491,41 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
-export const clientServiceRatingsRelations = relations(clientServiceRatings, ({ one }) => ({
+export const clientFieldAgentRatingsRelations = relations(clientFieldAgentRatings, ({ one }) => ({
   workOrder: one(workOrders, {
-    fields: [clientServiceRatings.workOrderId],
+    fields: [clientFieldAgentRatings.workOrderId],
     references: [workOrders.id],
   }),
   client: one(users, {
-    fields: [clientServiceRatings.clientId],
-    references: [users.id],
-  }),
-  company: one(companies, {
-    fields: [clientServiceRatings.companyId],
-    references: [companies.id],
-  }),
-  manager: one(users, {
-    fields: [clientServiceRatings.managerId],
-    references: [users.id],
-  }),
-  dispatcher: one(users, {
-    fields: [clientServiceRatings.dispatcherId],
+    fields: [clientFieldAgentRatings.clientId],
     references: [users.id],
   }),
   fieldAgent: one(users, {
-    fields: [clientServiceRatings.fieldAgentId],
+    fields: [clientFieldAgentRatings.fieldAgentId],
     references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [clientFieldAgentRatings.companyId],
+    references: [companies.id],
+  }),
+}));
+
+export const clientDispatcherRatingsRelations = relations(clientDispatcherRatings, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [clientDispatcherRatings.workOrderId],
+    references: [workOrders.id],
+  }),
+  client: one(users, {
+    fields: [clientDispatcherRatings.clientId],
+    references: [users.id],
+  }),
+  dispatcher: one(users, {
+    fields: [clientDispatcherRatings.dispatcherId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [clientDispatcherRatings.companyId],
+    references: [companies.id],
   }),
 }));
 
@@ -547,7 +608,13 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   confirmedAt: true,
 });
 
-export const insertClientServiceRatingSchema = createInsertSchema(clientServiceRatings).omit({
+export const insertClientFieldAgentRatingSchema = createInsertSchema(clientFieldAgentRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClientDispatcherRatingSchema = createInsertSchema(clientDispatcherRatings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -586,6 +653,13 @@ export const insertWorkOrderRequestSchema = createInsertSchema(workOrderRequests
   reviewedAt: true,
 });
 
+export const insertExclusiveNetworkMemberSchema = createInsertSchema(exclusiveNetworkMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  addedAt: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -611,8 +685,11 @@ export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
-export type ClientServiceRating = typeof clientServiceRatings.$inferSelect;
-export type InsertClientServiceRating = z.infer<typeof insertClientServiceRatingSchema>;
+export type ClientFieldAgentRating = typeof clientFieldAgentRatings.$inferSelect;
+export type InsertClientFieldAgentRating = z.infer<typeof insertClientFieldAgentRatingSchema>;
+
+export type ClientDispatcherRating = typeof clientDispatcherRatings.$inferSelect;
+export type InsertClientDispatcherRating = z.infer<typeof insertClientDispatcherRatingSchema>;
 
 export type ServiceClientRating = typeof serviceClientRatings.$inferSelect;
 export type InsertServiceClientRating = z.infer<typeof insertServiceClientRatingSchema>;
@@ -628,6 +705,9 @@ export type InsertExclusiveNetworkPost = z.infer<typeof insertExclusiveNetworkPo
 
 export type WorkOrderRequest = typeof workOrderRequests.$inferSelect;
 export type InsertWorkOrderRequest = z.infer<typeof insertWorkOrderRequestSchema>;
+
+export type ExclusiveNetworkMember = typeof exclusiveNetworkMembers.$inferSelect;
+export type InsertExclusiveNetworkMember = z.infer<typeof insertExclusiveNetworkMemberSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {

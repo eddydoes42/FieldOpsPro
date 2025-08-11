@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -1608,8 +1608,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== RATING SYSTEM ROUTES =====
 
-  // Client rating service company
-  app.post('/api/ratings/client-service', isAuthenticated, async (req: any, res) => {
+  // Client rating field agent
+  app.post('/api/ratings/client-field-agent', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
@@ -1625,25 +1625,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if rating already exists
-      const existingRating = await storage.getClientServiceRating(req.body.workOrderId, userId);
+      const existingRating = await storage.getClientFieldAgentRating(req.body.workOrderId, userId);
       if (existingRating) {
         return res.status(400).json({ message: "Rating already exists for this work order" });
       }
 
-      const ratingData = insertClientServiceRatingSchema.parse({
+      const ratingData = insertClientFieldAgentRatingSchema.parse({
         ...req.body,
         clientId: userId,
         companyId: workOrder.companyId,
         fieldAgentId: workOrder.assigneeId,
-        // These would be populated based on work order management assignments
-        managerId: workOrder.createdById, // Assuming creator is manager for now
-        dispatcherId: workOrder.createdById, // Would need proper logic to determine dispatcher
       });
 
-      const rating = await storage.createClientServiceRating(ratingData);
+      const rating = await storage.createClientFieldAgentRating(ratingData);
       res.json(rating);
     } catch (error) {
-      console.error("Error creating client service rating:", error);
+      console.error("Error creating client field agent rating:", error);
+      res.status(500).json({ message: "Failed to create rating" });
+    }
+  });
+
+  // Client rating dispatcher  
+  app.post('/api/ratings/client-dispatcher', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !isClient(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      // Get work order details to populate rating data
+      const workOrder = await storage.getWorkOrder(req.body.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if rating already exists
+      const existingRating = await storage.getClientDispatcherRating(req.body.workOrderId, userId);
+      if (existingRating) {
+        return res.status(400).json({ message: "Rating already exists for this work order" });
+      }
+
+      const ratingData = insertClientDispatcherRatingSchema.parse({
+        ...req.body,
+        clientId: userId,
+        companyId: workOrder.companyId,
+        dispatcherId: workOrder.createdById, // Assuming creator is dispatcher for now
+      });
+
+      const rating = await storage.createClientDispatcherRating(ratingData);
+      res.json(rating);
+    } catch (error) {
+      console.error("Error creating client dispatcher rating:", error);
       res.status(500).json({ message: "Failed to create rating" });
     }
   });
@@ -1685,20 +1719,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get service company ratings
-  app.get('/api/ratings/service-company/:companyId', isAuthenticated, async (req: any, res) => {
+  // Get field agent ratings
+  app.get('/api/ratings/field-agent/:fieldAgentId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const currentUser = await storage.getUser(userId);
       
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager'])) {
-        return res.status(403).json({ message: "Access denied. Administrator or manager role required." });
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'field_agent'])) {
+        return res.status(403).json({ message: "Access denied." });
       }
 
-      const ratings = await storage.getServiceCompanyRatings(req.params.companyId);
+      // Field agents can only view their own ratings
+      if (hasAnyRole(currentUser, ['field_agent']) && req.params.fieldAgentId !== userId) {
+        return res.status(403).json({ message: "Access denied. Can only view own ratings." });
+      }
+
+      const ratings = await storage.getFieldAgentRatings(req.params.fieldAgentId);
       res.json(ratings);
     } catch (error) {
-      console.error("Error fetching service company ratings:", error);
+      console.error("Error fetching field agent ratings:", error);
+      res.status(500).json({ message: "Failed to fetch ratings" });
+    }
+  });
+
+  // Get dispatcher ratings
+  app.get('/api/ratings/dispatcher/:dispatcherId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Dispatchers can only view their own ratings  
+      if (hasAnyRole(currentUser, ['dispatcher']) && req.params.dispatcherId !== userId) {
+        return res.status(403).json({ message: "Access denied. Can only view own ratings." });
+      }
+
+      const ratings = await storage.getDispatcherRatings(req.params.dispatcherId);
+      res.json(ratings);
+    } catch (error) {
+      console.error("Error fetching dispatcher ratings:", error);
       res.status(500).json({ message: "Failed to fetch ratings" });
     }
   });
@@ -1986,6 +2048,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching exclusive network posts:", error);
       res.status(500).json({ message: "Failed to fetch exclusive network posts" });
+    }
+  });
+
+  // ===== EXCLUSIVE NETWORK MANAGEMENT ROUTES =====
+
+  // Get exclusive network members for a client company
+  app.get('/api/exclusive-network/:clientCompanyId/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (!isClient(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      const members = await storage.getExclusiveNetworkMembers(req.params.clientCompanyId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching exclusive network members:", error);
+      res.status(500).json({ message: "Failed to fetch exclusive network members" });
+    }
+  });
+
+  // Create exclusive network member relationship
+  app.post('/api/exclusive-network/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isClient(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const memberData = insertExclusiveNetworkMemberSchema.parse({
+        ...req.body,
+        clientCompanyId: currentUser.clientCompanyId || req.body.clientCompanyId,
+      });
+
+      const member = await storage.createExclusiveNetworkMember(memberData);
+      res.json(member);
+    } catch (error) {
+      console.error("Error creating exclusive network member:", error);
+      res.status(500).json({ message: "Failed to create exclusive network member" });
+    }
+  });
+
+  // Check exclusive network eligibility
+  app.get('/api/exclusive-network/eligibility/:clientCompanyId/:serviceCompanyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (!isClient(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      const { clientCompanyId, serviceCompanyId } = req.params;
+      const isEligible = await storage.checkExclusiveNetworkEligibility(clientCompanyId, serviceCompanyId);
+      res.json({ eligible: isEligible });
+    } catch (error) {
+      console.error("Error checking exclusive network eligibility:", error);
+      res.status(500).json({ message: "Failed to check eligibility" });
     }
   });
 

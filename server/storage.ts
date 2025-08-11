@@ -7,12 +7,14 @@ import {
   workOrderTasks,
   workOrderIssues,
   notifications,
-  clientServiceRatings,
+  clientFieldAgentRatings,
+  clientDispatcherRatings,
   serviceClientRatings,
   issues,
   jobNetworkPosts,
   exclusiveNetworkPosts,
   workOrderRequests,
+  exclusiveNetworkMembers,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -30,8 +32,10 @@ import {
   type InsertWorkOrderIssue,
   type Notification,
   type InsertNotification,
-  type ClientServiceRating,
-  type InsertClientServiceRating,
+  type ClientFieldAgentRating,
+  type InsertClientFieldAgentRating,
+  type ClientDispatcherRating,
+  type InsertClientDispatcherRating,
   type ServiceClientRating,
   type InsertServiceClientRating,
   type Issue,
@@ -42,6 +46,8 @@ import {
   type InsertExclusiveNetworkPost,
   type WorkOrderRequest,
   type InsertWorkOrderRequest,
+  type ExclusiveNetworkMember,
+  type InsertExclusiveNetworkMember,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -185,12 +191,23 @@ export interface IStorage {
   getExclusiveNetworkPosts(): Promise<ExclusiveNetworkPost[]>;
 
   // Rating operations
-  createClientServiceRating(rating: InsertClientServiceRating): Promise<ClientServiceRating>;
+  createClientFieldAgentRating(rating: InsertClientFieldAgentRating): Promise<ClientFieldAgentRating>;
+  createClientDispatcherRating(rating: InsertClientDispatcherRating): Promise<ClientDispatcherRating>;
   createServiceClientRating(rating: InsertServiceClientRating): Promise<ServiceClientRating>;
-  getClientServiceRating(workOrderId: string, clientId: string): Promise<ClientServiceRating | undefined>;
+  getClientFieldAgentRating(workOrderId: string, clientId: string): Promise<ClientFieldAgentRating | undefined>;
+  getClientDispatcherRating(workOrderId: string, clientId: string): Promise<ClientDispatcherRating | undefined>;
   getServiceClientRating(workOrderId: string, raterId: string): Promise<ServiceClientRating | undefined>;
-  getServiceCompanyRatings(companyId: string): Promise<ClientServiceRating[]>;
+  getFieldAgentRatings(fieldAgentId: string): Promise<ClientFieldAgentRating[]>;
+  getDispatcherRatings(dispatcherId: string): Promise<ClientDispatcherRating[]>;
   getClientRatings(clientId: string): Promise<ServiceClientRating[]>;
+  updateUserRatings(userId: string): Promise<void>;
+  updateCompanyRatings(companyId: string): Promise<void>;
+  
+  // Exclusive Network operations
+  createExclusiveNetworkMember(member: InsertExclusiveNetworkMember): Promise<ExclusiveNetworkMember>;
+  getExclusiveNetworkMembers(clientCompanyId: string): Promise<ExclusiveNetworkMember[]>;
+  updateExclusiveNetworkMember(id: string, updates: Partial<InsertExclusiveNetworkMember>): Promise<ExclusiveNetworkMember>;
+  checkExclusiveNetworkEligibility(clientCompanyId: string, serviceCompanyId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1304,11 +1321,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Rating operations
-  async createClientServiceRating(rating: InsertClientServiceRating): Promise<ClientServiceRating> {
-    const [newRating] = await db
-      .insert(clientServiceRatings)
-      .values(rating)
-      .returning();
+  async createClientFieldAgentRating(rating: InsertClientFieldAgentRating): Promise<ClientFieldAgentRating> {
+    const [newRating] = await db.insert(clientFieldAgentRatings).values(rating).returning();
+    
+    // Update field agent's average ratings
+    await this.updateUserRatings(rating.fieldAgentId);
+    await this.updateCompanyRatings(rating.companyId);
+    
+    return newRating;
+  }
+
+  async createClientDispatcherRating(rating: InsertClientDispatcherRating): Promise<ClientDispatcherRating> {
+    const [newRating] = await db.insert(clientDispatcherRatings).values(rating).returning();
+    
+    // Update dispatcher's average ratings
+    await this.updateUserRatings(rating.dispatcherId);
+    await this.updateCompanyRatings(rating.companyId);
+    
     return newRating;
   }
 
@@ -1320,13 +1349,24 @@ export class DatabaseStorage implements IStorage {
     return newRating;
   }
 
-  async getClientServiceRating(workOrderId: string, clientId: string): Promise<ClientServiceRating | undefined> {
+  async getClientFieldAgentRating(workOrderId: string, clientId: string): Promise<ClientFieldAgentRating | undefined> {
     const [rating] = await db
       .select()
-      .from(clientServiceRatings)
+      .from(clientFieldAgentRatings)
       .where(and(
-        eq(clientServiceRatings.workOrderId, workOrderId),
-        eq(clientServiceRatings.clientId, clientId)
+        eq(clientFieldAgentRatings.workOrderId, workOrderId),
+        eq(clientFieldAgentRatings.clientId, clientId)
+      ));
+    return rating;
+  }
+
+  async getClientDispatcherRating(workOrderId: string, clientId: string): Promise<ClientDispatcherRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(clientDispatcherRatings)
+      .where(and(
+        eq(clientDispatcherRatings.workOrderId, workOrderId),
+        eq(clientDispatcherRatings.clientId, clientId)
       ));
     return rating;
   }
@@ -1342,49 +1382,177 @@ export class DatabaseStorage implements IStorage {
     return rating;
   }
 
-  async getServiceCompanyRatings(companyId: string): Promise<ClientServiceRating[]> {
+  async getFieldAgentRatings(fieldAgentId: string): Promise<ClientFieldAgentRating[]> {
     return await db
-      .select({
-        ...clientServiceRatings,
-        workOrder: {
-          id: workOrders.id,
-          title: workOrders.title,
-          dueDate: workOrders.dueDate
-        },
-        client: {
-          id: users.id,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          clientCompanyName: users.clientCompanyName
-        }
-      })
-      .from(clientServiceRatings)
-      .leftJoin(workOrders, eq(clientServiceRatings.workOrderId, workOrders.id))
-      .leftJoin(users, eq(clientServiceRatings.clientId, users.id))
-      .where(eq(clientServiceRatings.companyId, companyId))
-      .orderBy(desc(clientServiceRatings.createdAt));
+      .select()
+      .from(clientFieldAgentRatings)
+      .where(eq(clientFieldAgentRatings.fieldAgentId, fieldAgentId))
+      .orderBy(desc(clientFieldAgentRatings.createdAt));
+  }
+
+  async getDispatcherRatings(dispatcherId: string): Promise<ClientDispatcherRating[]> {
+    return await db
+      .select()
+      .from(clientDispatcherRatings)
+      .where(eq(clientDispatcherRatings.dispatcherId, dispatcherId))
+      .orderBy(desc(clientDispatcherRatings.createdAt));
   }
 
   async getClientRatings(clientId: string): Promise<ServiceClientRating[]> {
     return await db
-      .select({
-        ...serviceClientRatings,
-        workOrder: {
-          id: workOrders.id,
-          title: workOrders.title,
-          dueDate: workOrders.dueDate
-        },
-        rater: {
-          id: users.id,
-          firstName: users.firstName,
-          lastName: users.lastName
-        }
-      })
+      .select()
       .from(serviceClientRatings)
-      .leftJoin(workOrders, eq(serviceClientRatings.workOrderId, workOrders.id))
-      .leftJoin(users, eq(serviceClientRatings.raterId, users.id))
       .where(eq(serviceClientRatings.clientId, clientId))
       .orderBy(desc(serviceClientRatings.createdAt));
+  }
+
+  async updateUserRatings(userId: string): Promise<void> {
+    // Calculate average ratings for field agent
+    const fieldAgentRatings = await this.getFieldAgentRatings(userId);
+    if (fieldAgentRatings.length > 0) {
+      const avgCommunication = fieldAgentRatings.reduce((sum, r) => sum + r.communicationRating, 0) / fieldAgentRatings.length;
+      const avgTimeliness = fieldAgentRatings.reduce((sum, r) => sum + r.timelinessRating, 0) / fieldAgentRatings.length;
+      const avgWorkSatisfaction = fieldAgentRatings.reduce((sum, r) => sum + r.workSatisfactionRating, 0) / fieldAgentRatings.length;
+      const overallRating = (avgCommunication + avgTimeliness + avgWorkSatisfaction) / 3;
+
+      await db.update(users).set({
+        communicationRating: Number(avgCommunication.toFixed(2)),
+        timelinessRating: Number(avgTimeliness.toFixed(2)),
+        workSatisfactionRating: Number(avgWorkSatisfaction.toFixed(2)),
+        overallRating: Number(overallRating.toFixed(2)),
+        totalRatings: fieldAgentRatings.length,
+        updatedAt: new Date()
+      }).where(eq(users.id, userId));
+    }
+
+    // Calculate average ratings for dispatcher
+    const dispatcherRatings = await this.getDispatcherRatings(userId);
+    if (dispatcherRatings.length > 0) {
+      const avgCommunication = dispatcherRatings.reduce((sum, r) => sum + r.communicationRating, 0) / dispatcherRatings.length;
+      const avgManagement = dispatcherRatings.reduce((sum, r) => sum + r.managementRating, 0) / dispatcherRatings.length;
+      const avgFieldAgent = dispatcherRatings.reduce((sum, r) => sum + r.fieldAgentRating, 0) / dispatcherRatings.length;
+      const overallRating = (avgCommunication + avgManagement + avgFieldAgent) / 3;
+
+      await db.update(users).set({
+        communicationRating: Number(avgCommunication.toFixed(2)),
+        managementRating: Number(avgManagement.toFixed(2)),
+        fieldAgentRating: Number(avgFieldAgent.toFixed(2)),
+        overallRating: Number(overallRating.toFixed(2)),
+        totalRatings: dispatcherRatings.length,
+        updatedAt: new Date()
+      }).where(eq(users.id, userId));
+    }
+
+    // Calculate client ratings
+    const clientRatings = await this.getClientRatings(userId);
+    if (clientRatings.length > 0) {
+      const avgCommunication = clientRatings.reduce((sum, r) => sum + r.communicationRating, 0) / clientRatings.length;
+      const avgClearScope = clientRatings.reduce((sum, r) => sum + r.clearScopeRating, 0) / clientRatings.length;
+      const avgOverallSatisfaction = clientRatings.reduce((sum, r) => sum + r.overallSatisfactionRating, 0) / clientRatings.length;
+      const overallRating = (avgCommunication + avgClearScope + avgOverallSatisfaction) / 3;
+
+      await db.update(users).set({
+        communicationRating: Number(avgCommunication.toFixed(2)),
+        clearScopeRating: Number(avgClearScope.toFixed(2)),
+        overallSatisfactionRating: Number(avgOverallSatisfaction.toFixed(2)),
+        overallRating: Number(overallRating.toFixed(2)),
+        totalRatings: clientRatings.length,
+        updatedAt: new Date()
+      }).where(eq(users.id, userId));
+    }
+  }
+
+  async updateCompanyRatings(companyId: string): Promise<void> {
+    // Get all users from this company with ratings
+    const companyUsers = await db.select().from(users).where(eq(users.companyId, companyId));
+    const usersWithRatings = companyUsers.filter(user => user.totalRatings && user.totalRatings > 0);
+    
+    if (usersWithRatings.length > 0) {
+      const totalRatingSum = usersWithRatings.reduce((sum, user) => sum + (user.overallRating || 0), 0);
+      const totalRatingsCount = usersWithRatings.reduce((sum, user) => sum + (user.totalRatings || 0), 0);
+      const avgRating = totalRatingSum / usersWithRatings.length;
+
+      await db.update(companies).set({
+        overallRating: Number(avgRating.toFixed(2)),
+        totalRatings: totalRatingsCount,
+        updatedAt: new Date()
+      }).where(eq(companies.id, companyId));
+    }
+  }
+
+  // Exclusive Network operations
+  async createExclusiveNetworkMember(member: InsertExclusiveNetworkMember): Promise<ExclusiveNetworkMember> {
+    const [newMember] = await db.insert(exclusiveNetworkMembers).values(member).returning();
+    return newMember;
+  }
+
+  async getExclusiveNetworkMembers(clientCompanyId: string): Promise<ExclusiveNetworkMember[]> {
+    return await db
+      .select()
+      .from(exclusiveNetworkMembers)
+      .where(eq(exclusiveNetworkMembers.clientCompanyId, clientCompanyId))
+      .orderBy(desc(exclusiveNetworkMembers.createdAt));
+  }
+
+  async updateExclusiveNetworkMember(id: string, updates: Partial<InsertExclusiveNetworkMember>): Promise<ExclusiveNetworkMember> {
+    const [updated] = await db
+      .update(exclusiveNetworkMembers)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(exclusiveNetworkMembers.id, id))
+      .returning();
+    return updated;
+  }
+
+  async checkExclusiveNetworkEligibility(clientCompanyId: string, serviceCompanyId: string): Promise<boolean> {
+    // Check if there are 5+ completed work orders with 4+ star average rating
+    const completedOrders = await db
+      .select()
+      .from(workOrders)
+      .where(and(
+        eq(workOrders.clientCompanyId, clientCompanyId),
+        eq(workOrders.companyId, serviceCompanyId),
+        eq(workOrders.status, 'completed')
+      ));
+
+    if (completedOrders.length >= 5) {
+      // Calculate average rating across all completed work orders
+      let totalRating = 0;
+      let ratingCount = 0;
+
+      for (const order of completedOrders) {
+        const fieldAgentRatings = await db
+          .select()
+          .from(clientFieldAgentRatings)
+          .where(eq(clientFieldAgentRatings.workOrderId, order.id));
+        
+        const dispatcherRatings = await db
+          .select()
+          .from(clientDispatcherRatings)
+          .where(eq(clientDispatcherRatings.workOrderId, order.id));
+
+        fieldAgentRatings.forEach(rating => {
+          const avgRating = (rating.communicationRating + rating.timelinessRating + rating.workSatisfactionRating) / 3;
+          totalRating += avgRating;
+          ratingCount++;
+        });
+
+        dispatcherRatings.forEach(rating => {
+          const avgRating = (rating.communicationRating + rating.managementRating + rating.fieldAgentRating) / 3;
+          totalRating += avgRating;
+          ratingCount++;
+        });
+      }
+
+      if (ratingCount > 0) {
+        const averageRating = totalRating / ratingCount;
+        return averageRating >= 4.0;
+      }
+    }
+
+    return false;
   }
 
   // Issue operations (hazard reporting)

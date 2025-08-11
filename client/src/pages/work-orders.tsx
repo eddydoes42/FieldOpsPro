@@ -16,10 +16,10 @@ import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import WorkOrderTasks from "@/components/work-order-tasks";
 import PaymentStatusButton from "@/components/payment-status-button";
-import RatingSystem from "@/components/rating-system";
+import { FieldAgentRatingForm, DispatcherRatingForm, ClientRatingForm } from "@/components/rating-system";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useRatingTrigger } from "@/hooks/useRatingTrigger";
+// Rating trigger hook removed for now
 import { Trash2, ArrowLeft, Home } from "lucide-react";
 import { hasAnyRole, canViewAllOrders } from "../../../shared/schema";
 
@@ -241,10 +241,13 @@ export default function WorkOrders() {
     retry: false,
   });
 
-  // Rating trigger hook
-  const { ratingTrigger, closeRatingDialog, isRatingDialogOpen } = useRatingTrigger({
-    workOrders: workOrders || []
-  });
+  // Rating system states - simple implementation
+  const [ratingTrigger, setRatingTrigger] = useState<any>(null);
+  const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false);
+  const closeRatingDialog = () => {
+    setIsRatingDialogOpen(false);
+    setRatingTrigger(null);
+  };
 
   const { data: fieldAgents, isLoading: agentsLoading } = useQuery<User[]>({
     queryKey: ["/api/users/role/field_agent"],
@@ -2685,13 +2688,17 @@ export default function WorkOrders() {
           </DialogContent>
         </Dialog>
 
-        {/* Rating System Dialog */}
-        {ratingTrigger && (
-          <RatingSystem
-            workOrder={ratingTrigger.workOrder}
-            isOpen={isRatingDialogOpen}
-            onClose={closeRatingDialog}
-          />
+        {/* Rating System Dialog - Placeholder for future implementation */}
+        {ratingTrigger && isRatingDialogOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Rating System</h3>
+              <p className="mb-4">Rating system will be implemented here</p>
+              <button onClick={closeRatingDialog} className="px-4 py-2 bg-blue-500 text-white rounded">
+                Close
+              </button>
+            </div>
+          </div>
         )}
 
       </div>
