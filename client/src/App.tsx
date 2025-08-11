@@ -29,6 +29,7 @@ import NotFound from "@/pages/not-found";
 import FloatingQuickAction from "@/components/floating-quick-action";
 import FieldAgentWork from "@/pages/field-agent-work";
 import FieldAgentSettings from "@/pages/field-agent-settings";
+import MyWork from "@/pages/mywork";
 
 // Lazy load ClientDashboard and ClientWorkOrders
 const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
@@ -264,6 +265,13 @@ function Router() {
                 <Onboarding />
               ) : hasRole(user as any, 'field_agent') ? (
                 <AgentDashboard />
+              ) : (
+                <Landing />
+              )}
+            </Route>
+            <Route path="/mywork">
+              {hasRole(user as any, 'field_agent') ? (
+                <MyWork />
               ) : (
                 <Landing />
               )}

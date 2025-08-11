@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -391,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       console.log("Work order creation - User:", currentUser?.email, "Roles:", currentUser?.roles);
-      console.log("canManageUsers:", canManageUsers(currentUser), "isClient:", isClient(currentUser));
+      console.log("canManageUsers:", canManageUsers(currentUser || null), "isClient:", isClient(currentUser || null));
       
       // Allow management users, clients, and operations directors to create work orders
       if (!currentUser || (!canManageUsers(currentUser) && !isClient(currentUser) && !isOperationsDirector(currentUser || null))) {
@@ -988,6 +988,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching all issues:", error);
       res.status(500).json({ message: "Failed to fetch issues" });
+    }
+  });
+
+  // Hazard Reporting (Issues) Routes
+  app.post("/api/work-orders/:workOrderId/create-issue", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { workOrderId } = req.params;
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      const issueData = insertIssueSchema.parse({
+        ...req.body,
+        workOrderId,
+        companyId: workOrder.companyId,
+        reportedById: currentUser.id,
+      });
+
+      const issue = await storage.createIssue(issueData);
+      res.status(201).json(issue);
+    } catch (error) {
+      console.error("Error creating issue:", error);
+      res.status(500).json({ message: "Failed to create issue" });
+    }
+  });
+
+  app.get("/api/issues/open", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to view issues" });
+      }
+
+      const issues = await storage.getAllOpenIssues();
+      res.json(issues);
+    } catch (error) {
+      console.error("Error fetching open issues:", error);
+      res.status(500).json({ message: "Failed to fetch open issues" });
+    }
+  });
+
+  app.get("/api/work-orders/:workOrderId/issues-hazards", isAuthenticated, async (req: any, res) => {
+    try {
+      const { workOrderId } = req.params;
+      const issues = await storage.getIssuesByWorkOrder(workOrderId);
+      res.json(issues);
+    } catch (error) {
+      console.error("Error fetching work order issues:", error);
+      res.status(500).json({ message: "Failed to fetch work order issues" });
+    }
+  });
+
+  app.patch("/api/issues/:issueId/resolve", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Only managers and above can resolve issues" });
+      }
+
+      const { issueId } = req.params;
+      const { resolution } = req.body;
+
+      if (!resolution) {
+        return res.status(400).json({ message: "Resolution text is required" });
+      }
+
+      const issue = await storage.resolveIssue(issueId, currentUser.id, resolution);
+      res.json(issue);
+    } catch (error) {
+      console.error("Error resolving issue:", error);
+      res.status(500).json({ message: "Failed to resolve issue" });
+    }
+  });
+
+  app.get("/api/companies/:companyId/issues", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to view company issues" });
+      }
+
+      const { companyId } = req.params;
+      const issues = await storage.getIssuesByCompany(companyId);
+      res.json(issues);
+    } catch (error) {
+      console.error("Error fetching company issues:", error);
+      res.status(500).json({ message: "Failed to fetch company issues" });
     }
   });
 

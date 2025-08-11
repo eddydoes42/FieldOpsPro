@@ -1,7 +1,7 @@
 # FieldOps Pro - IT Field Agent Management System
 
 ## Overview
-FieldOps Pro is a comprehensive field operations management platform that empowers mobile workforce teams with advanced operational tools, dynamic time tracking, and enhanced work order capabilities. It offers role-based dashboards for administrators, managers, and field agents, enabling work order management, time tracking, user onboarding, and real-time messaging. The system includes a comprehensive bidirectional star rating system for clients and service companies, advanced client management with work order creation and agent request systems, and a robust task management system with work order status dependencies. The application aims to streamline IT field services, improve communication, and enhance operational efficiency.
+FieldOps Pro is a comprehensive field operations management platform that empowers mobile workforce teams with advanced operational tools, dynamic time tracking, and enhanced work order capabilities. It features a hierarchical role-based system with Operations Director (god mode capabilities), company-level administrators, managers, dispatchers, and field agents. The system includes comprehensive work order management with integrated issue reporting, role testing capabilities, user management workflows, and real-time messaging. The application aims to streamline IT field services, improve communication, and enhance operational efficiency through strict role-based access controls and company hierarchy management.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -25,7 +25,25 @@ The server uses Express.js with TypeScript, following a RESTful API design. It i
 PostgreSQL is the primary database, with Drizzle ORM for type-safe operations. The schema includes tables for users, work orders, tasks, time entries, messages, and sessions, supporting hierarchical user roles and task management with referential integrity.
 
 ### Authentication & Authorization
-Authentication uses Replit's OAuth with session management via connect-pg-simple. Role-based authorization is implemented for administrators, managers, field agents, and clients, with strict access controls and administrator-only user creation. Users can have multiple roles simultaneously.
+Authentication uses Replit's OAuth with session management via connect-pg-simple. The system implements a strict hierarchical role-based authorization system:
+
+**Operations Director (God Mode):**
+- Complete system oversight and control
+- Only role that can create/delete companies, clients, and administrators
+- Can perform any function across all companies
+- Role Testing: When using Role Tester (white bar), restricted to selected role's capabilities
+- Not associated with any company
+- Oversees unresolved issues and app functionality
+
+**Company Hierarchy (within each company):**
+1. **Administrator**: User account creation/editing/deletion; work order CRUD and assignment; Job Network access; issue resolution; user suspension/deactivation; messaging
+2. **Manager**: Same as Administrator, EXCEPT Administrator can delete Manager but not vice versa
+3. **Dispatcher**: Same as Manager, EXCEPT cannot create/delete/edit user accounts
+4. **Field Agent**: View/complete assigned work orders only; message team members; edit own contact info; access /mywork dashboard
+
+**Test Company Structure:**
+- Test Company exists with full team for role testing
+- Test Admin, Test Manager, Test Dispatcher, Test Field Agent users
 
 ### State Management
 Frontend uses TanStack Query for server state management. Form state is managed with React Hook Form and Zod for validation, sharing schemas between frontend and backend.
@@ -34,19 +52,24 @@ Frontend uses TanStack Query for server state management. Form state is managed 
 The application features a modern design built on Tailwind CSS and shadcn/ui, providing a responsive interface. It emphasizes role-specific workflows with distinct dashboard layouts and a consistent dark theme using a blue-grey color scheme. A comprehensive calendar system with weekly view and advanced filtering is integrated.
 
 ### Key Features
-- **Role-based Dashboards**: Administrator, Manager, Dispatcher, Field Agent, and Client specific interfaces.
-- **Work Order Management**: Creation, assignment, status tracking (Scheduled to Mark Complete), and task dependencies.
-- **Task Management System**: Fully functional task creation, completion tracking, and category organization (Pre-visit, On-site, Post-site).
-- **Time Tracking System**: Real-time check-in/check-out, active timer display, and logged time calculation.
-- **Budget Management System**: Comprehensive budget creation (fixed, hourly, per-device, materials+labor) with dynamic total calculation.
-- **Client Management System**: Dedicated client dashboard for work order creation, job network access, and field agent request system.
-- **Bidirectional Star Rating System**: Comprehensive rating system between clients and service companies with auto-triggering and specific categories.
-- **Multiple Role Assignment**: Users can hold multiple roles simultaneously with priority logic.
-- **Restricted Authentication**: Login limited to pre-approved team members; no self-registration.
-- **Operations Director Role Testing Feature**: Advanced role switching for system testing with proper dashboard navigation.
-- **Interactive Work Order Popup**: Enhanced layout with Budget Information positioned above Work Details for improved workflow.
-- **Talent Network Page**: New page accessible to clients showing field agent cards from all companies with clickable detailed agent profiles and company associations.
-- **Icon-Based Navigation**: Complete transition from text-based "Back to Dashboard" buttons to intuitive Home (🏠) and Back (←) icons across all pages including Talent Network.
+- **Hierarchical Role System**: Operations Director (god mode), Administrator, Manager, Dispatcher, Field Agent with strict access controls
+- **Operations Director God Mode**: Complete system oversight with role testing capabilities via Role Tester (white bar)
+- **Company Management**: Operations Director exclusive company/client/administrator creation and deletion
+- **Role-based Dashboards**: Operations Director, Administrator, Manager, Dispatcher, Field Agent, and Client specific interfaces
+- **Work Order Management**: Creation, assignment, status tracking (Scheduled to Mark Complete), task dependencies, and integrated issue reporting
+- **Issue Reporting System**: "Create Issue" function on work orders creates hazard alerts requiring Manager+ approval
+- **Field Agent Dashboard**: /mywork page displaying cards with work orders assigned to specific Field Agent
+- **User Management Hierarchy**: Administrator > Manager > Dispatcher > Field Agent with appropriate CRUD permissions
+- **Test Company Structure**: Complete test team (Test Admin, Test Manager, Test Dispatcher, Test Field Agent) for role testing
+- **Task Management System**: Fully functional task creation, completion tracking, and category organization (Pre-visit, On-site, Post-site)
+- **Time Tracking System**: Real-time check-in/check-out, active timer display, and logged time calculation
+- **Budget Management System**: Comprehensive budget creation (fixed, hourly, per-device, materials+labor) with dynamic total calculation
+- **Client Management System**: Dedicated client dashboard for work order creation, job network access, and field agent request system
+- **Bidirectional Star Rating System**: Comprehensive rating system between clients and service companies with auto-triggering and specific categories
+- **Restricted Authentication**: Login limited to pre-approved team members; no self-registration
+- **Interactive Work Order Popup**: Enhanced layout with Budget Information positioned above Work Details for improved workflow
+- **Talent Network Page**: New page accessible to clients showing field agent cards from all companies with clickable detailed agent profiles and company associations
+- **Icon-Based Navigation**: Complete transition from text-based "Back to Dashboard" buttons to intuitive Home (🏠) and Back (←) icons across all pages including Talent Network
 
 ## External Dependencies
 

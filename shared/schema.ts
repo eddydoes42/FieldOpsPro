@@ -117,6 +117,25 @@ export const workOrders = pgTable("work_orders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Issues table for hazard reporting
+export const issues = pgTable("issues", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  reportedById: varchar("reported_by_id").notNull().references(() => users.id),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  severity: varchar("severity").notNull().default("medium"), // low, medium, high, critical
+  category: varchar("category").notNull(), // safety_hazard, equipment_issue, access_problem, other
+  status: varchar("status").notNull().default("open"), // open, investigating, resolved, closed
+  resolvedById: varchar("resolved_by_id").references(() => users.id),
+  resolution: text("resolution"),
+  resolvedAt: timestamp("resolved_at"),
+  requiresManagerApproval: boolean("requires_manager_approval").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Agent performance history table for client review
 export const agentPerformance = pgTable("agent_performance", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -433,6 +452,13 @@ export const insertWorkOrderIssueSchema = createInsertSchema(workOrderIssues).om
   resolvedAt: true,
 });
 
+export const insertIssueSchema = createInsertSchema(issues).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  resolvedAt: true,
+});
+
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,
@@ -487,6 +513,9 @@ export type InsertClientServiceRating = z.infer<typeof insertClientServiceRating
 
 export type ServiceClientRating = typeof serviceClientRatings.$inferSelect;
 export type InsertServiceClientRating = z.infer<typeof insertServiceClientRatingSchema>;
+
+export type Issue = typeof issues.$inferSelect;
+export type InsertIssue = z.infer<typeof insertIssueSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {

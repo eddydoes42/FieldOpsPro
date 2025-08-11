@@ -9,6 +9,7 @@ import {
   notifications,
   clientServiceRatings,
   serviceClientRatings,
+  issues,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -30,6 +31,8 @@ import {
   type InsertClientServiceRating,
   type ServiceClientRating,
   type InsertServiceClientRating,
+  type Issue,
+  type InsertIssue,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -131,6 +134,15 @@ export interface IStorage {
   getWorkOrderIssues(workOrderId: string): Promise<WorkOrderIssue[]>;
   createWorkOrderIssue(issue: InsertWorkOrderIssue): Promise<WorkOrderIssue>;
   getAllIssues(): Promise<WorkOrderIssue[]>;
+
+  // Issue operations (hazard reporting)
+  createIssue(issue: InsertIssue): Promise<Issue>;
+  getIssue(id: string): Promise<Issue | undefined>;
+  getIssuesByWorkOrder(workOrderId: string): Promise<Issue[]>;
+  getIssuesByCompany(companyId: string): Promise<Issue[]>;
+  getAllOpenIssues(): Promise<Issue[]>;
+  updateIssue(id: string, updates: Partial<InsertIssue>): Promise<Issue>;
+  resolveIssue(id: string, resolvedById: string, resolution: string): Promise<Issue>;
 
   // Status and time tracking operations
   updateWorkOrderStatus(id: string, updateData: any): Promise<WorkOrder>;
@@ -1129,13 +1141,7 @@ export class DatabaseStorage implements IStorage {
     return updatedWorkOrder;
   }
 
-  async getFieldAgents(): Promise<User[]> {
-    return await db
-      .select()
-      .from(users)
-      .where(sql`'field_agent' = ANY(roles)`)
-      .orderBy(users.firstName, users.lastName);
-  }
+
 
   // Rating operations
   async createClientServiceRating(rating: InsertClientServiceRating): Promise<ClientServiceRating> {
@@ -1219,6 +1225,68 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(serviceClientRatings.raterId, users.id))
       .where(eq(serviceClientRatings.clientId, clientId))
       .orderBy(desc(serviceClientRatings.createdAt));
+  }
+
+  // Issue operations (hazard reporting)
+  async createIssue(issueData: InsertIssue): Promise<Issue> {
+    const [issue] = await db.insert(issues).values(issueData).returning();
+    return issue;
+  }
+
+  async getIssue(id: string): Promise<Issue | undefined> {
+    const [issue] = await db.select().from(issues).where(eq(issues.id, id));
+    return issue;
+  }
+
+  async getIssuesByWorkOrder(workOrderId: string): Promise<Issue[]> {
+    return await db
+      .select()
+      .from(issues)
+      .where(eq(issues.workOrderId, workOrderId))
+      .orderBy(desc(issues.createdAt));
+  }
+
+  async getIssuesByCompany(companyId: string): Promise<Issue[]> {
+    return await db
+      .select()
+      .from(issues)
+      .where(eq(issues.companyId, companyId))
+      .orderBy(desc(issues.createdAt));
+  }
+
+  async getAllOpenIssues(): Promise<Issue[]> {
+    return await db
+      .select()
+      .from(issues)
+      .where(sql`status IN ('open', 'investigating')`)
+      .orderBy(desc(issues.createdAt));
+  }
+
+  async updateIssue(id: string, updates: Partial<InsertIssue>): Promise<Issue> {
+    const [issue] = await db
+      .update(issues)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(issues.id, id))
+      .returning();
+    return issue;
+  }
+
+  async resolveIssue(id: string, resolvedById: string, resolution: string): Promise<Issue> {
+    const [issue] = await db
+      .update(issues)
+      .set({
+        status: 'resolved',
+        resolvedById,
+        resolution,
+        resolvedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(issues.id, id))
+      .returning();
+    return issue;
   }
 }
 
