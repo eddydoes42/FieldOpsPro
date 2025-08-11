@@ -2109,6 +2109,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Approve and pay work order (for client admins)
+  app.patch('/api/work-orders/:id/approve-and-pay', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isClient(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      const workOrder = await storage.getWorkOrder(req.params.id);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Verify the work order belongs to the client's company
+      if (workOrder.clientCompanyId !== currentUser.clientCompanyId) {
+        return res.status(403).json({ message: "Access denied. Work order not from your company." });
+      }
+
+      // Verify work order is completed
+      if (workOrder.status !== 'completed') {
+        return res.status(400).json({ message: "Work order must be completed before approval." });
+      }
+
+      // Update work order to approved and paid status
+      const updatedWorkOrder = await storage.updateWorkOrder(req.params.id, {
+        paymentStatus: 'paid',
+        assignmentProgress: 'PAID',
+        pathToCompletion: 'paid',
+        progressIndicator: 'paid',
+        paymentUpdatedById: currentUser.id,
+        paymentUpdatedAt: new Date()
+      });
+
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error approving and paying work order:", error);
+      res.status(500).json({ message: "Failed to approve and pay work order" });
+    }
+  });
+
   // Operations Director specific routes for exclusive network management
   app.get('/api/operations/exclusive-network-members', isAuthenticated, async (req: any, res) => {
     try {

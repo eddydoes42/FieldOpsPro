@@ -33,6 +33,24 @@ interface ClientDashboardProps {
 export default function ClientDashboard({ user }: ClientDashboardProps) {
   const queryClient = useQueryClient();
 
+  // Mutation for approving and paying work orders
+  const approveAndPayMutation = useMutation({
+    mutationFn: async (workOrderId: string) => {
+      return apiRequest(`/api/work-orders/${workOrderId}/approve-and-pay`, 'PATCH');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
+    },
+  });
+
+  const handleApproveAndPay = async (workOrderId: string) => {
+    try {
+      await approveAndPayMutation.mutateAsync(workOrderId);
+    } catch (error) {
+      console.error('Failed to approve and pay work order:', error);
+    }
+  };
+
   // Query for user's company info
   const { data: company } = useQuery({
     queryKey: ['/api/companies', user.companyId],
@@ -66,13 +84,14 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
     queryKey: ['/api/exclusive-network'],
   });
 
-  const adminTeamMembers = teamMembers.filter((member: User) => isAdminTeam(member));
-  const activeWorkOrders = workOrders.filter((wo: any) => wo.status !== 'completed' && wo.status !== 'cancelled');
-  const recentMessages = messages.slice(0, 5);
+  const adminTeamMembers = (teamMembers as any[]).filter((member: User) => isAdminTeam(member));
+  const activeWorkOrders = (workOrders as any[]).filter((wo: any) => wo.status !== 'completed' && wo.status !== 'cancelled');
+  const workOrdersToApprove = (workOrders as any[]).filter((wo: any) => wo.status === 'completed' && (!wo.paymentStatus || wo.paymentStatus === 'pending_payment'));
+  const recentMessages = (messages as any[]).slice(0, 5);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navigation user={user} />
+      <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -83,7 +102,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 Client Dashboard
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                {company?.name} - {company?.type === 'client' ? 'Client Company' : 'Service Company'}
+                {(company as any)?.name} - {(company as any)?.type === 'client' ? 'Client Company' : 'Service Company'}
               </p>
             </div>
           </div>
@@ -99,7 +118,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                     Team Members
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {teamMembers.length}
+                    {(teamMembers as any[]).length}
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -147,7 +166,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                     Unread Messages
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {messages.filter((m: any) => !m.isRead).length}
+                    {(messages as any[]).filter((m: any) => !m.isRead).length}
                   </p>
                 </div>
                 <MessageSquare className="h-8 w-8 text-orange-600 dark:text-orange-400" />
@@ -155,6 +174,49 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             </CardContent>
           </Card>
         </div>
+
+        {/* Things to Approve Section */}
+        {workOrdersToApprove.length > 0 && (
+          <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
+                <Clock className="h-5 w-5" />
+                <span>Things to Approve</span>
+                <Badge variant="secondary" className="bg-yellow-200 text-yellow-800">
+                  {workOrdersToApprove.length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {workOrdersToApprove.map((workOrder: any) => (
+                  <div key={workOrder.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {workOrder.title}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Completed by: {workOrder.assignee?.firstName} {workOrder.assignee?.lastName}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Location: {workOrder.location}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => handleApproveAndPay(workOrder.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Approve and Pay
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
@@ -256,9 +318,9 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                {workOrders.length > 0 ? (
+                {(workOrders as any[]).length > 0 ? (
                   <div className="space-y-4">
-                    {workOrders.map((workOrder: any) => (
+                    {(workOrders as any[]).map((workOrder: any) => (
                       <div key={workOrder.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -318,9 +380,9 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Post work orders publicly for all Service Company Admin Teams to view and bid on.
                 </p>
-                {jobNetworkPosts.length > 0 ? (
+                {(jobNetworkPosts as any[]).length > 0 ? (
                   <div className="space-y-4">
-                    {jobNetworkPosts.map((post: any) => (
+                    {(jobNetworkPosts as any[]).map((post: any) => (
                       <div key={post.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -380,9 +442,9 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Post work orders privately for Admin Teams only. Higher security and confidentiality.
                 </p>
-                {exclusiveNetworkPosts.length > 0 ? (
+                {(exclusiveNetworkPosts as any[]).length > 0 ? (
                   <div className="space-y-4">
-                    {exclusiveNetworkPosts.map((post: any) => (
+                    {(exclusiveNetworkPosts as any[]).map((post: any) => (
                       <div key={post.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -438,9 +500,9 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                {teamMembers.length > 0 ? (
+                {(teamMembers as any[]).length > 0 ? (
                   <div className="space-y-4">
-                    {teamMembers.map((member: User) => (
+                    {(teamMembers as any[]).map((member: User) => (
                       <div key={member.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">

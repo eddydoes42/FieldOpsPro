@@ -121,7 +121,10 @@ export const workOrders = pgTable("work_orders", {
   workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
   checkedInAt: timestamp("checked_in_at"),
   checkedOutAt: timestamp("checked_out_at"),
-  // Assignment progress button status
+  // Assignment progress tracking
+  assignmentProgress: varchar("assignment_progress").default(""), // tracks status for client approval
+  pathToCompletion: varchar("path_to_completion").default(""), // current path status
+  progressIndicator: varchar("progress_indicator").default(""), // visual indicator status
   assignmentProgressStatus: varchar("assignment_progress_status").default("confirm"), // confirm, in_route, check_in, check_out, mark_complete, mark_incomplete
   // Scheduling status
   isScheduled: boolean("is_scheduled").default(false), // true when field agent puts work order on schedule
