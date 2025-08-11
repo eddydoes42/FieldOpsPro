@@ -37,7 +37,7 @@ const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
 const JobNetwork = React.lazy(() => import('@/pages/job-network'));
 
 // Import Talent Network
-import { TalentNetworkPage } from './components/talent-network';
+import TalentNetworkPage from '@/pages/talent-network';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -318,7 +318,44 @@ function Router() {
                 const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
                 
                 if (isAuthenticated && hasTalentNetworkAccess) {
-                  return <TalentNetworkPage />;
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      <TalentNetworkPage />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+            <Route path="/manager-dashboard">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasManagerAccess = ['operations_director', 'manager'].includes(effectiveRole);
+                
+                if (isAuthenticated && hasManagerAccess) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'manager'} />
+                      <ManagerDashboard />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+            <Route path="/admin-dashboard">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasAdminAccess = ['operations_director', 'administrator'].includes(effectiveRole);
+                
+                if (isAuthenticated && hasAdminAccess) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'administrator'} />
+                      <AdminDashboard />
+                    </div>
+                  );
                 }
                 return <Landing />;
               })()}
