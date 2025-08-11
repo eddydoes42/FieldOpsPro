@@ -193,7 +193,7 @@ function Router() {
                   } else if (effectiveRole === 'client') {
                     return (
                       <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
-                        <ClientDashboard user={user} />
+                        <ClientDashboard user={user as any} />
                       </Suspense>
                     );
                   } else {
@@ -289,12 +289,13 @@ function Router() {
                 
                 if (isAuthenticated && hasJobNetworkAccess) {
                   return (
-                    <div>
-                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
-                      <Suspense fallback={<div className="p-4">Loading job network...</div>}>
-                        <JobNetwork user={user} />
-                      </Suspense>
-                    </div>
+                    <Suspense fallback={<div className="p-4">Loading job network...</div>}>
+                      <JobNetwork 
+                        user={user as any} 
+                        testingRole={testingRole || undefined}
+                        onRoleSwitch={handleRoleSwitch}
+                      />
+                    </Suspense>
                   );
                 }
                 return <Landing />;
@@ -333,7 +334,7 @@ function Router() {
                         )}
                         {(() => {
                           const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
-                          return <ClientDashboard user={user} />;
+                          return <ClientDashboard user={user as any} />;
                         })()}
                       </div>
                     </Suspense>

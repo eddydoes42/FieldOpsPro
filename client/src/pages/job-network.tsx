@@ -27,11 +27,12 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, canPostToJobNetwork, isAdminTeam, isClient, insertJobNetworkPostSchema } from '@shared/schema';
+import { User, canPostToJobNetwork, isAdminTeam, isClient, insertJobNetworkPostSchema, isOperationsDirector } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 import Navigation from '@/components/navigation';
+import RoleSwitcher from '@/components/role-switcher';
 
 const createJobSchema = insertJobNetworkPostSchema.extend({
   requiredSkills: z.array(z.string()).optional(),
@@ -49,9 +50,11 @@ const requestJobSchema = z.object({
 
 interface JobNetworkProps {
   user: User;
+  testingRole?: string;
+  onRoleSwitch?: (role: string) => void;
 }
 
-export default function JobNetwork({ user }: JobNetworkProps) {
+export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetworkProps) {
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isRequestJobOpen, setIsRequestJobOpen] = useState(false);
@@ -209,6 +212,17 @@ export default function JobNetwork({ user }: JobNetworkProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
+      
+      {/* Role Tester for Operations Director */}
+      {isOperationsDirector(user) && onRoleSwitch && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <RoleSwitcher 
+            currentRole={testingRole || user.role} 
+            onRoleSwitch={onRoleSwitch}
+            currentActiveRole={user.role}
+          />
+        </div>
+      )}
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
