@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
+import RoleSwitcher from "@/components/role-switcher";
 import UserOnboardingForm from "@/components/user-onboarding-form";
 import WorkOrderForm from "@/components/work-order-form";
 import { Card, CardContent } from "@/components/ui/card";
@@ -106,6 +107,29 @@ export default function ManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Role Tester - shows when Operations Director is testing Manager role */}
+      <RoleSwitcher 
+        currentRole="manager"
+        onRoleSwitch={(role) => {
+          localStorage.setItem('testingRole', role);
+          // Navigate to appropriate dashboard based on role
+          if (role === 'operations_director') {
+            window.location.href = '/operations-dashboard';
+          } else if (role === 'administrator') {
+            window.location.href = '/admin-dashboard';
+          } else if (role === 'manager') {
+            window.location.href = '/manager-dashboard';
+          } else if (role === 'dispatcher') {
+            window.location.href = '/dispatcher-dashboard';
+          } else if (role === 'field_agent') {
+            window.location.href = '/agent-dashboard';
+          } else if (role === 'client') {
+            window.location.href = '/client-dashboard';
+          }
+        }}
+        currentActiveRole={localStorage.getItem('permanentRole') || 'manager'}
+      />
+      
       <Navigation 
         testingRole={testingRole}
         currentActiveRole={localStorage.getItem('permanentRole') || 'manager'} 

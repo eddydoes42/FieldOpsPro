@@ -24,8 +24,9 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
-  // Only show for operations directors AND when current active role is operations_director
-  if (!isOperationsDirector(user as any) || (currentActiveRole && currentActiveRole !== 'operations_director')) {
+  // Only show for operations directors when they are testing a role
+  const isTestingRole = localStorage.getItem('testingRole');
+  if (!isOperationsDirector(user as any) || !isTestingRole) {
     return null;
   }
 

@@ -6,6 +6,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { hasRole } from "../../../shared/schema";
 import Navigation from "@/components/navigation";
+import RoleSwitcher from "@/components/role-switcher";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -110,6 +111,29 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Role Tester - shows when Operations Director is testing Administrator role */}
+      <RoleSwitcher 
+        currentRole="administrator"
+        onRoleSwitch={(role) => {
+          localStorage.setItem('testingRole', role);
+          // Navigate to appropriate dashboard based on role
+          if (role === 'operations_director') {
+            window.location.href = '/operations-dashboard';
+          } else if (role === 'administrator') {
+            window.location.href = '/admin-dashboard';
+          } else if (role === 'manager') {
+            window.location.href = '/manager-dashboard';
+          } else if (role === 'dispatcher') {
+            window.location.href = '/dispatcher-dashboard';
+          } else if (role === 'field_agent') {
+            window.location.href = '/agent-dashboard';
+          } else if (role === 'client') {
+            window.location.href = '/client-dashboard';
+          }
+        }}
+        currentActiveRole={localStorage.getItem('permanentRole') || 'administrator'}
+      />
+      
       <Navigation 
         testingRole={testingRole}
         currentActiveRole={localStorage.getItem('permanentRole') || 'administrator'} 
