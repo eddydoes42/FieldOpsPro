@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { hasRole, hasAnyRole, isOperationsDirector, canViewJobNetwork, getPrimaryRole } from "../../shared/schema";
 import RoleSwitcher from "@/components/role-switcher";
+import GlobalRoleTester from "@/components/global-role-tester";
 
 import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
@@ -155,6 +156,17 @@ function Router() {
 
   return (
     <div data-quick-actions="true" className="quick-action-zone">
+      {/* Global Role Tester - appears on all pages for operations directors */}
+      <GlobalRoleTester 
+        currentTestingRole={testingRole || undefined}
+        onRoleTest={handleRoleSwitch}
+        onExitTest={() => {
+          setTestingRole(null);
+          localStorage.removeItem('testingRole');
+          // Return to operations director dashboard when exiting test
+          setLocation('/operations-dashboard');
+        }}
+      />
       <Switch>
         {!isAuthenticated ? (
           <Route path="/" component={Landing} />
