@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, Users, UserPlus, Settings, DollarSign } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
+import RoleSwitcher from "@/components/role-switcher";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
@@ -62,6 +63,27 @@ export default function OperationsDirectorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Role Tester - always visible on Operations Director dashboard */}
+      <RoleSwitcher 
+        currentRole="operations_director"
+        onRoleSwitch={(role) => {
+          localStorage.setItem('testingRole', role);
+          // Navigate to appropriate dashboard based on role
+          if (role === 'administrator') {
+            window.location.href = '/admin-dashboard';
+          } else if (role === 'manager') {
+            window.location.href = '/manager-dashboard';
+          } else if (role === 'dispatcher') {
+            window.location.href = '/dispatcher-dashboard';
+          } else if (role === 'field_agent') {
+            window.location.href = '/agent-dashboard';
+          } else if (role === 'client') {
+            window.location.href = '/client-dashboard';
+          }
+        }}
+        currentActiveRole={localStorage.getItem('permanentRole') || 'operations_director'}
+      />
+      
       <Navigation 
         currentActiveRole={localStorage.getItem('permanentRole') || 'operations_director'} 
         onPermanentRoleSwitch={(role) => {
@@ -71,8 +93,6 @@ export default function OperationsDirectorDashboard() {
           window.location.href = '/dashboard';
         }}
       />
-      
-
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

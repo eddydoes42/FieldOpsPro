@@ -24,9 +24,11 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
-  // Only show for operations directors when they are testing a role
+  // Show for operations directors when they are testing a role OR when they're on operations dashboard
   const isTestingRole = localStorage.getItem('testingRole');
-  if (!isOperationsDirector(user as any) || !isTestingRole) {
+  const isOnOperationsDashboard = window.location.pathname === '/operations-dashboard';
+  
+  if (!isOperationsDirector(user as any) || (!isTestingRole && !isOnOperationsDashboard)) {
     return null;
   }
 
@@ -41,6 +43,57 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
     localStorage.removeItem('testingRole');
     window.location.href = '/operations-dashboard';
   };
+
+  const handleStartTesting = () => {
+    onRoleSwitch(selectedRole);
+  };
+
+  // Different layout when on operations dashboard vs when testing
+  if (isOnOperationsDashboard && !isTestingRole) {
+    return (
+      <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex items-center">
+          <span className="text-sm text-blue-700 font-medium mr-3">Role Tester</span>
+          <span className="text-xs text-blue-600">Select a role to test:</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                <User className="h-3 w-3 mr-2" />
+                {availableRoles.find(role => role.value === selectedRole)?.shortLabel || 'Select Role'}
+                <ChevronDown className="h-3 w-3 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-blue-900">
+                Available Roles
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableRoles.map((role) => (
+                <DropdownMenuItem
+                  key={role.value}
+                  onClick={() => setSelectedRole(role.value)}
+                  className="cursor-pointer"
+                >
+                  <User className="h-3 w-3 mr-2" />
+                  {role.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button 
+            onClick={handleStartTesting}
+            variant="default" 
+            size="sm" 
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Start Testing
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
