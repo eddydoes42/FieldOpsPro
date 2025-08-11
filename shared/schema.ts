@@ -105,6 +105,10 @@ export const workOrders = pgTable("work_orders", {
   workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
   checkedInAt: timestamp("checked_in_at"),
   checkedOutAt: timestamp("checked_out_at"),
+  // Assignment progress button status
+  assignmentProgressStatus: varchar("assignment_progress_status").default("confirm"), // confirm, in_route, check_in, check_out, mark_complete, mark_incomplete
+  // Scheduling status
+  isScheduled: boolean("is_scheduled").default(false), // true when field agent puts work order on schedule
   // Client work order fields
   isClientCreated: boolean("is_client_created").default(false), // true if created by client
   // Request assignment fields for job network

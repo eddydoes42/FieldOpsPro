@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -386,6 +386,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update assignment progress status
+  app.patch("/api/work-orders/:id/assignment-progress", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.user.claims.sub;
+
+      // Get current user and work order
+      const currentUser = await storage.getUser(userId);
+      const workOrder = await storage.getWorkOrder(id);
+      
+      if (!currentUser || !workOrder) {
+        return res.status(404).json({ message: "User or work order not found" });
+      }
+
+      // Check if user is assigned to this work order or has management privileges
+      const canUpdate = canManageWorkOrders(currentUser) || workOrder.assigneeId === userId;
+      
+      if (!canUpdate) {
+        return res.status(403).json({ message: "Not authorized to update this work order" });
+      }
+
+      const updatedWorkOrder = await storage.updateAssignmentProgressStatus(id, status);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error updating assignment progress status:", error);
+      res.status(500).json({ message: "Failed to update assignment progress status" });
+    }
+  });
+
+  // Schedule work order
+  app.patch("/api/work-orders/:id/schedule", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+
+      // Get current user and work order
+      const currentUser = await storage.getUser(userId);
+      const workOrder = await storage.getWorkOrder(id);
+      
+      if (!currentUser || !workOrder) {
+        return res.status(404).json({ message: "User or work order not found" });
+      }
+
+      // Only assigned field agents and management can schedule work orders
+      const canSchedule = (hasAnyRole(currentUser, ['field_agent']) && workOrder.assigneeId === userId) ||
+                         canManageWorkOrders(currentUser);
+      
+      if (!canSchedule) {
+        return res.status(403).json({ message: "Only assigned field agents or management can schedule work orders" });
+      }
+
+      const updatedWorkOrder = await storage.scheduleWorkOrder(id);
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Error scheduling work order:", error);
+      res.status(500).json({ message: "Failed to schedule work order" });
+    }
+  });
+
   // Work Order routes
   app.post('/api/work-orders', isAuthenticated, async (req: any, res) => {
     try {
@@ -593,6 +653,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (!currentUser) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if trying to message operations director
+      if (req.body.recipientId) {
+        const recipient = await storage.getUser(req.body.recipientId);
+        if (recipient && isOperationsDirector(recipient)) {
+          // Only chief team members (administrators and managers) can message operations director
+          if (!isChiefTeam(currentUser)) {
+            return res.status(403).json({ 
+              message: "Only administrators and managers can message the Operations Director" 
+            });
+          }
+        }
       }
 
       const messageData = {

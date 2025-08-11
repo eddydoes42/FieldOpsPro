@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Home, Clock, MapPin, Calendar, Users, AlertTriangle, FileText, CheckCir
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { WorkOrder, WorkOrderRequest, hasRole, isAdminTeam } from "../../../shared/schema";
+import { WorkOrderStatusIndicators } from "@/components/work-order-status-indicators";
+import { apiRequest } from "@/lib/queryClient";
 
 interface MyWorkProps {
   user?: any;
@@ -17,6 +19,7 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
   const [, setLocation] = useLocation();
   const { user: authUser } = useAuth();
   const user = propsUser || authUser;
+  const queryClient = useQueryClient();
 
   const { data: workOrders = [] } = useQuery<WorkOrder[]>({
     queryKey: ['/api/work-orders'],
@@ -54,6 +57,47 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
   };
 
   const { created, assigned, inProgress, pending, requested } = categorizeWorkOrders();
+
+  // Mutation for updating assignment progress status
+  const updateAssignmentProgressMutation = useMutation({
+    mutationFn: async ({ workOrderId, status }: { workOrderId: string; status: string }) => {
+      return apiRequest(`/api/work-orders/${workOrderId}/assignment-progress`, {
+        method: 'PATCH',
+        body: { status }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
+    }
+  });
+
+  // Mutation for scheduling work order
+  const scheduleWorkOrderMutation = useMutation({
+    mutationFn: async (workOrderId: string) => {
+      return apiRequest(`/api/work-orders/${workOrderId}/schedule`, {
+        method: 'PATCH'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
+    }
+  });
+
+  const handleAssignmentProgress = async (workOrderId: string, status: string) => {
+    try {
+      await updateAssignmentProgressMutation.mutateAsync({ workOrderId, status });
+    } catch (error) {
+      console.error('Failed to update assignment progress:', error);
+    }
+  };
+
+  const handleScheduleWorkOrder = async (workOrderId: string) => {
+    try {
+      await scheduleWorkOrderMutation.mutateAsync(workOrderId);
+    } catch (error) {
+      console.error('Failed to schedule work order:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -114,22 +158,53 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
           {order.description}
         </p>
         
-        <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
           <div className="flex items-center space-x-2">
             <Calendar className="h-4 w-4" />
-            <span>Due: {formatDate(order.scheduledDate)}</span>
+            <span>Due: {formatDate(order.dueDate?.toString() || '')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <MapPin className="h-4 w-4" />
             <span>{order.location}</span>
           </div>
-          {order.assignedAgent && (
+          {order.assigneeId && (
             <div className="flex items-center space-x-2">
               <Users className="h-4 w-4" />
-              <span>Assigned to: {order.assignedAgent.firstName} {order.assignedAgent.lastName}</span>
+              <span>Assigned</span>
             </div>
           )}
         </div>
+        
+        {/* Work Order Status Indicators */}
+        <div className="border-t pt-3">
+          <WorkOrderStatusIndicators 
+            workOrder={{
+              id: order.id,
+              title: order.title,
+              assigneeId: order.assigneeId,
+              assignmentProgressStatus: order.assignmentProgressStatus,
+              isScheduled: order.isScheduled,
+              status: order.status,
+              confirmedAt: order.confirmedAt?.toString()
+            }}
+            onAssignmentProgress={handleAssignmentProgress}
+            onSchedule={handleScheduleWorkOrder}
+          />
+        </div>
+        
+        {/* Schedule Work Order button for field agents */}
+        {hasRole(user, 'field_agent') && order.assigneeId === user?.id && !order.isScheduled && (
+          <div className="pt-3 border-t dark:border-gray-600">
+            <Button 
+              onClick={() => handleScheduleWorkOrder(order.id)}
+              disabled={scheduleWorkOrderMutation.isPending}
+              className="w-full"
+              variant="outline"
+            >
+              {scheduleWorkOrderMutation.isPending ? 'Scheduling...' : 'Schedule Work Order'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -140,7 +215,7 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-            Request from {request.requestingCompany?.name}
+            Request from Service Company
           </CardTitle>
           <Badge className={getRequestStatusColor(request.status)}>
             {request.status}
@@ -150,8 +225,8 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
       <CardContent>
         <div className="space-y-3">
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Work Order Title:</p>
-            <p className="text-gray-600 dark:text-gray-300">{request.workOrderTitle}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Work Order ID:</p>
+            <p className="text-gray-600 dark:text-gray-300">{request.workOrderId || 'N/A'}</p>
           </div>
           {request.message && (
             <div>
@@ -159,16 +234,14 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
               <p className="text-gray-600 dark:text-gray-300">{request.message}</p>
             </div>
           )}
-          {request.proposedAgent && (
+          {request.proposedAgentId && (
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Proposed Agent:</p>
-              <p className="text-gray-600 dark:text-gray-300">
-                {request.proposedAgent.firstName} {request.proposedAgent.lastName}
-              </p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Proposed Agent ID:</p>
+              <p className="text-gray-600 dark:text-gray-300">{request.proposedAgentId}</p>
             </div>
           )}
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            <span>Requested: {formatDate(request.createdAt)}</span>
+            <span>Requested: {formatDate(request.createdAt?.toString() || '')}</span>
           </div>
         </div>
       </CardContent>
