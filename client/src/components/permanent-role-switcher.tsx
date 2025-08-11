@@ -50,15 +50,6 @@ export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch 
   const currentRoleInfo = availableRoles.find(role => role.value === currentActiveRole);
   const CurrentIcon = currentRoleInfo?.icon || User;
 
-  // Debug logging to understand what's happening
-  console.log("PermanentRoleSwitcher Debug:", {
-    currentActiveRole,
-    currentRoleInfo,
-    label: currentRoleInfo?.label,
-    fallbackText: currentRoleInfo?.label || 'Switch Role',
-    availableRoles: availableRoles.map(r => r.value)
-  });
-
   return (
     <div className="flex items-center">
       <DropdownMenu>
@@ -69,7 +60,8 @@ export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch 
             className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl transition-shadow"
           >
             <CurrentIcon className="h-4 w-4 mr-2" />
-            <span className="text-sm">{currentRoleInfo?.label || 'Switch Role'}</span>
+            <span className="hidden sm:inline">{currentRoleInfo?.label || 'Switch Role'}</span>
+            <span className="sm:hidden">Role</span>
             <ChevronDown className="h-3 w-3 ml-2" />
           </Button>
         </DropdownMenuTrigger>
