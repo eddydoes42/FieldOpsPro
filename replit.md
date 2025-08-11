@@ -1,7 +1,7 @@
 # FieldOps Pro - IT Field Agent Management System
 
 ## Overview
-FieldOps Pro is a full-stack web application for managing IT field operations. It offers role-based dashboards for administrators, managers, and field agents, enabling work order management, time tracking, user onboarding, and real-time messaging. The system includes a comprehensive bidirectional star rating system for clients and service companies, advanced client management with work order creation and agent request systems, and a robust task management system with work order status dependencies. The application aims to streamline IT field services, improve communication, and enhance operational efficiency.
+FieldOps Pro is a comprehensive field operations management platform that empowers mobile workforce teams with advanced operational tools, dynamic time tracking, and enhanced work order capabilities. It offers role-based dashboards for administrators, managers, and field agents, enabling work order management, time tracking, user onboarding, and real-time messaging. The system includes a comprehensive bidirectional star rating system for clients and service companies, advanced client management with work order creation and agent request systems, and a robust task management system with work order status dependencies. The application aims to streamline IT field services, improve communication, and enhance operational efficiency.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
