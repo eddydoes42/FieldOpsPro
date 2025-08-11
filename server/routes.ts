@@ -1285,8 +1285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/companies/:id', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isAdmin(currentUser)) {
-        return res.status(403).json({ message: "Administrator access required" });
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
       }
 
       const companyId = req.params.id;

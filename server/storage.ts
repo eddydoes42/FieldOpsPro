@@ -292,6 +292,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCompany(id: string): Promise<void> {
+    // First, update all users linked to this company to remove the company association
+    await db
+      .update(users)
+      .set({ companyId: null })
+      .where(eq(users.companyId, id));
+    
+    // Then delete the company
     await db.delete(companies).where(eq(companies.id, id));
   }
 
