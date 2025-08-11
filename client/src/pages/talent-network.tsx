@@ -54,6 +54,7 @@ export default function TalentNetwork() {
   const [companyFilter, setCompanyFilter] = useState("all");
   const [assignmentWorkOrderId, setAssignmentWorkOrderId] = useState<string | null>(null);
   const [assignmentWorkOrderTitle, setAssignmentWorkOrderTitle] = useState<string>('');
+  const [confirmAssignAgent, setConfirmAssignAgent] = useState<FieldAgent | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -133,11 +134,24 @@ export default function TalentNetwork() {
     },
   });
 
-  // Handle agent assignment
-  const handleAssignAgent = (agentId: string, agentName: string) => {
+  // Handle agent assignment - show confirmation dialog
+  const handleAssignAgent = (agent: FieldAgent) => {
     if (assignmentWorkOrderId) {
-      assignAgentMutation.mutate(agentId);
+      setConfirmAssignAgent(agent);
     }
+  };
+
+  // Confirm assignment
+  const confirmAssignment = () => {
+    if (confirmAssignAgent && assignmentWorkOrderId) {
+      assignAgentMutation.mutate(confirmAssignAgent.id);
+      setConfirmAssignAgent(null);
+    }
+  };
+
+  // Cancel assignment confirmation
+  const cancelAssignmentConfirmation = () => {
+    setConfirmAssignAgent(null);
   };
 
   // Cancel assignment mode
@@ -269,7 +283,7 @@ export default function TalentNetwork() {
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent card click
-                    handleAssignAgent(agent.id, `${agent.firstName} ${agent.lastName}`);
+                    handleAssignAgent(agent);
                   }}
                   disabled={assignAgentMutation.isPending}
                   className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-700 text-white p-0 shadow-lg"
@@ -543,6 +557,106 @@ export default function TalentNetwork() {
                   console.log('Request assignment:', selectedAgent.id);
                 }}>
                   Request Assignment
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Assignment Confirmation Dialog */}
+      {confirmAssignAgent && (
+        <Dialog open={!!confirmAssignAgent} onOpenChange={cancelAssignmentConfirmation}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Confirm Assignment</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Assign <strong>{confirmAssignAgent.firstName} {confirmAssignAgent.lastName}</strong> to work order:
+              </p>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="font-semibold text-gray-900 dark:text-white">"{assignmentWorkOrderTitle}"</p>
+              </div>
+
+              {/* Agent Summary */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {confirmAssignAgent.firstName[0]}{confirmAssignAgent.lastName[0]}
+                  </div>
+                  <div>
+                    <p className="font-semibold">{confirmAssignAgent.firstName} {confirmAssignAgent.lastName}</p>
+                    {confirmAssignAgent.company && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <Building className="h-3 w-3" />
+                        {confirmAssignAgent.company.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {confirmAssignAgent.rating && (
+                    <div className="flex items-center gap-1">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      <span className="font-medium">{confirmAssignAgent.rating}</span>
+                      <span className="text-gray-500">rating</span>
+                    </div>
+                  )}
+                  
+                  {confirmAssignAgent.completedJobs !== undefined && (
+                    <div className="flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="font-medium">{confirmAssignAgent.completedJobs}</span>
+                      <span className="text-gray-500">completed</span>
+                    </div>
+                  )}
+                </div>
+
+                {confirmAssignAgent.specializations && confirmAssignAgent.specializations.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Skills:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {confirmAssignAgent.specializations.slice(0, 3).map((spec) => (
+                        <Badge key={spec} variant="secondary" className="text-xs">
+                          {spec}
+                        </Badge>
+                      ))}
+                      {confirmAssignAgent.specializations.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{confirmAssignAgent.specializations.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={cancelAssignmentConfirmation}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={confirmAssignment}
+                  disabled={assignAgentMutation.isPending}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {assignAgentMutation.isPending ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      Assigning...
+                    </div>
+                  ) : (
+                    'Confirm Assignment'
+                  )}
                 </Button>
               </div>
             </div>
