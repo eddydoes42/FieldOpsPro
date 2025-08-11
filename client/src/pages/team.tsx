@@ -70,6 +70,10 @@ export default function TeamPage() {
     enabled: !!user && canManageUsers(user as any),
   });
 
+  // For field agents, filter to show only their company's team members
+  const isFieldAgent = user && (user as any).roles?.includes('field_agent') && !(user as any).roles?.includes('administrator') && !(user as any).roles?.includes('manager');
+  const userCompanyId = (user as any)?.companyId;
+
   const { data: companies } = useQuery({
     queryKey: ["/api/companies"],
     enabled: !!user && canManageUsers(user as any),
@@ -248,7 +252,8 @@ export default function TeamPage() {
     );
   }
 
-  if (!canManageUsers(user as any)) {
+  // Allow field agents to view team, but with restricted access
+  if (!canManageUsers(user as any) && !isFieldAgent) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
@@ -438,7 +443,23 @@ export default function TeamPage() {
                     // Include if user has other roles besides operations_director
                     return roles.some((r: string) => r !== 'operations_director');
                   })
-                  .filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))
+                  .filter((userData: any) => {
+                    // For field agents, only show users from their company
+                    if (isFieldAgent && userCompanyId) {
+                      return userData.companyId === userCompanyId;
+                    }
+                    return true;
+                  })
+                  .filter((userData: any) => {
+                    // For field agents, only show field agents, dispatchers, managers, and admins
+                    if (isFieldAgent) {
+                      const userRoles = userData.roles || [];
+                      return userRoles.some((role: string) => 
+                        ['field_agent', 'dispatcher', 'manager', 'administrator'].includes(role)
+                      );
+                    }
+                    return roleFilter === "all" || userData.roles?.includes(roleFilter);
+                  })
                   .filter((userData: any) => {
                     if (statusFilter === "all") return true;
                     if (statusFilter === "active") return userData.isActive !== false;

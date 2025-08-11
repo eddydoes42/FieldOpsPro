@@ -8,13 +8,30 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Home, ArrowLeft, User, Bell, Shield } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Home, ArrowLeft, User, Bell, Shield, Settings, Edit2, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function FieldAgentSettings() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Contact information editing state
+  const [isEditContactOpen, setIsEditContactOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    email: (user as any)?.email || '',
+    phone: (user as any)?.phone || '',
+    address: (user as any)?.address || '',
+    city: (user as any)?.city || '',
+    state: (user as any)?.state || '',
+    zipCode: (user as any)?.zipCode || ''
+  });
   
   // Settings state
   const [notifications, setNotifications] = useState({
@@ -50,6 +67,59 @@ export default function FieldAgentSettings() {
       title: "Settings Updated",
       description: "Your preferences have been saved.",
     });
+  };
+
+  // Update contact information mutation
+  const updateContactMutation = useMutation({
+    mutationFn: async (contactData: any) => {
+      const response = await apiRequest('PATCH', `/api/users/${(user as any).id}`, contactData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setIsEditContactOpen(false);
+      toast({
+        title: "Success",
+        description: "Contact information updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to update contact information",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('DELETE', `/api/users/${(user as any).id}`, {});
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been successfully deleted",
+      });
+      // Redirect to logout
+      setTimeout(() => {
+        window.location.href = "/api/logout";
+      }, 2000);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateContactMutation.mutate(contactForm);
   };
 
   if (isLoading) return <div>Loading...</div>;
