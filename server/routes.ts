@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientServiceRatingSchema, insertServiceClientRatingSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -94,8 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add manual login credentials if provided
       if (onboardingData.username && onboardingData.password) {
-        // Hash password with bcrypt (need to install bcrypt)
-        const bcrypt = require('bcrypt');
+        // Hash password with bcrypt
         const saltRounds = 12;
         const passwordHash = await bcrypt.hash(onboardingData.password, saltRounds);
         
