@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Users, UserPlus, Settings, DollarSign } from "lucide-react";
 import Navigation from "@/components/navigation";
+import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
@@ -13,6 +14,9 @@ export default function OperationsDirectorDashboard() {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [, setLocation] = useLocation();
+  const [currentActiveRole, setCurrentActiveRole] = useState(
+    localStorage.getItem('permanentRole') || 'operations_director'
+  );
 
   // Listen for custom events from quick action menu
   useEffect(() => {
@@ -76,10 +80,30 @@ export default function OperationsDirectorDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Operations Director Dashboard
-            </h1>
+          <div className="flex items-center space-x-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Operations Director Dashboard
+              </h1>
+            </div>
+            
+            {/* Role Switcher */}
+            <PermanentRoleSwitcher
+              currentActiveRole={currentActiveRole}
+              onRoleSwitch={(role) => {
+                setCurrentActiveRole(role);
+                localStorage.setItem('permanentRole', role);
+                localStorage.setItem('selectedRole', role);
+                // Navigate to appropriate dashboard based on role
+                if (role === 'operations_director') {
+                  window.location.href = '/dashboard';
+                } else if (role === 'administrator') {
+                  window.location.href = '/dashboard';
+                } else {
+                  window.location.href = '/dashboard';
+                }
+              }}
+            />
           </div>
           
           {/* Budget Indicator */}
