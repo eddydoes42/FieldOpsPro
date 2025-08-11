@@ -13,7 +13,6 @@ interface RoleSwitcherProps {
 }
 
 const availableRoles = [
-  { value: 'operations_director', label: 'Operations Director', shortLabel: 'Ops Dir', color: 'bg-purple-100 text-purple-800' },
   { value: 'administrator', label: 'Administrator', shortLabel: 'Admin', color: 'bg-blue-100 text-blue-800' },
   { value: 'manager', label: 'Manager', shortLabel: 'Manager', color: 'bg-green-100 text-green-800' },
   { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher', color: 'bg-orange-100 text-orange-800' },

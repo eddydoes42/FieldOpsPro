@@ -18,7 +18,7 @@ export default function OperationsDirectorDashboard() {
   const [currentActiveRole, setCurrentActiveRole] = useState(
     localStorage.getItem('permanentRole') || 'operations_director'
   );
-  const [testingRole, setTestingRole] = useState<string>('operations_director');
+  const [testingRole, setTestingRole] = useState<string>('administrator');
 
   // Listen for custom events from quick action menu
   useEffect(() => {
