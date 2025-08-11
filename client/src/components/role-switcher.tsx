@@ -51,7 +51,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
                   <User className="h-3 w-3 mr-2" />
-                  Switch Role
+                  {currentRoleInfo?.label || 'Switch Role'}
                   <ChevronDown className="h-3 w-3 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
