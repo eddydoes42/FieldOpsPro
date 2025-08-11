@@ -35,10 +35,27 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
 
   const currentRoleInfo = availableRoles.find(role => role.value === currentRole);
 
+  const handleStopTesting = () => {
+    // Clear testing role and navigate back to operations director dashboard
+    localStorage.removeItem('testingRole');
+    window.location.href = '/operations-dashboard';
+  };
+
   return (
-    <div className="mb-4 flex items-center justify-end bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
+    <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
+      <div className="flex items-center">
+        <span className="text-sm text-purple-700 font-medium mr-3">Role Tester</span>
+        <Button 
+          onClick={handleStopTesting}
+          variant="outline" 
+          size="sm" 
+          className="border-red-300 text-red-700 hover:bg-red-50"
+        >
+          Stop Testing
+        </Button>
+      </div>
+      <div className="flex items-center space-x-2">
+        <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
                   <User className="h-3 w-3 mr-2" />
@@ -72,7 +89,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </div>
+      </div>
+    </div>
   );
 }

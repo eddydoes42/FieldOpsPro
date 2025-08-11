@@ -20,6 +20,9 @@ export default function ManagerDashboard() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [, setLocation] = useLocation();
+  
+  // Get testing role from localStorage for role tester functionality
+  const testingRole = localStorage.getItem('testingRole') || undefined;
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -104,6 +107,7 @@ export default function ManagerDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation 
+        testingRole={testingRole}
         currentActiveRole={localStorage.getItem('permanentRole') || 'manager'} 
         onPermanentRoleSwitch={(role) => {
           localStorage.setItem('permanentRole', role);

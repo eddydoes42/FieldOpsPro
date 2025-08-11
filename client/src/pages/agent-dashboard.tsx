@@ -94,8 +94,10 @@ export default function AgentDashboard() {
     );
   }
 
+  // Get testing role from localStorage for role tester functionality
+  const testingRole = localStorage.getItem('testingRole') || undefined;
+  
   // Check if user can access field agent dashboard (either actual field agent or operations director testing)
-  const testingRole = localStorage.getItem('testingRole');
   const canAccessAgentDashboard = hasRole(user as any, 'field_agent') || 
     (isOperationsDirector(user as any) && testingRole === 'field_agent') ||
     testingRole === 'field_agent';
@@ -123,7 +125,7 @@ export default function AgentDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation testingRole={testingRole} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">

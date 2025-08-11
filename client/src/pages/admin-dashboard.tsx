@@ -18,6 +18,9 @@ export default function AdminDashboard() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  
+  // Get testing role from localStorage for role tester functionality
+  const testingRole = localStorage.getItem('testingRole') || undefined;
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -108,6 +111,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation 
+        testingRole={testingRole}
         currentActiveRole={localStorage.getItem('permanentRole') || 'administrator'} 
         onPermanentRoleSwitch={(role) => {
           localStorage.setItem('permanentRole', role);
