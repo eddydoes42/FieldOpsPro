@@ -54,6 +54,8 @@ export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch 
   console.log("PermanentRoleSwitcher Debug:", {
     currentActiveRole,
     currentRoleInfo,
+    label: currentRoleInfo?.label,
+    fallbackText: currentRoleInfo?.label || 'Switch Role',
     availableRoles: availableRoles.map(r => r.value)
   });
 
@@ -67,8 +69,7 @@ export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch 
             className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg hover:shadow-xl transition-shadow"
           >
             <CurrentIcon className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">{currentRoleInfo?.label || 'Switch Role'}</span>
-            <span className="sm:hidden">Role</span>
+            <span className="text-sm">{currentRoleInfo?.label || 'Switch Role'}</span>
             <ChevronDown className="h-3 w-3 ml-2" />
           </Button>
         </DropdownMenuTrigger>
