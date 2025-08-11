@@ -8,6 +8,7 @@ import { ArrowLeft, Building2, Home } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatPhoneNumber } from "@/lib/phone-formatter";
 
 interface CompanyFormData {
   name: string;
@@ -152,7 +153,10 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      onChange={(e) => {
+                        const formatted = formatPhoneNumber(e.target.value);
+                        handleInputChange('phone', formatted);
+                      }}
                       placeholder="(555) 123-4567"
                     />
                   </div>

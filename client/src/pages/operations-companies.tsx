@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, ArrowLeft, Plus, Search, Filter, Users, CheckCircle, TrendingUp, X, Mail, Phone, Globe, MapPin, Edit, Trash2, UserMinus, Clipboard, Home } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import { formatPhoneNumber } from "@/lib/phone-formatter";
 import { useLocation } from "wouter";
 import { useState, useMemo, useEffect } from "react";
 import { Company, User } from "../../../shared/schema";
@@ -767,8 +768,12 @@ export default function OperationsCompanies() {
                 <Label htmlFor="company-phone" className="text-sm">Phone</Label>
                 <Input
                   id="company-phone"
+                  type="tel"
                   value={editingCompany.phone || ''}
-                  onChange={(e) => setEditingCompany(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    setEditingCompany(prev => ({ ...prev, phone: formatted }));
+                  }}
                   placeholder="(555) 123-4567"
                   className="h-9"
                 />
@@ -901,8 +906,12 @@ export default function OperationsCompanies() {
                 <Label htmlFor="new-company-phone" className="text-sm">Phone</Label>
                 <Input
                   id="new-company-phone"
+                  type="tel"
                   value={editingCompany.phone || ''}
-                  onChange={(e) => setEditingCompany(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    setEditingCompany(prev => ({ ...prev, phone: formatted }));
+                  }}
                   placeholder="(555) 123-4567"
                   className="h-9"
                 />

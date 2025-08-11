@@ -12,6 +12,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { isAdmin } from "../../../shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
+import { formatPhoneNumber } from "@/lib/phone-formatter";
 
 import { useLocation } from "wouter";
 import { ArrowLeft, Home } from "lucide-react";
@@ -319,8 +320,11 @@ export default function Onboarding() {
                     id="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="Enter phone number"
+                    onChange={(e) => {
+                      const formatted = formatPhoneNumber(e.target.value);
+                      handleInputChange('phone', formatted);
+                    }}
+                    placeholder="(555) 123-4567"
                   />
                 </div>
               </div>
@@ -486,8 +490,11 @@ export default function Onboarding() {
                       id="emergencyPhone"
                       type="tel"
                       value={formData.emergencyPhone}
-                      onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
-                      placeholder="Enter emergency contact phone"
+                      onChange={(e) => {
+                        const formatted = formatPhoneNumber(e.target.value);
+                        handleInputChange('emergencyPhone', formatted);
+                      }}
+                      placeholder="(555) 123-4567"
                     />
                   </div>
                 </div>

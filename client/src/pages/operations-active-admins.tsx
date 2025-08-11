@@ -15,6 +15,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
+import { formatPhoneNumber } from "@/lib/phone-formatter";
 
 interface Admin {
   id: string;
@@ -324,6 +325,11 @@ export default function OperationsActiveAdmins() {
                       type="tel"
                       {...form.register('phone')}
                       placeholder="(555) 123-4567"
+                      onChange={(e) => {
+                        const formatted = formatPhoneNumber(e.target.value);
+                        e.target.value = formatted;
+                        form.setValue('phone', formatted);
+                      }}
                     />
                   </div>
                 </div>
