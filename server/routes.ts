@@ -1395,7 +1395,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/operations/stats', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
+      console.log("Operations stats - User:", currentUser?.email, "Roles:", currentUser?.roles, "isOperationsDirector:", isOperationsDirector(currentUser));
       if (!currentUser || !isOperationsDirector(currentUser)) {
+        console.log("Operations Director access denied for user:", currentUser?.id);
         return res.status(403).json({ message: "Operations Director access required" });
       }
 

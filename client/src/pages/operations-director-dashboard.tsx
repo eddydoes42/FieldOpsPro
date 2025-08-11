@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, Users, UserPlus, Settings, DollarSign } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
+import RoleSwitcher from "@/components/role-switcher";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
@@ -17,6 +18,7 @@ export default function OperationsDirectorDashboard() {
   const [currentActiveRole, setCurrentActiveRole] = useState(
     localStorage.getItem('permanentRole') || 'operations_director'
   );
+  const [testingRole, setTestingRole] = useState<string>('operations_director');
 
   // Listen for custom events from quick action menu
   useEffect(() => {
@@ -67,14 +69,18 @@ export default function OperationsDirectorDashboard() {
           localStorage.setItem('permanentRole', role);
           localStorage.setItem('selectedRole', role);
           // Navigate to appropriate dashboard based on role
-          if (role === 'operations_director') {
-            window.location.href = '/operations-dashboard';
-          } else if (role === 'administrator') {
-            window.location.href = '/admin-dashboard';
-          } else {
-            window.location.href = '/dashboard';
-          }
+          window.location.href = '/dashboard';
         }}
+      />
+      
+      {/* Role Tester - White Bar for Operations Director */}
+      <RoleSwitcher
+        currentRole={testingRole}
+        onRoleSwitch={(role) => {
+          setTestingRole(role);
+          // Role testing is temporary - doesn't navigate or change permanent role
+        }}
+        currentActiveRole={currentActiveRole}
       />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
