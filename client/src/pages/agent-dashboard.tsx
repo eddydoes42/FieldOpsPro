@@ -202,7 +202,11 @@ export default function AgentDashboard() {
                           <i className="fas fa-check-circle mr-2"></i>Completed
                         </Button>
                       )}
-                      <Button variant="secondary" className="flex-1 text-sm">
+                      <Button 
+                        variant="secondary" 
+                        className="flex-1 text-sm"
+                        onClick={() => window.location.href = '/messages'}
+                      >
                         <i className="fas fa-comment mr-2"></i>Message Team
                       </Button>
                     </div>

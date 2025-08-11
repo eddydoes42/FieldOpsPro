@@ -12,7 +12,7 @@ interface TimeTrackerProps {
   activeTimeEntry?: any;
 }
 
-export default function TimeTracker({ activeTimeEntry }: TimeTrackerProps) {
+export default function TimeTracker({ activeTimeEntry: propActiveTimeEntry }: TimeTrackerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -34,8 +34,14 @@ export default function TimeTracker({ activeTimeEntry }: TimeTrackerProps) {
     enabled: showWorkOrderDialog,
   });
 
+  // Get the current active time entry from the API
+  const { data: activeTimeEntry } = useQuery({
+    queryKey: ["/api/time-entries/active"],
+    refetchInterval: 2000, // Refetch every 2 seconds to keep timer updated
+  });
+
   // Filter for active/in-progress work orders
-  const activeWorkOrders = workOrders?.filter((order: any) => 
+  const activeWorkOrders = (workOrders as any[])?.filter((order: any) => 
     order.status === 'scheduled' || 
     order.status === 'in_progress' || 
     order.status === 'assigned'
@@ -129,8 +135,8 @@ export default function TimeTracker({ activeTimeEntry }: TimeTrackerProps) {
   };
 
   const clockOut = () => {
-    if (activeTimeEntry) {
-      endTimeMutation.mutate(activeTimeEntry.id);
+    if (activeTimeEntry && (activeTimeEntry as any).id) {
+      endTimeMutation.mutate((activeTimeEntry as any).id);
     }
   };
 
@@ -172,15 +178,15 @@ export default function TimeTracker({ activeTimeEntry }: TimeTrackerProps) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Today's Time</h3>
             <div className="flex items-center space-x-2">
-              {activeTimeEntry && (
+              {activeTimeEntry && (activeTimeEntry as any).startTime && (
                 <>
                   <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   <span className="text-lg font-bold text-green-600">
-                    {formatDuration(activeTimeEntry.startTime)}
+                    {formatDuration((activeTimeEntry as any).startTime)}
                   </span>
-                  {activeTimeEntry.workOrderTitle && (
+                  {(activeTimeEntry as any).workOrderTitle && (
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      → {activeTimeEntry.workOrderTitle}
+                      → {(activeTimeEntry as any).workOrderTitle}
                     </span>
                   )}
                 </>
@@ -191,7 +197,7 @@ export default function TimeTracker({ activeTimeEntry }: TimeTrackerProps) {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {activeTimeEntry ? formatDuration(activeTimeEntry.startTime) : "0h 0m"}
+                {activeTimeEntry && (activeTimeEntry as any).startTime ? formatDuration((activeTimeEntry as any).startTime) : "0h 0m"}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Today's Session</p>
             </div>
