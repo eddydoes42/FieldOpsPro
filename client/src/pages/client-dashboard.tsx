@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,9 @@ import {
   UserPlus,
   FileText,
   Network,
-  Eye
+  Eye,
+  BarChart3,
+  Shield
 } from 'lucide-react';
 import { User, canManageUsers, canManageWorkOrders, isAdminTeam } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
@@ -32,6 +35,7 @@ interface ClientDashboardProps {
 
 export default function ClientDashboard({ user }: ClientDashboardProps) {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Mutation for approving and paying work orders
   const approveAndPayMutation = useMutation({
@@ -88,6 +92,12 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
   const activeWorkOrders = (workOrders as any[]).filter((wo: any) => wo.status !== 'completed' && wo.status !== 'cancelled');
   const workOrdersToApprove = (workOrders as any[]).filter((wo: any) => wo.status === 'completed' && (!wo.paymentStatus || wo.paymentStatus === 'pending_payment'));
   const recentMessages = (messages as any[]).slice(0, 5);
+  
+  // Filter recent work orders (< 7 days old)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const recentWorkOrders = (workOrders as any[]).filter((wo: any) => 
+    new Date(wo.createdAt || wo.scheduledDate) >= sevenDaysAgo
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -110,7 +120,10 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setLocation('/team')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -126,7 +139,10 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setLocation('/work-orders')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -142,7 +158,10 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setLocation('/team')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -158,7 +177,10 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <Card 
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setLocation('/messages')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -220,19 +242,37 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="work-orders">Work Orders</TabsTrigger>
-            <TabsTrigger value="job-network">Job Network</TabsTrigger>
-            <TabsTrigger value="exclusive-network">Exclusive Network</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 h-auto">
+            <TabsTrigger value="overview" className="flex flex-col items-center gap-1 py-3">
+              <BarChart3 className="h-4 w-4" />
+              <span className="text-xs">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="work-orders" className="flex flex-col items-center gap-1 py-3">
+              <Briefcase className="h-4 w-4" />
+              <span className="text-xs">Work Orders</span>
+            </TabsTrigger>
+            <TabsTrigger value="job-network" className="flex flex-col items-center gap-1 py-3">
+              <Network className="h-4 w-4" />
+              <span className="text-xs">Job Network</span>
+            </TabsTrigger>
+            <TabsTrigger value="exclusive-network" className="flex flex-col items-center gap-1 py-3">
+              <Shield className="h-4 w-4" />
+              <span className="text-xs">Exclusive</span>
+            </TabsTrigger>
+            <TabsTrigger value="team" className="flex flex-col items-center gap-1 py-3">
+              <Users className="h-4 w-4" />
+              <span className="text-xs">Team</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Work Orders */}
-              <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <Card 
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setLocation('/job-network?filter=recent')}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Briefcase className="h-5 w-5" />
@@ -240,9 +280,9 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {activeWorkOrders.length > 0 ? (
+                  {recentWorkOrders.length > 0 ? (
                     <div className="space-y-3">
-                      {activeWorkOrders.slice(0, 5).map((workOrder: any) => (
+                      {recentWorkOrders.slice(0, 5).map((workOrder: any) => (
                         <div key={workOrder.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white">
@@ -260,14 +300,17 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                     </div>
                   ) : (
                     <p className="text-gray-600 dark:text-gray-400 text-center py-4">
-                      No active work orders
+                      No recent work orders (last 7 days)
                     </p>
                   )}
                 </CardContent>
               </Card>
 
               {/* Recent Messages */}
-              <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <Card 
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setLocation('/messages')}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MessageSquare className="h-5 w-5" />
@@ -310,7 +353,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 <div className="flex justify-between items-center">
                   <CardTitle>Work Orders</CardTitle>
                   {canManageWorkOrders(user) && (
-                    <Button>
+                    <Button onClick={() => setLocation('/work-orders')}>
                       <Plus className="h-4 w-4 mr-2" />
                       Create Work Order
                     </Button>
@@ -321,7 +364,11 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 {(workOrders as any[]).length > 0 ? (
                   <div className="space-y-4">
                     {(workOrders as any[]).map((workOrder: any) => (
-                      <div key={workOrder.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <div 
+                        key={workOrder.id} 
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setLocation('/work-orders')}
+                      >
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
                             {workOrder.title}
@@ -370,7 +417,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                     <Network className="h-5 w-5" />
                     <span>Job Network - Public Postings</span>
                   </CardTitle>
-                  <Button>
+                  <Button onClick={() => setLocation('/job-network')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Post Job
                   </Button>
@@ -383,7 +430,11 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 {(jobNetworkPosts as any[]).length > 0 ? (
                   <div className="space-y-4">
                     {(jobNetworkPosts as any[]).map((post: any) => (
-                      <div key={post.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <div 
+                        key={post.id} 
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setLocation('/job-network')}
+                      >
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
                             {post.title}
@@ -432,7 +483,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                     <Network className="h-5 w-5" />
                     <span>Exclusive Network - Private Postings</span>
                   </CardTitle>
-                  <Button>
+                  <Button onClick={() => setLocation('/exclusive-network')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Post Exclusive Job
                   </Button>
@@ -445,7 +496,11 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 {(exclusiveNetworkPosts as any[]).length > 0 ? (
                   <div className="space-y-4">
                     {(exclusiveNetworkPosts as any[]).map((post: any) => (
-                      <div key={post.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                      <div 
+                        key={post.id} 
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setLocation('/exclusive-network')}
+                      >
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
                             {post.title}
@@ -469,7 +524,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                             </div>
                           )}
                           <div className="flex items-center text-purple-600 dark:text-purple-400">
-                            <Eye className="h-4 w-4 mr-1" />
+                            <Network className="h-4 w-4 mr-1" />
                             Exclusive
                           </div>
                         </div>
@@ -492,7 +547,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 <div className="flex justify-between items-center">
                   <CardTitle>Team Members</CardTitle>
                   {canManageUsers(user) && (
-                    <Button>
+                    <Button onClick={() => setLocation('/team')}>
                       <UserPlus className="h-4 w-4 mr-2" />
                       Add Team Member
                     </Button>
@@ -503,7 +558,11 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 {(teamMembers as any[]).length > 0 ? (
                   <div className="space-y-4">
                     {(teamMembers as any[]).map((member: User) => (
-                      <div key={member.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <div 
+                        key={member.id} 
+                        className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setLocation('/team')}
+                      >
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                             <Users className="h-5 w-5 text-gray-600 dark:text-gray-400" />
