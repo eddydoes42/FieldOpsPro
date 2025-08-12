@@ -151,7 +151,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
         return {
           badge: { text: 'Client', icon: 'fas fa-user-tie', color: 'bg-teal-900/30 text-teal-300 border-teal-800/50' },
           links: [
-            { path: '/client-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
             { path: '/client/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },

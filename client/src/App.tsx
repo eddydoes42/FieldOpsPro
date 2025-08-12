@@ -486,6 +486,15 @@ function Router() {
                   return (
                     <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
                       <div>
+                        {/* Navigation for client dashboard users */}
+                        <Navigation 
+                          testingRole={testingRole || undefined} 
+                          currentActiveRole={permanentRole || getPrimaryRole(user as any)}
+                          onPermanentRoleSwitch={(role) => {
+                            localStorage.setItem('selectedRole', role);
+                            window.location.reload();
+                          }}
+                        />
                         {isOperationsDirector(user as any) && (
                           <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                         )}
