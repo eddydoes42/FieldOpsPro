@@ -242,24 +242,24 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 h-auto">
-            <TabsTrigger value="overview" className="flex flex-col items-center gap-1 py-3">
+          <TabsList className="flex w-full h-auto justify-evenly bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <TabsTrigger value="overview" className="flex flex-col items-center gap-1 py-3 flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md">
               <BarChart3 className="h-4 w-4" />
               <span className="text-xs">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="work-orders" className="flex flex-col items-center gap-1 py-3">
+            <TabsTrigger value="work-orders" className="flex flex-col items-center gap-1 py-3 flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md">
               <Briefcase className="h-4 w-4" />
               <span className="text-xs">Work Orders</span>
             </TabsTrigger>
-            <TabsTrigger value="job-network" className="flex flex-col items-center gap-1 py-3">
+            <TabsTrigger value="job-network" className="flex flex-col items-center gap-1 py-3 flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md">
               <Network className="h-4 w-4" />
               <span className="text-xs">Job Network</span>
             </TabsTrigger>
-            <TabsTrigger value="exclusive-network" className="flex flex-col items-center gap-1 py-3">
+            <TabsTrigger value="exclusive-network" className="flex flex-col items-center gap-1 py-3 flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md">
               <Shield className="h-4 w-4" />
               <span className="text-xs">Exclusive</span>
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex flex-col items-center gap-1 py-3">
+            <TabsTrigger value="team" className="flex flex-col items-center gap-1 py-3 flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md">
               <Users className="h-4 w-4" />
               <span className="text-xs">Team</span>
             </TabsTrigger>
