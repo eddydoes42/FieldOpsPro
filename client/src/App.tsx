@@ -242,47 +242,134 @@ function Router() {
               <AdminDashboard />
             </Route>
             <Route path="/reports">
-              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
-                <TeamReports />
-              ) : hasRole(user as any, 'field_agent') ? (
-                <AgentDashboard />
-              ) : (
-                <Landing />
-              )}
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasAdminAccess = hasAnyRole(user as any, ['administrator', 'manager']) || ['administrator', 'manager'].includes(effectiveRole) || isOperationsDirector(user as any);
+                const hasFieldAgentAccess = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent';
+                
+                if (hasAdminAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <TeamReports />
+                    </div>
+                  );
+                } else if (hasFieldAgentAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <AgentDashboard />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
             <Route path="/reports/team">
-              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
-                <TeamReports />
-              ) : hasRole(user as any, 'field_agent') ? (
-                <AgentDashboard />
-              ) : (
-                <Landing />
-              )}
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasAdminAccess = hasAnyRole(user as any, ['administrator', 'manager']) || ['administrator', 'manager'].includes(effectiveRole) || isOperationsDirector(user as any);
+                const hasFieldAgentAccess = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent';
+                
+                if (hasAdminAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <TeamReports />
+                    </div>
+                  );
+                } else if (hasFieldAgentAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <AgentDashboard />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
             <Route path="/team">
-              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
-                <TeamPage />
-              ) : hasRole(user as any, 'field_agent') ? (
-                <AgentDashboard />
-              ) : (
-                <Landing />
-              )}
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasAdminAccess = hasAnyRole(user as any, ['administrator', 'manager']) || ['administrator', 'manager'].includes(effectiveRole) || isOperationsDirector(user as any);
+                const hasFieldAgentAccess = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent';
+                
+                if (hasAdminAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <TeamPage />
+                    </div>
+                  );
+                } else if (hasFieldAgentAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <AgentDashboard />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
             <Route path="/onboarding">
-              {hasAnyRole(user as any, ['administrator', 'manager']) ? (
-                <Onboarding />
-              ) : hasRole(user as any, 'field_agent') ? (
-                <AgentDashboard />
-              ) : (
-                <Landing />
-              )}
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasAdminAccess = hasAnyRole(user as any, ['administrator', 'manager']) || ['administrator', 'manager'].includes(effectiveRole) || isOperationsDirector(user as any);
+                const hasFieldAgentAccess = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent';
+                
+                if (hasAdminAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <Onboarding />
+                    </div>
+                  );
+                } else if (hasFieldAgentAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <AgentDashboard />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
             <Route path="/mywork">
-              {hasRole(user as any, 'field_agent') ? (
-                <MyWork />
-              ) : (
-                <Landing />
-              )}
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasFieldAgentAccess = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent' || isOperationsDirector(user as any);
+                
+                if (hasFieldAgentAccess) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      )}
+                      <MyWork />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
 
             <Route path="/work-orders">
@@ -382,7 +469,8 @@ function Router() {
             <Route path="/client-dashboard">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasClientAccess = hasRole(user as any, 'client') || effectiveRole === 'client';
+                // Allow access if user has client role OR is testing as client OR is operations director
+                const hasClientAccess = hasRole(user as any, 'client') || effectiveRole === 'client' || isOperationsDirector(user as any);
                 
                 if (isAuthenticated && hasClientAccess) {
                   return (
