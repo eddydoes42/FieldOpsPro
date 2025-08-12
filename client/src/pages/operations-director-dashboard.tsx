@@ -82,7 +82,7 @@ export default function OperationsDirectorDashboard() {
     } else if (role === 'field_agent') {
       window.location.href = '/agent-dashboard';
     } else if (role === 'client') {
-      window.location.href = '/client-dashboard';
+      window.location.href = '/dashboard';
     }
   };
 

@@ -93,8 +93,9 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/operations/companies', label: 'Companies', icon: 'fas fa-building' },
             { path: '/operations/active-admins', label: 'Administrators', icon: 'fas fa-users-cog' },
             { path: '/operations/recent-setups', label: 'Recent Setups', icon: 'fas fa-user-plus' },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
-            { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-network-wired' },
+            { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
