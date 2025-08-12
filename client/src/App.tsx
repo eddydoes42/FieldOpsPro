@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { hasRole, hasAnyRole, isOperationsDirector, canViewJobNetwork, getPrimaryRole } from "../../shared/schema";
 import RoleSwitcher from "@/components/role-switcher";
+import Navigation from "@/components/navigation";
 
 import Landing from "@/pages/landing";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
@@ -85,6 +86,15 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
 
   return (
     <div>
+      {/* Navigation for all dashboard users */}
+      <Navigation 
+        testingRole={testingRole || undefined} 
+        currentActiveRole={permanentRole || getPrimaryRole(user as any)}
+        onPermanentRoleSwitch={(role) => {
+          localStorage.setItem('selectedRole', role);
+          window.location.reload();
+        }}
+      />
       {/* Role switcher for operations directors */}
       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || getPrimaryRole(user as any)} />
       <DashboardContent />
