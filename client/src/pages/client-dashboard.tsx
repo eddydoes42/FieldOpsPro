@@ -259,10 +259,6 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
               <Shield className="h-4 w-4" />
               <span className="text-xs">Exclusive</span>
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex flex-col items-center gap-1 py-3 flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md">
-              <Users className="h-4 w-4" />
-              <span className="text-xs">Team</span>
-            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -540,60 +536,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             </Card>
           </TabsContent>
 
-          {/* Team Tab */}
-          <TabsContent value="team" className="space-y-6">
-            <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Team Members</CardTitle>
-                  {canManageUsers(user) && (
-                    <Button onClick={() => setLocation('/team')}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Add Team Member
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {(teamMembers as any[]).length > 0 ? (
-                  <div className="space-y-4">
-                    {(teamMembers as any[]).map((member: User) => (
-                      <div 
-                        key={member.id} 
-                        className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => setLocation('/team')}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                            <Users className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {member.firstName} {member.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {member.email}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {member.roles.map((role) => (
-                            <Badge key={role} variant="secondary">
-                              {role.replace('_', ' ')}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-                    No team members found
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
       </div>
     </div>
