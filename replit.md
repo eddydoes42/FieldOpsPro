@@ -8,13 +8,16 @@ Preferred communication style: Simple, everyday language.
 Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies").
 
 ## Terminology
-- **Role Tester**: The white bar at the top of the interface
+- **Service Company Role Tester**: Purple-colored role tester bar for testing service company roles (Administrator, Manager, Dispatcher, Field Agent)
+- **Client Company Role Tester**: Teal-colored role tester bar for testing client company roles (Administrator, Manager, Dispatcher)
 - **Role Switcher**: The permanent dropdown button that allows users to switch between Operations Director and Admin roles for EDE
 - **Service Company Creation Form**: Form used to create new service companies
+- **Client Company Creation Form**: Form used to create new client companies
 - **User Creation Form**: General form with selectable role categories (like /onboarding) for creating users
 - **Administrator Creation Form**: Specific form for creating administrators
-- **Service Companies**: Organizations like EDE and Test Company that provide IT field services
-- **Client Companies**: Organizations that require IT services (cannot have Field Agents)
+- **Service Companies**: Organizations like EDE and Test Company that provide IT field services (entity type, not user role)
+- **Client Companies**: Organizations that require IT services but cannot have Field Agents (entity type, not user role)
+- **Client Company Admin**: Administrator role within client companies (user role)
 - **Admin Team**: Users with Dispatcher, Manager, and Administrator roles (workflow designation)
 - **Chief Team**: Users with Manager and Administrator roles (escalation designation)
 - **Job Network**: Public work order posting page accessible to Admin Teams of both Service Companies and Client Companies
@@ -60,14 +63,18 @@ The application features a modern design built on Tailwind CSS and shadcn/ui, pr
 
 ### Key Features
 - **Hierarchical Role System**: Operations Director (god mode), Administrator, Manager, Dispatcher, Field Agent with strict access controls
-- **Operations Director God Mode**: Complete system oversight with role testing capabilities via Role Tester (white bar)
-- **Service Company Management**: Operations Director exclusive service company/client/administrator creation and deletion
-- **Role-based Dashboards**: Operations Director, Administrator, Manager, Dispatcher, Field Agent, and Client specific interfaces
+- **Operations Director God Mode**: Complete system oversight with dual role testing capabilities via Service Company and Client Company Role Testers
+- **Dual Company Type System**: Service Companies (provide IT services) and Client Companies (require IT services) as entity types, not user roles
+- **Dual Role Testing**: Service Company Role Tester (purple) and Client Company Role Tester (teal) for comprehensive testing across both company types
+- **Service Company Management**: Operations Director exclusive service company/client company/administrator creation and deletion
+- **Role-based Dashboards**: Operations Director, Administrator, Manager, Dispatcher, Field Agent, and Client Company Admin specific interfaces
 - **Work Order Management**: Creation, assignment, status tracking (Scheduled to Mark Complete), task dependencies, and integrated issue reporting
 - **Issue Reporting System**: "Create Issue" function on work orders creates hazard alerts requiring Manager+ approval
 - **Field Agent Dashboard**: /mywork page displaying cards with work orders assigned to specific Field Agent
 - **User Management Hierarchy**: Administrator > Manager > Dispatcher > Field Agent with appropriate CRUD permissions
 - **Test Service Company Structure**: Complete test team (Test Admin, Test Manager, Test Dispatcher, Test Field Agent) for role testing
+- **Client Company Role Testing**: Operations Director can test Administrator, Manager, and Dispatcher roles within client companies
+- **Three-Way Role Selection**: Operations Director, Service Company Admin, and Client Company options in /choose-role page
 - **Task Management System**: Fully functional task creation, completion tracking, and category organization (Pre-visit, On-site, Post-site)
 - **Time Tracking System**: Real-time check-in/check-out, active timer display, and logged time calculation
 - **Budget Management System**: Comprehensive budget creation (fixed, hourly, per-device, materials+labor) with dynamic total calculation

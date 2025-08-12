@@ -77,7 +77,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                         roles.includes('administrator') ? 'administrator' :
                         roles.includes('manager') ? 'manager' :
                         roles.includes('dispatcher') ? 'dispatcher' :
-                        roles.includes('client') ? 'client' : 'field_agent';
+                        roles.includes('client_company_admin') ? 'client_company_admin' : 'field_agent';
 
     // Create combined role badge for multiple roles
     const roleDisplay = roles.length > 1 ? 
@@ -148,11 +148,11 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/field-agent/settings', label: 'Settings', icon: 'fas fa-cog' },
           ]
         };
-      case 'client':
+      case 'client_company_admin':
         return {
-          badge: { text: 'Client', icon: 'fas fa-user-tie', color: 'bg-teal-900/30 text-teal-300 border-teal-800/50' },
+          badge: { text: 'Client Admin', icon: 'fas fa-user-tie', color: 'bg-teal-900/30 text-teal-300 border-teal-800/50' },
           links: [
-            { path: '/dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/client-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
             { path: '/client/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },

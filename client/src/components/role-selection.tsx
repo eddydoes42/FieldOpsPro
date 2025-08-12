@@ -46,6 +46,15 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
     setLocation('/admin-dashboard');
   };
 
+  const handleClientCompany = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Store testing role for client company testing and redirect to client dashboard
+    localStorage.setItem('testingRole', 'client_company_admin');
+    localStorage.setItem('testingCompanyType', 'client');
+    setLocation('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
       <div className="max-w-4xl w-full">
@@ -58,7 +67,7 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Operations Director Option */}
           <Card 
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
@@ -135,6 +144,46 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
                 type="button"
               >
                 Access Company Admin Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Client Company Option */}
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
+          >
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto mb-4 p-3 bg-teal-100 dark:bg-teal-900 rounded-full w-fit">
+                <UserCheck className="h-8 w-8 text-teal-600 dark:text-teal-400" />
+              </div>
+              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+                Client Company
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Test client company administration, work order creation, and IT service management from the client perspective.
+              </p>
+              <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+                <div className="flex items-center justify-center">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  <span>Work order creation</span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  <span>Service requests</span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  <span>Talent network access</span>
+                </div>
+              </div>
+              <Button 
+                className="w-full bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+                onClick={handleClientCompany}
+                type="button"
+              >
+                Access Client Company Dashboard
               </Button>
             </CardContent>
           </Card>

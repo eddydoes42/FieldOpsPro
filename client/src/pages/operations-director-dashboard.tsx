@@ -20,6 +20,7 @@ export default function OperationsDirectorDashboard() {
   );
   const [testingRole, setTestingRole] = useState<string>('administrator');
   const [selectedTestRole, setSelectedTestRole] = useState<string>('administrator');
+  const [selectedClientTestRole, setSelectedClientTestRole] = useState<string>('administrator');
 
   // Listen for custom events from quick action menu
   useEffect(() => {
@@ -66,12 +67,18 @@ export default function OperationsDirectorDashboard() {
     { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
     { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
     { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' },
-    { value: 'field_agent', label: 'Field Agent', shortLabel: 'Field Agent' },
-    { value: 'client', label: 'Client', shortLabel: 'Client' }
+    { value: 'field_agent', label: 'Field Agent', shortLabel: 'Field Agent' }
+  ];
+
+  const availableClientRoles = [
+    { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
+    { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
+    { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' }
   ];
 
   const handleStartTesting = (role: string) => {
     localStorage.setItem('testingRole', role);
+    localStorage.setItem('testingCompanyType', 'service');
     // Navigate to appropriate dashboard based on role
     if (role === 'administrator') {
       window.location.href = '/admin-dashboard';
@@ -81,56 +88,118 @@ export default function OperationsDirectorDashboard() {
       window.location.href = '/dispatcher-dashboard';
     } else if (role === 'field_agent') {
       window.location.href = '/agent-dashboard';
-    } else if (role === 'client') {
-      window.location.href = '/dashboard';
+    }
+  };
+
+  const handleStartClientTesting = (role: string) => {
+    localStorage.setItem('testingRole', role);
+    localStorage.setItem('testingCompanyType', 'client');
+    // Navigate to client-specific dashboard based on role
+    if (role === 'administrator') {
+      window.location.href = '/client-dashboard';
+    } else if (role === 'manager') {
+      window.location.href = '/client-dashboard';
+    } else if (role === 'dispatcher') {
+      window.location.href = '/client-dashboard';
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Role Tester for Operations Director */}
-      <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3 mx-4 mt-4">
-        <div className="flex items-center">
-          <span className="text-sm text-purple-700 font-medium mr-3">Role Tester</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
-                <User className="h-3 w-3 mr-2" />
-                {availableRoles.find(role => role.value === selectedTestRole)?.shortLabel || 'Switch Role'}
-                <ChevronDown className="h-3 w-3 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-purple-900">
-                Available Roles
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {availableRoles.map((role) => (
-                <DropdownMenuItem
-                  key={role.value}
-                  onClick={() => handleStartTesting(role.value)}
-                  className="cursor-pointer"
-                >
+      {/* Dual Role Testers for Operations Director */}
+      <div className="mx-4 mt-4 space-y-3">
+        {/* Service Company Role Tester */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
+          <div className="flex items-center">
+            <span className="text-sm text-purple-700 font-medium mr-3">Service Company Role Tester</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
                   <User className="h-3 w-3 mr-2" />
-                  {role.label}
+                  {availableRoles.find(role => role.value === selectedTestRole)?.shortLabel || 'Switch Role'}
+                  <ChevronDown className="h-3 w-3 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-purple-900">
+                  Service Company Roles
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableRoles.map((role) => (
+                  <DropdownMenuItem
+                    key={role.value}
+                    onClick={() => handleStartTesting(role.value)}
+                    className="cursor-pointer"
+                  >
+                    <User className="h-3 w-3 mr-2" />
+                    {role.label}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    localStorage.removeItem('testingRole');
+                    localStorage.removeItem('testingCompanyType');
+                    setSelectedTestRole('administrator'); // Reset to default
+                    window.location.reload(); // Refresh to clear any testing state
+                  }}
+                  className="cursor-pointer text-red-600 hover:text-red-700 focus:text-red-700"
+                >
+                  <span className="text-red-600 mr-2">✕</span>
+                  Stop Testing
                 </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  localStorage.removeItem('testingRole');
-                  setSelectedTestRole('administrator'); // Reset to default
-                  window.location.reload(); // Refresh to clear any testing state
-                }}
-                className="cursor-pointer text-red-600 hover:text-red-700 focus:text-red-700"
-              >
-                <span className="text-red-600 mr-2">✕</span>
-                Stop Testing
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Client Company Role Tester */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-3">
+          <div className="flex items-center">
+            <span className="text-sm text-teal-700 font-medium mr-3">Client Company Role Tester</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-teal-300 text-teal-700 hover:bg-teal-50">
+                  <User className="h-3 w-3 mr-2" />
+                  {availableClientRoles.find(role => role.value === selectedClientTestRole)?.shortLabel || 'Switch Role'}
+                  <ChevronDown className="h-3 w-3 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-teal-900">
+                  Client Company Roles
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableClientRoles.map((role) => (
+                  <DropdownMenuItem
+                    key={role.value}
+                    onClick={() => handleStartClientTesting(role.value)}
+                    className="cursor-pointer"
+                  >
+                    <User className="h-3 w-3 mr-2" />
+                    {role.label}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    localStorage.removeItem('testingRole');
+                    localStorage.removeItem('testingCompanyType');
+                    setSelectedClientTestRole('administrator'); // Reset to default
+                    window.location.reload(); // Refresh to clear any testing state
+                  }}
+                  className="cursor-pointer text-red-600 hover:text-red-700 focus:text-red-700"
+                >
+                  <span className="text-red-600 mr-2">✕</span>
+                  Stop Testing
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
       

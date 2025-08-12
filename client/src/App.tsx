@@ -73,7 +73,7 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
       return <ManagerDashboard />;
     } else if (effectiveRole === 'field_agent') {
       return <AgentDashboard />;
-    } else if (effectiveRole === 'client') {
+    } else if (effectiveRole === 'client_company_admin') {
       return (
         <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
           <ClientDashboard user={user} />
@@ -121,6 +121,11 @@ function Router() {
       return permanentRole;
     }
     if (isOperationsDirector(user as any) && testingRole) {
+      // Check if testing a client company role
+      const testingCompanyType = localStorage.getItem('testingCompanyType');
+      if (testingCompanyType === 'client') {
+        return 'client_company_admin';
+      }
       return testingRole;
     }
     return getPrimaryRole(user as any);
@@ -141,7 +146,7 @@ function Router() {
       setLocation('/admin-dashboard');
     } else if (role === 'manager') {
       setLocation('/manager-dashboard');
-    } else if (role === 'client') {
+    } else if (role === 'client_company_admin') {
       setLocation('/client-dashboard');
     } else {
       setLocation('/dashboard');
@@ -392,7 +397,7 @@ function Router() {
             <Route path="/job-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
+                const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
                 
                 if (isAuthenticated && hasJobNetworkAccess) {
                   return (
@@ -412,7 +417,7 @@ function Router() {
             <Route path="/talent-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher', 'client'].includes(effectiveRole);
+                const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
                 
                 if (isAuthenticated && hasTalentNetworkAccess) {
                   return (
@@ -480,7 +485,7 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 // Allow access if user has client role OR is testing as client OR is operations director
-                const hasClientAccess = hasRole(user as any, 'client') || effectiveRole === 'client' || isOperationsDirector(user as any);
+                const hasClientAccess = effectiveRole === 'client_company_admin' || isOperationsDirector(user as any);
                 
                 if (isAuthenticated && hasClientAccess) {
                   return (

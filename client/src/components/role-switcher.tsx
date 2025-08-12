@@ -16,8 +16,7 @@ const availableRoles = [
   { value: 'administrator', label: 'Administrator', shortLabel: 'Admin', color: 'bg-blue-100 text-blue-800' },
   { value: 'manager', label: 'Manager', shortLabel: 'Manager', color: 'bg-green-100 text-green-800' },
   { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher', color: 'bg-orange-100 text-orange-800' },
-  { value: 'field_agent', label: 'Field Agent', shortLabel: 'Field Agent', color: 'bg-gray-100 text-gray-800' },
-  { value: 'client', label: 'Client', shortLabel: 'Client', color: 'bg-pink-100 text-pink-800' }
+  { value: 'field_agent', label: 'Field Agent', shortLabel: 'Field Agent', color: 'bg-gray-100 text-gray-800' }
 ];
 
 export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveRole }: RoleSwitcherProps) {

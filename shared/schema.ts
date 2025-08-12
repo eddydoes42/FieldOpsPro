@@ -57,7 +57,7 @@ export const users = pgTable("users", {
   city: varchar("city"),
   state: varchar("state"),
   zipCode: varchar("zip_code"),
-  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: operations_director, administrator, manager, dispatcher, field_agent, client
+  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: operations_director, administrator, manager, dispatcher, field_agent
   companyId: varchar("company_id").references(() => companies.id), // null for operations_director
   profileImageUrl: varchar("profile_image_url"),
   // Client-specific fields
