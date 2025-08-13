@@ -148,30 +148,32 @@ export default function ProjectNetwork() {
   });
 
   const handleCreateProject = (data: ProjectFormData) => {
+    console.log("Creating project with data:", data);
+    console.log("Requirements:", requirements);
+    console.log("Tools:", tools);
+    
     const projectData: InsertProject = {
       ...data,
-      budget: data.budget.toString(), // Convert to string for database
+      budget: data.budget?.toString() || "0", // Convert to string for database
       tools: tools.length > 0 ? tools : undefined,
       requirements: requirements.length > 0 ? requirements : undefined,
       createdById: (user as any)?.id,
       createdByCompanyId: (user as any)?.companyId,
+      status: 'available',
       startDate: new Date(data.startDate),
-      endDate: new Date(new Date(data.startDate).getTime() + (data.expectedDuration * 24 * 60 * 60 * 1000)),
+      endDate: new Date(new Date(data.startDate).getTime() + ((data.expectedDuration || 1) * 24 * 60 * 60 * 1000)),
     };
 
+    console.log("Sending project data:", projectData);
     createProjectMutation.mutate(projectData);
   };
 
   const addRequirement = () => {
-    console.log("addRequirement called", { newRequirement, currentRequirements: requirements });
     if (newRequirement.trim()) {
       const updatedRequirements = [...requirements, newRequirement.trim()];
-      console.log("Updated requirements:", updatedRequirements);
       setRequirements(updatedRequirements);
       form.setValue("requirements", updatedRequirements);
       setNewRequirement("");
-    } else {
-      console.log("newRequirement is empty or whitespace");
     }
   };
 
@@ -182,15 +184,11 @@ export default function ProjectNetwork() {
   };
 
   const addTool = () => {
-    console.log("addTool called", { newTool, currentTools: tools });
     if (newTool.trim()) {
       const updatedTools = [...tools, newTool.trim()];
-      console.log("Updated tools:", updatedTools);
       setTools(updatedTools);
       form.setValue("tools", updatedTools);
       setNewTool("");
-    } else {
-      console.log("newTool is empty or whitespace");
     }
   };
 
@@ -381,7 +379,7 @@ export default function ProjectNetwork() {
                                 type="number" 
                                 min={1}
                                 {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 1)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -403,7 +401,7 @@ export default function ProjectNetwork() {
                                 min={0}
                                 step="0.01"
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -422,7 +420,7 @@ export default function ProjectNetwork() {
                                 type="number" 
                                 min={1}
                                 {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 1)}
                               />
                             </FormControl>
                             <FormMessage />
