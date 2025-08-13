@@ -127,6 +127,10 @@ function Router() {
     if (isOperationsDirector(user as any) && testingRole) {
       // Check if testing a client company role
       const testingCompanyType = localStorage.getItem('testingCompanyType');
+      // Special handling for project_manager - they use the same role regardless of company type
+      if (testingRole === 'project_manager') {
+        return 'project_manager';
+      }
       if (testingCompanyType === 'client') {
         return 'client_company_admin';
       }
@@ -209,6 +213,8 @@ function Router() {
                     return <OperationsDirectorDashboard />;
                   } else if (effectiveRole === 'administrator') {
                     return <AdminDashboard />;
+                  } else if (effectiveRole === 'project_manager') {
+                    return <ProjectManagerDashboard />;
                   } else if (effectiveRole === 'manager') {
                     return <ManagerDashboard />;
                   } else if (effectiveRole === 'dispatcher') {
