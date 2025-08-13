@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -2177,6 +2177,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching exclusive network posts for operations:", error);
       res.status(500).json({ message: "Failed to fetch exclusive network posts" });
+    }
+  });
+
+  // Project routes
+  app.get('/api/projects', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !canViewProjectNetwork(currentUser)) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const projects = await storage.getProjects();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      res.status(500).json({ message: "Failed to fetch projects" });
+    }
+  });
+
+  app.post('/api/projects', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !canCreateProjects(currentUser)) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const projectData = insertProjectSchema.parse(req.body);
+      const project = await storage.createProject(projectData);
+      res.json(project);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      res.status(500).json({ message: "Failed to create project" });
+    }
+  });
+
+  app.post('/api/projects/:id/request', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !canViewProjectNetwork(currentUser)) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const projectId = req.params.id;
+      const assignment = await storage.requestProjectAssignment(projectId, currentUser.companyId!, currentUser.id);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error requesting project assignment:", error);
+      res.status(500).json({ message: "Failed to request project assignment" });
     }
   });
 

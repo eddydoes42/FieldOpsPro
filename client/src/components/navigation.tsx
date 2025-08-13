@@ -95,6 +95,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/operations/recent-setups', label: 'Recent Setups', icon: 'fas fa-user-plus' },
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
+            { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
             { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
@@ -105,7 +106,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           links: [
             { path: '/admin-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
-            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' }, { path: "/project-network", label: "Project Network", icon: "fas fa-project-diagram" },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
@@ -119,7 +120,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           links: [
             { path: '/manager-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
-            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' }, { path: "/project-network", label: "Project Network", icon: "fas fa-project-diagram" },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },

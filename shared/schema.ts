@@ -57,7 +57,7 @@ export const users = pgTable("users", {
   city: varchar("city"),
   state: varchar("state"),
   zipCode: varchar("zip_code"),
-  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: operations_director, administrator, manager, dispatcher, field_agent
+  roles: text("roles").array().notNull().default(sql`ARRAY['field_agent']`), // array of: operations_director, administrator, project_manager, manager, dispatcher, field_engineer, field_agent
   companyId: varchar("company_id").references(() => companies.id), // null for operations_director
   profileImageUrl: varchar("profile_image_url"),
   // Client-specific fields
@@ -396,6 +396,67 @@ export const exclusiveNetworkMembers = pgTable("exclusive_network_members", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Projects table
+export const projects = pgTable("projects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  projectCode: varchar("project_code").unique().notNull(), // e.g., "dowa1234"
+  description: text("description"),
+  overview: text("overview"),
+  startDate: timestamp("start_date").notNull(),
+  expectedDuration: integer("expected_duration").notNull(), // in days
+  endDate: timestamp("end_date"), // calculated or set based on duration
+  budget: decimal("budget", { precision: 10, scale: 2 }),
+  workersNeeded: integer("workers_needed").notNull(),
+  status: varchar("status").notNull().default("available"), // available, assigned, in_progress, completed, cancelled
+  createdById: varchar("created_by_id").notNull().references(() => users.id), // project manager who created it
+  createdByCompanyId: varchar("created_by_company_id").notNull().references(() => companies.id),
+  assignedToCompanyId: varchar("assigned_to_company_id").references(() => companies.id), // company that accepted the project
+  assignedAt: timestamp("assigned_at"),
+  assignedById: varchar("assigned_by_id").references(() => users.id), // admin who assigned it
+  tools: text("tools").array(), // required tools
+  requirements: text("requirements").array(), // project requirements
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Project requirements table (for more structured requirements)
+export const projectRequirements = pgTable("project_requirements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  requirement: text("requirement").notNull(),
+  isCompleted: boolean("is_completed").default(false),
+  completedBy: varchar("completed_by").references(() => users.id),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Project assignments table (tracks which users are assigned to projects)
+export const projectAssignments = pgTable("project_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  role: varchar("role").notNull(), // field_agent, field_engineer, project_manager, manager, etc.
+  assignedById: varchar("assigned_by_id").notNull().references(() => users.id),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  status: varchar("status").default("active"), // active, completed, removed
+});
+
+// Approval requests table (for onboarding requests within projects)
+export const approvalRequests = pgTable("approval_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: varchar("type").notNull(), // "user_onboarding", "project_assignment", etc.
+  requestedById: varchar("requested_by_id").notNull().references(() => users.id),
+  reviewerId: varchar("reviewer_id").references(() => users.id), // admin who needs to approve
+  projectId: varchar("project_id").references(() => projects.id),
+  status: varchar("status").notNull().default("pending"), // pending, approved, rejected
+  requestData: jsonb("request_data"), // stores form data for user creation, etc.
+  notes: text("notes"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
@@ -663,6 +724,37 @@ export const insertExclusiveNetworkMemberSchema = createInsertSchema(exclusiveNe
   addedAt: true,
 });
 
+// Project schemas
+export const insertProjectSchema = createInsertSchema(projects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  assignedAt: true,
+  assignedById: true,
+  assignedToCompanyId: true,
+});
+
+export const insertProjectRequirementSchema = createInsertSchema(projectRequirements).omit({
+  id: true,
+  createdAt: true,
+  completedBy: true,
+  completedAt: true,
+  isCompleted: true,
+});
+
+export const insertProjectAssignmentSchema = createInsertSchema(projectAssignments).omit({
+  id: true,
+  assignedAt: true,
+});
+
+export const insertApprovalRequestSchema = createInsertSchema(approvalRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true,
+  reviewerId: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -711,6 +803,18 @@ export type InsertWorkOrderRequest = z.infer<typeof insertWorkOrderRequestSchema
 
 export type ExclusiveNetworkMember = typeof exclusiveNetworkMembers.$inferSelect;
 export type InsertExclusiveNetworkMember = z.infer<typeof insertExclusiveNetworkMemberSchema>;
+
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+
+export type ProjectRequirement = typeof projectRequirements.$inferSelect;
+export type InsertProjectRequirement = z.infer<typeof insertProjectRequirementSchema>;
+
+export type ProjectAssignment = typeof projectAssignments.$inferSelect;
+export type InsertProjectAssignment = z.infer<typeof insertProjectAssignmentSchema>;
+
+export type ApprovalRequest = typeof approvalRequests.$inferSelect;
+export type InsertApprovalRequest = z.infer<typeof insertApprovalRequestSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
@@ -778,23 +882,36 @@ export function canManageCompanies(user: User | null): boolean {
 export function getPrimaryRole(user: User | null): string {
   if (!user || !user.roles || user.roles.length === 0) return 'field_agent';
   
-  // Priority order: operations_director > administrator > manager > dispatcher > field_agent > client
+  // Priority order: operations_director > administrator > project_manager > manager > dispatcher > field_engineer > field_agent
   if (user.roles.includes('operations_director')) return 'operations_director';
   if (user.roles.includes('administrator')) return 'administrator';
+  if (user.roles.includes('project_manager')) return 'project_manager';
   if (user.roles.includes('manager')) return 'manager';
   if (user.roles.includes('dispatcher')) return 'dispatcher';
+  if (user.roles.includes('field_engineer')) return 'field_engineer';
   if (user.roles.includes('field_agent')) return 'field_agent';
-  if (user.roles.includes('client')) return 'client';
   return 'field_agent';
 }
 
 // Admin Team and Chief Team utility functions
 export function isAdminTeam(user: User | null): boolean {
-  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
+  return hasAnyRole(user, ['administrator', 'project_manager', 'manager', 'field_engineer']);
 }
 
 export function isChiefTeam(user: User | null): boolean {
-  return hasAnyRole(user, ['administrator', 'manager']);
+  return hasAnyRole(user, ['administrator', 'project_manager']);
+}
+
+export function canViewBudgetsFieldEngineer(user: User | null): boolean {
+  return hasAnyRole(user, ['administrator', 'project_manager', 'manager', 'field_engineer']);
+}
+
+export function canCreateProjects(user: User | null): boolean {
+  return hasRole(user, 'project_manager');
+}
+
+export function canViewProjectNetwork(user: User | null): boolean {
+  return isAdminTeam(user);
 }
 
 export function canPostToJobNetwork(user: User | null): boolean {

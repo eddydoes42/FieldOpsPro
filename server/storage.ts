@@ -15,6 +15,10 @@ import {
   exclusiveNetworkPosts,
   workOrderRequests,
   exclusiveNetworkMembers,
+  projects,
+  projectRequirements,
+  projectAssignments,
+  approvalRequests,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -48,6 +52,14 @@ import {
   type InsertWorkOrderRequest,
   type ExclusiveNetworkMember,
   type InsertExclusiveNetworkMember,
+  type Project,
+  type InsertProject,
+  type ProjectRequirement,
+  type InsertProjectRequirement,
+  type ProjectAssignment,
+  type InsertProjectAssignment,
+  type ApprovalRequest,
+  type InsertApprovalRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -209,6 +221,23 @@ export interface IStorage {
   getAllExclusiveNetworkMembers(): Promise<ExclusiveNetworkMember[]>;
   updateExclusiveNetworkMember(id: string, updates: Partial<InsertExclusiveNetworkMember>): Promise<ExclusiveNetworkMember>;
   checkExclusiveNetworkEligibility(clientCompanyId: string, serviceCompanyId: string): Promise<boolean>;
+
+  // Project operations
+  getProjects(): Promise<Project[]>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: string, updates: Partial<InsertProject>): Promise<Project>;
+  requestProjectAssignment(projectId: string, companyId: string, requestedById: string): Promise<ProjectAssignment>;
+  getProjectAssignments(projectId: string): Promise<ProjectAssignment[]>;
+  
+  // Project Requirements operations
+  createProjectRequirement(requirement: InsertProjectRequirement): Promise<ProjectRequirement>;
+  getProjectRequirements(projectId: string): Promise<ProjectRequirement[]>;
+  updateProjectRequirement(id: string, updates: Partial<InsertProjectRequirement>): Promise<ProjectRequirement>;
+  
+  // Approval Requests operations
+  createApprovalRequest(request: InsertApprovalRequest): Promise<ApprovalRequest>;
+  getApprovalRequests(reviewerId: string): Promise<ApprovalRequest[]>;
+  reviewApprovalRequest(id: string, status: 'approved' | 'denied', reviewerId: string, response?: string): Promise<ApprovalRequest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1665,6 +1694,105 @@ export class DatabaseStorage implements IStorage {
       .where(eq(issues.id, id))
       .returning();
     return issue;
+  }
+  // Project operations
+  async getProjects(): Promise<Project[]> {
+    return await db
+      .select()
+      .from(projects)
+      .orderBy(desc(projects.createdAt));
+  }
+
+  async createProject(projectData: InsertProject): Promise<Project> {
+    const [project] = await db
+      .insert(projects)
+      .values(projectData)
+      .returning();
+    return project;
+  }
+
+  async updateProject(id: string, updates: Partial<InsertProject>): Promise<Project> {
+    const [project] = await db
+      .update(projects)
+      .set(updates)
+      .where(eq(projects.id, id))
+      .returning();
+    return project;
+  }
+
+  async requestProjectAssignment(projectId: string, companyId: string, requestedById: string): Promise<ProjectAssignment> {
+    const [assignment] = await db
+      .insert(projectAssignments)
+      .values({
+        projectId,
+        companyId,
+        requestedById,
+        assignedAt: new Date(),
+      })
+      .returning();
+    return assignment;
+  }
+
+  async getProjectAssignments(projectId: string): Promise<ProjectAssignment[]> {
+    return await db
+      .select()
+      .from(projectAssignments)
+      .where(eq(projectAssignments.projectId, projectId));
+  }
+
+  // Project Requirements operations
+  async createProjectRequirement(requirementData: InsertProjectRequirement): Promise<ProjectRequirement> {
+    const [requirement] = await db
+      .insert(projectRequirements)
+      .values(requirementData)
+      .returning();
+    return requirement;
+  }
+
+  async getProjectRequirements(projectId: string): Promise<ProjectRequirement[]> {
+    return await db
+      .select()
+      .from(projectRequirements)
+      .where(eq(projectRequirements.projectId, projectId));
+  }
+
+  async updateProjectRequirement(id: string, updates: Partial<InsertProjectRequirement>): Promise<ProjectRequirement> {
+    const [requirement] = await db
+      .update(projectRequirements)
+      .set(updates)
+      .where(eq(projectRequirements.id, id))
+      .returning();
+    return requirement;
+  }
+
+  // Approval Requests operations
+  async createApprovalRequest(requestData: InsertApprovalRequest): Promise<ApprovalRequest> {
+    const [request] = await db
+      .insert(approvalRequests)
+      .values(requestData)
+      .returning();
+    return request;
+  }
+
+  async getApprovalRequests(reviewerId: string): Promise<ApprovalRequest[]> {
+    return await db
+      .select()
+      .from(approvalRequests)
+      .where(eq(approvalRequests.reviewerId, reviewerId));
+  }
+
+  async reviewApprovalRequest(id: string, status: 'approved' | 'denied', reviewerId: string, response?: string): Promise<ApprovalRequest> {
+    const [request] = await db
+      .update(approvalRequests)
+      .set({
+        status,
+        reviewerId,
+        response,
+        reviewedAt: new Date(),
+      })
+      .where(eq(approvalRequests.id, id))
+      .returning();
+    return request;
   }
 }
 

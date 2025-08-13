@@ -37,8 +37,9 @@ import MyWork from "@/pages/mywork";
 const ClientDashboard = React.lazy(() => import('@/pages/client-dashboard'));
 const JobNetwork = React.lazy(() => import('@/pages/job-network'));
 
-// Import Talent Network
+// Import Talent Network and Project Network
 import TalentNetworkPage from '@/pages/talent-network';
+import ProjectNetworkPage from '@/pages/project-network';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -430,6 +431,24 @@ function Router() {
                 return <Landing />;
               })()}
             </Route>
+
+            <Route path="/project-network">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasProjectNetworkAccess = ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer', 'client_company_admin'].includes(effectiveRole);
+                
+                if (isAuthenticated && hasProjectNetworkAccess) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      <ProjectNetworkPage />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+
             <Route path="/manager-dashboard">
               {(() => {
                 const effectiveRole = getEffectiveRole();
