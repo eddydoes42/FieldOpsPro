@@ -185,6 +185,7 @@ export default function OperationsDirectorDashboard() {
 
   const availableRoles = [
     { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
+    { value: 'project_manager', label: 'Project Manager', shortLabel: 'Project Manager' },
     { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
     { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' },
     { value: 'field_agent', label: 'Field Agent', shortLabel: 'Field Agent' }
@@ -192,6 +193,7 @@ export default function OperationsDirectorDashboard() {
 
   const availableClientRoles = [
     { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
+    { value: 'project_manager', label: 'Project Manager', shortLabel: 'Project Manager' },
     { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
     { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' }
   ];
@@ -202,6 +204,8 @@ export default function OperationsDirectorDashboard() {
     // Navigate to appropriate dashboard based on role
     if (role === 'administrator') {
       window.location.href = '/admin-dashboard';
+    } else if (role === 'project_manager') {
+      window.location.href = '/admin-dashboard'; // Project managers use the admin dashboard
     } else if (role === 'manager') {
       window.location.href = '/manager-dashboard';
     } else if (role === 'dispatcher') {
@@ -217,6 +221,8 @@ export default function OperationsDirectorDashboard() {
     // Navigate to client-specific dashboard based on role
     if (role === 'administrator') {
       window.location.href = '/client-dashboard';
+    } else if (role === 'project_manager') {
+      window.location.href = '/client-dashboard'; // Project managers use the client dashboard
     } else if (role === 'manager') {
       window.location.href = '/client-dashboard';
     } else if (role === 'dispatcher') {
