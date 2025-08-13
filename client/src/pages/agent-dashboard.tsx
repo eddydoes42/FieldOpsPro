@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
-import RoleSwitcher from "@/components/role-switcher";
 import TimeTracker from "@/components/time-tracker";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,29 +125,6 @@ export default function AgentDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Role Tester - shows when Operations Director is testing Field Agent role */}
-      <RoleSwitcher 
-        currentRole="field_agent"
-        onRoleSwitch={(role) => {
-          localStorage.setItem('testingRole', role);
-          // Navigate to appropriate dashboard based on role
-          if (role === 'operations_director') {
-            window.location.href = '/operations-dashboard';
-          } else if (role === 'administrator') {
-            window.location.href = '/admin-dashboard';
-          } else if (role === 'manager') {
-            window.location.href = '/manager-dashboard';
-          } else if (role === 'dispatcher') {
-            window.location.href = '/dispatcher-dashboard';
-          } else if (role === 'field_agent') {
-            window.location.href = '/agent-dashboard';
-          } else if (role === 'client') {
-            window.location.href = '/client-dashboard';
-          }
-        }}
-        currentActiveRole={localStorage.getItem('permanentRole') || 'field_agent'}
-      />
-      
       <Navigation testingRole={testingRole} />
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
