@@ -102,94 +102,94 @@ export default function ProjectManagerDashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total Projects</CardTitle>
+            <Briefcase className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{myProjects.length}</div>
-            <p className="text-xs text-muted-foreground">Projects created by you</p>
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">{myProjects.length}</div>
+            <p className="text-xs text-muted-foreground">Created by you</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Active Projects</CardTitle>
+            <Clock className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeProjects.length}</div>
-            <p className="text-xs text-muted-foreground">Currently in progress</p>
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">{activeProjects.length}</div>
+            <p className="text-xs text-muted-foreground">In progress</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Projects</CardTitle>
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Completed</CardTitle>
+            <CheckSquare className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedProjects.length}</div>
-            <p className="text-xs text-muted-foreground">Successfully completed</p>
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">{completedProjects.length}</div>
+            <p className="text-xs text-muted-foreground">Finished</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total Budget</CardTitle>
+            <DollarSign className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">
               {formatCurrency(myProjects.reduce((sum, p) => sum + Number(p.budget || 0), 0))}
             </div>
-            <p className="text-xs text-muted-foreground">Across all projects</p>
+            <p className="text-xs text-muted-foreground">All projects</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Project Tabs */}
-      <Tabs defaultValue="my-projects" className="space-y-3">
-        <TabsList>
-          <TabsTrigger value="my-projects">My Projects ({myProjects.length})</TabsTrigger>
-          <TabsTrigger value="active">Active ({activeProjects.length})</TabsTrigger>
-          <TabsTrigger value="available">Available ({availableProjects.length})</TabsTrigger>
+      <Tabs defaultValue="my-projects" className="space-y-2">
+        <TabsList className="h-8">
+          <TabsTrigger value="my-projects" className="text-xs">My Projects ({myProjects.length})</TabsTrigger>
+          <TabsTrigger value="active" className="text-xs">Active ({activeProjects.length})</TabsTrigger>
+          <TabsTrigger value="available" className="text-xs">Available ({availableProjects.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="my-projects" className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <TabsContent value="my-projects" className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {myProjects.map((project) => (
               <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{project.name}</CardTitle>
-                    <Badge variant={getStatusBadgeVariant(project.status)}>
+                    <CardTitle className="text-sm">{project.name}</CardTitle>
+                    <Badge variant={getStatusBadgeVariant(project.status)} className="text-xs">
                       {project.status.replace('_', ' ').toUpperCase()}
                     </Badge>
                   </div>
-                  <CardDescription className="text-sm text-gray-600">
+                  <CardDescription className="text-xs text-gray-600">
                     {project.projectCode}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Start: {formatDate(project.startDate)}
+                <CardContent className="pt-0">
+                  <div className="space-y-1">
+                    <div className="flex items-center text-xs text-gray-600">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {formatDate(project.startDate)}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Clock className="h-4 w-4 mr-2" />
-                      Duration: {project.expectedDuration} days
+                    <div className="flex items-center text-xs text-gray-600">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {project.expectedDuration} days
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Users className="h-4 w-4 mr-2" />
-                      Workers needed: {project.workersNeeded}
+                    <div className="flex items-center text-xs text-gray-600">
+                      <Users className="h-3 w-3 mr-1" />
+                      {project.workersNeeded} workers
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Budget: {formatCurrency(Number(project.budget || 0))}
+                    <div className="flex items-center text-xs text-gray-600">
+                      <DollarSign className="h-3 w-3 mr-1" />
+                      {formatCurrency(Number(project.budget || 0))}
                     </div>
                   </div>
                 </CardContent>
@@ -197,20 +197,20 @@ export default function ProjectManagerDashboard() {
             ))}
           </div>
           {myProjects.length === 0 && (
-            <div className="text-center py-12">
-              <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No projects yet</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">Create your first project to get started</p>
-              <Button onClick={() => setLocation('/project-network')}>
-                <Plus className="h-4 w-4 mr-2" />
+            <div className="text-center py-8">
+              <Briefcase className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-1">No projects yet</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">Create your first project to get started</p>
+              <Button size="sm" onClick={() => setLocation('/project-network')}>
+                <Plus className="h-3 w-3 mr-1" />
                 Create Project
               </Button>
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="active" className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <TabsContent value="active" className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {activeProjects.map((project) => (
               <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200">
                 <CardHeader>
@@ -256,8 +256,8 @@ export default function ProjectManagerDashboard() {
           )}
         </TabsContent>
 
-        <TabsContent value="available" className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <TabsContent value="available" className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {availableProjects.map((project) => (
               <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer border-green-200">
                 <CardHeader>
