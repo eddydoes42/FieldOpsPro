@@ -47,6 +47,15 @@ export default function ProjectNetwork() {
   const [tools, setTools] = useState<string[]>([]);
   const [newTool, setNewTool] = useState("");
 
+  // Reset form state function
+  const resetFormState = () => {
+    setRequirements([]);
+    setNewRequirement("");
+    setTools([]);
+    setNewTool("");
+    form.reset();
+  };
+
   // Check if user can access this page
   if (!canViewProjectNetwork(user as any)) {
     return (
@@ -115,9 +124,7 @@ export default function ProjectNetwork() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       setShowCreateForm(false);
-      form.reset();
-      setRequirements([]);
-      setTools([]);
+      resetFormState();
     },
   });
 
@@ -157,24 +164,32 @@ export default function ProjectNetwork() {
 
   const addRequirement = () => {
     if (newRequirement.trim()) {
-      setRequirements([...requirements, newRequirement.trim()]);
+      const updatedRequirements = [...requirements, newRequirement.trim()];
+      setRequirements(updatedRequirements);
+      form.setValue("requirements", updatedRequirements);
       setNewRequirement("");
     }
   };
 
   const removeRequirement = (index: number) => {
-    setRequirements(requirements.filter((_, i) => i !== index));
+    const updatedRequirements = requirements.filter((_, i) => i !== index);
+    setRequirements(updatedRequirements);
+    form.setValue("requirements", updatedRequirements);
   };
 
   const addTool = () => {
     if (newTool.trim()) {
-      setTools([...tools, newTool.trim()]);
+      const updatedTools = [...tools, newTool.trim()];
+      setTools(updatedTools);
+      form.setValue("tools", updatedTools);
       setNewTool("");
     }
   };
 
   const removeTool = (index: number) => {
-    setTools(tools.filter((_, i) => i !== index));
+    const updatedTools = tools.filter((_, i) => i !== index);
+    setTools(updatedTools);
+    form.setValue("tools", updatedTools);
   };
 
   const handleRequestProject = (project: Project) => {
@@ -477,7 +492,7 @@ export default function ProjectNetwork() {
                     </div>
 
                     <div className="flex justify-end space-x-2 pt-4">
-                      <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                      <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); resetFormState(); }}>
                         Cancel
                       </Button>
                       <Button type="submit" disabled={createProjectMutation.isPending}>
