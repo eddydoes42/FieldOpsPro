@@ -78,11 +78,11 @@ export default function ProjectManagerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <Button
               variant="ghost"
               size="sm"
@@ -92,7 +92,7 @@ export default function ProjectManagerDashboard() {
               <Home className="h-4 w-4 mr-2" />
               Dashboard
             </Button>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Project Manager Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Project Manager Dashboard</h1>
           </div>
           <Button onClick={() => setLocation('/project-network')}>
             <Plus className="h-4 w-4 mr-2" />
@@ -102,7 +102,7 @@ export default function ProjectManagerDashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
@@ -151,15 +151,15 @@ export default function ProjectManagerDashboard() {
       </div>
 
       {/* Project Tabs */}
-      <Tabs defaultValue="my-projects" className="space-y-4">
+      <Tabs defaultValue="my-projects" className="space-y-3">
         <TabsList>
           <TabsTrigger value="my-projects">My Projects ({myProjects.length})</TabsTrigger>
           <TabsTrigger value="active">Active ({activeProjects.length})</TabsTrigger>
           <TabsTrigger value="available">Available ({availableProjects.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="my-projects" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="my-projects" className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myProjects.map((project) => (
               <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
@@ -209,8 +209,8 @@ export default function ProjectManagerDashboard() {
           )}
         </TabsContent>
 
-        <TabsContent value="active" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="active" className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeProjects.map((project) => (
               <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200">
                 <CardHeader>
@@ -256,8 +256,8 @@ export default function ProjectManagerDashboard() {
           )}
         </TabsContent>
 
-        <TabsContent value="available" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="available" className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {availableProjects.map((project) => (
               <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer border-green-200">
                 <CardHeader>
