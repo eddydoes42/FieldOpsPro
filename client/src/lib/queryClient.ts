@@ -39,10 +39,12 @@ function getTestingRoleHeaders(): Record<string, string> {
     
     if (effectiveTestingRole) {
       headers['x-testing-role'] = effectiveTestingRole;
+      console.log('Adding testing role header:', effectiveTestingRole);
     }
     
     if (testingCompanyType) {
       headers['x-testing-company-type'] = testingCompanyType;
+      console.log('Adding testing company type header:', testingCompanyType);
     }
     
     return headers;

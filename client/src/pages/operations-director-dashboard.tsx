@@ -201,33 +201,19 @@ export default function OperationsDirectorDashboard() {
   const handleStartTesting = (role: string) => {
     localStorage.setItem('testingRole', role);
     localStorage.setItem('testingCompanyType', 'service');
-    // Navigate to appropriate dashboard based on role
-    if (role === 'administrator') {
-      window.location.href = '/admin-dashboard';
-    } else if (role === 'project_manager') {
-      window.location.href = '/dashboard'; // Project managers go to their dashboard
-    } else if (role === 'manager') {
-      window.location.href = '/manager-dashboard';
-    } else if (role === 'dispatcher') {
-      window.location.href = '/dispatcher-dashboard';
-    } else if (role === 'field_agent') {
-      window.location.href = '/agent-dashboard';
-    }
+    console.log('Starting role test:', role, 'service');
+    
+    // Force reload to clear any cached user data and apply new role context
+    window.location.href = '/dashboard';
   };
 
   const handleStartClientTesting = (role: string) => {
     localStorage.setItem('testingRole', role);
     localStorage.setItem('testingCompanyType', 'client');
-    // Navigate to client-specific dashboard based on role
-    if (role === 'administrator') {
-      window.location.href = '/client-dashboard';
-    } else if (role === 'project_manager') {
-      window.location.href = '/dashboard'; // Project managers go to their dashboard
-    } else if (role === 'manager') {
-      window.location.href = '/client-dashboard';
-    } else if (role === 'dispatcher') {
-      window.location.href = '/client-dashboard';
-    }
+    console.log('Starting client role test:', role, 'client');
+    
+    // Force reload to clear any cached user data and apply new role context
+    window.location.href = '/dashboard';
   };
 
   return (

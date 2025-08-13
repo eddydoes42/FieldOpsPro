@@ -20,6 +20,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const testingRole = req.headers['x-testing-role'];
       const testingCompanyType = req.headers['x-testing-company-type'];
       
+      console.log('Auth user request - testing role:', testingRole, 'company type:', testingCompanyType);
+      
       if (user && isOperationsDirector(user) && testingRole) {
         // Switch to test user based on role and company type
         let testUserEmail = '';
