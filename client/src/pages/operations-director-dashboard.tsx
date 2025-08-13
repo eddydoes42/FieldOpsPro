@@ -199,6 +199,8 @@ export default function OperationsDirectorDashboard() {
   ];
 
   const handleStartTesting = (role: string) => {
+    // Clear any permanent role selection to ensure testing role takes precedence
+    localStorage.removeItem('selectedRole');
     localStorage.setItem('testingRole', role);
     localStorage.setItem('testingCompanyType', 'service');
     console.log('Starting role test:', role, 'service');
@@ -208,6 +210,8 @@ export default function OperationsDirectorDashboard() {
   };
 
   const handleStartClientTesting = (role: string) => {
+    // Clear any permanent role selection to ensure testing role takes precedence
+    localStorage.removeItem('selectedRole');
     localStorage.setItem('testingRole', role);
     localStorage.setItem('testingCompanyType', 'client');
     console.log('Starting client role test:', role, 'client');

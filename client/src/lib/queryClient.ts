@@ -31,15 +31,13 @@ type UnauthorizedBehavior = "returnNull" | "throw";
 function getTestingRoleHeaders(): Record<string, string> {
   if (typeof window !== 'undefined') {
     const testingRole = localStorage.getItem('testingRole');
-    const permanentRole = localStorage.getItem('selectedRole');
     const testingCompanyType = localStorage.getItem('testingCompanyType');
-    const effectiveTestingRole = permanentRole || testingRole;
     
     const headers: Record<string, string> = {};
     
-    if (effectiveTestingRole) {
-      headers['x-testing-role'] = effectiveTestingRole;
-      console.log('Adding testing role header:', effectiveTestingRole);
+    if (testingRole) {
+      headers['x-testing-role'] = testingRole;
+      console.log('Adding testing role header:', testingRole);
     }
     
     if (testingCompanyType) {
