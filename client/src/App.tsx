@@ -70,6 +70,8 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
       return <OperationsDirectorDashboard />;
     } else if (effectiveRole === 'administrator') {
       return <AdminDashboard />;
+    } else if (effectiveRole === 'project_manager') {
+      return <ProjectNetworkPage />;
     } else if (effectiveRole === 'manager') {
       return <ManagerDashboard />;
     } else if (effectiveRole === 'field_agent') {
@@ -145,6 +147,8 @@ function Router() {
       setLocation('/operations-dashboard');
     } else if (role === 'administrator') {
       setLocation('/admin-dashboard');
+    } else if (role === 'project_manager') {
+      setLocation('/project-network');
     } else if (role === 'manager') {
       setLocation('/manager-dashboard');
     } else if (role === 'client_company_admin') {
