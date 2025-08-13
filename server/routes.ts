@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -2225,6 +2225,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error requesting project assignment:", error);
       res.status(500).json({ message: "Failed to request project assignment" });
+    }
+  });
+
+  // Access Request routes for unregistered users requesting access
+  app.post('/api/access-requests', async (req: any, res) => {
+    try {
+      const requestData = insertAccessRequestSchema.parse(req.body);
+      const accessRequest = await storage.createAccessRequest(requestData);
+      res.json(accessRequest);
+    } catch (error) {
+      console.error("Error creating access request:", error);
+      res.status(500).json({ message: "Failed to create access request" });
+    }
+  });
+
+  // Get all pending access requests - Operations Director only
+  app.get('/api/access-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Operations Director required." });
+      }
+
+      const accessRequests = await storage.getPendingAccessRequests();
+      res.json(accessRequests);
+    } catch (error) {
+      console.error("Error fetching access requests:", error);
+      res.status(500).json({ message: "Failed to fetch access requests" });
+    }
+  });
+
+  // Review access request - Operations Director only
+  app.patch('/api/access-requests/:requestId/review', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Operations Director required." });
+      }
+
+      const { requestId } = req.params;
+      const { status, notes } = req.body;
+
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be 'approved' or 'rejected'." });
+      }
+
+      const updatedRequest = await storage.reviewAccessRequest(requestId, status, currentUser.id, notes);
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error reviewing access request:", error);
+      res.status(500).json({ message: "Failed to review access request" });
     }
   });
 

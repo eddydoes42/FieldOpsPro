@@ -396,6 +396,24 @@ export const exclusiveNetworkMembers = pgTable("exclusive_network_members", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Access Requests table - for unregistered users requesting system access
+export const accessRequests = pgTable("access_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  email: varchar("email").notNull(),
+  phone: varchar("phone"),
+  requestedRole: varchar("requested_role").notNull(), // field_agent, manager, project_manager, administrator
+  intention: varchar("intention").notNull(), // do_jobs, create_jobs, manage_jobs_people
+  howHeardAbout: text("how_heard_about"),
+  skillsDescription: text("skills_description"),
+  status: varchar("status").notNull().default("pending"), // pending, approved, rejected
+  requestedAt: timestamp("requested_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  notes: text("notes"), // admin notes during review
+});
+
 // Projects table
 export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -925,3 +943,18 @@ export function canViewExclusiveNetwork(user: User | null): boolean {
 export function canAssignWorkOrders(user: User | null): boolean {
   return isAdminTeam(user);
 }
+
+// Access Request types
+export type AccessRequest = typeof accessRequests.$inferSelect;
+export type InsertAccessRequest = typeof accessRequests.$inferInsert;
+
+export const insertAccessRequestSchema = createInsertSchema(accessRequests).omit({
+  id: true,
+  requestedAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+  status: true,
+  notes: true,
+});
+
+export type InsertAccessRequestType = z.infer<typeof insertAccessRequestSchema>;

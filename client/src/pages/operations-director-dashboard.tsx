@@ -14,6 +14,8 @@ import { Company } from "../../../shared/schema";
 export default function OperationsDirectorDashboard() {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [showAdminForm, setShowAdminForm] = useState(false);
+  const [showUserCreationDialog, setShowUserCreationDialog] = useState(false);
+  const [selectedAccessRequest, setSelectedAccessRequest] = useState<AccessRequest | null>(null);
   const [, setLocation] = useLocation();
   const [currentActiveRole, setCurrentActiveRole] = useState(
     localStorage.getItem('permanentRole') || 'operations_director'
@@ -21,6 +23,8 @@ export default function OperationsDirectorDashboard() {
   const [testingRole, setTestingRole] = useState<string>('administrator');
   const [selectedTestRole, setSelectedTestRole] = useState<string>('administrator');
   const [selectedClientTestRole, setSelectedClientTestRole] = useState<string>('administrator');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Listen for custom events from quick action menu
   useEffect(() => {
@@ -55,6 +59,28 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/operations/budget-summary'],
   });
 
+  // Access requests query
+  const { data: accessRequests = [] } = useQuery<AccessRequest[]>({
+    queryKey: ['/api/access-requests'],
+  });
+
+  // User creation form
+  const userForm = useForm({
+    resolver: zodResolver(insertUserSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      roles: [],
+      companyId: "",
+    },
+  });
+
   if (showCompanyForm) {
     return <CompanyOnboardingForm onClose={() => setShowCompanyForm(false)} />;
   }
@@ -62,6 +88,79 @@ export default function OperationsDirectorDashboard() {
   if (showAdminForm) {
     return <AdminOnboardingForm onClose={() => setShowAdminForm(false)} />;
   }
+
+  // Mutations for access request actions
+  const reviewAccessRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status, notes }: { requestId: string; status: 'approved' | 'rejected'; notes?: string }) => {
+      return apiRequest(`/api/access-requests/${requestId}/review`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, notes }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
+      toast({
+        title: "Request Reviewed",
+        description: "Access request has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to review access request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      return apiRequest('/api/users', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      setShowUserCreationDialog(false);
+      userForm.reset();
+      setSelectedAccessRequest(null);
+      toast({
+        title: "User Created",
+        description: "User account has been successfully created.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAccessRequestClick = (request: AccessRequest) => {
+    setSelectedAccessRequest(request);
+    // Pre-populate form with access request data
+    userForm.setValue('firstName', request.firstName);
+    userForm.setValue('lastName', request.lastName);
+    userForm.setValue('email', request.email);
+    userForm.setValue('phone', request.phone || '');
+    userForm.setValue('roles', [request.requestedRole]);
+    setShowUserCreationDialog(true);
+  };
+
+  const handleApproveRequest = (requestId: string) => {
+    reviewAccessRequestMutation.mutate({ requestId, status: 'approved' });
+  };
+
+  const handleRejectRequest = (requestId: string) => {
+    reviewAccessRequestMutation.mutate({ requestId, status: 'rejected', notes: 'Request denied' });
+  };
+
+  const onSubmitUserCreation = (data: any) => {
+    createUserMutation.mutate(data);
+  };
 
   const availableRoles = [
     { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
@@ -253,6 +352,82 @@ export default function OperationsDirectorDashboard() {
           </div>
         </div>
 
+        {/* Things to Approve Section */}
+        {accessRequests.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Things to Approve</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {accessRequests.map((request) => (
+                <Card 
+                  key={request.id} 
+                  className="bg-white dark:bg-gray-800 border-yellow-200 dark:border-yellow-700 cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900/10 transition-colors"
+                  onClick={() => handleAccessRequestClick(request)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {request.firstName} {request.lastName}
+                      </CardTitle>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {request.requestedRole.replace('_', ' ').split(' ').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ')}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <strong>Email:</strong> {request.email}
+                      </p>
+                      {request.phone && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <strong>Phone:</strong> {request.phone}
+                        </p>
+                      )}
+                      {request.howHeardAbout && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <strong>Source:</strong> {request.howHeardAbout}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {new Date(request.requestedAt).toLocaleDateString()}
+                        </div>
+                        <div className="flex space-x-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-green-600 border-green-200 hover:bg-green-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApproveRequest(request.id);
+                            }}
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRejectRequest(request.id);
+                            }}
+                          >
+                            <XCircle className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card 
@@ -331,6 +506,102 @@ export default function OperationsDirectorDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* User Creation Dialog */}
+        <Dialog open={showUserCreationDialog} onOpenChange={setShowUserCreationDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create User Account</DialogTitle>
+            </DialogHeader>
+            <Form {...userForm}>
+              <form onSubmit={userForm.handleSubmit(onSubmitUserCreation)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={userForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={userForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={userForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="companyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a company" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companies.map((company) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowUserCreationDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createUserMutation.isPending}
+                  >
+                    {createUserMutation.isPending ? "Creating..." : "Create User"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

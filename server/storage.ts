@@ -19,6 +19,7 @@ import {
   projectRequirements,
   projectAssignments,
   approvalRequests,
+  accessRequests,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -60,6 +61,8 @@ import {
   type InsertProjectAssignment,
   type ApprovalRequest,
   type InsertApprovalRequest,
+  type AccessRequest,
+  type InsertAccessRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -238,6 +241,13 @@ export interface IStorage {
   createApprovalRequest(request: InsertApprovalRequest): Promise<ApprovalRequest>;
   getApprovalRequests(reviewerId: string): Promise<ApprovalRequest[]>;
   reviewApprovalRequest(id: string, status: 'approved' | 'denied', reviewerId: string, response?: string): Promise<ApprovalRequest>;
+  
+  // Access Requests operations
+  createAccessRequest(request: InsertAccessRequest): Promise<AccessRequest>;
+  getAllAccessRequests(): Promise<AccessRequest[]>;
+  getPendingAccessRequests(): Promise<AccessRequest[]>;
+  updateAccessRequest(id: string, updates: Partial<InsertAccessRequest>): Promise<AccessRequest>;
+  reviewAccessRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, notes?: string): Promise<AccessRequest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1791,6 +1801,53 @@ export class DatabaseStorage implements IStorage {
         reviewedAt: new Date(),
       })
       .where(eq(approvalRequests.id, id))
+      .returning();
+    return request;
+  }
+
+  // Access Requests operations
+  async createAccessRequest(requestData: InsertAccessRequest): Promise<AccessRequest> {
+    const [request] = await db
+      .insert(accessRequests)
+      .values(requestData)
+      .returning();
+    return request;
+  }
+
+  async getAllAccessRequests(): Promise<AccessRequest[]> {
+    return await db
+      .select()
+      .from(accessRequests)
+      .orderBy(desc(accessRequests.requestedAt));
+  }
+
+  async getPendingAccessRequests(): Promise<AccessRequest[]> {
+    return await db
+      .select()
+      .from(accessRequests)
+      .where(eq(accessRequests.status, 'pending'))
+      .orderBy(desc(accessRequests.requestedAt));
+  }
+
+  async updateAccessRequest(id: string, updates: Partial<InsertAccessRequest>): Promise<AccessRequest> {
+    const [request] = await db
+      .update(accessRequests)
+      .set(updates)
+      .where(eq(accessRequests.id, id))
+      .returning();
+    return request;
+  }
+
+  async reviewAccessRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, notes?: string): Promise<AccessRequest> {
+    const [request] = await db
+      .update(accessRequests)
+      .set({
+        status,
+        reviewedBy: reviewedById,
+        reviewedAt: new Date(),
+        notes,
+      })
+      .where(eq(accessRequests.id, id))
       .returning();
     return request;
   }
