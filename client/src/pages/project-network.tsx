@@ -117,14 +117,20 @@ export default function ProjectNetwork() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to create project');
+        const errorText = await response.text();
+        console.error('Project creation failed:', response.status, errorText);
+        throw new Error(`Failed to create project: ${response.status}`);
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (createdProject) => {
+      console.log('Project created successfully:', createdProject);
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       setShowCreateForm(false);
       resetFormState();
+    },
+    onError: (error) => {
+      console.error('Project creation error:', error);
     },
   });
 
@@ -151,10 +157,11 @@ export default function ProjectNetwork() {
     console.log("Creating project with data:", data);
     console.log("Requirements:", requirements);
     console.log("Tools:", tools);
+    console.log("User data:", user);
     
     const projectData: InsertProject = {
       ...data,
-      budget: data.budget?.toString() || "0", // Convert to string for database
+      budget: data.budget?.toString() || "0",
       tools: tools.length > 0 ? tools : undefined,
       requirements: requirements.length > 0 ? requirements : undefined,
       createdById: (user as any)?.id,
