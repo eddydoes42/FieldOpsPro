@@ -1401,6 +1401,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Project Manager stats route
+  app.get('/api/project-manager/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['project_manager', 'operations_director'])) {
+        return res.status(403).json({ message: "Project Manager access required" });
+      }
+
+      // Get project statistics for project managers
+      const stats = {
+        totalProjects: 0,
+        activeProjects: 0,
+        completedProjects: 0,
+        totalBudget: 0
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching project manager stats:", error);
+      res.status(500).json({ message: "Failed to fetch project manager stats" });
+    }
+  });
+
   // Company routes - restricted to operations directors
   app.get('/api/companies', isAuthenticated, async (req: any, res) => {
     try {

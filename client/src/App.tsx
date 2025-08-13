@@ -40,6 +40,7 @@ const JobNetwork = React.lazy(() => import('@/pages/job-network'));
 // Import Talent Network and Project Network
 import TalentNetworkPage from '@/pages/talent-network';
 import ProjectNetworkPage from '@/pages/project-network';
+import ProjectManagerDashboard from '@/pages/project-manager-dashboard';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -71,7 +72,7 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
     } else if (effectiveRole === 'administrator') {
       return <AdminDashboard />;
     } else if (effectiveRole === 'project_manager') {
-      return <ProjectNetworkPage />;
+      return <ProjectManagerDashboard />;
     } else if (effectiveRole === 'manager') {
       return <ManagerDashboard />;
     } else if (effectiveRole === 'field_agent') {
@@ -148,7 +149,7 @@ function Router() {
     } else if (role === 'administrator') {
       setLocation('/admin-dashboard');
     } else if (role === 'project_manager') {
-      setLocation('/project-network');
+      setLocation('/dashboard');
     } else if (role === 'manager') {
       setLocation('/manager-dashboard');
     } else if (role === 'client_company_admin') {

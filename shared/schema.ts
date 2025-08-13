@@ -925,7 +925,19 @@ export function canViewBudgetsFieldEngineer(user: User | null): boolean {
 }
 
 export function canCreateProjects(user: User | null): boolean {
-  return hasRole(user, 'project_manager');
+  return isOperationsDirector(user) || hasRole(user, 'project_manager');
+}
+
+export function canEditProjects(user: User | null): boolean {
+  return isOperationsDirector(user) || hasRole(user, 'project_manager');
+}
+
+export function canDeleteProjects(user: User | null): boolean {
+  return isOperationsDirector(user) || hasRole(user, 'project_manager');
+}
+
+export function canAssignProjects(user: User | null): boolean {
+  return isOperationsDirector(user) || hasRole(user, 'project_manager');
 }
 
 export function canViewProjectNetwork(user: User | null): boolean {
