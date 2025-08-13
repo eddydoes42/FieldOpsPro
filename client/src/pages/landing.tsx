@@ -147,13 +147,13 @@ export default function Landing() {
                       Request Access
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-md w-[95vw] max-h-[85vh] overflow-y-auto p-4">
                     <DialogHeader>
                       <DialogTitle>Request Access to FieldOps Pro</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
                           <FormField
                             control={form.control}
                             name="firstName"
@@ -273,6 +273,7 @@ export default function Landing() {
                                   placeholder="Tell us what interests you about this role..."
                                   {...field}
                                   value={field.value || ""}
+                                  rows={3}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -291,6 +292,7 @@ export default function Landing() {
                                   placeholder="Tell us about your relevant experience, certifications, or skills..."
                                   {...field}
                                   value={field.value || ""}
+                                  rows={3}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -298,7 +300,7 @@ export default function Landing() {
                           )}
                         />
 
-                        <div className="flex justify-end space-x-3">
+                        <div className="flex justify-end space-x-2 pt-2">
                           <Button
                             type="button"
                             variant="outline"
