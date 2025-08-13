@@ -14,7 +14,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
+      
+      // Check if user is testing a role (for Operations Directors)
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      
+      if (user && isOperationsDirector(user) && testingRole) {
+        // Switch to test user based on role and company type
+        let testUserEmail = '';
+        
+        if (testingRole === 'project_manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testprojectmanager@testclient.com'
+            : 'testprojectmanager@testcompany.com';
+        } else if (testingRole === 'administrator') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testadmin@testclient.com'
+            : 'testadmin@testcompany.com';
+        } else if (testingRole === 'manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testmanager@testclient.com'
+            : 'testmanager@testcompany.com';
+        } else if (testingRole === 'dispatcher') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testdispatcher@testclient.com'
+            : 'testdispatcher@testcompany.com';
+        } else if (testingRole === 'field_agent') {
+          testUserEmail = 'testfieldagent@testcompany.com';
+        }
+        
+        if (testUserEmail) {
+          const testUser = await storage.getUserByEmail(testUserEmail);
+          if (testUser) {
+            user = testUser;
+          }
+        }
+      }
+      
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);

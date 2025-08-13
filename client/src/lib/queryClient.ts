@@ -12,7 +12,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const baseHeaders = data ? { "Content-Type": "application/json" } : {};
+  const baseHeaders: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
   const testingHeaders = getTestingRoleHeaders();
   
   const res = await fetch(url, {
@@ -32,11 +32,20 @@ function getTestingRoleHeaders(): Record<string, string> {
   if (typeof window !== 'undefined') {
     const testingRole = localStorage.getItem('testingRole');
     const permanentRole = localStorage.getItem('selectedRole');
+    const testingCompanyType = localStorage.getItem('testingCompanyType');
     const effectiveTestingRole = permanentRole || testingRole;
     
+    const headers: Record<string, string> = {};
+    
     if (effectiveTestingRole) {
-      return { 'x-testing-role': effectiveTestingRole };
+      headers['x-testing-role'] = effectiveTestingRole;
     }
+    
+    if (testingCompanyType) {
+      headers['x-testing-company-type'] = testingCompanyType;
+    }
+    
+    return headers;
   }
   return {};
 }
