@@ -163,11 +163,15 @@ export default function ProjectNetwork() {
   };
 
   const addRequirement = () => {
+    console.log("addRequirement called", { newRequirement, currentRequirements: requirements });
     if (newRequirement.trim()) {
       const updatedRequirements = [...requirements, newRequirement.trim()];
+      console.log("Updated requirements:", updatedRequirements);
       setRequirements(updatedRequirements);
       form.setValue("requirements", updatedRequirements);
       setNewRequirement("");
+    } else {
+      console.log("newRequirement is empty or whitespace");
     }
   };
 
@@ -178,11 +182,15 @@ export default function ProjectNetwork() {
   };
 
   const addTool = () => {
+    console.log("addTool called", { newTool, currentTools: tools });
     if (newTool.trim()) {
       const updatedTools = [...tools, newTool.trim()];
+      console.log("Updated tools:", updatedTools);
       setTools(updatedTools);
       form.setValue("tools", updatedTools);
       setNewTool("");
+    } else {
+      console.log("newTool is empty or whitespace");
     }
   };
 
