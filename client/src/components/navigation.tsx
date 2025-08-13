@@ -75,13 +75,14 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
     
     const priorityRole = isOperationsDirector ? 'operations_director' :
                         roles.includes('administrator') ? 'administrator' :
+                        roles.includes('project_manager') ? 'project_manager' :
                         roles.includes('manager') ? 'manager' :
                         roles.includes('dispatcher') ? 'dispatcher' :
                         roles.includes('client_company_admin') ? 'client_company_admin' : 'field_agent';
 
     // Create combined role badge for multiple roles
     const roleDisplay = roles.length > 1 ? 
-      `${priorityRole === 'administrator' ? 'Admin' : priorityRole === 'manager' ? 'Manager' : priorityRole === 'dispatcher' ? 'Dispatcher' : 'Agent'} +${roles.length - 1}` :
+      `${priorityRole === 'administrator' ? 'Admin' : priorityRole === 'project_manager' ? 'Project Mgr' : priorityRole === 'manager' ? 'Manager' : priorityRole === 'dispatcher' ? 'Dispatcher' : 'Agent'} +${roles.length - 1}` :
       priorityRole;
 
     switch (priorityRole) {
@@ -111,6 +112,18 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
             { path: '/onboarding', label: 'Team Member Information', icon: 'fas fa-user-plus' },
+            { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+          ]
+        };
+      case 'project_manager':
+        return {
+          badge: { text: roleDisplay === 'project_manager' ? 'Project Manager' : roleDisplay, icon: 'fas fa-project-diagram', color: 'bg-cyan-900/30 text-cyan-300 border-cyan-800/50' },
+          links: [
+            { path: '/project-manager-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+            { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
+            { path: '/operations/exclusive-network', label: 'Exclusive Network', icon: 'fas fa-shield-alt' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };

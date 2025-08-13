@@ -4,6 +4,7 @@
 FieldOps Pro is a comprehensive field operations management platform that empowers mobile workforce teams with advanced operational tools, dynamic time tracking, and enhanced work order capabilities. It features a hierarchical role-based system with Operations Director (god mode capabilities), company-level administrators, managers, dispatchers, and field agents. The system includes comprehensive work order management with integrated issue reporting, streamlined role testing capabilities, user management workflows, and real-time messaging. The application aims to streamline IT field services, improve communication, and enhance operational efficiency through strict role-based access controls and company hierarchy management.
 
 ## Recent Changes
+- **January 13, 2025**: Fixed Project Manager navigation system - added project_manager role configuration to navigation component with proper badge display and network access (Project Network, Job Network, Talent Network, Exclusive Network)
 - **January 13, 2025**: Removed redundant general role tester component from all dashboard pages while maintaining Service Company Role Tester (purple) and Client Company Role Tester (teal) for comprehensive role testing functionality
 
 ## User Preferences
