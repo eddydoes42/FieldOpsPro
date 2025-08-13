@@ -119,7 +119,7 @@ export default function OperationsDirectorDashboard() {
   // Mutations for access request actions
   const reviewAccessRequestMutation = useMutation({
     mutationFn: async ({ requestId, status, notes }: { requestId: string; status: 'approved' | 'rejected'; notes?: string }) => {
-      return apiRequest(`/api/access-requests/${requestId}/review`, 'PATCH', { status, notes });
+      return apiRequest('PATCH', `/api/access-requests/${requestId}/review`, { status, notes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
@@ -139,7 +139,7 @@ export default function OperationsDirectorDashboard() {
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: any) => {
-      return apiRequest('/api/users', 'POST', userData);
+      return apiRequest('POST', '/api/users', userData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
