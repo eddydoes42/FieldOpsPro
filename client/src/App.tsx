@@ -206,36 +206,12 @@ function Router() {
             </Route>
             <Route path="/operations-dashboard">
               {(() => {
-                const effectiveRole = getEffectiveRole();
-                
-                const DashboardContent = () => {
-                  if (effectiveRole === 'operations_director') {
-                    return <OperationsDirectorDashboard />;
-                  } else if (effectiveRole === 'administrator') {
-                    return <AdminDashboard />;
-                  } else if (effectiveRole === 'project_manager') {
-                    return <ProjectManagerDashboard />;
-                  } else if (effectiveRole === 'manager') {
-                    return <ManagerDashboard />;
-                  } else if (effectiveRole === 'dispatcher') {
-                    return <ManagerDashboard />;
-                  } else if (effectiveRole === 'field_agent') {
-                    return <AgentDashboard />;
-                  } else if (effectiveRole === 'client') {
-                    return (
-                      <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
-                        <ClientDashboard user={user as any} />
-                      </Suspense>
-                    );
-                  } else {
-                    return <OperationsDirectorDashboard />;
-                  }
-                };
-
+                // Operations Dashboard should always show Operations Director dashboard
+                // regardless of testing roles, since this is the dedicated Operations Director route
                 return (
                   <div>
-                    <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
-                    <DashboardContent />
+                    <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                    <OperationsDirectorDashboard />
                   </div>
                 );
               })()}
