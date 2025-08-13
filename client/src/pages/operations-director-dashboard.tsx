@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
@@ -9,7 +9,34 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
 import AdminOnboardingForm from "@/components/admin-onboarding-form";
-import { Company } from "../../../shared/schema";
+import { Company, AccessRequest, insertUserSchema } from "../../../shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function OperationsDirectorDashboard() {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
@@ -92,10 +119,7 @@ export default function OperationsDirectorDashboard() {
   // Mutations for access request actions
   const reviewAccessRequestMutation = useMutation({
     mutationFn: async ({ requestId, status, notes }: { requestId: string; status: 'approved' | 'rejected'; notes?: string }) => {
-      return apiRequest(`/api/access-requests/${requestId}/review`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status, notes }),
-      });
+      return apiRequest(`/api/access-requests/${requestId}/review`, 'PATCH', { status, notes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
@@ -115,10 +139,7 @@ export default function OperationsDirectorDashboard() {
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: any) => {
-      return apiRequest('/api/users', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
+      return apiRequest('/api/users', 'POST', userData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -146,7 +167,7 @@ export default function OperationsDirectorDashboard() {
     userForm.setValue('lastName', request.lastName);
     userForm.setValue('email', request.email);
     userForm.setValue('phone', request.phone || '');
-    userForm.setValue('roles', [request.requestedRole]);
+    userForm.setValue('roles', [request.requestedRole] as any);
     setShowUserCreationDialog(true);
   };
 
@@ -393,7 +414,7 @@ export default function OperationsDirectorDashboard() {
                       <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                           <Clock className="h-3 w-3 mr-1" />
-                          {new Date(request.requestedAt).toLocaleDateString()}
+                          {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : 'N/A'}
                         </div>
                         <div className="flex space-x-1">
                           <Button
