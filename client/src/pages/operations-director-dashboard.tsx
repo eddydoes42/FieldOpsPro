@@ -205,7 +205,7 @@ export default function OperationsDirectorDashboard() {
     if (role === 'administrator') {
       window.location.href = '/admin-dashboard';
     } else if (role === 'project_manager') {
-      window.location.href = '/admin-dashboard'; // Project managers use the admin dashboard
+      window.location.href = '/project-network'; // Project managers go to Project Network
     } else if (role === 'manager') {
       window.location.href = '/manager-dashboard';
     } else if (role === 'dispatcher') {
@@ -222,7 +222,7 @@ export default function OperationsDirectorDashboard() {
     if (role === 'administrator') {
       window.location.href = '/client-dashboard';
     } else if (role === 'project_manager') {
-      window.location.href = '/client-dashboard'; // Project managers use the client dashboard
+      window.location.href = '/project-network'; // Project managers go to Project Network
     } else if (role === 'manager') {
       window.location.href = '/client-dashboard';
     } else if (role === 'dispatcher') {
