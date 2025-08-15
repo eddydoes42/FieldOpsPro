@@ -21,7 +21,7 @@ import type { Project, InsertProject } from '@shared/schema';
 
 const projectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
-  projectCode: z.string().min(8, "Project code must be at least 8 characters"),
+  projectCode: z.string().min(7, "Project code must be at least 7 characters"),
   description: z.string().optional(),
   overview: z.string().min(1, "Overview is required"),
   startDate: z.string().min(1, "Start date is required"),
@@ -105,13 +105,16 @@ export default function ProjectNetwork() {
   const watchedName = form.watch("name");
 
   useEffect(() => {
-    if (watchedName && watchedName.length >= 2) {
-      const abbreviation = watchedName.toLowerCase()
-        .split(' ')
-        .map(word => word.charAt(0))
-        .join('')
-        .substring(0, 4);
-      form.setValue("projectCode", abbreviation);
+    if (watchedName && watchedName.length >= 3) {
+      // Take first 3 letters from project name (letters only, no spaces or special chars)
+      const letters = watchedName.toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
+      
+      // Generate random 4-digit code
+      const randomCode = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Combine letters + random code
+      const projectCode = letters + randomCode;
+      form.setValue("projectCode", projectCode);
     }
   }, [watchedName, form]);
 
