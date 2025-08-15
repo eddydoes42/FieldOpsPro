@@ -1466,8 +1466,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company routes - restricted to operations directors
   app.get('/api/companies', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isOperationsDirector(currentUser)) {
+      // Get the original user for Operations Director permission check
+      const originalUser = await storage.getUser(req.user.claims.sub);
+      if (!originalUser || !isOperationsDirector(originalUser)) {
         return res.status(403).json({ message: "Operations Director access required" });
       }
 
@@ -1481,8 +1482,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/companies', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isOperationsDirector(currentUser)) {
+      // Get the original user for Operations Director permission check
+      const originalUser = await storage.getUser(req.user.claims.sub);
+      if (!originalUser || !isOperationsDirector(originalUser)) {
         return res.status(403).json({ message: "Operations Director access required" });
       }
 
@@ -1497,8 +1499,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/companies/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isOperationsDirector(currentUser)) {
+      // Get the original user for Operations Director permission check
+      const originalUser = await storage.getUser(req.user.claims.sub);
+      if (!originalUser || !isOperationsDirector(originalUser)) {
         return res.status(403).json({ message: "Operations Director access required" });
       }
 
@@ -1514,8 +1517,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/companies/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isOperationsDirector(currentUser)) {
+      // Get the original user for Operations Director permission check
+      const originalUser = await storage.getUser(req.user.claims.sub);
+      if (!originalUser || !isOperationsDirector(originalUser)) {
         return res.status(403).json({ message: "Operations Director access required" });
       }
 
