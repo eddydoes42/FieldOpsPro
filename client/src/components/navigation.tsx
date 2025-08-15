@@ -73,6 +73,24 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
     // Check if user has operations_director role (companyId doesn't matter for navigation)
     const isOperationsDirector = roles.includes('operations_director');
     
+    // For Operations Director, always show Operations Director navigation unless actively testing
+    if (isOperationsDirector && !testingRole) {
+      return {
+        badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
+        links: [
+          { path: '/operations-dashboard', label: 'Operations Dashboard', icon: 'fas fa-chart-network' },
+          { path: '/operations/companies', label: 'Companies', icon: 'fas fa-building' },
+          { path: '/operations/active-admins', label: 'Administrators', icon: 'fas fa-users-cog' },
+          { path: '/operations/recent-setups', label: 'Recent Setups', icon: 'fas fa-user-plus' },
+          { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+          { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
+          { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
+          { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
+          { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+        ]
+      };
+    }
+    
     const priorityRole = isOperationsDirector ? 'operations_director' :
                         roles.includes('administrator') ? 'administrator' :
                         roles.includes('project_manager') ? 'project_manager' :
