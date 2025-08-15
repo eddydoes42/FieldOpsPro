@@ -46,6 +46,14 @@ export default function ProjectNetwork() {
   const [newRequirement, setNewRequirement] = useState("");
   const [tools, setTools] = useState<string[]>([]);
   const [newTool, setNewTool] = useState("");
+  const [showRequirementsDialog, setShowRequirementsDialog] = useState(false);
+  const [projectRequirements, setProjectRequirements] = useState({
+    preVisit: { requirements: [] as string[], documentsNeeded: 0 },
+    onSite: { requirements: [] as string[], documentsNeeded: 0 },
+    postVisit: { requirements: [] as string[], documentsNeeded: 0 }
+  });
+  const [currentStage, setCurrentStage] = useState<'preVisit' | 'onSite' | 'postVisit'>('preVisit');
+  const [newStageRequirement, setNewStageRequirement] = useState("");
 
   // Reset form state function
   const resetFormState = () => {
@@ -53,6 +61,13 @@ export default function ProjectNetwork() {
     setNewRequirement("");
     setTools([]);
     setNewTool("");
+    setProjectRequirements({
+      preVisit: { requirements: [], documentsNeeded: 0 },
+      onSite: { requirements: [], documentsNeeded: 0 },
+      postVisit: { requirements: [], documentsNeeded: 0 }
+    });
+    setCurrentStage('preVisit');
+    setNewStageRequirement("");
     form.reset();
   };
 
@@ -203,6 +218,67 @@ export default function ProjectNetwork() {
     const updatedTools = tools.filter((_, i) => i !== index);
     setTools(updatedTools);
     form.setValue("tools", updatedTools);
+  };
+
+  // Functions for stage-based requirements
+  const addStageRequirement = () => {
+    if (newStageRequirement.trim()) {
+      const updatedRequirements = {
+        ...projectRequirements,
+        [currentStage]: {
+          ...projectRequirements[currentStage],
+          requirements: [...projectRequirements[currentStage].requirements, newStageRequirement.trim()]
+        }
+      };
+      setProjectRequirements(updatedRequirements);
+      setNewStageRequirement("");
+    }
+  };
+
+  const removeStageRequirement = (stage: 'preVisit' | 'onSite' | 'postVisit', index: number) => {
+    const updatedRequirements = {
+      ...projectRequirements,
+      [stage]: {
+        ...projectRequirements[stage],
+        requirements: projectRequirements[stage].requirements.filter((_, i) => i !== index)
+      }
+    };
+    setProjectRequirements(updatedRequirements);
+  };
+
+  const updateDocumentsNeeded = (stage: 'preVisit' | 'onSite' | 'postVisit', count: number) => {
+    const updatedRequirements = {
+      ...projectRequirements,
+      [stage]: {
+        ...projectRequirements[stage],
+        documentsNeeded: Math.max(0, count)
+      }
+    };
+    setProjectRequirements(updatedRequirements);
+  };
+
+  const applyRequirements = () => {
+    // Combine all stage requirements into a single array
+    const allRequirements = [
+      ...projectRequirements.preVisit.requirements.map(req => `Pre-Visit: ${req}`),
+      ...projectRequirements.onSite.requirements.map(req => `On-Site: ${req}`),
+      ...projectRequirements.postVisit.requirements.map(req => `Post-Visit: ${req}`)
+    ];
+    
+    // Add document requirements
+    if (projectRequirements.preVisit.documentsNeeded > 0) {
+      allRequirements.push(`Pre-Visit: ${projectRequirements.preVisit.documentsNeeded} document(s) required`);
+    }
+    if (projectRequirements.onSite.documentsNeeded > 0) {
+      allRequirements.push(`On-Site: ${projectRequirements.onSite.documentsNeeded} document(s) required`);
+    }
+    if (projectRequirements.postVisit.documentsNeeded > 0) {
+      allRequirements.push(`Post-Visit: ${projectRequirements.postVisit.documentsNeeded} document(s) required`);
+    }
+
+    setRequirements(allRequirements);
+    form.setValue("requirements", allRequirements);
+    setShowRequirementsDialog(false);
   };
 
   const handleRequestProject = (project: Project) => {
@@ -438,36 +514,27 @@ export default function ProjectNetwork() {
 
                     {/* Requirements Section */}
                     <div>
-                      <FormLabel>Project Requirements</FormLabel>
-                      <div className="mt-2">
-                        <div className="flex gap-2 mb-2">
-                          <Input
-                            placeholder="Add a requirement..."
-                            value={newRequirement}
-                            onChange={(e) => setNewRequirement(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRequirement())}
-                          />
-                          <Button type="button" onClick={addRequirement} size="sm">
-                            Add
-                          </Button>
-                        </div>
-                        <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Project Requirements</FormLabel>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowRequirementsDialog(true)}
+                        >
+                          Project Requirements
+                        </Button>
+                      </div>
+                      {requirements.length > 0 && (
+                        <div className="mt-2 space-y-2">
                           {requirements.map((req, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 rounded">
-                              <span className="text-sm">{req}</span>
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => removeRequirement(index)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                Remove
-                              </Button>
+                            <div key={index} className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm flex items-center justify-between">
+                              <span>{req}</span>
+                              <span className="text-xs text-gray-500 italic">Applied from requirements</span>
                             </div>
                           ))}
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Tools Section */}
@@ -517,6 +584,135 @@ export default function ProjectNetwork() {
               </DialogContent>
             </Dialog>
           )}
+
+          {/* Project Requirements Dialog */}
+          <Dialog open={showRequirementsDialog} onOpenChange={setShowRequirementsDialog}>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Project Requirements</DialogTitle>
+                <DialogDescription>
+                  Define requirements for each stage of the project and specify document needs.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                {/* Stage Selector */}
+                <div className="flex space-x-2">
+                  <Button
+                    type="button"
+                    variant={currentStage === 'preVisit' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentStage('preVisit')}
+                  >
+                    Pre-Visit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={currentStage === 'onSite' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentStage('onSite')}
+                  >
+                    On-Site
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={currentStage === 'postVisit' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentStage('postVisit')}
+                  >
+                    Post-Visit
+                  </Button>
+                </div>
+
+                {/* Current Stage Requirements */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold mb-4">
+                    {currentStage === 'preVisit' ? 'Pre-Visit' : 
+                     currentStage === 'onSite' ? 'On-Site' : 'Post-Visit'} Requirements
+                  </h3>
+
+                  {/* Add Requirement */}
+                  <div className="flex gap-2 mb-4">
+                    <Input
+                      placeholder={`Add ${currentStage === 'preVisit' ? 'pre-visit' : 
+                                          currentStage === 'onSite' ? 'on-site' : 'post-visit'} requirement...`}
+                      value={newStageRequirement}
+                      onChange={(e) => setNewStageRequirement(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addStageRequirement())}
+                    />
+                    <Button type="button" onClick={addStageRequirement} size="sm">
+                      Add
+                    </Button>
+                  </div>
+
+                  {/* Requirements List */}
+                  <div className="space-y-2 mb-4">
+                    {projectRequirements[currentStage].requirements.map((req, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                        <span className="text-sm">{req}</span>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => removeStageRequirement(currentStage, index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Documents Needed */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Documents Required</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        value={projectRequirements[currentStage].documentsNeeded}
+                        onChange={(e) => updateDocumentsNeeded(currentStage, parseInt(e.target.value) || 0)}
+                        className="w-20"
+                      />
+                      <span className="text-sm text-gray-600">document(s) to be uploaded</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                  <h3 className="font-semibold mb-2">Requirements Summary</h3>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <div className="font-medium text-blue-600">Pre-Visit</div>
+                      <div>{projectRequirements.preVisit.requirements.length} requirements</div>
+                      <div>{projectRequirements.preVisit.documentsNeeded} documents</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-green-600">On-Site</div>
+                      <div>{projectRequirements.onSite.requirements.length} requirements</div>
+                      <div>{projectRequirements.onSite.documentsNeeded} documents</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-purple-600">Post-Visit</div>
+                      <div>{projectRequirements.postVisit.requirements.length} requirements</div>
+                      <div>{projectRequirements.postVisit.documentsNeeded} documents</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setShowRequirementsDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="button" onClick={applyRequirements}>
+                    Apply Requirements
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
