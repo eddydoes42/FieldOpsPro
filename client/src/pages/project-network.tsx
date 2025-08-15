@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquare, AlertCircle, Home, ArrowLeft } from 'lucide-react';
+import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquare, AlertCircle, Home, ArrowLeft, Check } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { canCreateProjects, canViewProjectNetwork } from '@shared/schema';
 import type { Project, InsertProject } from '@shared/schema';
@@ -54,6 +54,7 @@ export default function ProjectNetwork() {
   });
   const [currentStage, setCurrentStage] = useState<'preVisit' | 'onSite' | 'postVisit'>('preVisit');
   const [newStageRequirement, setNewStageRequirement] = useState("");
+  const [completedRequirements, setCompletedRequirements] = useState<{[projectId: string]: {[requirementId: string]: boolean}}>({});
 
   // Reset form state function
   const resetFormState = () => {
@@ -260,28 +261,95 @@ export default function ProjectNetwork() {
     setProjectRequirements(updatedRequirements);
   };
 
+  const applyToAllMembers = (stage: 'preVisit' | 'onSite' | 'postVisit', requirementIndex: number) => {
+    const requirement = projectRequirements[stage].requirements[requirementIndex];
+    const stagePrefix = stage === 'preVisit' ? 'Pre-Visit' : 
+                        stage === 'onSite' ? 'On-Site' : 'Post-Visit';
+    
+    // Mark this requirement to be applied to all work orders
+    const updatedRequirements = {
+      ...projectRequirements,
+      [stage]: {
+        ...projectRequirements[stage],
+        requirements: projectRequirements[stage].requirements.map((req, idx) => 
+          idx === requirementIndex ? `${req} [ALL MEMBERS]` : req
+        )
+      }
+    };
+    setProjectRequirements(updatedRequirements);
+    
+    // Show confirmation
+    alert(`Requirement "${requirement}" will be applied to all project members when the project is created.`);
+  };
+
   const applyRequirements = () => {
-    // Combine all stage requirements into a single array
+    // Combine all stage requirements into a single array with checkbox structure
     const allRequirements = [
-      ...projectRequirements.preVisit.requirements.map(req => `Pre-Visit: ${req}`),
-      ...projectRequirements.onSite.requirements.map(req => `On-Site: ${req}`),
-      ...projectRequirements.postVisit.requirements.map(req => `Post-Visit: ${req}`)
+      ...projectRequirements.preVisit.requirements.map(req => ({
+        stage: 'Pre-Visit',
+        text: req,
+        completed: false,
+        applyToAll: req.includes('[ALL MEMBERS]')
+      })),
+      ...projectRequirements.onSite.requirements.map(req => ({
+        stage: 'On-Site',
+        text: req,
+        completed: false,
+        applyToAll: req.includes('[ALL MEMBERS]')
+      })),
+      ...projectRequirements.postVisit.requirements.map(req => ({
+        stage: 'Post-Visit',
+        text: req,
+        completed: false,
+        applyToAll: req.includes('[ALL MEMBERS]')
+      }))
     ];
     
-    // Add document requirements
+    // Add document requirements as structured requirements
     if (projectRequirements.preVisit.documentsNeeded > 0) {
-      allRequirements.push(`Pre-Visit: ${projectRequirements.preVisit.documentsNeeded} document(s) required`);
+      allRequirements.push({
+        stage: 'Pre-Visit',
+        text: `${projectRequirements.preVisit.documentsNeeded} document(s) required`,
+        completed: false,
+        applyToAll: false
+      });
     }
     if (projectRequirements.onSite.documentsNeeded > 0) {
-      allRequirements.push(`On-Site: ${projectRequirements.onSite.documentsNeeded} document(s) required`);
+      allRequirements.push({
+        stage: 'On-Site',
+        text: `${projectRequirements.onSite.documentsNeeded} document(s) required`,
+        completed: false,
+        applyToAll: false
+      });
     }
     if (projectRequirements.postVisit.documentsNeeded > 0) {
-      allRequirements.push(`Post-Visit: ${projectRequirements.postVisit.documentsNeeded} document(s) required`);
+      allRequirements.push({
+        stage: 'Post-Visit',
+        text: `${projectRequirements.postVisit.documentsNeeded} document(s) required`,
+        completed: false,
+        applyToAll: false
+      });
     }
 
-    setRequirements(allRequirements);
-    form.setValue("requirements", allRequirements);
+    // Convert to string format for form (backwards compatibility)
+    const stringRequirements = allRequirements.map(req => 
+      `${req.stage}: ${req.text.replace(' [ALL MEMBERS]', '')}`
+    );
+    
+    setRequirements(stringRequirements);
+    form.setValue("requirements", stringRequirements);
     setShowRequirementsDialog(false);
+  };
+
+  // Toggle requirement completion
+  const toggleRequirement = (projectId: string, requirementId: string) => {
+    setCompletedRequirements(prev => ({
+      ...prev,
+      [projectId]: {
+        ...prev[projectId],
+        [requirementId]: !prev[projectId]?.[requirementId]
+      }
+    }));
   };
 
   const handleRequestProject = (project: Project) => {
@@ -652,16 +720,27 @@ export default function ProjectNetwork() {
                   <div className="space-y-2 mb-4">
                     {projectRequirements[currentStage].requirements.map((req, index) => (
                       <div key={index} className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 rounded">
-                        <span className="text-sm">{req}</span>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => removeStageRequirement(currentStage, index)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Remove
-                        </Button>
+                        <span className="text-sm flex-1">{req}</span>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => applyToAllMembers(currentStage, index)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            All Members
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => removeStageRequirement(currentStage, index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -762,6 +841,44 @@ export default function ProjectNetwork() {
                       {project.workersNeeded} workers needed
                     </div>
                   </div>
+                  
+                  {/* Requirements Checklist */}
+                  {project.requirements && project.requirements.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h4 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Requirements</h4>
+                      <div className="space-y-2">
+                        {project.requirements.slice(0, 3).map((requirement: string, index: number) => {
+                          const requirementId = `${project.id}-${index}`;
+                          const isCompleted = completedRequirements[project.id]?.[requirementId] || false;
+                          return (
+                            <div key={index} className="flex items-start gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRequirement(project.id, requirementId);
+                                }}
+                                className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                                  isCompleted 
+                                    ? 'bg-green-500 border-green-500 text-white' 
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                {isCompleted && <Check className="h-2.5 w-2.5" />}
+                              </button>
+                              <span className={`text-xs ${isCompleted ? 'line-through text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {requirement}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {project.requirements.length > 3 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            +{project.requirements.length - 3} more requirements
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
 
                 <CardFooter>
@@ -826,6 +943,44 @@ export default function ProjectNetwork() {
                       {project.workersNeeded} workers needed
                     </div>
                   </div>
+                  
+                  {/* Requirements Checklist */}
+                  {project.requirements && project.requirements.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h4 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Requirements</h4>
+                      <div className="space-y-2">
+                        {project.requirements.slice(0, 3).map((requirement: string, index: number) => {
+                          const requirementId = `${project.id}-my-${index}`;
+                          const isCompleted = completedRequirements[project.id]?.[requirementId] || false;
+                          return (
+                            <div key={index} className="flex items-start gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRequirement(project.id, requirementId);
+                                }}
+                                className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                                  isCompleted 
+                                    ? 'bg-green-500 border-green-500 text-white' 
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                {isCompleted && <Check className="h-2.5 w-2.5" />}
+                              </button>
+                              <span className={`text-xs ${isCompleted ? 'line-through text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {requirement}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {project.requirements.length > 3 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            +{project.requirements.length - 3} more requirements
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
 
                 <CardFooter>
