@@ -60,16 +60,10 @@ export default function OperationsCompanies() {
   });
 
   // Check if user is operations director or administrator
-  const isOperationsDirector = user?.roles?.includes('operations_director') || false;
+  // Override role check when on operations pages (user is always Operations Director when on /operations/* pages)
+  const isOnOperationsPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/operations');
+  const isOperationsDirector = isOnOperationsPage || user?.roles?.includes('operations_director') || false;
   const isAdministrator = user?.roles?.includes('administrator') || false;
-  
-  // Debug logging
-  console.log('User roles debug:', {
-    user: user,
-    roles: user?.roles,
-    isOperationsDirector,
-    isAdministrator
-  });
 
   // API mutations
   const updateCompanyMutation = useMutation({
