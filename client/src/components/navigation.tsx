@@ -57,9 +57,13 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   }, []);
 
   const getRoleConfig = () => {
-    // Use testing role if provided, otherwise use actual user roles
-    if (testingRole) {
-      const roles = [testingRole];
+    // Check for testing role from localStorage or prop
+    const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
+    const activeTestingRole = testingRole || storedTestingRole;
+    
+    // Use testing role if active, otherwise use actual user roles
+    if (activeTestingRole) {
+      const roles = [activeTestingRole];
       return getConfigForRoles(roles);
     }
     
@@ -70,11 +74,14 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   };
 
   const getConfigForRoles = (roles: string[]) => {
-    // Check if user has operations_director role (companyId doesn't matter for navigation)
-    const isOperationsDirector = roles.includes('operations_director');
+    // Check if actual user has operations_director role (not testing role)
+    const userRoles = (user as any)?.roles || [];
+    const actualUserRoles = Array.isArray(userRoles) ? userRoles : [userRoles];
+    const isOperationsDirector = actualUserRoles.includes('operations_director');
     
-    // For Operations Director, always show Operations Director navigation unless actively testing
-    if (isOperationsDirector && !testingRole) {
+    // For Operations Director, ALWAYS show Operations Director navigation even when role testing
+    // Operations Director should never lose their navigation menu, role testing only affects permissions
+    if (isOperationsDirector) {
       return {
         badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
         links: [
