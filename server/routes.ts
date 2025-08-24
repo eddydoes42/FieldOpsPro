@@ -224,9 +224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Allow access to clients and service company roles
+      // Allow access to clients, service company roles, and Operations Director
       const hasAccess = hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client']) || 
-                       isClient(currentUser);
+                       isClient(currentUser) || isOperationsDirector(currentUser);
       
       if (!hasAccess) {
         return res.status(403).json({ message: "Insufficient permissions" });
