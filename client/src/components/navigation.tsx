@@ -57,13 +57,13 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   }, []);
 
   const getRoleConfig = () => {
-    // Check if we're on operations dashboard - if so, always show Operations Director navigation
-    const isOnOperationsDashboard = typeof window !== 'undefined' ? window.location.pathname === '/operations-dashboard' : false;
+    // Check if we're on any operations page - if so, always show Operations Director navigation
+    const isOnOperationsPage = typeof window !== 'undefined' ? window.location.pathname.startsWith('/operations') : false;
     const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
     
     
-    if (isOnOperationsDashboard) {
-      // Always show Operations Director navigation on operations dashboard
+    if (isOnOperationsPage) {
+      // Always show Operations Director navigation on operations pages
       return {
         badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
         links: [
@@ -268,7 +268,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                   />
                 )}
                 <span className="text-foreground font-medium text-sm hidden md:block">
-                  {typeof window !== 'undefined' && window.location.pathname === '/operations-dashboard' 
+                  {typeof window !== 'undefined' && window.location.pathname.startsWith('/operations') 
                     ? 'Operations Director' 
                     : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
                 </span>
@@ -289,7 +289,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                       )}
                       <div>
                         <p className="font-medium text-foreground">
-                          {typeof window !== 'undefined' && window.location.pathname === '/operations-dashboard' 
+                          {typeof window !== 'undefined' && window.location.pathname.startsWith('/operations') 
                             ? 'Operations Director' 
                             : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
                         </p>
