@@ -62,6 +62,14 @@ export default function OperationsCompanies() {
   // Check if user is operations director or administrator
   const isOperationsDirector = user?.roles?.includes('operations_director') || false;
   const isAdministrator = user?.roles?.includes('administrator') || false;
+  
+  // Debug logging
+  console.log('User roles debug:', {
+    user: user,
+    roles: user?.roles,
+    isOperationsDirector,
+    isAdministrator
+  });
 
   // API mutations
   const updateCompanyMutation = useMutation({
