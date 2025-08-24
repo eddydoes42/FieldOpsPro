@@ -243,6 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fieldAgents = await storage.getFieldAgents();
+      console.log('Field agents returned:', JSON.stringify(fieldAgents, null, 2));
       res.json(fieldAgents);
     } catch (error) {
       console.error("Error fetching field agents:", error);
