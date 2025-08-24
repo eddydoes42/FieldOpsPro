@@ -269,8 +269,12 @@ export default function TeamPage() {
     );
   }
 
+  // Check Operations Director superuser access (when not role testing)
+  const isOperationsDirectorSuperUser = isOperationsDirector(user as any);
+  
   // Allow field agents to view team, but with restricted access
-  if (!canManageUsers(user as any) && !isFieldAgent) {
+  // Also allow Operations Director superuser access
+  if (!canManageUsers(user as any) && !isFieldAgent && !isOperationsDirectorSuperUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
