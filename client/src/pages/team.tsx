@@ -356,8 +356,8 @@ export default function TeamPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
               <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
               <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                {/* Add Team Member Button - Show only for administrators */}
-                {(user as any).roles?.includes('administrator') && (
+                {/* Add Team Member Button - Show for administrators and Operations Director */}
+                {((user as any).roles?.includes('administrator') || isOperationsDirectorSuperUser) && (
                   <Button
                     onClick={() => {
                       // Pass company context if filtering by a specific company
