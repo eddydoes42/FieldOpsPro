@@ -1982,7 +1982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/users/field-agents', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+      if (!currentUser || (!hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client']) && !isOperationsDirector(currentUser))) {
         return res.status(403).json({ message: "Access denied. Management or client role required." });
       }
 

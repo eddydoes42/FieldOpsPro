@@ -413,18 +413,6 @@ function Router() {
                 const isRoleTesting = !!testingRole || !!permanentRole;
                 const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
                 
-                // Debug logging
-                console.log('Talent Network Access Debug:', {
-                  testingRole,
-                  permanentRole,
-                  isRoleTesting,
-                  isOperationsDirector: isOperationsDirector(user as any),
-                  isSuperUserAccess,
-                  hasTalentNetworkAccess,
-                  effectiveRole,
-                  finalAccess: hasTalentNetworkAccess || isSuperUserAccess
-                });
-                
                 if (isAuthenticated && (hasTalentNetworkAccess || isSuperUserAccess)) {
                   return (
                     <div>

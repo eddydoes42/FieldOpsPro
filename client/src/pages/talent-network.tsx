@@ -71,12 +71,12 @@ export default function TalentNetwork() {
   }, []);
 
   // Fetch field agents from all companies
-  const { data: fieldAgents, isLoading } = useQuery({
+  const { data: fieldAgents, isLoading } = useQuery<FieldAgent[]>({
     queryKey: ['/api/users/field-agents'],
   });
 
   // Get unique companies with agent counts
-  const companiesWithAgents = fieldAgents ? 
+  const companiesWithAgents = fieldAgents && Array.isArray(fieldAgents) ? 
     fieldAgents.reduce((acc: any[], agent: FieldAgent) => {
       if (!agent.company) return acc;
       
@@ -97,7 +97,7 @@ export default function TalentNetwork() {
 
   // Get agents for selected company
   const selectedCompanyAgents = selectedCompany 
-    ? companiesWithAgents.find(c => c.name === selectedCompany)?.agents || []
+    ? companiesWithAgents.find((c: any) => c.name === selectedCompany)?.agents || []
     : [];
 
   // Filter agents based on search term and company for company view
@@ -142,7 +142,7 @@ export default function TalentNetwork() {
     mutationFn: async (agentId: string) => {
       return apiRequest(`/api/work-orders/${assignmentWorkOrderId}/assign`, {
         method: 'PATCH',
-        body: JSON.stringify({ assigneeId: agentId }),
+        body: { assigneeId: agentId },
       });
     },
     onSuccess: () => {
@@ -357,7 +357,7 @@ export default function TalentNetwork() {
                   {/* Show top skills from agents in this company */}
                   {company.agents && (
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {Array.from(new Set(company.agents.flatMap((agent: FieldAgent) => agent.specializations || []))).slice(0, 3).map((skill: string) => (
+                      {Array.from(new Set(company.agents.flatMap((agent: FieldAgent) => agent.specializations || []))).slice(0, 3).map((skill: any) => (
                         <Badge key={skill} variant="outline" className="text-xs">
                           {skill}
                         </Badge>
