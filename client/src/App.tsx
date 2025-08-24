@@ -406,8 +406,10 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
+                // Always allow Operations Directors to access talent-network, even when role testing
+                const isOpsDirectorAccess = isOperationsDirector(user as any);
                 
-                if (isAuthenticated && hasTalentNetworkAccess) {
+                if (isAuthenticated && (hasTalentNetworkAccess || isOpsDirectorAccess)) {
                   return (
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
