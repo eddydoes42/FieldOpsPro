@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, ArrowLeft, Phone, MapPin, Mail, Briefcase, UserX, Edit2, UserPlus, Home } from "lucide-react";
 import { useLocation } from "wouter";
-import { hasAnyRole, canManageUsers } from "../../../shared/schema";
+import { hasAnyRole, canManageUsers, isOperationsDirector } from "../../../shared/schema";
 
 export default function TeamPage() {
   const { toast } = useToast();
