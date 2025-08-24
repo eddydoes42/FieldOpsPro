@@ -57,6 +57,27 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   }, []);
 
   const getRoleConfig = () => {
+    // Check if we're on operations dashboard - if so, always show Operations Director navigation
+    const isOnOperationsDashboard = typeof window !== 'undefined' ? window.location.pathname === '/operations-dashboard' : false;
+    
+    if (isOnOperationsDashboard) {
+      // Always show Operations Director navigation on operations dashboard
+      return {
+        badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
+        links: [
+          { path: '/operations-dashboard', label: 'Operations Dashboard', icon: 'fas fa-chart-network' },
+          { path: '/operations/companies', label: 'Companies', icon: 'fas fa-building' },
+          { path: '/operations/active-admins', label: 'Administrators', icon: 'fas fa-users-cog' },
+          { path: '/operations/recent-setups', label: 'Recent Setups', icon: 'fas fa-user-plus' },
+          { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+          { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
+          { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
+          { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
+          { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+        ]
+      };
+    }
+    
     // Check for testing role from localStorage or prop
     const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
     const activeTestingRole = testingRole || storedTestingRole;
