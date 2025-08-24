@@ -59,9 +59,17 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   const getRoleConfig = () => {
     // Check if we're on operations dashboard - if so, always show Operations Director navigation
     const isOnOperationsDashboard = typeof window !== 'undefined' ? window.location.pathname === '/operations-dashboard' : false;
+    const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
+    
+    console.log('Navigation debug:', {
+      isOnOperationsDashboard,
+      storedTestingRole,
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'undefined'
+    });
     
     if (isOnOperationsDashboard) {
       // Always show Operations Director navigation on operations dashboard
+      console.log('Forcing Operations Director navigation on operations dashboard');
       return {
         badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
         links: [
@@ -78,8 +86,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
       };
     }
     
-    // Check for testing role from localStorage or prop
-    const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
+    // Check for testing role from localStorage or prop  
     const activeTestingRole = testingRole || storedTestingRole;
     
     // Use testing role if active, otherwise use actual user roles
@@ -95,34 +102,8 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   };
 
   const getConfigForRoles = (roles: string[]) => {
-    // Check if we're on operations-dashboard and role testing is active
-    // This means an Operations Director is testing roles and should keep their navigation
-    const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
-    const isOnOperationsDashboard = typeof window !== 'undefined' ? window.location.pathname === '/operations-dashboard' : false;
-    const isRoleTesting = storedTestingRole && (testingRole || storedTestingRole);
-    
-    // If we're on operations dashboard and role testing is active, show Operations Director navigation
-    if (isOnOperationsDashboard && isRoleTesting) {
-      return {
-        badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
-        links: [
-          { path: '/operations-dashboard', label: 'Operations Dashboard', icon: 'fas fa-chart-network' },
-          { path: '/operations/companies', label: 'Companies', icon: 'fas fa-building' },
-          { path: '/operations/active-admins', label: 'Administrators', icon: 'fas fa-users-cog' },
-          { path: '/operations/recent-setups', label: 'Recent Setups', icon: 'fas fa-user-plus' },
-          { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
-          { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
-          { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
-          { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
-          { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
-        ]
-      };
-    }
-    
-    // Check if actual user has operations_director role (when not role testing)
-    const userRoles = (user as any)?.roles || [];
-    const actualUserRoles = Array.isArray(userRoles) ? userRoles : [userRoles];
-    const isOperationsDirector = actualUserRoles.includes('operations_director');
+    // Check if actual user has operations_director role
+    const isOperationsDirector = roles.includes('operations_director');
     
     // For Operations Director when not testing, show Operations Director navigation
     if (isOperationsDirector) {
