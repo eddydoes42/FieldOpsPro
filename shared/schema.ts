@@ -750,6 +750,9 @@ export const insertProjectSchema = createInsertSchema(projects).omit({
   assignedAt: true,
   assignedById: true,
   assignedToCompanyId: true,
+}).extend({
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().optional(),
 });
 
 export const insertProjectRequirementSchema = createInsertSchema(projectRequirements).omit({

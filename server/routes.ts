@@ -2234,7 +2234,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project routes
   app.get('/api/projects', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      let currentUser = await storage.getUser(userId);
+      
+      // Check if user is testing a role (for Operations Directors)
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      
+      console.log('Projects GET API - role testing headers:', testingRole, testingCompanyType);
+      console.log('Projects GET API - current user:', currentUser?.email, currentUser?.roles);
+      
+      if (currentUser && isOperationsDirector(currentUser) && testingRole) {
+        // Switch to test user based on role and company type
+        console.log('Projects GET API - role testing detected, switching user...');
+        let testUserEmail = '';
+        
+        if (testingRole === 'project_manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testprojectmanager@testclient.com'
+            : 'testprojectmanager@testcompany.com';
+        } else if (testingRole === 'administrator') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testadmin@testclient.com'
+            : 'testadmin@testcompany.com';
+        } else if (testingRole === 'manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testmanager@testclient.com'
+            : 'testmanager@testcompany.com';
+        } else if (testingRole === 'dispatcher') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testdispatcher@testclient.com'
+            : 'testdispatcher@testcompany.com';
+        } else if (testingRole === 'field_agent') {
+          testUserEmail = 'testfieldagent@testcompany.com';
+        }
+        
+        if (testUserEmail) {
+          const testUser = await storage.getUserByEmail(testUserEmail);
+          if (testUser) {
+            currentUser = testUser;
+          }
+        }
+      }
+      
       if (!currentUser || !canViewProjectNetwork(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
@@ -2249,7 +2291,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/projects', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
+      const userId = req.user.claims.sub;
+      let currentUser = await storage.getUser(userId);
+      
+      // Check if user is testing a role (for Operations Directors)
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      
+      if (currentUser && isOperationsDirector(currentUser) && testingRole) {
+        // Switch to test user based on role and company type
+        let testUserEmail = '';
+        
+        if (testingRole === 'project_manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testprojectmanager@testclient.com'
+            : 'testprojectmanager@testcompany.com';
+        } else if (testingRole === 'administrator') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testadmin@testclient.com'
+            : 'testadmin@testcompany.com';
+        } else if (testingRole === 'manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testmanager@testclient.com'
+            : 'testmanager@testcompany.com';
+        } else if (testingRole === 'dispatcher') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testdispatcher@testclient.com'
+            : 'testdispatcher@testcompany.com';
+        } else if (testingRole === 'field_agent') {
+          testUserEmail = 'testfieldagent@testcompany.com';
+        }
+        
+        if (testUserEmail) {
+          const testUser = await storage.getUserByEmail(testUserEmail);
+          if (testUser) {
+            currentUser = testUser;
+          }
+        }
+      }
+      
       if (!currentUser || !canCreateProjects(currentUser)) {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
