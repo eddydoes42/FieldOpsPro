@@ -99,8 +99,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isAdmin(currentUser)) {
-        return res.status(403).json({ message: "Only administrators can create users and assign roles" });
+      if (!currentUser || (!isAdmin(currentUser) && !isOperationsDirector(currentUser))) {
+        return res.status(403).json({ message: "Only administrators and Operations Directors can create users and assign roles" });
       }
 
       const userData = insertUserSchema.parse(req.body);
@@ -116,8 +116,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users/onboard', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isAdmin(currentUser)) {
-        return res.status(403).json({ message: "Only administrators can onboard users and assign roles" });
+      if (!currentUser || (!isAdmin(currentUser) && !isOperationsDirector(currentUser))) {
+        return res.status(403).json({ message: "Only administrators and Operations Directors can onboard users and assign roles" });
       }
 
       // Transform onboarding data to user data format
