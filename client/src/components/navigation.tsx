@@ -61,16 +61,10 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
     const isOnOperationsDashboard = typeof window !== 'undefined' ? window.location.pathname === '/operations-dashboard' : false;
     const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
     
-    console.log('Navigation debug:', {
-      isOnOperationsDashboard,
-      storedTestingRole,
-      pathname: typeof window !== 'undefined' ? window.location.pathname : 'undefined'
-    });
     
     if (isOnOperationsDashboard) {
       // Always show Operations Director navigation on operations dashboard
-      console.log('Forcing Operations Director navigation on operations dashboard');
-      const config = {
+      return {
         badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
         links: [
           { path: '/operations-dashboard', label: 'Operations Dashboard', icon: 'fas fa-chart-network' },
@@ -84,8 +78,6 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
         ]
       };
-      console.log('Returning Operations Director config:', config.badge.text);
-      return config;
     }
     
     // Check for testing role from localStorage or prop  
@@ -239,7 +231,6 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   };
 
   const config = getRoleConfig();
-  console.log('Final config being used for rendering:', config.badge.text);
 
   return (
     <nav className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
@@ -277,7 +268,9 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                   />
                 )}
                 <span className="text-foreground font-medium text-sm hidden md:block">
-                  {(user as any)?.firstName} {(user as any)?.lastName}
+                  {typeof window !== 'undefined' && window.location.pathname === '/operations-dashboard' 
+                    ? 'Operations Director' 
+                    : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
                 </span>
                 <i className="fas fa-bars text-muted-foreground"></i>
               </button>
@@ -296,7 +289,9 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                       )}
                       <div>
                         <p className="font-medium text-foreground">
-                          {(user as any)?.firstName} {(user as any)?.lastName}
+                          {typeof window !== 'undefined' && window.location.pathname === '/operations-dashboard' 
+                            ? 'Operations Director' 
+                            : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
                         </p>
                         {/* Role Badge */}
                         <span className={`${config.badge.color} text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap inline-flex mt-1`}>
