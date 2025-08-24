@@ -70,7 +70,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
     if (isOnOperationsDashboard) {
       // Always show Operations Director navigation on operations dashboard
       console.log('Forcing Operations Director navigation on operations dashboard');
-      return {
+      const config = {
         badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
         links: [
           { path: '/operations-dashboard', label: 'Operations Dashboard', icon: 'fas fa-chart-network' },
@@ -84,6 +84,8 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
         ]
       };
+      console.log('Returning Operations Director config:', config.badge.text);
+      return config;
     }
     
     // Check for testing role from localStorage or prop  
@@ -237,6 +239,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   };
 
   const config = getRoleConfig();
+  console.log('Final config being used for rendering:', config.badge.text);
 
   return (
     <nav className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
