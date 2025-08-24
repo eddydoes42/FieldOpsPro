@@ -386,8 +386,10 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
+                // Always allow Operations Directors to access job-network, even when role testing
+                const isOpsDirectorAccess = isOperationsDirector(user as any);
                 
-                if (isAuthenticated && hasJobNetworkAccess) {
+                if (isAuthenticated && (hasJobNetworkAccess || isOpsDirectorAccess)) {
                   return (
                     <Suspense fallback={<div className="p-4">Loading job network...</div>}>
                       <JobNetwork 
@@ -425,8 +427,10 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 const hasProjectNetworkAccess = ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer', 'client_company_admin'].includes(effectiveRole);
+                // Always allow Operations Directors to access project-network, even when role testing
+                const isOpsDirectorAccess = isOperationsDirector(user as any);
                 
-                if (isAuthenticated && hasProjectNetworkAccess) {
+                if (isAuthenticated && (hasProjectNetworkAccess || isOpsDirectorAccess)) {
                   return (
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
@@ -442,8 +446,10 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 const hasManagerAccess = ['operations_director', 'manager'].includes(effectiveRole);
+                // Always allow Operations Directors to access manager dashboard, even when role testing
+                const isOpsDirectorAccess = isOperationsDirector(user as any);
                 
-                if (isAuthenticated && hasManagerAccess) {
+                if (isAuthenticated && (hasManagerAccess || isOpsDirectorAccess)) {
                   return (
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'manager'} />
@@ -458,8 +464,10 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 const hasAdminAccess = ['operations_director', 'administrator'].includes(effectiveRole);
+                // Always allow Operations Directors to access admin dashboard, even when role testing
+                const isOpsDirectorAccess = isOperationsDirector(user as any);
                 
-                if (isAuthenticated && hasAdminAccess) {
+                if (isAuthenticated && (hasAdminAccess || isOpsDirectorAccess)) {
                   return (
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'administrator'} />
