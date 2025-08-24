@@ -248,7 +248,18 @@ export default function Onboarding() {
             >
               <Home className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => window.history.back()}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                // Navigate back to team page with company context if available
+                if (preselectedCompanyId) {
+                  setLocation(`/team?company=${preselectedCompanyId}`);
+                } else {
+                  setLocation('/team');
+                }
+              }}
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </div>
