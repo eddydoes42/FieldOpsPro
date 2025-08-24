@@ -266,10 +266,10 @@ export default function OperationsCompanies() {
   const handleDeleteCompany = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (!isAdministrator) {
+    if (!isOperationsDirector) {
       toast({ 
         title: "Access Denied", 
-        description: "Only Administrators can delete companies",
+        description: "Only Operations Directors can delete companies",
         variant: "destructive" 
       });
       return;
@@ -797,12 +797,13 @@ export default function OperationsCompanies() {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end items-center space-x-2 pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
-                  {isAdministrator && (
+                  {isOperationsDirector && (
                     <Button 
                       variant="destructive" 
                       size="sm"
                       onClick={handleDeleteCompany}
                       className="flex items-center space-x-2"
+                      data-testid="button-delete-company"
                     >
                       <Trash2 className="h-4 w-4" />
                       <span>Delete Company</span>
