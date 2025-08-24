@@ -46,6 +46,17 @@ export const companies = pgTable("companies", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Exclusive Networks - client-service company relationships
+export const exclusiveNetworks = pgTable("exclusive_networks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientCompanyId: varchar("client_company_id").notNull().references(() => companies.id),
+  serviceCompanyId: varchar("service_company_id").notNull().references(() => companies.id),
+  addedById: varchar("added_by_id").references(() => users.id), // client admin who added the relationship
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User storage table.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -117,6 +128,14 @@ export const workOrders = pgTable("work_orders", {
   paymentStatus: varchar("payment_status"), // null, pending_payment, payment_approved, payment_received, paid
   paymentUpdatedById: varchar("payment_updated_by_id").references(() => users.id),
   paymentUpdatedAt: timestamp("payment_updated_at"),
+  // Client final approval and profit calculation fields
+  clientApprovalStatus: varchar("client_approval_status").default("pending"), // pending, approved, rejected, requires_revision
+  clientApprovedById: varchar("client_approved_by_id").references(() => users.id),
+  clientApprovedAt: timestamp("client_approved_at"),
+  clientApprovalNotes: text("client_approval_notes"),
+  profitMargin: decimal("profit_margin", { precision: 5, scale: 2 }), // percentage profit margin
+  actualProfit: decimal("actual_profit", { precision: 10, scale: 2 }), // calculated profit amount
+  profitCalculatedAt: timestamp("profit_calculated_at"),
   // Status tracking fields
   workStatus: varchar("work_status").notNull().default("not_started"), // not_started, in_route, checked_in, checked_out, completed
   checkedInAt: timestamp("checked_in_at"),
@@ -434,6 +453,12 @@ export const projects = pgTable("projects", {
   assignedById: varchar("assigned_by_id").references(() => users.id), // admin who assigned it
   tools: text("tools").array(), // required tools
   requirements: text("requirements").array(), // project requirements
+  // Budget deduction workflow fields
+  budgetStatus: varchar("budget_status").notNull().default("pending"), // pending, approved, deducted, cancelled
+  budgetApprovedById: varchar("budget_approved_by_id").references(() => users.id),
+  budgetApprovedAt: timestamp("budget_approved_at"),
+  budgetDeductedAt: timestamp("budget_deducted_at"),
+  actualCost: decimal("actual_cost", { precision: 10, scale: 2 }), // final cost after completion
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -476,6 +501,30 @@ export const approvalRequests = pgTable("approval_requests", {
 });
 
 // Relations
+export const companiesRelations = relations(companies, ({ many }) => ({
+  users: many(users),
+  workOrders: many(workOrders),
+  clientExclusiveNetworks: many(exclusiveNetworks, { relationName: "ClientCompany" }),
+  serviceExclusiveNetworks: many(exclusiveNetworks, { relationName: "ServiceCompany" }),
+}));
+
+export const exclusiveNetworksRelations = relations(exclusiveNetworks, ({ one }) => ({
+  clientCompany: one(companies, {
+    fields: [exclusiveNetworks.clientCompanyId],
+    references: [companies.id],
+    relationName: "ClientCompany",
+  }),
+  serviceCompany: one(companies, {
+    fields: [exclusiveNetworks.serviceCompanyId],
+    references: [companies.id],
+    relationName: "ServiceCompany",
+  }),
+  addedBy: one(users, {
+    fields: [exclusiveNetworks.addedById],
+    references: [users.id],
+  }),
+}));
+
 export const usersRelations = relations(users, ({ many }) => ({
   assignedWorkOrders: many(workOrders, { relationName: "assigneeWorkOrders" }),
   createdWorkOrders: many(workOrders, { relationName: "creatorWorkOrders" }),
@@ -484,6 +533,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   sentMessages: many(messages, { relationName: "senderMessages" }),
   receivedMessages: many(messages, { relationName: "recipientMessages" }),
   notifications: many(notifications),
+  addedExclusiveNetworks: many(exclusiveNetworks),
 }));
 
 export const workOrdersRelations = relations(workOrders, ({ one, many }) => ({
@@ -714,6 +764,12 @@ export const insertCompanySchema = createInsertSchema(companies).omit({
   updatedAt: true,
 });
 
+export const insertExclusiveNetworkSchema = createInsertSchema(exclusiveNetworks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertJobNetworkPostSchema = createInsertSchema(jobNetworkPosts).omit({
   id: true,
   createdAt: true,
@@ -779,6 +835,8 @@ export const insertApprovalRequestSchema = createInsertSchema(approvalRequests).
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type ExclusiveNetwork = typeof exclusiveNetworks.$inferSelect;
+export type InsertExclusiveNetwork = z.infer<typeof insertExclusiveNetworkSchema>;
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -860,6 +918,14 @@ export function isFieldAgent(user: User | null): boolean {
   return hasRole(user, 'field_agent');
 }
 
+export function isFieldEngineer(user: User | null): boolean {
+  return hasRole(user, 'field_engineer');
+}
+
+export function isFieldLevel(user: User | null): boolean {
+  return hasAnyRole(user, ['field_agent', 'field_engineer']);
+}
+
 export function isClient(user: User | null): boolean {
   return hasRole(user, 'client');
 }
@@ -877,7 +943,31 @@ export function isOperationsDirector(user: User | null): boolean {
 }
 
 export function canManageUsers(user: User | null): boolean {
-  return hasAnyRole(user, ['administrator', 'manager']);
+  return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager']);
+}
+
+export function canDeleteAdmin(user: User | null): boolean {
+  return isOperationsDirector(user);
+}
+
+export function canDeleteProjectManager(user: User | null): boolean {
+  return hasAnyRole(user, ['operations_director', 'administrator']);
+}
+
+export function canDeleteManager(user: User | null): boolean {
+  return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager']);
+}
+
+export function canDeleteDispatcher(user: User | null): boolean {
+  return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager']);
+}
+
+export function canSelfAssignWorkOrders(user: User | null): boolean {
+  return hasAnyRole(user, ['field_engineer']);
+}
+
+export function canMessageOperationsDirector(user: User | null): boolean {
+  return hasRole(user, 'administrator');
 }
 
 export function canManageWorkOrders(user: User | null): boolean {
@@ -885,7 +975,7 @@ export function canManageWorkOrders(user: User | null): boolean {
 }
 
 export function canViewBudgets(user: User | null): boolean {
-  return hasAnyRole(user, ['administrator', 'manager']);
+  return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer']);
 }
 
 export function canViewAllOrders(user: User | null): boolean {

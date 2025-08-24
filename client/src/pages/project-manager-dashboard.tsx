@@ -31,6 +31,7 @@ export default function ProjectManagerDashboard() {
             <option value="project_manager">Project Manager</option>
             <option value="manager">Manager</option>
             <option value="dispatcher">Dispatcher</option>
+            <option value="field_engineer">Field Engineer</option>
             <option value="field_agent">Field Agent</option>
           </select>
         </div>

@@ -42,6 +42,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           testUserEmail = testingCompanyType === 'client' 
             ? 'testdispatcher@testclient.com'
             : 'testdispatcher@testcompany.com';
+        } else if (testingRole === 'field_engineer') {
+          testUserEmail = 'testfieldengineer@testcompany.com';
         } else if (testingRole === 'field_agent') {
           testUserEmail = 'testfieldagent@testcompany.com';
         }
@@ -1917,6 +1919,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Exclusive Networks routes
+  app.post('/api/exclusive-networks', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || !hasRole(currentUser, 'administrator') || !currentUser.companyId) {
+        return res.status(403).json({ message: "Only client administrators can manage exclusive networks" });
+      }
+
+      const clientCompany = await storage.getCompany(currentUser.companyId);
+      if (!clientCompany || clientCompany.type !== 'client') {
+        return res.status(403).json({ message: "Only client company administrators can add exclusive networks" });
+      }
+
+      const { serviceCompanyId } = req.body;
+      
+      const exclusiveNetwork = await storage.createExclusiveNetwork({
+        clientCompanyId: currentUser.companyId,
+        serviceCompanyId,
+        addedById: currentUser.id,
+      });
+
+      res.json(exclusiveNetwork);
+    } catch (error) {
+      console.error("Error creating exclusive network:", error);
+      res.status(500).json({ message: "Failed to create exclusive network" });
+    }
+  });
+
+  app.get('/api/exclusive-networks', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      let exclusiveNetworks;
+      if (isOperationsDirector(currentUser)) {
+        exclusiveNetworks = await storage.getExclusiveNetworks();
+      } else if (currentUser.companyId) {
+        const company = await storage.getCompany(currentUser.companyId);
+        if (company?.type === 'client') {
+          exclusiveNetworks = await storage.getExclusiveNetworks(currentUser.companyId);
+        } else if (company?.type === 'service') {
+          exclusiveNetworks = await storage.getExclusiveNetworks(undefined, currentUser.companyId);
+        }
+      }
+
+      res.json(exclusiveNetworks || []);
+    } catch (error) {
+      console.error("Error fetching exclusive networks:", error);
+      res.status(500).json({ message: "Failed to fetch exclusive networks" });
+    }
+  });
+
+  app.delete('/api/exclusive-networks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasRole(currentUser, 'administrator'))) {
+        return res.status(403).json({ message: "Only administrators can remove exclusive networks" });
+      }
+
+      await storage.deleteExclusiveNetwork(req.params.id);
+      res.json({ message: "Exclusive network removed successfully" });
+    } catch (error) {
+      console.error("Error removing exclusive network:", error);
+      res.status(500).json({ message: "Failed to remove exclusive network" });
+    }
+  });
+
   // Job network work orders (client-created orders for management assignment)
   app.get('/api/job-network/work-orders', isAuthenticated, async (req: any, res) => {
     try {
@@ -2069,6 +2143,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error responding to work order request:", error);
       res.status(500).json({ message: "Failed to respond to work order request" });
+    }
+  });
+
+  // Project budget deduction workflow endpoints
+  app.patch('/api/projects/:projectId/approve-budget', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'project_manager']))) {
+        return res.status(403).json({ message: "Only administrators and project managers can approve budgets" });
+      }
+
+      const project = await storage.approveBudget(req.params.projectId, currentUser.id);
+      res.json(project);
+    } catch (error) {
+      console.error("Error approving project budget:", error);
+      res.status(500).json({ message: "Failed to approve project budget" });
+    }
+  });
+
+  app.patch('/api/projects/:projectId/deduct-budget', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasRole(currentUser, 'administrator'))) {
+        return res.status(403).json({ message: "Only administrators can deduct project budgets" });
+      }
+
+      const { actualCost } = req.body;
+      const project = await storage.deductBudget(req.params.projectId, actualCost);
+      res.json(project);
+    } catch (error) {
+      console.error("Error deducting project budget:", error);
+      res.status(500).json({ message: "Failed to deduct project budget" });
+    }
+  });
+
+  app.patch('/api/projects/:projectId/cancel-budget', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'project_manager']))) {
+        return res.status(403).json({ message: "Only administrators and project managers can cancel budget approval" });
+      }
+
+      const project = await storage.cancelBudgetApproval(req.params.projectId);
+      res.json(project);
+    } catch (error) {
+      console.error("Error canceling budget approval:", error);
+      res.status(500).json({ message: "Failed to cancel budget approval" });
+    }
+  });
+
+  app.get('/api/projects/budget-status/:status?', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'project_manager', 'manager']))) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const projects = await storage.getProjectsBudgetStatus(req.params.status);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching projects by budget status:", error);
+      res.status(500).json({ message: "Failed to fetch projects" });
+    }
+  });
+
+  // Client final approval and profit calculation endpoints
+  app.patch('/api/work-orders/:workOrderId/client-approval', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasRole(currentUser, 'client'))) {
+        return res.status(403).json({ message: "Only clients can approve work orders" });
+      }
+
+      const { status, notes } = req.body;
+      
+      if (!['approved', 'rejected', 'requires_revision'].includes(status)) {
+        return res.status(400).json({ message: "Invalid approval status" });
+      }
+
+      const workOrder = await storage.clientApprovalWorkOrder(req.params.workOrderId, status, currentUser.id, notes);
+      res.json(workOrder);
+    } catch (error) {
+      console.error("Error processing client approval:", error);
+      res.status(500).json({ message: "Failed to process client approval" });
+    }
+  });
+
+  app.post('/api/work-orders/:workOrderId/calculate-profit', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'project_manager', 'manager']))) {
+        return res.status(403).json({ message: "Only management can calculate profit" });
+      }
+
+      const workOrder = await storage.calculateProfit(req.params.workOrderId);
+      res.json(workOrder);
+    } catch (error) {
+      console.error("Error calculating profit:", error);
+      res.status(500).json({ message: "Failed to calculate profit" });
+    }
+  });
+
+  app.get('/api/work-orders/pending-approvals/:clientCompanyId?', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      let workOrders;
+      if (isOperationsDirector(currentUser)) {
+        workOrders = await storage.getPendingClientApprovals(req.params.clientCompanyId);
+      } else if (hasRole(currentUser, 'client') && currentUser.companyId) {
+        workOrders = await storage.getPendingClientApprovals(currentUser.companyId);
+      } else if (hasAnyRole(currentUser, ['administrator', 'manager', 'project_manager'])) {
+        workOrders = await storage.getPendingClientApprovals();
+      } else {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(workOrders);
+    } catch (error) {
+      console.error("Error fetching pending client approvals:", error);
+      res.status(500).json({ message: "Failed to fetch pending approvals" });
+    }
+  });
+
+  app.get('/api/work-orders/completed-for-approval', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager', 'project_manager']))) {
+        return res.status(403).json({ message: "Management access required" });
+      }
+
+      const workOrders = await storage.getCompletedWorkOrdersForApproval();
+      res.json(workOrders);
+    } catch (error) {
+      console.error("Error fetching completed work orders for approval:", error);
+      res.status(500).json({ message: "Failed to fetch completed work orders" });
     }
   });
 
@@ -2265,6 +2486,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           testUserEmail = testingCompanyType === 'client' 
             ? 'testdispatcher@testclient.com'
             : 'testdispatcher@testcompany.com';
+        } else if (testingRole === 'field_engineer') {
+          testUserEmail = 'testfieldengineer@testcompany.com';
         } else if (testingRole === 'field_agent') {
           testUserEmail = 'testfieldagent@testcompany.com';
         }
@@ -2318,6 +2541,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           testUserEmail = testingCompanyType === 'client' 
             ? 'testdispatcher@testclient.com'
             : 'testdispatcher@testcompany.com';
+        } else if (testingRole === 'field_engineer') {
+          testUserEmail = 'testfieldengineer@testcompany.com';
         } else if (testingRole === 'field_agent') {
           testUserEmail = 'testfieldagent@testcompany.com';
         }

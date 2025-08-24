@@ -1,0 +1,50 @@
+**Adjusting the prompt**
+
+Okay, the user mentioned that the app is already being developed, so I need to avoid saying "create a new." Instead, I should make sure the prompt reflects that these changes are for the existing AgentConnect project, Field Ops Pro, without disrupting what’s already in place. I’ll rephrase it like this:
+
+“Configure the existing Replit AgentConnect project Field Ops Pro with: 1. Roles and Hierarchy... Ensure seamless integration with the current codebase without drastically altering existing functionality...”
+
+I think that feels right!
+```text
+Configure the existing Replit AgentConnect project Field Ops Pro to support and enforce the following roles, hierarchies, permissions, dashboards, and workflows without disrupting what’s already in place:
+
+1. Roles and Hierarchy  
+   • Operations Director (Ops Dir): superuser and lead developer, not tied to any company  
+     – Full access to create, implement, or remove features, roles, and functions  
+     – Two built-in Role Testers (SC Role Tester & CC Role Tester) that switch the Ops Dir into a Test<Role> dashboard (e.g., “Test Field Agent”) under Test Service Company or Test Client Company  
+     – Defaults to Ops Dir view if no tester is selected  
+     – Duties: role testing, functionality testing, onboarding/deleting companies & admins, granting access, approving manager deletions, app monitoring, issue creation/resolution/deletion  
+
+   • Test Companies  
+     – Test Service Company & Test Client Company, each with one Test<Role> user per role  
+
+2. Service Company Roles & Permissions  
+   • Admin  
+     – Highest rank; only Ops Dir can delete  
+     – Manage users (create/edit/delete/deactivate), projects, work orders, and issues  
+     – Sole role that can message Ops Dir  
+     – Approve manager deletions  
+   • Project Manager  
+     – Same as Admin except cannot delete Admin  
+     – Full project lifecycle (create/edit/assign/approve/delete), budget management, user management, issue handling  
+   • Manager  
+     – Same as Admin except cannot delete Admin or Project Manager  
+     – Full work-order lifecycle, user management, project assignment/completion, issue handling  
+   • Dispatcher  
+     – Same as Admin except cannot delete Admin, PM, or Manager  
+     – Handle assignments, completions, approvals, deletions, and issues  
+   • Field Agent / Field Engineer  
+     – View and complete only assigned work orders; message non-admin users  
+     – Upon promotion to Field Engineer, self-assign work orders and view budgets  
+
+3. Client Company Roles & Permissions  
+   • Mirror Service Company hierarchy minus Field Agent/Engineer  
+   • Create and route work orders/projects; approve or deny requests and counteroffers  
+
+4. Networks & Workflows  
+   • Job Network: client work orders + a service company’s internal orders; service companies request/counteroffer; client approves; admin team assigns to agents  
+   • Project Network: project requests/counteroffers; approved projects allow internal work orders that deduct from the project budget; client final approval calculates profit  
+   • Talent Network: company cards list onboarded users; visibility determined by role hierarchy  
+   • Exclusive Networks: client admins add service companies post-completion; exclusive alerts surface at top for related work orders/projects  
+
+Make sure these configurations and permission checks slot into the existing code and UI flows without undoing or radically altering current features.```

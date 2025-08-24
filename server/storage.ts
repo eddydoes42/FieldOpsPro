@@ -1,6 +1,7 @@
 import {
   users,
   companies,
+  exclusiveNetworks,
   workOrders,
   timeEntries,
   messages,
@@ -63,6 +64,8 @@ import {
   type InsertApprovalRequest,
   type AccessRequest,
   type InsertAccessRequest,
+  type ExclusiveNetwork,
+  type InsertExclusiveNetwork,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -206,6 +209,12 @@ export interface IStorage {
   getJobNetworkPosts(): Promise<JobNetworkPost[]>;
   getExclusiveNetworkPosts(): Promise<ExclusiveNetworkPost[]>;
 
+  // Client final approval and profit calculation operations
+  clientApprovalWorkOrder(workOrderId: string, status: 'approved' | 'rejected' | 'requires_revision', clientId: string, notes?: string): Promise<WorkOrder>;
+  calculateProfit(workOrderId: string): Promise<WorkOrder>;
+  getPendingClientApprovals(clientCompanyId?: string): Promise<WorkOrder[]>;
+  getCompletedWorkOrdersForApproval(): Promise<WorkOrder[]>;
+
   // Rating operations
   createClientFieldAgentRating(rating: InsertClientFieldAgentRating): Promise<ClientFieldAgentRating>;
   createClientDispatcherRating(rating: InsertClientDispatcherRating): Promise<ClientDispatcherRating>;
@@ -220,6 +229,12 @@ export interface IStorage {
   updateCompanyRatings(companyId: string): Promise<void>;
   
   // Exclusive Network operations
+  createExclusiveNetwork(data: InsertExclusiveNetwork): Promise<ExclusiveNetwork>;
+  getExclusiveNetworks(clientCompanyId?: string, serviceCompanyId?: string): Promise<ExclusiveNetwork[]>;
+  deleteExclusiveNetwork(id: string): Promise<void>;
+  getExclusiveServiceCompanies(clientCompanyId: string): Promise<Company[]>;
+  
+  // Exclusive Network Member operations  
   createExclusiveNetworkMember(member: InsertExclusiveNetworkMember): Promise<ExclusiveNetworkMember>;
   getExclusiveNetworkMembers(clientCompanyId: string): Promise<ExclusiveNetworkMember[]>;
   getAllExclusiveNetworkMembers(): Promise<ExclusiveNetworkMember[]>;
@@ -232,6 +247,12 @@ export interface IStorage {
   updateProject(id: string, updates: Partial<InsertProject>): Promise<Project>;
   requestProjectAssignment(projectId: string, companyId: string, requestedById: string): Promise<ProjectAssignment>;
   getProjectAssignments(projectId: string): Promise<ProjectAssignment[]>;
+  
+  // Project budget deduction workflow
+  approveBudget(projectId: string, approvedById: string): Promise<Project>;
+  deductBudget(projectId: string, actualCost?: number): Promise<Project>;
+  cancelBudgetApproval(projectId: string): Promise<Project>;
+  getProjectsBudgetStatus(status?: string): Promise<Project[]>;
   
   // Project Requirements operations
   createProjectRequirement(requirement: InsertProjectRequirement): Promise<ProjectRequirement>;
@@ -1756,6 +1777,69 @@ export class DatabaseStorage implements IStorage {
       .where(eq(projectAssignments.projectId, projectId));
   }
 
+  // Project budget deduction workflow implementations
+  async approveBudget(projectId: string, approvedById: string): Promise<Project> {
+    const [project] = await db
+      .update(projects)
+      .set({
+        budgetStatus: 'approved',
+        budgetApprovedById: approvedById,
+        budgetApprovedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId))
+      .returning();
+    return project;
+  }
+
+  async deductBudget(projectId: string, actualCost?: number): Promise<Project> {
+    const updates: Partial<{
+      budgetStatus: string;
+      budgetDeductedAt: Date;
+      actualCost?: number;
+    }> = {
+      budgetStatus: 'deducted',
+      budgetDeductedAt: new Date(),
+    };
+
+    if (actualCost !== undefined) {
+      updates.actualCost = actualCost;
+    }
+
+    const [project] = await db
+      .update(projects)
+      .set(updates)
+      .where(eq(projects.id, projectId))
+      .returning();
+    return project;
+  }
+
+  async cancelBudgetApproval(projectId: string): Promise<Project> {
+    const [project] = await db
+      .update(projects)
+      .set({
+        budgetStatus: 'cancelled',
+        budgetApprovedById: null,
+        budgetApprovedAt: null,
+      })
+      .where(eq(projects.id, projectId))
+      .returning();
+    return project;
+  }
+
+  async getProjectsBudgetStatus(status?: string): Promise<Project[]> {
+    if (status) {
+      return await db
+        .select()
+        .from(projects)
+        .where(eq(projects.budgetStatus, status))
+        .orderBy(desc(projects.createdAt));
+    }
+    return await db
+      .select()
+      .from(projects)
+      .orderBy(desc(projects.createdAt));
+  }
+
   // Project Requirements operations
   async createProjectRequirement(requirementData: InsertProjectRequirement): Promise<ProjectRequirement> {
     const [requirement] = await db
@@ -1856,6 +1940,150 @@ export class DatabaseStorage implements IStorage {
       .where(eq(accessRequests.id, id))
       .returning();
     return request;
+  }
+  // Exclusive Network operations
+  async createExclusiveNetwork(data: InsertExclusiveNetwork): Promise<ExclusiveNetwork> {
+    const [exclusiveNetwork] = await db
+      .insert(exclusiveNetworks)
+      .values(data)
+      .returning();
+    return exclusiveNetwork;
+  }
+
+  async getExclusiveNetworks(clientCompanyId?: string, serviceCompanyId?: string): Promise<ExclusiveNetwork[]> {
+    let query = db.select().from(exclusiveNetworks).where(eq(exclusiveNetworks.isActive, true));
+    
+    if (clientCompanyId) {
+      query = query.where(eq(exclusiveNetworks.clientCompanyId, clientCompanyId));
+    }
+    if (serviceCompanyId) {
+      query = query.where(eq(exclusiveNetworks.serviceCompanyId, serviceCompanyId));
+    }
+    
+    return await query;
+  }
+
+  async deleteExclusiveNetwork(id: string): Promise<void> {
+    await db.delete(exclusiveNetworks).where(eq(exclusiveNetworks.id, id));
+  }
+
+  async getExclusiveServiceCompanies(clientCompanyId: string): Promise<Company[]> {
+    const result = await db
+      .select({ 
+        company: companies
+      })
+      .from(exclusiveNetworks)
+      .innerJoin(companies, eq(exclusiveNetworks.serviceCompanyId, companies.id))
+      .where(
+        and(
+          eq(exclusiveNetworks.clientCompanyId, clientCompanyId),
+          eq(exclusiveNetworks.isActive, true),
+          eq(companies.isActive, true)
+        )
+      );
+    
+    return result.map(r => r.company);
+  }
+
+  // Client final approval and profit calculation implementations
+  async clientApprovalWorkOrder(workOrderId: string, status: 'approved' | 'rejected' | 'requires_revision', clientId: string, notes?: string): Promise<WorkOrder> {
+    const [workOrder] = await db
+      .update(workOrders)
+      .set({
+        clientApprovalStatus: status,
+        clientApprovedById: clientId,
+        clientApprovedAt: new Date(),
+        clientApprovalNotes: notes,
+      })
+      .where(eq(workOrders.id, workOrderId))
+      .returning();
+    
+    // If approved, calculate profit
+    if (status === 'approved') {
+      await this.calculateProfit(workOrderId);
+    }
+    
+    return workOrder;
+  }
+
+  async calculateProfit(workOrderId: string): Promise<WorkOrder> {
+    const [workOrder] = await db
+      .select()
+      .from(workOrders)
+      .where(eq(workOrders.id, workOrderId));
+
+    if (!workOrder) {
+      throw new Error("Work order not found");
+    }
+
+    // Calculate total budget based on budget type
+    let totalBudget = 0;
+    const budgetAmount = parseFloat(workOrder.budgetAmount?.toString() || '0');
+    const estimatedHours = parseFloat(workOrder.estimatedHours?.toString() || '0');
+    const actualHours = parseFloat(workOrder.actualHours?.toString() || '0');
+    const devicesInstalled = workOrder.devicesInstalled || 0;
+
+    switch (workOrder.budgetType) {
+      case 'fixed':
+        totalBudget = budgetAmount;
+        break;
+      case 'hourly':
+        totalBudget = budgetAmount * actualHours; // Use actual hours for profit calculation
+        break;
+      case 'per_device':
+        totalBudget = budgetAmount * devicesInstalled;
+        break;
+      case 'materials_plus_labor':
+        totalBudget = budgetAmount;
+        break;
+      default:
+        totalBudget = budgetAmount;
+        break;
+    }
+
+    // Calculate actual cost (for now, using 70% of budget as base cost)
+    const baseCostRatio = 0.7;
+    const actualCost = totalBudget * baseCostRatio;
+    const actualProfit = totalBudget - actualCost;
+    const profitMargin = totalBudget > 0 ? (actualProfit / totalBudget) * 100 : 0;
+
+    const [updatedWorkOrder] = await db
+      .update(workOrders)
+      .set({
+        actualProfit,
+        profitMargin,
+        profitCalculatedAt: new Date(),
+      })
+      .where(eq(workOrders.id, workOrderId))
+      .returning();
+
+    return updatedWorkOrder;
+  }
+
+  async getPendingClientApprovals(clientCompanyId?: string): Promise<WorkOrder[]> {
+    let query = db
+      .select()
+      .from(workOrders)
+      .where(
+        and(
+          eq(workOrders.status, 'completed'),
+          eq(workOrders.clientApprovalStatus, 'pending')
+        )
+      );
+
+    if (clientCompanyId) {
+      query = query.where(eq(workOrders.companyId, clientCompanyId));
+    }
+
+    return await query.orderBy(desc(workOrders.completedAt));
+  }
+
+  async getCompletedWorkOrdersForApproval(): Promise<WorkOrder[]> {
+    return await db
+      .select()
+      .from(workOrders)
+      .where(eq(workOrders.status, 'completed'))
+      .orderBy(desc(workOrders.completedAt));
   }
 }
 
