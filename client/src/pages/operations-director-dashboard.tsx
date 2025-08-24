@@ -234,7 +234,7 @@ export default function OperationsDirectorDashboard() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
                   <User className="h-3 w-3 mr-2" />
-                  {availableRoles.find(role => role.value === selectedTestRole)?.shortLabel || 'Switch Role'}
+                  Select a Role
                   <ChevronDown className="h-3 w-3 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -281,7 +281,7 @@ export default function OperationsDirectorDashboard() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="border-teal-300 text-teal-700 hover:bg-teal-50">
                   <User className="h-3 w-3 mr-2" />
-                  {availableClientRoles.find(role => role.value === selectedClientTestRole)?.shortLabel || 'Switch Role'}
+                  Select a Role
                   <ChevronDown className="h-3 w-3 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
