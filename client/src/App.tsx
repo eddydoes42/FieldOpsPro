@@ -303,10 +303,13 @@ function Router() {
             <Route path="/team">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasAdminAccess = hasAnyRole(user as any, ['administrator', 'manager']) || ['administrator', 'manager'].includes(effectiveRole) || isOperationsDirector(user as any);
+                const hasAdminAccess = hasAnyRole(user as any, ['administrator', 'manager']) || ['administrator', 'manager'].includes(effectiveRole);
+                // Only allow Operations Directors superuser access when NOT role testing
+                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
                 const hasFieldAgentAccess = hasRole(user as any, 'field_agent') || effectiveRole === 'field_agent';
                 
-                if (hasAdminAccess) {
+                if (hasAdminAccess || isSuperUserAccess) {
                   return (
                     <div>
                       {isOperationsDirector(user as any) && (

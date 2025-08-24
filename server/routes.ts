@@ -224,26 +224,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Debug logging
-      console.log('Field agents access check:', {
-        userId: currentUser.id,
-        roles: currentUser.roles,
-        hasAnyRole: hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client']),
-        isClient: isClient(currentUser),
-        isOperationsDirector: isOperationsDirector(currentUser)
-      });
-
       // Allow access to clients, service company roles, and Operations Director
       const hasAccess = hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client']) || 
                        isClient(currentUser) || isOperationsDirector(currentUser);
       
       if (!hasAccess) {
-        console.log('Access denied for field agents endpoint');
         return res.status(403).json({ message: "Insufficient permissions" });
       }
 
       const fieldAgents = await storage.getFieldAgents();
-      console.log('Field agents returned:', JSON.stringify(fieldAgents, null, 2));
       res.json(fieldAgents);
     } catch (error) {
       console.error("Error fetching field agents:", error);
