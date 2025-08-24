@@ -74,13 +74,36 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
   };
 
   const getConfigForRoles = (roles: string[]) => {
-    // Check if actual user has operations_director role (not testing role)
+    // Check if we're on operations-dashboard and role testing is active
+    // This means an Operations Director is testing roles and should keep their navigation
+    const storedTestingRole = typeof window !== 'undefined' ? localStorage.getItem('testingRole') : null;
+    const isOnOperationsDashboard = typeof window !== 'undefined' ? window.location.pathname === '/operations-dashboard' : false;
+    const isRoleTesting = storedTestingRole && (testingRole || storedTestingRole);
+    
+    // If we're on operations dashboard and role testing is active, show Operations Director navigation
+    if (isOnOperationsDashboard && isRoleTesting) {
+      return {
+        badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
+        links: [
+          { path: '/operations-dashboard', label: 'Operations Dashboard', icon: 'fas fa-chart-network' },
+          { path: '/operations/companies', label: 'Companies', icon: 'fas fa-building' },
+          { path: '/operations/active-admins', label: 'Administrators', icon: 'fas fa-users-cog' },
+          { path: '/operations/recent-setups', label: 'Recent Setups', icon: 'fas fa-user-plus' },
+          { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+          { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
+          { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
+          { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
+          { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+        ]
+      };
+    }
+    
+    // Check if actual user has operations_director role (when not role testing)
     const userRoles = (user as any)?.roles || [];
     const actualUserRoles = Array.isArray(userRoles) ? userRoles : [userRoles];
     const isOperationsDirector = actualUserRoles.includes('operations_director');
     
-    // For Operations Director, ALWAYS show Operations Director navigation even when role testing
-    // Operations Director should never lose their navigation menu, role testing only affects permissions
+    // For Operations Director when not testing, show Operations Director navigation
     if (isOperationsDirector) {
       return {
         badge: { text: 'Operations Director', icon: 'fas fa-globe', color: 'bg-indigo-900/30 text-indigo-300 border-indigo-800/50' },
