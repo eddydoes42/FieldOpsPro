@@ -12,6 +12,53 @@ import type { Project } from '@shared/schema';
 export default function ProjectManagerDashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  
+  // Role Testing Components
+  const ServiceCompanyRoleTester = () => {
+    const [testingRole, setTestingRole] = useState<string>('');
+
+    return (
+      <div className="bg-purple-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">Service Company Role Tester:</span>
+          <select
+            value={testingRole}
+            onChange={(e) => setTestingRole(e.target.value)}
+            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+          >
+            <option value="">Select a Role</option>
+            <option value="administrator">Administrator</option>
+            <option value="project_manager">Project Manager</option>
+            <option value="manager">Manager</option>
+            <option value="dispatcher">Dispatcher</option>
+            <option value="field_agent">Field Agent</option>
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  const ClientCompanyRoleTester = () => {
+    const [testingRole, setTestingRole] = useState<string>('');
+
+    return (
+      <div className="bg-teal-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">Client Company Role Tester:</span>
+          <select
+            value={testingRole}
+            onChange={(e) => setTestingRole(e.target.value)}
+            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+          >
+            <option value="">Select a Role</option>
+            <option value="administrator">Administrator</option>
+            <option value="manager">Manager</option>
+            <option value="dispatcher">Dispatcher</option>
+          </select>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch projects
   const { data: projects = [], isLoading } = useQuery({
@@ -79,6 +126,10 @@ export default function ProjectManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3">
+      {/* Role Testers - Always present for Operations Director */}
+      <ServiceCompanyRoleTester />
+      <ClientCompanyRoleTester />
+      
       {/* Header */}
       <div className="mb-3">
         <div className="flex items-center justify-between">

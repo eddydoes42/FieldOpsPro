@@ -865,7 +865,7 @@ export function isClient(user: User | null): boolean {
 }
 
 export function canViewJobNetwork(user: User | null): boolean {
-  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher', 'client']);
+  return hasAnyRole(user, ['administrator', 'project_manager', 'manager', 'dispatcher', 'client']);
 }
 
 export function canRequestWorkOrder(user: User | null): boolean {
