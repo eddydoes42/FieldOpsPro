@@ -4,6 +4,9 @@
 FieldOps Pro is a comprehensive field operations management platform that empowers mobile workforce teams with advanced operational tools, dynamic time tracking, and enhanced work order capabilities. It features a hierarchical role-based system with Operations Director (god mode capabilities), company-level administrators, managers, dispatchers, and field agents. The system includes comprehensive work order management with integrated issue reporting, streamlined role testing capabilities, user management workflows, and real-time messaging. The application aims to streamline IT field services, improve communication, and enhance operational efficiency through strict role-based access controls and company hierarchy management.
 
 ## Recent Changes
+- **January 26, 2025**: Added Field Engineer role to Service Company hierarchy - positioned between Field Agent and Dispatcher with emerald color theme, automatic promotion after 100 work orders, and manual promotion by Chief Team (Administrator/Manager)
+- **January 26, 2025**: Enhanced team management with separate company filters for Operations Director - added Service Company (blue) and Client Company (teal) filters alongside general company filter
+- **January 26, 2025**: Fixed back button functionality across all pages - now uses browser history with intelligent dashboard fallback based on user role
 - **January 26, 2025**: Completed comprehensive system audit and technical fixes - resolved all TypeScript errors, added missing storage methods, fixed field references, and ensured all role-based permissions work correctly
 - **January 26, 2025**: Enhanced dashboard card layout with centered icons/numbers and bottom-aligned text labels for improved visual consistency
 - **January 26, 2025**: Added currency auto-formatting to work order budget fields with standard format ($65,000) and proper parsing for form submission
@@ -57,7 +60,8 @@ Authentication uses Replit's OAuth with session management via connect-pg-simple
 1. **Administrator**: User account creation/editing/deletion; work order CRUD and assignment; Job Network access; issue resolution; user suspension/deactivation; messaging
 2. **Manager**: Same as Administrator, EXCEPT Administrator can delete Manager but not vice versa
 3. **Dispatcher**: Same as Manager, EXCEPT cannot create/delete/edit user accounts
-4. **Field Agent**: View/complete assigned work orders only; message team members; edit own contact info; access /mywork dashboard
+4. **Field Engineer**: Enhanced field operations capabilities; can promote Field Agents; access to advanced technical features; messaging team members
+5. **Field Agent**: View/complete assigned work orders only; message team members; edit own contact info; access /mywork dashboard; automatically promoted to Field Engineer after 100 completed work orders
 
 **Test Service Company Structure:**
 - Test Service Company exists with full team for role testing

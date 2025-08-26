@@ -681,7 +681,7 @@ export const serviceClientRatingsRelations = relations(serviceClientRatings, ({ 
 }));
 
 // Role validation schema
-export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_agent', 'client'])).min(1);
+export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client'])).min(1);
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users, {

@@ -339,13 +339,15 @@ export default function TeamPage() {
   });
 
   const getNextRole = (currentRole: string) => {
-    if (currentRole === 'field_agent') return 'dispatcher';
+    if (currentRole === 'field_agent') return 'field_engineer';
+    if (currentRole === 'field_engineer') return 'dispatcher';
     if (currentRole === 'dispatcher') return 'manager';
     return currentRole; // Don't change if already manager or administrator
   };
 
   const getRoleDisplayName = (role: string) => {
     if (role === 'field_agent') return 'Field Agent';
+    if (role === 'field_engineer') return 'Field Engineer';
     if (role === 'dispatcher') return 'Dispatcher';
     if (role === 'manager') return 'Manager';
     if (role === 'administrator') return 'Administrator';
@@ -372,7 +374,7 @@ export default function TeamPage() {
       filteredUsers = filteredUsers.filter((user: any) => {
         const userRoles = user.roles || [];
         return userRoles.some((userRole: string) => 
-          ['field_agent', 'dispatcher', 'manager', 'administrator'].includes(userRole)
+          ['field_agent', 'field_engineer', 'dispatcher', 'manager', 'administrator'].includes(userRole)
         );
       });
     }
@@ -540,6 +542,14 @@ export default function TeamPage() {
                       className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
                     >
                       FA ({getRoleCount("field_agent")})
+                    </Button>
+                    <Button
+                      variant={roleFilter === "field_engineer" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRoleFilter("field_engineer")}
+                      className={`text-xs ${roleFilter === "field_engineer" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white"}`}
+                    >
+                      FE ({getRoleCount("field_engineer")})
                     </Button>
                     <Button
                       variant={roleFilter === "administrator" ? "default" : "outline"}
@@ -757,10 +767,13 @@ export default function TeamPage() {
                                 ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
                                 : userData.roles?.includes('dispatcher')
                                 ? 'bg-orange-900/30 text-orange-300 border-orange-800/50'
+                                : userData.roles?.includes('field_engineer')
+                                ? 'bg-emerald-900/30 text-emerald-300 border-emerald-800/50'
                                 : 'bg-green-900/30 text-green-300 border-green-800/50'
                             } text-xs flex-shrink-0`}
                           >
                             {userData.roles?.includes('field_agent') ? 'FA' : 
+                             userData.roles?.includes('field_engineer') ? 'FE' :
                              userData.roles?.includes('administrator') ? 'A' :
                              userData.roles?.includes('manager') ? 'M' :
                              userData.roles?.includes('dispatcher') ? 'D' : 
@@ -1131,6 +1144,8 @@ export default function TeamPage() {
                           ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
                           : selectedUser.roles?.includes('dispatcher')
                           ? 'bg-orange-900/30 text-orange-300 border-orange-800/50'
+                          : selectedUser.roles?.includes('field_engineer')
+                          ? 'bg-emerald-900/30 text-emerald-300 border-emerald-800/50'
                           : 'bg-green-900/30 text-green-300 border-green-800/50'
                       } ${
                         !selectedUser.roles?.includes('manager') && !selectedUser.roles?.includes('administrator') 
