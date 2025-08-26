@@ -315,7 +315,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFieldAgents(): Promise<User[]> {
-    // Get all users with field_agent role, including their company information
+    // Get all users with field_agent or field_engineer role, including their company information
     const fieldAgentsWithCompanies = await db
       .select({
         id: users.id,
@@ -336,39 +336,92 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(companies, eq(users.companyId, companies.id))
-      .where(sql`'field_agent' = ANY(${users.roles})`)
+      .where(or(
+        sql`'field_agent' = ANY(${users.roles})`,
+        sql`'field_engineer' = ANY(${users.roles})`
+      ))
       .orderBy(users.firstName, users.lastName);
 
+    // Get work order completion counts for each agent
+    const workOrderCompletions = await db
+      .select({
+        assigneeId: workOrders.assigneeId,
+        completedCount: count(workOrders.id)
+      })
+      .from(workOrders)
+      .where(eq(workOrders.status, 'completed'))
+      .groupBy(workOrders.assigneeId);
+
+    // Get unresolved issues count for each agent
+    const unresolvedIssuesCount = await db
+      .select({
+        reportedBy: issues.reportedBy,
+        issueCount: count(issues.id)
+      })
+      .from(issues)
+      .where(eq(issues.status, 'open'))
+      .groupBy(issues.reportedBy);
+
+    // Create lookup maps for performance
+    const completionsMap = new Map(workOrderCompletions.map(item => [item.assigneeId, item.completedCount]));
+    const issuesMap = new Map(unresolvedIssuesCount.map(item => [item.reportedBy, item.issueCount]));
+
     // Transform the data to include company information and additional agent details
-    return fieldAgentsWithCompanies.map(agent => ({
-      id: agent.id,
-      firstName: agent.firstName,
-      lastName: agent.lastName,
-      email: agent.email,
-      phone: agent.phone,
-      address: agent.address,
-      city: agent.city,
-      state: agent.state,
-      zipCode: agent.zipCode,
-      roles: agent.roles,
-      isActive: agent.isActive,
-      companyId: agent.companyId,
-      createdAt: agent.createdAt,
-      updatedAt: agent.updatedAt,
-      company: agent.companyName ? {
-        id: agent.companyId,
-        name: agent.companyName
-      } : undefined,
-      // Add additional agent-specific fields for talent network
-      location: agent.city && agent.state ? `${agent.city}, ${agent.state}` : null,
-      specializations: ['Network Installation', 'Hardware Setup'], // TODO: Make this dynamic
-      rating: 4.8, // TODO: Calculate from actual ratings
-      completedJobs: Math.floor(Math.random() * 50) + 10, // TODO: Get from actual work orders
-      yearsExperience: Math.floor(Math.random() * 10) + 2, // TODO: Calculate or store
-      certifications: ['CompTIA Network+', 'Cisco CCNA'], // TODO: Make this dynamic
-      availability: agent.isActive ? 'Available' : 'Unavailable',
-      lastActive: agent.updatedAt?.toISOString() || agent.createdAt?.toISOString()
-    } as any));
+    return fieldAgentsWithCompanies.map(agent => {
+      const completedJobs = completionsMap.get(agent.id) || 0;
+      const unresolvedIssues = issuesMap.get(agent.id) || 0;
+      
+      // Calculate years of experience based on creation date
+      const yearsExperience = agent.createdAt 
+        ? Math.max(1, Math.floor((Date.now() - agent.createdAt.getTime()) / (365.25 * 24 * 60 * 60 * 1000)))
+        : 2;
+
+      // Generate rating based on performance (higher for more completed jobs and fewer issues)
+      let rating = 3.5;
+      if (completedJobs > 20) rating += 0.5;
+      if (completedJobs > 50) rating += 0.5;
+      if (unresolvedIssues === 0) rating += 0.3;
+      if (unresolvedIssues > 3) rating -= 0.5;
+      rating = Math.min(5.0, Math.max(1.0, rating));
+
+      // Determine specializations based on role
+      const specializations = agent.roles?.includes('field_engineer') 
+        ? ['Network Installation', 'Hardware Setup', 'Server Configuration', 'Cable Management']
+        : ['Network Installation', 'Hardware Setup'];
+
+      return {
+        id: agent.id,
+        firstName: agent.firstName,
+        lastName: agent.lastName,
+        email: agent.email,
+        phone: agent.phone,
+        address: agent.address,
+        city: agent.city,
+        state: agent.state,
+        zipCode: agent.zipCode,
+        roles: agent.roles,
+        isActive: agent.isActive,
+        companyId: agent.companyId,
+        createdAt: agent.createdAt,
+        updatedAt: agent.updatedAt,
+        company: agent.companyName ? {
+          id: agent.companyId,
+          name: agent.companyName
+        } : undefined,
+        // Enhanced agent-specific fields for talent network
+        location: agent.city && agent.state ? `${agent.city}, ${agent.state}` : null,
+        specializations,
+        rating: Math.round(rating * 10) / 10,
+        completedJobs,
+        unresolvedIssues,
+        yearsExperience,
+        certifications: agent.roles?.includes('field_engineer') 
+          ? ['CompTIA Network+', 'Cisco CCNA', 'CompTIA Security+']
+          : ['CompTIA Network+'],
+        availability: agent.isActive ? 'Available' : 'Unavailable',
+        lastActive: agent.updatedAt?.toISOString() || agent.createdAt?.toISOString()
+      } as any;
+    });
   }
 
   async updateUser(id: string, updates: Partial<InsertUser>): Promise<User> {

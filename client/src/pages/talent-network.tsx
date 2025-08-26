@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -25,8 +26,12 @@ import {
   UserPlus,
   CheckCircle,
   Home,
-  ArrowLeft
+  ArrowLeft,
+  AlertTriangle,
+  TrendingUp,
+  Settings
 } from "lucide-react";
+import UserOnboardingForm from "@/components/user-onboarding-form";
 
 interface FieldAgent {
   id: string;
@@ -46,6 +51,8 @@ interface FieldAgent {
   certifications?: string[];
   availability?: string;
   lastActive?: string;
+  unresolvedIssues?: number;
+  roles?: string[];
 }
 
 export default function TalentNetwork() {
@@ -56,9 +63,31 @@ export default function TalentNetwork() {
   const [assignmentWorkOrderId, setAssignmentWorkOrderId] = useState<string | null>(null);
   const [assignmentWorkOrderTitle, setAssignmentWorkOrderTitle] = useState<string>('');
   const [confirmAssignAgent, setConfirmAssignAgent] = useState<FieldAgent | null>(null);
+  
+  // Advanced filters for talent management
+  const [ratingFilter, setRatingFilter] = useState("all");
+  const [experienceFilter, setExperienceFilter] = useState("all");
+  const [workOrderFilter, setWorkOrderFilter] = useState("all");
+  const [issuesFilter, setIssuesFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  
+  // User creation state
+  const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
+  
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Get current user to check if Operations Director
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/user'],
+  });
+
+  // Check if user is Operations Director (not role testing)
+  const isOperationsDirector = user?.roles?.includes('operations_director') && 
+    typeof window !== 'undefined' && 
+    !window.location.search.includes('testing_role') &&
+    !window.location.search.includes('company_type');
 
   // Import role testing components
   const ServiceCompanyRoleTester = () => {
@@ -148,13 +177,45 @@ export default function TalentNetwork() {
     ? companiesWithAgents.find((c: any) => c.name === selectedCompany)?.agents || []
     : [];
 
-  // Filter agents based on search term and company for company view
+  // Advanced filtering logic for agents
   const filteredAgents = selectedCompany 
     ? selectedCompanyAgents.filter((agent: FieldAgent) => {
-        return !searchTerm || 
+        // Search filter
+        const matchesSearch = !searchTerm || 
           `${agent.firstName} ${agent.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
           agent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
           agent.specializations?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        // Rating filter
+        const matchesRating = ratingFilter === "all" || 
+          (ratingFilter === "5star" && (agent.rating || 0) >= 4.5) ||
+          (ratingFilter === "4star" && (agent.rating || 0) >= 4.0 && (agent.rating || 0) < 4.5) ||
+          (ratingFilter === "3star" && (agent.rating || 0) >= 3.0 && (agent.rating || 0) < 4.0) ||
+          (ratingFilter === "unrated" && !agent.rating);
+
+        // Experience filter
+        const matchesExperience = experienceFilter === "all" ||
+          (experienceFilter === "senior" && (agent.yearsExperience || 0) >= 5) ||
+          (experienceFilter === "mid" && (agent.yearsExperience || 0) >= 2 && (agent.yearsExperience || 0) < 5) ||
+          (experienceFilter === "junior" && (agent.yearsExperience || 0) < 2);
+
+        // Work order completion filter
+        const matchesWorkOrders = workOrderFilter === "all" ||
+          (workOrderFilter === "high" && (agent.completedJobs || 0) >= 50) ||
+          (workOrderFilter === "medium" && (agent.completedJobs || 0) >= 10 && (agent.completedJobs || 0) < 50) ||
+          (workOrderFilter === "low" && (agent.completedJobs || 0) < 10);
+
+        // Issues filter
+        const matchesIssues = issuesFilter === "all" ||
+          (issuesFilter === "none" && (agent.unresolvedIssues || 0) === 0) ||
+          (issuesFilter === "few" && (agent.unresolvedIssues || 0) >= 1 && (agent.unresolvedIssues || 0) <= 2) ||
+          (issuesFilter === "many" && (agent.unresolvedIssues || 0) > 2);
+
+        // Role filter
+        const matchesRole = roleFilter === "all" ||
+          (agent.roles && agent.roles.includes(roleFilter));
+
+        return matchesSearch && matchesRating && matchesExperience && matchesWorkOrders && matchesIssues && matchesRole;
       })
     : [];
 
@@ -338,8 +399,22 @@ export default function TalentNetwork() {
         )}
       </div>
 
+      {/* Create User Button for Operations Director */}
+      {isOperationsDirector && (
+        <div className="flex justify-between items-center mb-4">
+          <div></div>
+          <Button
+            onClick={() => setShowCreateUserDialog(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add New User
+          </Button>
+        </div>
+      )}
+
       {/* Search Controls */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
@@ -352,6 +427,178 @@ export default function TalentNetwork() {
             className="pl-10"
           />
         </div>
+
+        {/* Advanced Filters - only show when viewing agents in a company */}
+        {selectedCompany && (
+          <div className="space-y-4">
+            {/* Filter Bar */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Rating Filters */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={ratingFilter === "5star" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRatingFilter("5star")}
+                  className="text-xs"
+                >
+                  <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+                  4.5+ ({filteredAgents.filter(a => (a.rating || 0) >= 4.5).length})
+                </Button>
+                <Button
+                  variant={ratingFilter === "4star" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRatingFilter("4star")}
+                  className="text-xs"
+                >
+                  4.0+ ({filteredAgents.filter(a => (a.rating || 0) >= 4.0 && (a.rating || 0) < 4.5).length})
+                </Button>
+                <Button
+                  variant={ratingFilter === "3star" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRatingFilter("3star")}
+                  className="text-xs"
+                >
+                  3.0+ ({filteredAgents.filter(a => (a.rating || 0) >= 3.0 && (a.rating || 0) < 4.0).length})
+                </Button>
+                <Button
+                  variant={ratingFilter === "unrated" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRatingFilter("unrated")}
+                  className="text-xs"
+                >
+                  Unrated ({filteredAgents.filter(a => !a.rating).length})
+                </Button>
+              </div>
+
+              {/* Experience Filters */}
+              <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                <Button
+                  variant={experienceFilter === "senior" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setExperienceFilter("senior")}
+                  className="text-xs bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                >
+                  <Award className="h-3 w-3 mr-1" />
+                  Senior (5+ years) ({filteredAgents.filter(a => (a.yearsExperience || 0) >= 5).length})
+                </Button>
+                <Button
+                  variant={experienceFilter === "mid" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setExperienceFilter("mid")}
+                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                >
+                  Mid-level (2-5 years) ({filteredAgents.filter(a => (a.yearsExperience || 0) >= 2 && (a.yearsExperience || 0) < 5).length})
+                </Button>
+                <Button
+                  variant={experienceFilter === "junior" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setExperienceFilter("junior")}
+                  className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  Junior (&lt;2 years) ({filteredAgents.filter(a => (a.yearsExperience || 0) < 2).length})
+                </Button>
+              </div>
+
+              {/* Work Order Completion Filters */}
+              <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                <Button
+                  variant={workOrderFilter === "high" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setWorkOrderFilter("high")}
+                  className="text-xs"
+                >
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  High (50+) ({filteredAgents.filter(a => (a.completedJobs || 0) >= 50).length})
+                </Button>
+                <Button
+                  variant={workOrderFilter === "medium" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setWorkOrderFilter("medium")}
+                  className="text-xs"
+                >
+                  Medium (10-49) ({filteredAgents.filter(a => (a.completedJobs || 0) >= 10 && (a.completedJobs || 0) < 50).length})
+                </Button>
+                <Button
+                  variant={workOrderFilter === "low" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setWorkOrderFilter("low")}
+                  className="text-xs"
+                >
+                  Low (&lt;10) ({filteredAgents.filter(a => (a.completedJobs || 0) < 10).length})
+                </Button>
+              </div>
+
+              {/* Issues Filters */}
+              <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                <Button
+                  variant={issuesFilter === "none" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIssuesFilter("none")}
+                  className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  No Issues ({filteredAgents.filter(a => (a.unresolvedIssues || 0) === 0).length})
+                </Button>
+                <Button
+                  variant={issuesFilter === "few" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIssuesFilter("few")}
+                  className="text-xs bg-yellow-600 hover:bg-yellow-700 text-white border-yellow-600"
+                >
+                  Few Issues (1-2) ({filteredAgents.filter(a => (a.unresolvedIssues || 0) >= 1 && (a.unresolvedIssues || 0) <= 2).length})
+                </Button>
+                <Button
+                  variant={issuesFilter === "many" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIssuesFilter("many")}
+                  className="text-xs bg-red-600 hover:bg-red-700 text-white border-red-600"
+                >
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Many Issues (3+) ({filteredAgents.filter(a => (a.unresolvedIssues || 0) > 2).length})
+                </Button>
+              </div>
+
+              {/* Role Filters */}
+              <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                <Button
+                  variant={roleFilter === "field_agent" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRoleFilter("field_agent")}
+                  className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  Field Agent ({filteredAgents.filter(a => a.roles?.includes('field_agent')).length})
+                </Button>
+                <Button
+                  variant={roleFilter === "field_engineer" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setRoleFilter("field_engineer")}
+                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                >
+                  Field Engineer ({filteredAgents.filter(a => a.roles?.includes('field_engineer')).length})
+                </Button>
+              </div>
+
+              {/* Clear All Filters */}
+              <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setRatingFilter("all");
+                    setExperienceFilter("all");
+                    setWorkOrderFilter("all");
+                    setIssuesFilter("all");
+                    setRoleFilter("all");
+                  }}
+                  className="text-xs"
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  Clear All Filters
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Results Count */}
@@ -832,6 +1079,31 @@ export default function TalentNetwork() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* User Creation Dialog for Operations Director */}
+      {isOperationsDirector && (
+        <Dialog open={showCreateUserDialog} onOpenChange={setShowCreateUserDialog}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Add New User</DialogTitle>
+            </DialogHeader>
+            <UserOnboardingForm 
+              onClose={() => setShowCreateUserDialog(false)}
+              onSuccess={() => {
+                setShowCreateUserDialog(false);
+                toast({
+                  title: "User Created Successfully",
+                  description: "The new user has been added to the system.",
+                });
+                // Refresh field agents data
+                queryClient.invalidateQueries({ queryKey: ['/api/users/field-agents'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+              }}
+              currentUser={user}
+            />
           </DialogContent>
         </Dialog>
       )}
