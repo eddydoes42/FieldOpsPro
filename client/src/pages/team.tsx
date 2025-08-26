@@ -603,9 +603,10 @@ export default function TeamPage() {
                     </Button>
                   </div>
 
-                  {/* Company Filter - Only for Operations Director */}
+                  {/* Company Filters - Only for Operations Director */}
                   {isOperationsDirectorSuperUser && companies && (companies as any[]).length > 0 && (
                     <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                      {/* All Companies Filter */}
                       <select
                         value={companyFilter}
                         onChange={(e) => {
@@ -623,6 +624,56 @@ export default function TeamPage() {
                       >
                         <option value="all">All Companies</option>
                         {(companies as any[]).map((company: any) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name} ({getUsersForCompany(company.id).length})
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {/* Service Companies Filter */}
+                      <select
+                        value={companyFilter === "all" ? "all" : 
+                               (companies as any[]).find((c: any) => c.id === companyFilter && c.type === "service") ? companyFilter : "all"}
+                        onChange={(e) => {
+                          setCompanyFilter(e.target.value);
+                          // Update URL to reflect company filter
+                          const url = new URL(window.location.href);
+                          if (e.target.value === "all") {
+                            url.searchParams.delete('company');
+                          } else {
+                            url.searchParams.set('company', e.target.value);
+                          }
+                          window.history.pushState({}, '', url.toString());
+                        }}
+                        className="px-2 py-1 text-xs border border-blue-300 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="all">All Service Companies</option>
+                        {(companies as any[]).filter((c: any) => c.type === "service").map((company: any) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name} ({getUsersForCompany(company.id).length})
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {/* Client Companies Filter */}
+                      <select
+                        value={companyFilter === "all" ? "all" : 
+                               (companies as any[]).find((c: any) => c.id === companyFilter && c.type === "client") ? companyFilter : "all"}
+                        onChange={(e) => {
+                          setCompanyFilter(e.target.value);
+                          // Update URL to reflect company filter
+                          const url = new URL(window.location.href);
+                          if (e.target.value === "all") {
+                            url.searchParams.delete('company');
+                          } else {
+                            url.searchParams.set('company', e.target.value);
+                          }
+                          window.history.pushState({}, '', url.toString());
+                        }}
+                        className="px-2 py-1 text-xs border border-teal-300 rounded bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      >
+                        <option value="all">All Client Companies</option>
+                        {(companies as any[]).filter((c: any) => c.type === "client").map((company: any) => (
                           <option key={company.id} value={company.id}>
                             {company.name} ({getUsersForCompany(company.id).length})
                           </option>
