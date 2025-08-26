@@ -34,9 +34,7 @@ import { Link } from 'wouter';
 import Navigation from '@/components/navigation';
 import RoleSwitcher from '@/components/role-switcher';
 
-const createJobSchema = insertJobNetworkPostSchema.extend({
-  requiredSkills: z.array(z.string()).optional(),
-});
+
 
 const requestJobSchema = z.object({
   workOrderId: z.string(),
@@ -50,6 +48,7 @@ const requestJobSchema = z.object({
 
 const createWorkOrderSchema = insertWorkOrderSchema.extend({
   budget: z.string().optional(),
+  clientCompanyId: z.string().optional(), // For Operations Director posting on behalf of client
 });
 
 interface JobNetworkProps {
@@ -59,7 +58,7 @@ interface JobNetworkProps {
 }
 
 export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetworkProps) {
-  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
+
   const [isCreateWorkOrderOpen, setIsCreateWorkOrderOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isRequestJobOpen, setIsRequestJobOpen] = useState(false);
@@ -69,23 +68,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const form = useForm({
-    resolver: zodResolver(createJobSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      location: '',
-      budget: '',
-      budgetType: 'fixed',
-      priority: 'normal',
-      estimatedDuration: '',
-      scheduledDate: '',
-      requiredSkills: [],
-      clientCompanyId: user.companyId || '',
-      postedById: user.id,
-      isPublic: true,
-    },
-  });
+
 
   const requestForm = useForm({
     resolver: zodResolver(requestJobSchema),
@@ -114,6 +97,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       dueDate: '',
       companyId: user.companyId || '',
       createdById: user.id,
+      clientCompanyId: '', // For Operations Director to select client company
     },
   });
 
@@ -133,27 +117,10 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     enabled: isAdminTeam(user),
   });
 
-  // Create job mutation
-  const createJobMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest('/api/job-network', 'POST', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/job-network'] });
-      setIsCreateJobOpen(false);
-      form.reset();
-      toast({
-        title: 'Success',
-        description: 'Job posted to network successfully',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to post job',
-        variant: 'destructive',
-      });
-    },
+  // Query for client companies (for Operations Director)
+  const { data: clientCompanies = [] } = useQuery<any[]>({
+    queryKey: ['/api/companies/client'],
+    enabled: isOperationsDirector(user) && !testingRole,
   });
 
   // Request job mutation
@@ -226,13 +193,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     },
   });
 
-  const onSubmit = (data: any) => {
-    createJobMutation.mutate({
-      ...data,
-      budget: data.budget ? parseFloat(data.budget) : null,
-      scheduledDate: data.scheduledDate ? new Date(data.scheduledDate).toISOString() : null,
-    });
-  };
+
 
   const onRequestSubmit = (data: any) => {
     requestJobMutation.mutate(data);
@@ -493,6 +454,35 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                           )}
                         />
 
+                        {/* Client Company Selection for Operations Director */}
+                        {isOperationsDirector(user) && !testingRole && (
+                          <FormField
+                            control={workOrderForm.control}
+                            name="clientCompanyId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Posting on Behalf of Client</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select client company or post as Operations Director" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="">Operations Director (Self)</SelectItem>
+                                    {clientCompanies.map((company: any) => (
+                                      <SelectItem key={company.id} value={company.id}>
+                                        {company.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+
                         <div className="grid grid-cols-2 gap-4">
                           <FormField
                             control={workOrderForm.control}
@@ -640,171 +630,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                   </DialogContent>
                 </Dialog>
               )}
-              
-              {canPostToJobNetwork(user) && (
-                <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Post Job
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Post New Job to Network</DialogTitle>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Job Title</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter job title" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                              <Textarea placeholder="Describe the work needed" rows={4} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="location"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Location</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Work location" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="estimatedDuration"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Estimated Duration</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g., 2 hours, 1 day" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="budget"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Budget</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="0.00" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="budgetType"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Budget Type</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select budget type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="fixed">Fixed</SelectItem>
-                                  <SelectItem value="hourly">Hourly</SelectItem>
-                                  <SelectItem value="per_device">Per Device</SelectItem>
-                                  <SelectItem value="materials_labor">Materials + Labor</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="priority"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Priority</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select priority" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="normal">Normal</SelectItem>
-                                  <SelectItem value="high">High</SelectItem>
-                                  <SelectItem value="urgent">Urgent</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="scheduledDate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Scheduled Date</FormLabel>
-                              <FormControl>
-                                <Input type="datetime-local" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="flex justify-end space-x-3">
-                        <Button type="button" variant="outline" onClick={() => setIsCreateJobOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" disabled={createJobMutation.isPending}>
-                          {createJobMutation.isPending ? 'Posting...' : 'Post Job'}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-            )}
             </div>
         </div>
 
