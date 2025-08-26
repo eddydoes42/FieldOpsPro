@@ -41,47 +41,119 @@ export default function ProjectNetwork() {
   
   // Role Testing Components
   const ServiceCompanyRoleTester = () => {
-    const [testingRole, setTestingRole] = useState<string>('');
+    const [testingRole, setTestingRole] = useState<string>(localStorage.getItem('testingRole') || '');
+    const [testingCompanyType, setTestingCompanyType] = useState<string>(localStorage.getItem('testingCompanyType') || '');
+
+    const handleRoleChange = (newRole: string) => {
+      setTestingRole(newRole);
+      if (newRole) {
+        localStorage.setItem('testingRole', newRole);
+        localStorage.setItem('testingCompanyType', 'service');
+        setTestingCompanyType('service');
+        window.location.reload(); // Reload to apply role testing
+      } else {
+        localStorage.removeItem('testingRole');
+        localStorage.removeItem('testingCompanyType');
+        setTestingCompanyType('');
+        window.location.reload();
+      }
+    };
+
+    const handleStopTesting = () => {
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
+      setTestingRole('');
+      setTestingCompanyType('');
+      window.location.reload();
+    };
 
     return (
       <div className="bg-purple-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">Service Company Role Tester:</span>
-          <select
-            value={testingRole}
-            onChange={(e) => setTestingRole(e.target.value)}
-            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
-          >
-            <option value="">Select a Role</option>
-            <option value="administrator">Administrator</option>
-            <option value="project_manager">Project Manager</option>
-            <option value="manager">Manager</option>
-            <option value="dispatcher">Dispatcher</option>
-            <option value="field_engineer">Field Engineer</option>
-            <option value="field_agent">Field Agent</option>
-          </select>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">Service Company Role Tester:</span>
+            <select
+              value={testingRole}
+              onChange={(e) => handleRoleChange(e.target.value)}
+              className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+            >
+              <option value="">Select a Role</option>
+              <option value="administrator">Administrator</option>
+              <option value="project_manager">Project Manager</option>
+              <option value="manager">Manager</option>
+              <option value="dispatcher">Dispatcher</option>
+              <option value="field_engineer">Field Engineer</option>
+              <option value="field_agent">Field Agent</option>
+            </select>
+          </div>
+          {testingRole && testingCompanyType === 'service' && (
+            <Button 
+              onClick={handleStopTesting}
+              variant="outline" 
+              size="sm" 
+              className="border-purple-300 text-purple-700 bg-white hover:bg-purple-50"
+            >
+              Stop Testing
+            </Button>
+          )}
         </div>
       </div>
     );
   };
 
   const ClientCompanyRoleTester = () => {
-    const [testingRole, setTestingRole] = useState<string>('');
+    const [testingRole, setTestingRole] = useState<string>(localStorage.getItem('testingRole') || '');
+    const [testingCompanyType, setTestingCompanyType] = useState<string>(localStorage.getItem('testingCompanyType') || '');
+
+    const handleRoleChange = (newRole: string) => {
+      setTestingRole(newRole);
+      if (newRole) {
+        localStorage.setItem('testingRole', newRole);
+        localStorage.setItem('testingCompanyType', 'client');
+        setTestingCompanyType('client');
+        window.location.reload(); // Reload to apply role testing
+      } else {
+        localStorage.removeItem('testingRole');
+        localStorage.removeItem('testingCompanyType');
+        setTestingCompanyType('');
+        window.location.reload();
+      }
+    };
+
+    const handleStopTesting = () => {
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
+      setTestingRole('');
+      setTestingCompanyType('');
+      window.location.reload();
+    };
 
     return (
       <div className="bg-teal-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">Client Company Role Tester:</span>
-          <select
-            value={testingRole}
-            onChange={(e) => setTestingRole(e.target.value)}
-            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
-          >
-            <option value="">Select a Role</option>
-            <option value="administrator">Administrator</option>
-            <option value="manager">Manager</option>
-            <option value="dispatcher">Dispatcher</option>
-          </select>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">Client Company Role Tester:</span>
+            <select
+              value={testingRole}
+              onChange={(e) => handleRoleChange(e.target.value)}
+              className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+            >
+              <option value="">Select a Role</option>
+              <option value="administrator">Administrator</option>
+              <option value="manager">Manager</option>
+              <option value="dispatcher">Dispatcher</option>
+            </select>
+          </div>
+          {testingRole && testingCompanyType === 'client' && (
+            <Button 
+              onClick={handleStopTesting}
+              variant="outline" 
+              size="sm" 
+              className="border-teal-300 text-teal-700 bg-white hover:bg-teal-50"
+            >
+              Stop Testing
+            </Button>
+          )}
         </div>
       </div>
     );
