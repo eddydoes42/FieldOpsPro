@@ -47,9 +47,13 @@ export default function OperationsDirectorDashboard() {
   const [currentActiveRole, setCurrentActiveRole] = useState(
     localStorage.getItem('permanentRole') || 'operations_director'
   );
-  const [testingRole, setTestingRole] = useState<string>('administrator');
-  const [selectedTestRole, setSelectedTestRole] = useState<string>('administrator');
-  const [selectedClientTestRole, setSelectedClientTestRole] = useState<string>('administrator');
+  const [testingRole, setTestingRole] = useState<string>('');
+  const [selectedTestRole, setSelectedTestRole] = useState<string>(
+    localStorage.getItem('testingCompanyType') === 'service' ? localStorage.getItem('testingRole') || '' : ''
+  );
+  const [selectedClientTestRole, setSelectedClientTestRole] = useState<string>(
+    localStorage.getItem('testingCompanyType') === 'client' ? localStorage.getItem('testingRole') || '' : ''
+  );
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -203,6 +207,8 @@ export default function OperationsDirectorDashboard() {
     localStorage.removeItem('selectedRole');
     localStorage.setItem('testingRole', role);
     localStorage.setItem('testingCompanyType', 'service');
+    setSelectedTestRole(role);
+    setSelectedClientTestRole(''); // Clear client role when selecting service role
     console.log('Starting role test:', role, 'service');
     
     // Force reload to clear any cached user data and apply new role context
@@ -214,10 +220,20 @@ export default function OperationsDirectorDashboard() {
     localStorage.removeItem('selectedRole');
     localStorage.setItem('testingRole', role);
     localStorage.setItem('testingCompanyType', 'client');
+    setSelectedClientTestRole(role);
+    setSelectedTestRole(''); // Clear service role when selecting client role
     console.log('Starting client role test:', role, 'client');
     
     // Force reload to clear any cached user data and apply new role context
-    window.location.href = '/dashboard';
+    window.location.href = '/client-dashboard';
+  };
+
+  const stopTesting = () => {
+    localStorage.removeItem('testingRole');
+    localStorage.removeItem('testingCompanyType');
+    setSelectedTestRole('');
+    setSelectedClientTestRole('');
+    window.location.href = '/operations-dashboard';
   };
 
   return (
@@ -246,6 +262,16 @@ export default function OperationsDirectorDashboard() {
               <option value="field_engineer">Field Engineer</option>
               <option value="field_agent">Field Agent</option>
             </select>
+            {selectedTestRole && (
+              <Button
+                onClick={stopTesting}
+                size="sm"
+                variant="outline"
+                className="bg-purple-800 hover:bg-purple-900 text-white border-purple-400"
+              >
+                Stop Testing
+              </Button>
+            )}
           </div>
         </div>
 
@@ -265,9 +291,20 @@ export default function OperationsDirectorDashboard() {
             >
               <option value="">Select a Role</option>
               <option value="administrator">Administrator</option>
+              <option value="project_manager">Project Manager</option>
               <option value="manager">Manager</option>
               <option value="dispatcher">Dispatcher</option>
             </select>
+            {selectedClientTestRole && (
+              <Button
+                onClick={stopTesting}
+                size="sm"
+                variant="outline"
+                className="bg-teal-800 hover:bg-teal-900 text-white border-teal-400"
+              >
+                Stop Testing
+              </Button>
+            )}
           </div>
         </div>
       </div>

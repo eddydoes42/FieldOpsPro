@@ -265,7 +265,17 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
 
   // Role Testers
   const ServiceCompanyRoleTester = () => {
-    const [localTestingRole, setLocalTestingRole] = useState<string>('');
+    const [localTestingRole, setLocalTestingRole] = useState<string>(
+      localStorage.getItem('testingCompanyType') === 'service' ? localStorage.getItem('testingRole') || '' : ''
+    );
+
+    const stopTesting = () => {
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
+      setLocalTestingRole('');
+      if (onRoleSwitch) onRoleSwitch('');
+      window.location.href = '/operations-dashboard';
+    };
 
     return (
       <div className="bg-purple-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
@@ -274,11 +284,14 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
           <select
             value={localTestingRole}
             onChange={(e) => {
-              setLocalTestingRole(e.target.value);
-              if (e.target.value) {
-                localStorage.setItem('testingRole', e.target.value);
+              const role = e.target.value;
+              setLocalTestingRole(role);
+              if (role) {
+                localStorage.setItem('testingRole', role);
                 localStorage.setItem('testingCompanyType', 'service');
-                if (onRoleSwitch) onRoleSwitch(e.target.value);
+                if (onRoleSwitch) onRoleSwitch(role);
+                // Automatically redirect to appropriate dashboard for role testing
+                window.location.href = '/dashboard';
               }
             }}
             className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
@@ -291,13 +304,33 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
             <option value="field_engineer">Field Engineer</option>
             <option value="field_agent">Field Agent</option>
           </select>
+          {localTestingRole && (
+            <Button
+              onClick={stopTesting}
+              size="sm"
+              variant="outline"
+              className="bg-purple-800 hover:bg-purple-900 text-white border-purple-400"
+            >
+              Stop Testing
+            </Button>
+          )}
         </div>
       </div>
     );
   };
 
   const ClientCompanyRoleTester = () => {
-    const [localTestingRole, setLocalTestingRole] = useState<string>('');
+    const [localTestingRole, setLocalTestingRole] = useState<string>(
+      localStorage.getItem('testingCompanyType') === 'client' ? localStorage.getItem('testingRole') || '' : ''
+    );
+
+    const stopTesting = () => {
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
+      setLocalTestingRole('');
+      if (onRoleSwitch) onRoleSwitch('');
+      window.location.href = '/operations-dashboard';
+    };
 
     return (
       <div className="bg-teal-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
@@ -306,20 +339,34 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
           <select
             value={localTestingRole}
             onChange={(e) => {
-              setLocalTestingRole(e.target.value);
-              if (e.target.value) {
-                localStorage.setItem('testingRole', e.target.value);
+              const role = e.target.value;
+              setLocalTestingRole(role);
+              if (role) {
+                localStorage.setItem('testingRole', role);
                 localStorage.setItem('testingCompanyType', 'client');
-                if (onRoleSwitch) onRoleSwitch(e.target.value);
+                if (onRoleSwitch) onRoleSwitch(role);
+                // Automatically redirect to appropriate dashboard for role testing
+                window.location.href = '/client-dashboard';
               }
             }}
             className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
           >
             <option value="">Select a Role</option>
             <option value="administrator">Administrator</option>
+            <option value="project_manager">Project Manager</option>
             <option value="manager">Manager</option>
             <option value="dispatcher">Dispatcher</option>
           </select>
+          {localTestingRole && (
+            <Button
+              onClick={stopTesting}
+              size="sm"
+              variant="outline"
+              className="bg-teal-800 hover:bg-teal-900 text-white border-teal-400"
+            >
+              Stop Testing
+            </Button>
+          )}
         </div>
       </div>
     );
