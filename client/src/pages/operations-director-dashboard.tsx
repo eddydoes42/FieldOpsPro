@@ -238,7 +238,86 @@ export default function OperationsDirectorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Role Testers - Always present for Operations Director */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+        {/* Service Company Role Tester */}
+        <div className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-sm">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">Service Company Role Tester:</span>
+            <select
+              value={selectedTestRole}
+              onChange={(e) => {
+                setSelectedTestRole(e.target.value);
+                if (e.target.value) {
+                  handleStartTesting(e.target.value);
+                }
+              }}
+              className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+            >
+              <option value="">Select a Role</option>
+              <option value="administrator">Administrator</option>
+              <option value="project_manager">Project Manager</option>
+              <option value="manager">Manager</option>
+              <option value="dispatcher">Dispatcher</option>
+              <option value="field_engineer">Field Engineer</option>
+              <option value="field_agent">Field Agent</option>
+            </select>
+            {selectedTestRole && (
+              <Button
+                onClick={stopTesting}
+                size="sm"
+                variant="outline"
+                className="bg-purple-800 hover:bg-purple-900 text-white border-purple-400"
+              >
+                Stop Testing
+              </Button>
+            )}
+          </div>
+        </div>
 
+        {/* Client Company Role Tester */}
+        <div className="bg-teal-600 text-white px-4 py-2 rounded-lg shadow-sm">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">Client Company Role Tester:</span>
+            <select
+              value={selectedClientTestRole}
+              onChange={(e) => {
+                setSelectedClientTestRole(e.target.value);
+                if (e.target.value) {
+                  handleStartClientTesting(e.target.value);
+                }
+              }}
+              className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+            >
+              <option value="">Select a Role</option>
+              <option value="administrator">Administrator</option>
+              <option value="project_manager">Project Manager</option>
+              <option value="manager">Manager</option>
+              <option value="dispatcher">Dispatcher</option>
+            </select>
+            {selectedClientTestRole && (
+              <Button
+                onClick={stopTesting}
+                size="sm"
+                variant="outline"
+                className="bg-teal-800 hover:bg-teal-900 text-white border-teal-400"
+              >
+                Stop Testing
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <Navigation 
+        currentActiveRole={localStorage.getItem('permanentRole') || 'operations_director'} 
+        onPermanentRoleSwitch={(role) => {
+          localStorage.setItem('permanentRole', role);
+          localStorage.setItem('selectedRole', role);
+          // Navigate to appropriate dashboard based on role
+          window.location.href = '/dashboard';
+        }}
+      />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

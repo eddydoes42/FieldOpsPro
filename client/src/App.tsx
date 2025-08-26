@@ -205,7 +205,16 @@ function Router() {
               />
             </Route>
             <Route path="/operations-dashboard">
-              <OperationsDirectorDashboard />
+              {(() => {
+                // Operations Dashboard should always show Operations Director dashboard
+                // regardless of testing roles, since this is the dedicated Operations Director route
+                return (
+                  <div>
+                    <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                    <OperationsDirectorDashboard />
+                  </div>
+                );
+              })()}
             </Route>
             <Route path="/operations/companies">
               <div>
