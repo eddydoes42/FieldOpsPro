@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Building2, Calendar, Users, Star, TrendingUp } from "lucide-react";
+import { ArrowLeft, Building2, Calendar, Users, Star, TrendingUp, Home } from "lucide-react";
 import { Link } from "wouter";
 import Navigation from "@/components/navigation";
 import RoleSwitcher from "@/components/role-switcher";
@@ -88,27 +88,75 @@ export default function OperationsExclusiveNetwork() {
     : "0.00";
   const totalWorkOrders = exclusiveMembers.reduce((sum, member) => sum + member.completedWorkOrders, 0);
 
+  // Role Testers
+  const ServiceCompanyRoleTester = () => {
+    const [testingRole, setTestingRole] = useState<string>('');
+
+    return (
+      <div className="bg-purple-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">Service Company Role Tester:</span>
+          <select
+            value={testingRole}
+            onChange={(e) => {
+              setTestingRole(e.target.value);
+              if (e.target.value) {
+                localStorage.setItem('testingRole', e.target.value);
+                localStorage.setItem('testingCompanyType', 'service');
+                window.location.reload();
+              }
+            }}
+            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+          >
+            <option value="">Select a Role</option>
+            <option value="administrator">Administrator</option>
+            <option value="project_manager">Project Manager</option>
+            <option value="manager">Manager</option>
+            <option value="dispatcher">Dispatcher</option>
+            <option value="field_engineer">Field Engineer</option>
+            <option value="field_agent">Field Agent</option>
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  const ClientCompanyRoleTester = () => {
+    const [testingRole, setTestingRole] = useState<string>('');
+
+    return (
+      <div className="bg-teal-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">Client Company Role Tester:</span>
+          <select
+            value={testingRole}
+            onChange={(e) => {
+              setTestingRole(e.target.value);
+              if (e.target.value) {
+                localStorage.setItem('testingRole', e.target.value);
+                localStorage.setItem('testingCompanyType', 'client');
+                window.location.reload();
+              }
+            }}
+            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+          >
+            <option value="">Select a Role</option>
+            <option value="administrator">Administrator</option>
+            <option value="manager">Manager</option>
+            <option value="dispatcher">Dispatcher</option>
+          </select>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Role Tester for when Operations Director is testing other roles */}
-      <RoleSwitcher 
-        currentRole="operations_director"
-        onRoleSwitch={(role) => {
-          localStorage.setItem('testingRole', role);
-          if (role === 'administrator') {
-            window.location.href = '/admin-dashboard';
-          } else if (role === 'manager') {
-            window.location.href = '/manager-dashboard';
-          } else if (role === 'dispatcher') {
-            window.location.href = '/dispatcher-dashboard';
-          } else if (role === 'field_agent') {
-            window.location.href = '/agent-dashboard';
-          } else if (role === 'client') {
-            window.location.href = '/client-dashboard';
-          }
-        }}
-        currentActiveRole={localStorage.getItem('permanentRole') || 'operations_director'}
-      />
+      {/* Role Testers - Always present for Operations Director */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <ServiceCompanyRoleTester />
+        <ClientCompanyRoleTester />
+      </div>
       
       <Navigation testingRole={testingRole} />
       
@@ -117,12 +165,22 @@ export default function OperationsExclusiveNetwork() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <Link href="/operations-dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/operations-dashboard'}
+                className="flex items-center space-x-1"
+              >
+                <Home className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="flex items-center space-x-1"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">
                   Exclusive Networks

@@ -69,6 +69,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -1581,14 +1582,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllExclusiveNetworkMembers(): Promise<ExclusiveNetworkMember[]> {
-    const serviceCompanies = companies;
+    const clientCompanies = alias(companies, 'clientCompanies');
+    const serviceCompanies = alias(companies, 'serviceCompanies');
     return await db
       .select({
         id: exclusiveNetworkMembers.id,
         clientCompany: {
-          id: companies.id,
-          name: companies.name,
-          type: companies.type
+          id: clientCompanies.id,
+          name: clientCompanies.name,
+          type: clientCompanies.type
         },
         serviceCompany: {
           id: serviceCompanies.id,
@@ -1605,7 +1607,7 @@ export class DatabaseStorage implements IStorage {
         updatedAt: exclusiveNetworkMembers.updatedAt
       })
       .from(exclusiveNetworkMembers)
-      .leftJoin(companies, eq(exclusiveNetworkMembers.clientCompanyId, companies.id))
+      .leftJoin(clientCompanies, eq(exclusiveNetworkMembers.clientCompanyId, clientCompanies.id))
       .leftJoin(serviceCompanies, eq(exclusiveNetworkMembers.serviceCompanyId, serviceCompanies.id))
       .orderBy(desc(exclusiveNetworkMembers.createdAt));
   }

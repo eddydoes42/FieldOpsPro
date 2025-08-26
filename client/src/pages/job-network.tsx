@@ -209,18 +209,77 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     return matchesSearch && matchesStatus;
   });
 
+  // Role Testers
+  const ServiceCompanyRoleTester = () => {
+    const [localTestingRole, setLocalTestingRole] = useState<string>('');
+
+    return (
+      <div className="bg-purple-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">Service Company Role Tester:</span>
+          <select
+            value={localTestingRole}
+            onChange={(e) => {
+              setLocalTestingRole(e.target.value);
+              if (e.target.value) {
+                localStorage.setItem('testingRole', e.target.value);
+                localStorage.setItem('testingCompanyType', 'service');
+                if (onRoleSwitch) onRoleSwitch(e.target.value);
+              }
+            }}
+            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+          >
+            <option value="">Select a Role</option>
+            <option value="administrator">Administrator</option>
+            <option value="project_manager">Project Manager</option>
+            <option value="manager">Manager</option>
+            <option value="dispatcher">Dispatcher</option>
+            <option value="field_engineer">Field Engineer</option>
+            <option value="field_agent">Field Agent</option>
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  const ClientCompanyRoleTester = () => {
+    const [localTestingRole, setLocalTestingRole] = useState<string>('');
+
+    return (
+      <div className="bg-teal-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">Client Company Role Tester:</span>
+          <select
+            value={localTestingRole}
+            onChange={(e) => {
+              setLocalTestingRole(e.target.value);
+              if (e.target.value) {
+                localStorage.setItem('testingRole', e.target.value);
+                localStorage.setItem('testingCompanyType', 'client');
+                if (onRoleSwitch) onRoleSwitch(e.target.value);
+              }
+            }}
+            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+          >
+            <option value="">Select a Role</option>
+            <option value="administrator">Administrator</option>
+            <option value="manager">Manager</option>
+            <option value="dispatcher">Dispatcher</option>
+          </select>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
       
-      {/* Role Tester for Operations Director */}
-      {isOperationsDirector(user) && onRoleSwitch && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RoleSwitcher 
-            currentRole={testingRole || user.role} 
-            onRoleSwitch={onRoleSwitch}
-            currentActiveRole={user.role}
-          />
+      {/* Role Testers - Always present for Operations Director */}
+      {isOperationsDirector(user) && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <ServiceCompanyRoleTester />
+          <ClientCompanyRoleTester />
         </div>
       )}
       
@@ -229,11 +288,30 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-400">
-                  <Home className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const selectedRole = localStorage.getItem('selectedRole');
+                  const testingRole = localStorage.getItem('testingRole');
+                  if (testingRole === 'operations_director' || selectedRole === 'operations_director') {
+                    window.location.href = '/operations-dashboard';
+                  } else {
+                    window.location.href = '/dashboard';
+                  }
+                }}
+                className="flex items-center space-x-1"
+              >
+                <Home className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="flex items-center space-x-1"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
                   <Network className="h-8 w-8 text-blue-600 dark:text-blue-400" />

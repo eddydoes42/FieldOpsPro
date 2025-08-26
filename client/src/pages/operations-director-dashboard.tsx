@@ -222,99 +222,52 @@ export default function OperationsDirectorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Dual Role Testers for Operations Director */}
-      <div className="mx-4 mt-4 space-y-3">
+      {/* Role Testers - Always present for Operations Director */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         {/* Service Company Role Tester */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
-          <div className="flex items-center">
-            <span className="text-sm text-purple-700 font-medium mr-3">Service Company Role Tester</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50">
-                  <User className="h-3 w-3 mr-2" />
-                  Select a Role
-                  <ChevronDown className="h-3 w-3 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-purple-900">
-                  Service Company Roles
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {availableRoles.map((role) => (
-                  <DropdownMenuItem
-                    key={role.value}
-                    onClick={() => handleStartTesting(role.value)}
-                    className="cursor-pointer"
-                  >
-                    <User className="h-3 w-3 mr-2" />
-                    {role.label}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    localStorage.removeItem('testingRole');
-                    localStorage.removeItem('testingCompanyType');
-                    setSelectedTestRole('administrator'); // Reset to default
-                    window.location.reload(); // Refresh to clear any testing state
-                  }}
-                  className="cursor-pointer text-red-600 hover:text-red-700 focus:text-red-700"
-                >
-                  <span className="text-red-600 mr-2">✕</span>
-                  Stop Testing
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <div className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-sm">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">Service Company Role Tester:</span>
+            <select
+              value={selectedTestRole}
+              onChange={(e) => {
+                setSelectedTestRole(e.target.value);
+                if (e.target.value) {
+                  handleStartTesting(e.target.value);
+                }
+              }}
+              className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+            >
+              <option value="">Select a Role</option>
+              <option value="administrator">Administrator</option>
+              <option value="project_manager">Project Manager</option>
+              <option value="manager">Manager</option>
+              <option value="dispatcher">Dispatcher</option>
+              <option value="field_engineer">Field Engineer</option>
+              <option value="field_agent">Field Agent</option>
+            </select>
           </div>
         </div>
 
         {/* Client Company Role Tester */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-3">
-          <div className="flex items-center">
-            <span className="text-sm text-teal-700 font-medium mr-3">Client Company Role Tester</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="border-teal-300 text-teal-700 hover:bg-teal-50">
-                  <User className="h-3 w-3 mr-2" />
-                  Select a Role
-                  <ChevronDown className="h-3 w-3 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-teal-900">
-                  Client Company Roles
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {availableClientRoles.map((role) => (
-                  <DropdownMenuItem
-                    key={role.value}
-                    onClick={() => handleStartClientTesting(role.value)}
-                    className="cursor-pointer"
-                  >
-                    <User className="h-3 w-3 mr-2" />
-                    {role.label}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    localStorage.removeItem('testingRole');
-                    localStorage.removeItem('testingCompanyType');
-                    setSelectedClientTestRole('administrator'); // Reset to default
-                    window.location.reload(); // Refresh to clear any testing state
-                  }}
-                  className="cursor-pointer text-red-600 hover:text-red-700 focus:text-red-700"
-                >
-                  <span className="text-red-600 mr-2">✕</span>
-                  Stop Testing
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <div className="bg-teal-600 text-white px-4 py-2 rounded-lg shadow-sm">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">Client Company Role Tester:</span>
+            <select
+              value={selectedClientTestRole}
+              onChange={(e) => {
+                setSelectedClientTestRole(e.target.value);
+                if (e.target.value) {
+                  handleStartClientTesting(e.target.value);
+                }
+              }}
+              className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+            >
+              <option value="">Select a Role</option>
+              <option value="administrator">Administrator</option>
+              <option value="manager">Manager</option>
+              <option value="dispatcher">Dispatcher</option>
+            </select>
           </div>
         </div>
       </div>
