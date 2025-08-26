@@ -196,6 +196,7 @@ export default function Messages() {
   };
 
   const formatRole = (role: string) => {
+    if (!role) return 'Unknown Role';
     return role
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
