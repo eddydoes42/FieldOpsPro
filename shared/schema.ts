@@ -1034,19 +1034,19 @@ export function canAssignProjects(user: User | null): boolean {
 }
 
 export function canViewProjectNetwork(user: User | null): boolean {
-  return isAdminTeam(user);
+  return isOperationsDirector(user) || isAdminTeam(user);
 }
 
 export function canPostToJobNetwork(user: User | null): boolean {
-  return isAdminTeam(user) || isClient(user);
+  return isOperationsDirector(user) || isAdminTeam(user) || isClient(user);
 }
 
 export function canViewExclusiveNetwork(user: User | null): boolean {
-  return isAdminTeam(user);
+  return isOperationsDirector(user) || isAdminTeam(user);
 }
 
 export function canAssignWorkOrders(user: User | null): boolean {
-  return isAdminTeam(user);
+  return isOperationsDirector(user) || isAdminTeam(user);
 }
 
 // Access Request types
