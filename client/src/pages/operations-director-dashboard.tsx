@@ -441,18 +441,16 @@ export default function OperationsDirectorDashboard() {
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
             onClick={() => setLocation('/operations/companies')}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Total Companies
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {companies.length || 0}
-                  </p>
-                </div>
+            <CardContent className="p-6 h-32 flex flex-col justify-between">
+              <div className="flex flex-col items-center justify-center flex-1">
+                <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {companies.length || 0}
+                </p>
               </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 text-center">
+                Total Companies
+              </p>
             </CardContent>
           </Card>
 
@@ -460,18 +458,16 @@ export default function OperationsDirectorDashboard() {
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
             onClick={() => setLocation('/operations/active-admins')}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Active Admins
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.totalAdmins || 0}
-                  </p>
-                </div>
+            <CardContent className="p-6 h-32 flex flex-col justify-between">
+              <div className="flex flex-col items-center justify-center flex-1">
+                <Users className="h-8 w-8 text-green-600 dark:text-green-400 mb-2" />
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {stats.totalAdmins || 0}
+                </p>
               </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 text-center">
+                Active Admins
+              </p>
             </CardContent>
           </Card>
 
@@ -479,18 +475,16 @@ export default function OperationsDirectorDashboard() {
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
             onClick={() => setLocation('/operations/companies?status=active')}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Settings className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Active Companies
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.activeCompanies || 0}
-                  </p>
-                </div>
+            <CardContent className="p-6 h-32 flex flex-col justify-between">
+              <div className="flex flex-col items-center justify-center flex-1">
+                <Settings className="h-8 w-8 text-purple-600 dark:text-purple-400 mb-2" />
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {stats.activeCompanies || 0}
+                </p>
               </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 text-center">
+                Active Companies
+              </p>
             </CardContent>
           </Card>
 
@@ -498,18 +492,16 @@ export default function OperationsDirectorDashboard() {
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
             onClick={() => setLocation('/operations/recent-setups')}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <UserPlus className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Recent Setups
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.recentSetups || 0}
-                  </p>
-                </div>
+            <CardContent className="p-6 h-32 flex flex-col justify-between">
+              <div className="flex flex-col items-center justify-center flex-1">
+                <UserPlus className="h-8 w-8 text-orange-600 dark:text-orange-400 mb-2" />
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {stats.recentSetups || 0}
+                </p>
               </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 text-center">
+                Recent Setups
+              </p>
             </CardContent>
           </Card>
         </div>
