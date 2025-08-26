@@ -27,7 +27,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, canPostToJobNetwork, isAdminTeam, isClient, insertJobNetworkPostSchema, isOperationsDirector, canManageWorkOrders } from '@shared/schema';
+import { User, canPostToJobNetwork, isAdminTeam, isClient, insertJobNetworkPostSchema, isOperationsDirector, canManageWorkOrders, insertWorkOrderSchema } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
@@ -48,6 +48,10 @@ const requestJobSchema = z.object({
   proposedAgentId: z.string().optional(),
 });
 
+const createWorkOrderSchema = insertWorkOrderSchema.extend({
+  budget: z.string().optional(),
+});
+
 interface JobNetworkProps {
   user: User;
   testingRole?: string;
@@ -56,6 +60,7 @@ interface JobNetworkProps {
 
 export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetworkProps) {
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
+  const [isCreateWorkOrderOpen, setIsCreateWorkOrderOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isRequestJobOpen, setIsRequestJobOpen] = useState(false);
   const [selectedJobForRequest, setSelectedJobForRequest] = useState<any>(null);
@@ -92,6 +97,23 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       requestedById: user.id,
       message: '',
       proposedAgentId: '',
+    },
+  });
+
+  const workOrderForm = useForm({
+    resolver: zodResolver(createWorkOrderSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      location: '',
+      priority: 'normal',
+      status: 'scheduled',
+      budget: '',
+      budgetType: 'fixed',
+      estimatedHours: '',
+      dueDate: '',
+      companyId: user.companyId || '',
+      createdById: user.id,
     },
   });
 
@@ -181,6 +203,29 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     },
   });
 
+  // Create work order mutation
+  const createWorkOrderMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('/api/work-orders', 'POST', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
+      setIsCreateWorkOrderOpen(false);
+      workOrderForm.reset();
+      toast({
+        title: 'Success',
+        description: 'Work order created successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create work order',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const onSubmit = (data: any) => {
     createJobMutation.mutate({
       ...data,
@@ -191,6 +236,15 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
 
   const onRequestSubmit = (data: any) => {
     requestJobMutation.mutate(data);
+  };
+
+  const onWorkOrderSubmit = (data: any) => {
+    createWorkOrderMutation.mutate({
+      ...data,
+      budget: data.budget ? parseFloat(data.budget) : null,
+      estimatedHours: data.estimatedHours ? parseInt(data.estimatedHours) : null,
+      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+    });
   };
 
   const handleRequestJob = (job: any) => {
@@ -327,14 +381,195 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
               {/* Create Work Order Button - for Administrators, Project Managers, Managers, and Operations Director (when not role testing) */}
               {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
                 (user as any)?.roles?.includes('project_manager')) && (
-                <Button
-                  onClick={() => window.location.href = '/create-work-order'}
-                  variant="outline"
-                  className="bg-green-600 hover:bg-green-700 text-white border-green-600"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Work Order
-                </Button>
+                <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Work Order
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Create New Work Order</DialogTitle>
+                    </DialogHeader>
+                    <Form {...workOrderForm}>
+                      <form onSubmit={workOrderForm.handleSubmit(onWorkOrderSubmit)} className="space-y-6">
+                        <FormField
+                          control={workOrderForm.control}
+                          name="title"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Work Order Title</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter work order title" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={workOrderForm.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Enter work order description"
+                                  className="min-h-[100px]"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={workOrderForm.control}
+                            name="location"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Location</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter location" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={workOrderForm.control}
+                            name="priority"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Priority</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select priority" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="low">Low</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="high">High</SelectItem>
+                                    <SelectItem value="urgent">Urgent</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={workOrderForm.control}
+                            name="budget"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Budget</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Enter budget amount" 
+                                    type="number"
+                                    step="0.01"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={workOrderForm.control}
+                            name="budgetType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Budget Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select budget type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="fixed">Fixed</SelectItem>
+                                    <SelectItem value="hourly">Hourly</SelectItem>
+                                    <SelectItem value="per_device">Per Device</SelectItem>
+                                    <SelectItem value="materials_labor">Materials + Labor</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={workOrderForm.control}
+                            name="estimatedHours"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Estimated Hours</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Enter estimated hours" 
+                                    type="number"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={workOrderForm.control}
+                            name="dueDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Due Date</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="datetime-local"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setIsCreateWorkOrderOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={createWorkOrderMutation.isPending}
+                          >
+                            {createWorkOrderMutation.isPending ? 'Creating...' : 'Create Work Order'}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
               )}
               
               {canPostToJobNetwork(user) && (
