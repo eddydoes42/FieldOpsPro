@@ -27,7 +27,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, canPostToJobNetwork, isAdminTeam, isClient, insertJobNetworkPostSchema, isOperationsDirector } from '@shared/schema';
+import { User, canPostToJobNetwork, isAdminTeam, isClient, insertJobNetworkPostSchema, isOperationsDirector, canManageWorkOrders } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
@@ -323,14 +323,28 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
               </div>
             </div>
             
-            {canPostToJobNetwork(user) && (
-              <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Post Job
-                  </Button>
-                </DialogTrigger>
+            <div className="flex items-center space-x-3">
+              {/* Create Work Order Button - for Administrators, Project Managers, Managers, and Operations Director (when not role testing) */}
+              {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
+                (user as any)?.roles?.includes('project_manager')) && (
+                <Button
+                  onClick={() => window.location.href = '/create-work-order'}
+                  variant="outline"
+                  className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Work Order
+                </Button>
+              )}
+              
+              {canPostToJobNetwork(user) && (
+                <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Post Job
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Post New Job to Network</DialogTitle>
@@ -487,7 +501,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                 </DialogContent>
               </Dialog>
             )}
-          </div>
+            </div>
         </div>
 
         {/* Search and Filters */}
@@ -811,6 +825,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
             </DialogContent>
           </Dialog>
         )}
+        </div>
       </div>
     </div>
   );
