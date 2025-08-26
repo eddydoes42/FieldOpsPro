@@ -21,6 +21,7 @@ export default function OperationsCompanies() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
+  const [companyTypeFilter, setCompanyTypeFilter] = useState("all");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -361,6 +362,13 @@ export default function OperationsCompanies() {
       );
     }
 
+    // Company type filter
+    if (companyTypeFilter !== "all") {
+      filtered = filtered.filter(company =>
+        company.type === companyTypeFilter
+      );
+    }
+
     // Time filter
     if (timeFilter !== "all") {
       const now = new Date();
@@ -385,7 +393,7 @@ export default function OperationsCompanies() {
     }
 
     return filtered;
-  }, [companies, searchTerm, statusFilter, timeFilter]);
+  }, [companies, searchTerm, statusFilter, companyTypeFilter, timeFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -429,41 +437,97 @@ export default function OperationsCompanies() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
+        <div className="mb-6 space-y-4">
+          {/* Search Bar */}
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search service companies..."
+              placeholder="Search companies..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active Only</SelectItem>
-              <SelectItem value="inactive">Inactive Only</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={timeFilter} onValueChange={setTimeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by onboard time" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="week">Last Week</SelectItem>
-              <SelectItem value="month">Last Month</SelectItem>
-              <SelectItem value="quarter">Last Quarter</SelectItem>
-              <SelectItem value="year">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
+          
+          {/* Filter Bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status Filters */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={statusFilter === "active" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("active")}
+                className="text-xs"
+              >
+                Active ({companies.filter(c => c.isActive).length})
+              </Button>
+              <Button
+                variant={statusFilter === "inactive" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("inactive")}
+                className="text-xs"
+              >
+                Inactive ({companies.filter(c => !c.isActive).length})
+              </Button>
+              <Button
+                variant={statusFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("all")}
+                className="text-xs"
+              >
+                All Status ({companies.length})
+              </Button>
+            </div>
+
+            {/* Company Type Filters */}
+            <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+              <Button
+                variant={companyTypeFilter === "service" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCompanyTypeFilter("service")}
+                className="text-xs bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+              >
+                Service Companies ({companies.filter(c => c.type === "service").length})
+              </Button>
+              <Button
+                variant={companyTypeFilter === "client" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCompanyTypeFilter("client")}
+                className="text-xs bg-teal-600 hover:bg-teal-700 text-white border-teal-600 hover:border-teal-700"
+              >
+                Client Companies ({companies.filter(c => c.type === "client").length})
+              </Button>
+              <Button
+                variant={companyTypeFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCompanyTypeFilter("all")}
+                className="text-xs"
+              >
+                All Types ({companies.length})
+              </Button>
+            </div>
+
+            {/* Time Filter */}
+            <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+              <Select value={timeFilter} onValueChange={setTimeFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by onboard time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="week">Last Week</SelectItem>
+                  <SelectItem value="month">Last Month</SelectItem>
+                  <SelectItem value="quarter">Last Quarter</SelectItem>
+                  <SelectItem value="year">Last Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Filter Summary */}
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
             <Filter className="h-4 w-4 mr-2" />
-            Showing {filteredCompanies.length} of {companies.length} service companies
+            Showing {filteredCompanies.length} of {companies.length} companies
           </div>
         </div>
 
