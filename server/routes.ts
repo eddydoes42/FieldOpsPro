@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, isAdmin, hasAnyRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -72,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Pass companyId for company-specific stats (Operations Directors see all, Admins see their company only)
-      const companyId = isOperationsDirector(currentUser) ? undefined : currentUser.companyId;
+      const companyId = isOperationsDirector(currentUser) ? undefined : (currentUser.companyId || undefined);
       const stats = await storage.getDashboardStats(companyId);
       res.json(stats);
     } catch (error) {
@@ -833,7 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/time-entries/reset-today', isAuthenticated, async (req: any, res) => {
     try {
       const today = new Date().toDateString();
-      const activeEntries = await storage.getActiveTimeEntries();
+      const activeEntries = await storage.getAllActiveTimeEntries();
       
       for (const entry of activeEntries) {
         const entryDate = new Date(entry.startTime).toDateString();
@@ -2353,7 +2353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const memberData = insertExclusiveNetworkMemberSchema.parse({
         ...req.body,
-        clientCompanyId: currentUser.clientCompanyId || req.body.clientCompanyId,
+        clientCompanyId: currentUser.companyId || req.body.clientCompanyId,
       });
 
       const member = await storage.createExclusiveNetworkMember(memberData);
@@ -2395,7 +2395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify the work order belongs to the client's company
-      if (workOrder.clientCompanyId !== currentUser.clientCompanyId) {
+      if (workOrder.companyId !== currentUser.companyId) {
         return res.status(403).json({ message: "Access denied. Work order not from your company." });
       }
 

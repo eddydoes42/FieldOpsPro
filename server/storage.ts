@@ -122,6 +122,7 @@ export interface IStorage {
   // Time Entry operations
   createTimeEntry(timeEntry: InsertTimeEntry): Promise<TimeEntry>;
   getActiveTimeEntry(userId: string): Promise<TimeEntry | undefined>;
+  getAllActiveTimeEntries(): Promise<TimeEntry[]>;
   getTimeEntriesByUser(userId: string): Promise<TimeEntry[]>;
   getTimeEntriesByWorkOrder(workOrderId: string): Promise<TimeEntry[]>;
   updateTimeEntry(id: string, updates: Partial<InsertTimeEntry>): Promise<TimeEntry>;
@@ -650,6 +651,14 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(workOrders, eq(timeEntries.workOrderId, workOrders.id))
       .where(and(eq(timeEntries.userId, userId), eq(timeEntries.isActive, true)));
     return activeEntry;
+  }
+
+  async getAllActiveTimeEntries(): Promise<TimeEntry[]> {
+    return await db
+      .select()
+      .from(timeEntries)
+      .where(eq(timeEntries.isActive, true))
+      .orderBy(desc(timeEntries.startTime));
   }
 
   async getTimeEntriesByUser(userId: string): Promise<TimeEntry[]> {

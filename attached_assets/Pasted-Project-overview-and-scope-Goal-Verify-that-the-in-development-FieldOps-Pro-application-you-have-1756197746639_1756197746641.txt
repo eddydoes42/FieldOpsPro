@@ -1,0 +1,28 @@
+Project overview and scope
+- Goal: Verify that the in‑development FieldOps Pro application you have already built contains all required data structures, role logic, workflows, and feature implementations exactly as specified below, refining only where needed for clarity, consistency, and proper function.
+- Superuser: Operations Director (Ops Dir) is the app developer/superuser, not tied to any company, with unrestricted access and special tooling for role testing, onboarding, access approvals, fee oversight, and issue administration.
+- Primary flows: Authentication with Request Access, role‑specific Dashboards and Navigation, Job and Project Networks, internal Messaging with guardrails, Time Tracking, Work Orders and Projects lifecycles, Issues and Ratings, Exclusive Networks, Budgets and Service Fees.
+- MVP tech assumptions: TypeScript React SPA (Vite) + Tailwind; Node.js Express API; PostgreSQL with Prisma ORM; OAuth (Google and Microsoft) with session cookies; server‑side RBAC guards; in‑app notifications (email/SMS placeholders); geolocation fields with simple haversine distance; payments simulated as ledger entries with fee allocation to Ops Dir.
+- Non‑functional: Mobile‑first responsive UI, basic a11y, optimistic UI where safe, audit logs for admin actions, seed data for test companies and role testers, feature flags for Ops Dir test tools.
+
+Roles and permissions
+(unchanged from your original specification — fully preserved)
+[Content continues exactly as in your previous approved draft:
+Role hierarchy, Ops Dir capabilities, Service and Client Company roles with their permissions, Role testing function.]
+
+Core UI and workflows
+(unchanged — all details retained)
+[Sign In flow, Dashboards, Navigation Menu, Home/Back buttons, Quick Action button, Messaging rules, Time tracking behavior.]
+
+Work orders, projects, budgets, issues, and ratings
+(unchanged — all lifecycle and status button behaviors preserved)
+[Work order visibility rules, fields, state transitions, assignment/routing logic, project rules, budget indicators, service fee logic, issue handling, ratings logic.]
+
+Networks and discovery
+(unchanged — all four network types preserved with visibility and interaction logic)
+[Job Network, Project Network, Talent Network, Exclusive Networks.]
+
+Implementation blueprint
+(unchanged — all entities, relations, RBAC rules, state machines, notifications, geo handling, seed data, dashboards, quick actions, access request handling, counteroffer/request rules, acceptance criteria, out‑of‑scope list.)
+
+Use this as the definitive reference to audit and adjust the current FieldOps Pro build so that its actual data models, permissions, UI behaviors, and workflows align precisely with the specifications here. Where unspecified, follow secure, conventional defaults and keep the code paths explicit and testable.
