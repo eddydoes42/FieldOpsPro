@@ -2251,6 +2251,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Approval requests API endpoints
+  app.get('/api/approval-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      let approvals = [];
+      
+      if (isOperationsDirector(currentUser)) {
+        // Operations Director sees all pending approvals
+        approvals = await storage.getAllApprovalRequests();
+      } else if (hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        // Admin Teams see approvals for their company
+        approvals = await storage.getApprovalRequests(currentUser.id);
+      } else {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(approvals);
+    } catch (error) {
+      console.error("Error fetching approval requests:", error);
+      res.status(500).json({ message: "Failed to fetch approval requests" });
+    }
+  });
+
+  app.patch('/api/approval-requests/:id/review', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Only admin teams can review approval requests" });
+      }
+
+      const { status, response } = req.body;
+      
+      if (!['approved', 'denied'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be 'approved' or 'denied'" });
+      }
+
+      const approval = await storage.reviewApprovalRequest(req.params.id, status, currentUser.id, response);
+      res.json(approval);
+    } catch (error) {
+      console.error("Error reviewing approval request:", error);
+      res.status(500).json({ message: "Failed to review approval request" });
+    }
+  });
+
   app.get('/api/work-orders/pending-approvals/:clientCompanyId?', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);

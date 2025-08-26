@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp } from "lucide-react";
+import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp, FileText, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
@@ -43,6 +43,9 @@ export default function OperationsDirectorDashboard() {
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [showUserCreationDialog, setShowUserCreationDialog] = useState(false);
   const [selectedAccessRequest, setSelectedAccessRequest] = useState<AccessRequest | null>(null);
+  const [showApprovalsDialog, setShowApprovalsDialog] = useState(false);
+  const [selectedApprovalRequest, setSelectedApprovalRequest] = useState<any>(null);
+  const [showApprovalDetailsDialog, setShowApprovalDetailsDialog] = useState(false);
   const [, setLocation] = useLocation();
   const [currentActiveRole, setCurrentActiveRole] = useState(
     localStorage.getItem('permanentRole') || 'operations_director'
@@ -94,6 +97,14 @@ export default function OperationsDirectorDashboard() {
   const { data: accessRequests = [] } = useQuery<AccessRequest[]>({
     queryKey: ['/api/access-requests'],
   });
+
+  // Query for all approval requests
+  const { data: approvalRequests = [] } = useQuery<any[]>({
+    queryKey: ['/api/approval-requests'],
+  });
+
+  // Calculate total pending approvals
+  const totalPendingApprovals = accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length;
 
   // User creation form
   const userForm = useForm({
@@ -359,84 +370,35 @@ export default function OperationsDirectorDashboard() {
           </div>
         </div>
 
-        {/* Things to Approve Section */}
-        {accessRequests.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Things to Approve</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {accessRequests.map((request) => (
-                <Card 
-                  key={request.id} 
-                  className="bg-white dark:bg-gray-800 border-yellow-200 dark:border-yellow-700 cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900/10 transition-colors"
-                  onClick={() => handleAccessRequestClick(request)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {request.firstName} {request.lastName}
-                      </CardTitle>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                        {request.requestedRole.replace('_', ' ').split(' ').map(word => 
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ')}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <strong>Email:</strong> {request.email}
-                      </p>
-                      {request.phone && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <strong>Phone:</strong> {request.phone}
-                        </p>
-                      )}
-                      {request.howHeardAbout && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <strong>Source:</strong> {request.howHeardAbout}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : 'N/A'}
-                        </div>
-                        <div className="flex space-x-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleApproveRequest(request.id);
-                            }}
-                          >
-                            <CheckCircle className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-red-600 border-red-200 hover:bg-red-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRejectRequest(request.id);
-                            }}
-                          >
-                            <XCircle className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          {/* Things to Approve Button */}
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors relative"
+            onClick={() => setShowApprovalsDialog(true)}
+            data-testid="button-things-to-approve"
+          >
+            <CardContent className="p-6 h-32 flex flex-col justify-between">
+              <div className="flex flex-col items-center justify-center flex-1">
+                <div className="relative">
+                  <FileText className="h-8 w-8 text-amber-600 dark:text-amber-400 mb-2" />
+                  {totalPendingApprovals > 0 && (
+                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                      {totalPendingApprovals}
+                    </div>
+                  )}
+                </div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {totalPendingApprovals}
+                </p>
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 text-center">
+                Things to Approve
+              </p>
+            </CardContent>
+          </Card>
           <Card 
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
             onClick={() => setLocation('/operations/companies')}
@@ -505,6 +467,247 @@ export default function OperationsDirectorDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Things to Approve Dialog */}
+        <Dialog open={showApprovalsDialog} onOpenChange={setShowApprovalsDialog}>
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-amber-600" />
+                Things to Approve ({totalPendingApprovals})
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Access Requests */}
+              {accessRequests.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    Access Requests ({accessRequests.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {accessRequests.map((request) => (
+                      <Card 
+                        key={request.id} 
+                        className="bg-white dark:bg-gray-800 border-yellow-200 dark:border-yellow-700 cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900/10 transition-colors"
+                        onClick={() => {
+                          setSelectedAccessRequest(request);
+                          setShowUserCreationDialog(true);
+                          setShowApprovalsDialog(false);
+                        }}
+                        data-testid={`card-access-request-${request.id}`}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {request.firstName} {request.lastName}
+                            </CardTitle>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {request.requestedRole.replace('_', ' ').split(' ').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                              ).join(' ')}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-2">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              <strong>Email:</strong> {request.email}
+                            </p>
+                            {request.phone && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <strong>Phone:</strong> {request.phone}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between pt-2">
+                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : 'N/A'}
+                              </div>
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-green-600 border-green-200 hover:bg-green-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApproveRequest(request.id);
+                                  }}
+                                  data-testid={`button-approve-${request.id}`}
+                                >
+                                  <CheckCircle className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRejectRequest(request.id);
+                                  }}
+                                  data-testid={`button-reject-${request.id}`}
+                                >
+                                  <XCircle className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Other Approval Requests */}
+              {approvalRequests.filter(req => req.status === 'pending').length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    Other Approvals ({approvalRequests.filter(req => req.status === 'pending').length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {approvalRequests.filter(req => req.status === 'pending').map((request) => (
+                      <Card 
+                        key={request.id} 
+                        className="bg-white dark:bg-gray-800 border-orange-200 dark:border-orange-700 cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors"
+                        onClick={() => {
+                          setSelectedApprovalRequest(request);
+                          setShowApprovalDetailsDialog(true);
+                        }}
+                        data-testid={`card-approval-${request.id}`}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {request.type === 'user_deletion' && 'User Deletion Request'}
+                              {request.type === 'high_budget_work_order' && 'High Budget Work Order'}
+                              {request.type === 'high_budget_project' && 'High Budget Project'}
+                              {request.type === 'issue_escalation' && 'Issue Escalation'}
+                            </CardTitle>
+                            <Badge 
+                              variant="outline" 
+                              className={
+                                request.priority === 'urgent' ? 'bg-red-50 text-red-700 border-red-200' :
+                                request.priority === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                'bg-blue-50 text-blue-700 border-blue-200'
+                              }
+                            >
+                              {request.priority?.toUpperCase() || 'NORMAL'}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-2">
+                            {request.budgetAmount && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <strong>Budget:</strong> ${parseFloat(request.budgetAmount).toLocaleString()}
+                              </p>
+                            )}
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              <strong>Requested:</strong> {new Date(request.createdAt).toLocaleDateString()}
+                            </p>
+                            <div className="flex items-center justify-between pt-2">
+                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Needs Review
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {totalPendingApprovals === 0 && (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No pending approvals at this time.</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Approval Details Dialog */}
+        <Dialog open={showApprovalDetailsDialog} onOpenChange={setShowApprovalDetailsDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Approval Request Details</DialogTitle>
+            </DialogHeader>
+            {selectedApprovalRequest && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Type:</label>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {selectedApprovalRequest.type === 'user_deletion' && 'User Deletion Request'}
+                    {selectedApprovalRequest.type === 'high_budget_work_order' && 'High Budget Work Order'}
+                    {selectedApprovalRequest.type === 'high_budget_project' && 'High Budget Project'}
+                    {selectedApprovalRequest.type === 'issue_escalation' && 'Issue Escalation'}
+                  </p>
+                </div>
+                
+                {selectedApprovalRequest.budgetAmount && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Budget Amount:</label>
+                    <p className="text-sm text-gray-900 dark:text-white">
+                      ${parseFloat(selectedApprovalRequest.budgetAmount).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                
+                {selectedApprovalRequest.notes && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Notes:</label>
+                    <p className="text-sm text-gray-900 dark:text-white">{selectedApprovalRequest.notes}</p>
+                  </div>
+                )}
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowApprovalDetailsDialog(false)}
+                    data-testid="button-cancel-approval"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    onClick={() => {
+                      // Handle deny logic
+                      setShowApprovalDetailsDialog(false);
+                    }}
+                    data-testid="button-deny-approval"
+                  >
+                    Deny
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Handle approve logic
+                      setShowApprovalDetailsDialog(false);
+                    }}
+                    data-testid="button-approve-approval"
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
+                    onClick={() => {
+                      // Handle intervene logic
+                      setShowApprovalDetailsDialog(false);
+                    }}
+                    data-testid="button-intervene-approval"
+                  >
+                    Intervene
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* User Creation Dialog */}
         <Dialog open={showUserCreationDialog} onOpenChange={setShowUserCreationDialog}>

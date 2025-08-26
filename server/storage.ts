@@ -264,6 +264,7 @@ export interface IStorage {
   // Approval Requests operations
   createApprovalRequest(request: InsertApprovalRequest): Promise<ApprovalRequest>;
   getApprovalRequests(reviewerId: string): Promise<ApprovalRequest[]>;
+  getAllApprovalRequests(): Promise<ApprovalRequest[]>;
   reviewApprovalRequest(id: string, status: 'approved' | 'denied', reviewerId: string, response?: string): Promise<ApprovalRequest>;
   
   // Access Requests operations
@@ -1943,6 +1944,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(approvalRequests)
       .where(eq(approvalRequests.reviewerId, reviewerId));
+  }
+
+  async getAllApprovalRequests(): Promise<ApprovalRequest[]> {
+    return await db
+      .select()
+      .from(approvalRequests)
+      .orderBy(desc(approvalRequests.createdAt));
   }
 
   async reviewApprovalRequest(id: string, status: 'approved' | 'denied', reviewerId: string, response?: string): Promise<ApprovalRequest> {

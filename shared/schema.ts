@@ -488,10 +488,16 @@ export const projectAssignments = pgTable("project_assignments", {
 // Approval requests table (for onboarding requests within projects)
 export const approvalRequests = pgTable("approval_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  type: varchar("type").notNull(), // "user_onboarding", "project_assignment", etc.
+  type: varchar("type").notNull(), // "access_request", "user_deletion", "high_budget_work_order", "high_budget_project", "issue_escalation"
   requestedById: varchar("requested_by_id").notNull().references(() => users.id),
   reviewerId: varchar("reviewer_id").references(() => users.id), // admin who needs to approve
+  companyId: varchar("company_id").references(() => companies.id), // company context for request
   projectId: varchar("project_id").references(() => projects.id),
+  workOrderId: varchar("work_order_id").references(() => workOrders.id),
+  issueId: varchar("issue_id").references(() => issues.id),
+  targetUserId: varchar("target_user_id").references(() => users.id), // user being deleted/affected
+  budgetAmount: decimal("budget_amount", { precision: 10, scale: 2 }), // for budget approvals
+  priority: varchar("priority").default("normal"), // low, normal, high, urgent
   status: varchar("status").notNull().default("pending"), // pending, approved, rejected
   requestData: jsonb("request_data"), // stores form data for user creation, etc.
   notes: text("notes"),
