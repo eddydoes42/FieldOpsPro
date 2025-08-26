@@ -238,10 +238,27 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     requestJobMutation.mutate(data);
   };
 
+  // Currency formatting utility
+  const formatCurrency = (value: string) => {
+    // Remove all non-digit characters
+    const numericValue = value.replace(/[^\d]/g, '');
+    
+    if (!numericValue) return '';
+    
+    // Convert to number and format with commas
+    const number = parseInt(numericValue);
+    return `$${number.toLocaleString()}`;
+  };
+
+  const parseCurrency = (value: string) => {
+    // Remove currency symbol and commas, return numeric value
+    return value.replace(/[$,]/g, '');
+  };
+
   const onWorkOrderSubmit = (data: any) => {
     createWorkOrderMutation.mutate({
       ...data,
-      budget: data.budget ? parseFloat(data.budget) : null,
+      budget: data.budget ? parseFloat(parseCurrency(data.budget)) : null,
       estimatedHours: data.estimatedHours ? parseInt(data.estimatedHours) : null,
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
     });
@@ -526,9 +543,14 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                 <FormControl>
                                   <Input 
                                     placeholder="Enter budget amount" 
-                                    type="number"
-                                    step="0.01"
-                                    {...field} 
+                                    type="text"
+                                    value={field.value ? formatCurrency(field.value) : ''}
+                                    onChange={(e) => {
+                                      const formattedValue = formatCurrency(e.target.value);
+                                      field.onChange(formattedValue);
+                                    }}
+                                    onBlur={field.onBlur}
+                                    name={field.name}
                                   />
                                 </FormControl>
                                 <FormMessage />
