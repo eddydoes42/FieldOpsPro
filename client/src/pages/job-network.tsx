@@ -469,7 +469,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="">Operations Director (Self)</SelectItem>
+                                    <SelectItem value="operations_director">Operations Director (Self)</SelectItem>
                                     {clientCompanies.map((company: any) => (
                                       <SelectItem key={company.id} value={company.id}>
                                         {company.name}

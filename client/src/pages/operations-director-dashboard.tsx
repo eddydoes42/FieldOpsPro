@@ -476,6 +476,9 @@ export default function OperationsDirectorDashboard() {
                 <FileText className="h-5 w-5 text-amber-600" />
                 Things to Approve ({totalPendingApprovals})
               </DialogTitle>
+              <DialogDescription>
+                Review and approve pending access requests, user deletions, and high-budget items.
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
@@ -635,6 +638,9 @@ export default function OperationsDirectorDashboard() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Approval Request Details</DialogTitle>
+              <DialogDescription>
+                Review the details of this approval request and choose an action.
+              </DialogDescription>
             </DialogHeader>
             {selectedApprovalRequest && (
               <div className="space-y-4">
@@ -714,6 +720,9 @@ export default function OperationsDirectorDashboard() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Create User Account</DialogTitle>
+              <DialogDescription>
+                Create a new user account from this approved access request.
+              </DialogDescription>
             </DialogHeader>
             <Form {...userForm}>
               <form onSubmit={userForm.handleSubmit(onSubmitUserCreation)} className="space-y-4">

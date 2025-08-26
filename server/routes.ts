@@ -506,11 +506,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if this should be treated as a client-created work order
       // (either user is actual client OR operations director testing client role via UI)
       const isClientUser = isClient(currentUser) || (isOperationsDirector(currentUser) && req.body.isClientCreated);
+      
+      // Handle Operations Director posting on behalf of client companies
+      let effectiveCompanyId = 'default-company-id'; // Default fallback
+      if (isOperationsDirector(currentUser) && req.body.clientCompanyId) {
+        if (req.body.clientCompanyId === 'operations_director') {
+          effectiveCompanyId = 'default-company-id'; // Operations Director uses default company
+        } else {
+          effectiveCompanyId = req.body.clientCompanyId; // Use selected client company
+        }
+      } else if (currentUser.companyId) {
+        effectiveCompanyId = currentUser.companyId; // Use user's company
+      }
+      
       const workOrderData = {
         id: `wo-${Date.now()}`, // Generate unique ID
         title: req.body.title,
         description: req.body.description,
-        companyId: 'default-company-id', // Add required companyId field
+        companyId: effectiveCompanyId,
         location: req.body.location || '',
         priority: req.body.priority || 'medium',
         status: 'pending', // Default status for new work orders
