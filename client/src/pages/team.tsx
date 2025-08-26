@@ -381,6 +381,16 @@ export default function TeamPage() {
     return filteredUsers.filter((user: any) => user.roles?.includes(role)).length;
   };
 
+  const getUsersForCompany = (companyId: string) => {
+    if (!allUsers) return [];
+    // Filter out users who ONLY have operations_director role (not company team members)
+    return (allUsers as any[]).filter((user: any) => {
+      const roles = user.roles || [];
+      // Include if user has other roles besides operations_director and matches company
+      return user.companyId === companyId && roles.some((r: string) => r !== 'operations_director');
+    });
+  };
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -592,6 +602,34 @@ export default function TeamPage() {
                       All Status
                     </Button>
                   </div>
+
+                  {/* Company Filter - Only for Operations Director */}
+                  {isOperationsDirectorSuperUser && companies && (companies as any[]).length > 0 && (
+                    <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                      <select
+                        value={companyFilter}
+                        onChange={(e) => {
+                          setCompanyFilter(e.target.value);
+                          // Update URL to reflect company filter
+                          const url = new URL(window.location.href);
+                          if (e.target.value === "all") {
+                            url.searchParams.delete('company');
+                          } else {
+                            url.searchParams.set('company', e.target.value);
+                          }
+                          window.history.pushState({}, '', url.toString());
+                        }}
+                        className="px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                      >
+                        <option value="all">All Companies</option>
+                        {(companies as any[]).map((company: any) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name} ({getUsersForCompany(company.id).length})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
 
                 </div>
