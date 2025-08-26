@@ -16,7 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquare, AlertCircle, Home, ArrowLeft, Check } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { canCreateProjects, canViewProjectNetwork } from '@shared/schema';
+import { canCreateProjects, canViewProjectNetwork, isOperationsDirector } from '@shared/schema';
 import type { Project, InsertProject } from '@shared/schema';
 
 const projectSchema = z.object({
@@ -537,7 +537,25 @@ export default function ProjectNetwork() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLocation('/dashboard')}
+              onClick={() => {
+                // Try browser history first, fallback to appropriate dashboard
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  // Determine appropriate dashboard based on user role
+                  if (isOperationsDirector(user as any)) {
+                    setLocation('/operations-dashboard');
+                  } else if ((user as any)?.roles?.includes('administrator')) {
+                    setLocation('/admin-dashboard');
+                  } else if ((user as any)?.roles?.includes('manager')) {
+                    setLocation('/admin-dashboard');
+                  } else if ((user as any)?.roles?.includes('dispatcher')) {
+                    setLocation('/admin-dashboard');
+                  } else {
+                    setLocation('/dashboard');
+                  }
+                }
+              }}
               className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

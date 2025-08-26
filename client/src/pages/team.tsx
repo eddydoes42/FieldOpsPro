@@ -441,7 +441,25 @@ export default function TeamPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.history.back()}
+              onClick={() => {
+                // Try browser history first, fallback to dashboard
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  // Determine appropriate dashboard based on user role
+                  if (isOperationsDirector(user as any)) {
+                    setLocation('/operations-dashboard');
+                  } else if ((user as any)?.roles?.includes('administrator')) {
+                    setLocation('/admin-dashboard');
+                  } else if ((user as any)?.roles?.includes('manager')) {
+                    setLocation('/admin-dashboard');
+                  } else if ((user as any)?.roles?.includes('dispatcher')) {
+                    setLocation('/admin-dashboard');
+                  } else {
+                    setLocation('/dashboard');
+                  }
+                }
+              }}
               className="flex items-center space-x-1"
             >
               <ArrowLeft className="h-4 w-4" />
