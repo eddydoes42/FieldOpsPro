@@ -376,13 +376,20 @@ export default function TeamPage() {
             </Button>
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">Team Management</h1>
-            <p className="text-muted-foreground mt-2">
-              {companyFilter !== "all" && companies ? 
-                `Showing team members for ${(companies as any[]).find(c => c.id === companyFilter)?.name || 'Selected Company'}` :
-                "Manage your team members and their accounts"
-              }
-            </p>
+            <h1 className="text-3xl font-bold text-foreground mb-4">Team Management</h1>
+            {companyFilter !== "all" && companies && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  Showing team members for {(companies as any[]).find(c => c.id === companyFilter)?.name || 'Selected Company'}
+                </span>
+              </div>
+            )}
+            {companyFilter === "all" && (
+              <p className="text-muted-foreground">
+                Manage your team members and their accounts
+              </p>
+            )}
             {companyFilter !== "all" && (
               <Button
                 variant="outline"
