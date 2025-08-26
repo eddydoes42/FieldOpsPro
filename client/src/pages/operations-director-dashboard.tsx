@@ -382,8 +382,8 @@ export default function OperationsDirectorDashboard() {
           >
             <CardContent className="p-6 h-32 flex flex-col justify-between">
               <div className="flex flex-col items-center justify-center flex-1">
-                <div className="relative">
-                  <FileText className="h-8 w-8 text-amber-600 dark:text-amber-400 mb-2" />
+                <div className="relative mb-2">
+                  <FileText className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                   {totalPendingApprovals > 0 && (
                     <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
                       {totalPendingApprovals}
