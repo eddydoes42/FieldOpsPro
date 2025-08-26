@@ -13,7 +13,7 @@ FieldOps Pro is a comprehensive field operations management platform that empowe
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies").
+Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies"). Organizations providing work orders and projects to Service Companies should be referred to as "Client Companies" (not just "Companies")
 
 ## Terminology
 - **Service Company Role Tester**: Purple-colored role tester bar for testing service company roles (Administrator, Manager, Dispatcher, Field Agent)
