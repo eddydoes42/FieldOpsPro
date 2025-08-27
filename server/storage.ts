@@ -26,6 +26,7 @@ import {
   accessRequests,
   jobRequests,
   onboardingRequests,
+  feedback,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -81,6 +82,8 @@ import {
   type InsertExclusiveNetwork,
   type OnboardingRequest,
   type InsertOnboardingRequest,
+  type Feedback,
+  type InsertFeedback,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -250,6 +253,20 @@ export interface IStorage {
   getDispatcherRatings(dispatcherId: string): Promise<ClientDispatcherRating[]>;
   getClientRatings(clientId: string): Promise<ServiceClientRating[]>;
   updateUserRatings(userId: string): Promise<void>;
+
+  // Feedback operations (Client Feedback Loop)
+  createFeedback(feedback: InsertFeedback): Promise<Feedback>;
+  getFeedbackByWorkOrder(workOrderId: string): Promise<Feedback | undefined>;
+  getFeedbackByAgent(agentId: string): Promise<Feedback[]>;
+  getAllFeedback(filters: {
+    companyId?: string;
+    stars?: number;
+    dateFrom?: string;
+    dateTo?: string;
+    agentId?: string;
+    limit: number;
+    offset: number;
+  }): Promise<Feedback[]>;
   updateCompanyRatings(companyId: string): Promise<void>;
   
   // Exclusive Network operations
@@ -1872,6 +1889,79 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       }).where(eq(companies.id, companyId));
     }
+  }
+
+  // Feedback operations (Client Feedback Loop)
+  async createFeedback(feedbackData: InsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db
+      .insert(feedback)
+      .values(feedbackData)
+      .returning();
+    return newFeedback;
+  }
+
+  async getFeedbackByWorkOrder(workOrderId: string): Promise<Feedback | undefined> {
+    const [feedbackRecord] = await db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.workOrderId, workOrderId));
+    return feedbackRecord;
+  }
+
+  async getFeedbackByAgent(agentId: string): Promise<Feedback[]> {
+    return await db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.givenTo, agentId))
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async getAllFeedback(filters: {
+    companyId?: string;
+    stars?: number;
+    dateFrom?: string;
+    dateTo?: string;
+    agentId?: string;
+    limit: number;
+    offset: number;
+  }): Promise<Feedback[]> {
+    const conditions = [];
+
+    if (filters.companyId) {
+      conditions.push(eq(workOrders.companyId, filters.companyId));
+    }
+
+    if (filters.stars) {
+      conditions.push(eq(feedback.stars, filters.stars));
+    }
+
+    if (filters.agentId) {
+      conditions.push(eq(feedback.givenTo, filters.agentId));
+    }
+
+    if (filters.dateFrom) {
+      conditions.push(sql`${feedback.createdAt} >= ${new Date(filters.dateFrom)}`);
+    }
+
+    if (filters.dateTo) {
+      conditions.push(sql`${feedback.createdAt} <= ${new Date(filters.dateTo)}`);
+    }
+
+    let query = db
+      .select()
+      .from(feedback)
+      .leftJoin(workOrders, eq(feedback.workOrderId, workOrders.id))
+      .leftJoin(companies, eq(workOrders.clientCompanyId, companies.id))
+      .leftJoin(users, eq(feedback.givenTo, users.id));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query
+      .orderBy(desc(feedback.createdAt))
+      .limit(filters.limit)
+      .offset(filters.offset);
   }
 
   // Exclusive Network operations

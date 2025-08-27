@@ -308,6 +308,18 @@ export const auditLogs = pgTable("audit_logs", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+export const feedback = pgTable("feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  givenBy: varchar("given_by").notNull().references(() => users.id),
+  givenTo: varchar("given_to").notNull().references(() => users.id),
+  stars: integer("stars").notNull(),
+  categoryScores: jsonb("category_scores"),
+  comments: text("comments"),
+  wouldHireAgain: boolean("would_hire_again"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Notifications table for work order confirmations
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -802,6 +814,23 @@ export const jobRequestsRelations = relations(jobRequests, ({ one }) => ({
   }),
 }));
 
+export const feedbackRelations = relations(feedback, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [feedback.workOrderId],
+    references: [workOrders.id],
+  }),
+  giver: one(users, {
+    fields: [feedback.givenBy],
+    references: [users.id],
+    relationName: "feedbackGiver"
+  }),
+  receiver: one(users, {
+    fields: [feedback.givenTo],
+    references: [users.id],
+    relationName: "feedbackReceiver"
+  }),
+}));
+
 // Role validation schema
 export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client'])).min(1);
 
@@ -910,6 +939,11 @@ export const insertExclusiveNetworkSchema = createInsertSchema(exclusiveNetworks
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertFeedbackSchema = createInsertSchema(feedback).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertJobNetworkPostSchema = createInsertSchema(jobNetworkPosts).omit({
@@ -1059,6 +1093,9 @@ export type InsertStructuredIssue = z.infer<typeof insertStructuredIssueSchema>;
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+
+export type Feedback = typeof feedback.$inferSelect;
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {

@@ -1,0 +1,70 @@
+## Module: Service Quality Dashboard (FieldOps Pro Enhancement)
+
+### Objective:
+Provide company‑level operational and service quality insights, aggregating data from agents, work orders, issues, audit logs, and client feedback to inform strategic decisions.
+
+---
+
+### Data Inputs:
+- Aggregated Agent Performance Metrics (from previous module)
+- Client Feedback Loop data (ratings, comments, hire‑again responses)
+- Work Order statistics (volume, types, completion timeframes)
+- Issue Creation module data (count, category, resolution time)
+- Audit Trail compliance scores
+- Timeliness % (on‑time starts & finishes)
+
+---
+
+### Affected Roles:
+- Operations Director (full company view)
+- Service Company Admin (view only their company data)
+- Client Company Admin (optional view of their contracted company’s performance)
+
+---
+
+### Affected Pages:
+- `/admin-dashboard/service-quality`
+- `/service-company-dashboard/quality`
+
+---
+
+### Implementation Steps:
+
+1. **Backend Aggregation**
+   - Create `/api/service-quality?companyId=abc`
+     - Returns:
+       - Overall Client Satisfaction Score (avg. star + hire‑again %)
+       - Service Compliance Score (audit trail & timeliness)
+       - Issue Rate (% of jobs with issues)
+       - Resolution Speed (avg. time to close issues)
+       - Job Volume Trends (daily, weekly, monthly)
+
+2. **Database Schema**
+   - Optional snapshot table `service_quality_snapshots` for historical trend graphing:
+     id SERIAL PRIMARY KEY,
+     company_id UUID REFERENCES companies(id),
+     period_start DATE,
+     period_end DATE,
+     metrics JSONB,
+     created_at TIMESTAMP DEFAULT NOW()
+
+3. **Frontend Visualization**
+   - KPI tiles at top (big‑number stats)
+   - Trend line for satisfaction over time
+   - Stacked bar for issues by category
+   - Heatmap for peak job load times
+   - Drill‑down links to Agent Performance view
+
+4. **Alerts & Thresholds**
+   - Flag when satisfaction drops below threshold (e.g., 4.0 stars)
+   - Flag if issue rate spikes above normal baseline
+
+5. **Permissions**
+   - Strict RBAC to ensure no cross‑company data leakage
+
+---
+
+### Notes:
+- Can be extended later for **predictive service quality risk**.
+- Visuals should be mobile‑friendly for on‑the‑go monitoring.
+- Keeps company leadership informed without requiring deep dive into individual records.

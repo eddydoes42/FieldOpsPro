@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
 import { logWorkOrderAction, logIssueAction, logUserAction, logAssignmentAction, AUDIT_ACTIONS } from "./auditLogger";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -2021,6 +2021,281 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching client ratings:", error);
       res.status(500).json({ message: "Failed to fetch ratings" });
+    }
+  });
+
+  // FEEDBACK ROUTES (Client Feedback Loop)
+  
+  // Create feedback for completed work order
+  app.post('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !isClient(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Only client companies can submit feedback." });
+      }
+
+      // Validate input data
+      const validatedData = insertFeedbackSchema.parse(req.body);
+      
+      // Verify work order exists and is completed
+      const workOrder = await storage.getWorkOrder(validatedData.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found." });
+      }
+      
+      if (workOrder.status !== 'completed') {
+        return res.status(400).json({ message: "Can only provide feedback for completed work orders." });
+      }
+
+      // Check if feedback already exists for this work order
+      const existingFeedback = await storage.getFeedbackByWorkOrder(validatedData.workOrderId);
+      if (existingFeedback) {
+        return res.status(400).json({ message: "Feedback already submitted for this work order." });
+      }
+
+      // Create feedback with client as giver
+      const feedbackData = {
+        ...validatedData,
+        givenBy: userId
+      };
+
+      const feedback = await storage.createFeedback(feedbackData);
+      res.status(201).json(feedback);
+    } catch (error: any) {
+      console.error("Error creating feedback:", error);
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid feedback data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create feedback" });
+    }
+  });
+
+  // Get feedback for a work order
+  app.get('/api/feedback/work-order/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'operations_director', 'client'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      const feedback = await storage.getFeedbackByWorkOrder(req.params.workOrderId);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching work order feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  // Get feedback for an agent
+  app.get('/api/feedback/agent/:agentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'operations_director', 'field_agent'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Field agents can only view their own feedback
+      if (hasAnyRole(currentUser, ['field_agent']) && req.params.agentId !== userId) {
+        return res.status(403).json({ message: "Access denied. Can only view own feedback." });
+      }
+
+      const feedback = await storage.getFeedbackByAgent(req.params.agentId);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching agent feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  // Get all feedback with filters (for Operations Director and admin analytics)
+  app.get('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied. Only Operations Director and admin teams can view all feedback." });
+      }
+
+      // Parse query parameters
+      const {
+        companyId,
+        stars,
+        dateFrom,
+        dateTo,
+        agentId,
+        limit = 20,
+        offset = 0
+      } = req.query;
+
+      // For non-Operations Director users, filter by their company
+      const filters = {
+        companyId: isOperationsDirector(currentUser) ? companyId : currentUser.companyId,
+        stars: stars ? parseInt(stars as string) : undefined,
+        dateFrom: dateFrom as string,
+        dateTo: dateTo as string,
+        agentId: agentId as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      };
+
+      const feedback = await storage.getAllFeedback(filters);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching all feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  // ===== CLIENT FEEDBACK LOOP ROUTES =====
+
+  // Create feedback after work order completion
+  app.post('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !isClient(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Client role required." });
+      }
+
+      // Get work order details to validate access and populate data
+      const workOrder = await storage.getWorkOrder(req.body.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if work order is completed
+      if (workOrder.status !== 'completed') {
+        return res.status(400).json({ message: "Feedback can only be submitted for completed work orders" });
+      }
+
+      // Check if client created this work order
+      if (workOrder.createdById !== userId) {
+        return res.status(403).json({ message: "Access denied. You can only provide feedback for work orders you created." });
+      }
+
+      // Check if feedback already exists
+      const existingFeedback = await storage.getFeedbackByWorkOrder(req.body.workOrderId);
+      if (existingFeedback) {
+        return res.status(400).json({ message: "Feedback already exists for this work order" });
+      }
+
+      const feedbackData = insertFeedbackSchema.parse({
+        ...req.body,
+        givenBy: userId,
+        givenTo: workOrder.assigneeId || workOrder.createdById,
+      });
+
+      const feedback = await storage.createFeedback(feedbackData);
+      
+      // Log the feedback action
+      await logUserAction(userId, 'feedback_submitted', {
+        workOrderId: workOrder.id,
+        feedbackId: feedback.id,
+        stars: feedback.stars,
+        wouldHireAgain: feedback.wouldHireAgain,
+      });
+
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error creating feedback:", error);
+      res.status(500).json({ message: "Failed to create feedback" });
+    }
+  });
+
+  // Get feedback for a work order
+  app.get('/api/feedback/work-order/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const workOrder = await storage.getWorkOrder(req.params.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check permissions
+      const canView = isOperationsDirector(currentUser) || 
+                     workOrder.createdById === userId ||
+                     workOrder.assigneeId === userId ||
+                     (currentUser.companyId === workOrder.companyId && hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher']));
+
+      if (!canView) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      const feedback = await storage.getFeedbackByWorkOrder(req.params.workOrderId);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  // Get feedback for an agent (aggregated)
+  app.get('/api/feedback/agent/:agentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Check permissions
+      const canView = isOperationsDirector(currentUser) ||
+                     req.params.agentId === userId ||
+                     hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher']);
+
+      if (!canView) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      const feedback = await storage.getFeedbackByAgent(req.params.agentId);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching agent feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  // Get all feedback (admin dashboard)
+  app.get('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin role required." });
+      }
+
+      const { stars, dateFrom, dateTo, agentId, limit = 50, offset = 0 } = req.query;
+      
+      const feedback = await storage.getAllFeedback({
+        companyId: isOperationsDirector(currentUser) ? undefined : currentUser.companyId,
+        stars: stars ? parseInt(stars as string) : undefined,
+        dateFrom: dateFrom as string,
+        dateTo: dateTo as string,
+        agentId: agentId as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
+
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching all feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
     }
   });
 
