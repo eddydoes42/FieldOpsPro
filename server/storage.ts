@@ -22,6 +22,7 @@ import {
   approvalRequests,
   accessRequests,
   jobRequests,
+  onboardingRequests,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -69,6 +70,8 @@ import {
   type InsertJobRequest,
   type ExclusiveNetwork,
   type InsertExclusiveNetwork,
+  type OnboardingRequest,
+  type InsertOnboardingRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -283,6 +286,12 @@ export interface IStorage {
   getJobRequestsByCompany(companyId: string): Promise<JobRequest[]>;
   getJobRequestsByAgent(agentId: string): Promise<JobRequest[]>;
   reviewJobRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, rejectionReason?: string): Promise<JobRequest>;
+
+  // Onboarding Request operations
+  createOnboardingRequest(request: InsertOnboardingRequest): Promise<OnboardingRequest>;
+  getAllOnboardingRequests(): Promise<OnboardingRequest[]>;
+  getOnboardingRequest(id: string): Promise<OnboardingRequest | undefined>;
+  reviewOnboardingRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, rejectionReason?: string): Promise<OnboardingRequest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2327,6 +2336,97 @@ export class DatabaseStorage implements IStorage {
 
   async getJobRequest(requestId: string): Promise<JobRequest | undefined> {
     const [request] = await db.select().from(jobRequests).where(eq(jobRequests.id, requestId));
+    return request;
+  }
+
+  // Onboarding Request operations
+  async createOnboardingRequest(request: InsertOnboardingRequest): Promise<OnboardingRequest> {
+    const [newRequest] = await db
+      .insert(onboardingRequests)
+      .values(request)
+      .returning();
+    return newRequest;
+  }
+
+  async getAllOnboardingRequests(): Promise<OnboardingRequest[]> {
+    return await db
+      .select({
+        id: onboardingRequests.id,
+        name: onboardingRequests.name,
+        email: onboardingRequests.email,
+        phone: onboardingRequests.phone,
+        company: onboardingRequests.company,
+        skills: onboardingRequests.skills,
+        resumeUrl: onboardingRequests.resumeUrl,
+        motivation: onboardingRequests.motivation,
+        status: onboardingRequests.status,
+        reviewedBy: onboardingRequests.reviewedBy,
+        reviewedAt: onboardingRequests.reviewedAt,
+        rejectionReason: onboardingRequests.rejectionReason,
+        createdAt: onboardingRequests.createdAt,
+        updatedAt: onboardingRequests.updatedAt,
+        // Include reviewer information
+        reviewer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        }
+      })
+      .from(onboardingRequests)
+      .leftJoin(users, eq(onboardingRequests.reviewedBy, users.id))
+      .orderBy(desc(onboardingRequests.createdAt));
+  }
+
+  async getOnboardingRequest(id: string): Promise<OnboardingRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(onboardingRequests)
+      .where(eq(onboardingRequests.id, id));
+    return request;
+  }
+
+  async reviewOnboardingRequest(
+    id: string, 
+    status: 'approved' | 'rejected', 
+    reviewedById: string, 
+    rejectionReason?: string
+  ): Promise<OnboardingRequest> {
+    const [request] = await db
+      .update(onboardingRequests)
+      .set({
+        status,
+        reviewedBy: reviewedById,
+        reviewedAt: new Date(),
+        rejectionReason: status === 'rejected' ? rejectionReason : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(onboardingRequests.id, id))
+      .returning();
+
+    // If approved, create a user account with field_agent role
+    if (status === 'approved' && request) {
+      // Find the first service company to assign the new user to
+      const serviceCompanies = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.type, 'service'))
+        .limit(1);
+
+      const assignedCompanyId = serviceCompanies.length > 0 ? serviceCompanies[0].id : null;
+
+      await this.createUser({
+        email: request.email,
+        firstName: request.name.split(' ')[0] || request.name,
+        lastName: request.name.split(' ').slice(1).join(' ') || '',
+        phone: request.phone || undefined,
+        roles: ['field_agent'],
+        companyId: assignedCompanyId,
+        skills: request.skills || [],
+        isActive: true,
+      });
+    }
+    
     return request;
   }
 }

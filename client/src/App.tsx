@@ -42,6 +42,8 @@ import TalentNetworkPage from '@/pages/talent-network';
 import ProjectNetworkPage from '@/pages/project-network';
 import ProjectManagerDashboard from '@/pages/project-manager-dashboard';
 import JobRequestsPage from '@/pages/job-requests';
+import Apply from '@/pages/apply';
+import OnboardingRequests from '@/pages/onboarding-requests';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -384,6 +386,30 @@ function Router() {
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <WorkOrders /> : <Landing />}
               </div>
+            </Route>
+
+            {/* Public route for contractor applications - no authentication needed */}
+            <Route path="/apply">
+              <Apply />
+            </Route>
+
+            {/* Operations Director only route for reviewing applications */}
+            <Route path="/onboarding-requests">
+              {(() => {
+                // Only allow Operations Directors when NOT role testing
+                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
+                
+                if (isAuthenticated && isSuperUserAccess) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      <OnboardingRequests />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
 
             <Route path="/job-requests">

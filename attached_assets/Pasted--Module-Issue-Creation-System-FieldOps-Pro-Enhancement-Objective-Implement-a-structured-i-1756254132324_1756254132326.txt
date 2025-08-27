@@ -1,0 +1,65 @@
+## Module: Issue Creation System (FieldOps Pro Enhancement)
+
+### Objective:
+Implement a structured issue reporting system tied to specific work orders. Issues should be traceable, role-restricted, and optionally escalated for approval. This builds on the job-linked messaging system and adds operational transparency.
+
+---
+
+### Affected Roles:
+- Field Agent (issue reporter)
+- Manager / Administrator (issue reviewer)
+- Operations Director (oversight)
+
+### Affected Pages:
+- `/work-order/:id` (job detail view)
+- `/issues` (admin dashboard tab)
+
+---
+
+### Implementation Steps:
+
+1. **Frontend (Work Order View)**
+   - Add “Create Issue” button to `/work-order/:id`
+   - On click, open modal with:
+     - Issue Type (dropdown: Hazard, Delay, Equipment, Other)
+     - Description (textarea)
+     - Optional file upload (photos, logs)
+     - Severity Level (Low, Medium, High)
+   - On submit, POST to `/api/issues`
+
+2. **Backend API**
+   - Create `POST /api/issues` to log issue
+   - Create `GET /api/issues?workOrderId=abc123` to fetch issues per job
+   - Create `PATCH /api/issues/:id` to update status (e.g., resolved, escalated)
+
+3. **Database Schema**
+   - Add `issues` table:
+     id SERIAL PRIMARY KEY,
+     work_order_id UUID REFERENCES work_orders(id),
+     reporter_id UUID REFERENCES users(id),
+     type TEXT,
+     description TEXT,
+     severity TEXT CHECK (severity IN ('low', 'medium', 'high')),
+     status TEXT CHECK (status IN ('open', 'resolved', 'escalated')),
+     attachments TEXT[],
+     created_at TIMESTAMP DEFAULT NOW(),
+     reviewed_by UUID REFERENCES users(id),
+     reviewed_at TIMESTAMP
+
+4. **Admin Dashboard**
+   - New tab: “Issues”
+   - Filter by status, severity, or work order
+   - Approve, resolve, or escalate issues
+   - Optionally link to job message thread for context
+
+5. **Notifications**
+   - Trigger alerts for new issues
+   - High-severity issues require Manager+ approval
+   - Escalated issues notify Operations Director
+
+---
+
+### Notes:
+- Preserve your existing “hazard alert” logic—this system formalizes it.
+- Consider adding audit trail for issue resolution steps.
+- Optionally allow agents to view status of their submitted issues.

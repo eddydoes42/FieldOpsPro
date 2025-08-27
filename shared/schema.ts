@@ -95,6 +95,11 @@ export const users = pgTable("users", {
   // Client specific ratings
   clearScopeRating: decimal("clear_scope_rating", { precision: 3, scale: 2 }).default("0.00"),
   overallSatisfactionRating: decimal("overall_satisfaction_rating", { precision: 3, scale: 2 }).default("0.00"),
+  // Job Visibility Logic fields for field agents
+  agentLocation: text("agent_location"), // field agent's location/address
+  agentLatitude: decimal("agent_latitude", { precision: 10, scale: 8 }),
+  agentLongitude: decimal("agent_longitude", { precision: 11, scale: 8 }),
+  skills: text("skills").array().default(sql`ARRAY[]::TEXT[]`), // field agent skills/certifications
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -156,6 +161,12 @@ export const workOrders = pgTable("work_orders", {
   requestedAt: timestamp("requested_at"),
   requestReviewedAt: timestamp("request_reviewed_at"),
   clientNotes: text("client_notes"), // client's notes when accepting/declining request
+  // Job Visibility Logic fields
+  jobLocation: text("job_location"), // address for the job
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  requiredSkills: text("required_skills").array().default(sql`ARRAY[]::TEXT[]`),
+  visibilityScope: varchar("visibility_scope").default("public"), // "public" or "exclusive"
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1112,3 +1123,45 @@ export const insertAccessRequestSchema = createInsertSchema(accessRequests).omit
 });
 
 export type InsertAccessRequestType = z.infer<typeof insertAccessRequestSchema>;
+
+// Onboarding Requests table - for contractor applications
+export const onboardingRequests = pgTable("onboarding_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  email: varchar("email").notNull(),
+  phone: varchar("phone"),
+  company: varchar("company"),
+  skills: text("skills").array().default(sql`ARRAY[]::TEXT[]`),
+  resumeUrl: varchar("resume_url"),
+  motivation: text("motivation"),
+  status: varchar("status").notNull().default("pending"), // pending, approved, rejected
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Onboarding Request relations
+export const onboardingRequestsRelations = relations(onboardingRequests, ({ one }) => ({
+  reviewer: one(users, {
+    fields: [onboardingRequests.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+// Onboarding Request types
+export type OnboardingRequest = typeof onboardingRequests.$inferSelect;
+export type InsertOnboardingRequest = typeof onboardingRequests.$inferInsert;
+
+export const insertOnboardingRequestSchema = createInsertSchema(onboardingRequests).omit({
+  id: true,
+  status: true,
+  reviewedBy: true,
+  reviewedAt: true,
+  rejectionReason: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertOnboardingRequestType = z.infer<typeof insertOnboardingRequestSchema>;

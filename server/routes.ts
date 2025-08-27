@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -3002,6 +3002,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error reviewing job request:", error);
       res.status(500).json({ error: "Failed to review job request" });
+    }
+  });
+
+  // Onboarding Request routes
+  // Public route for contractor applications - no authentication required
+  app.post('/api/onboarding-requests', async (req, res) => {
+    try {
+      const validatedData = insertOnboardingRequestSchema.parse(req.body);
+      const request = await storage.createOnboardingRequest(validatedData);
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Error creating onboarding request:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create onboarding request" });
+    }
+  });
+
+  // Get all onboarding requests - Operations Director only
+  app.get('/api/onboarding-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ error: "Access denied. Operations Director role required." });
+      }
+
+      const requests = await storage.getAllOnboardingRequests();
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching onboarding requests:", error);
+      res.status(500).json({ error: "Failed to fetch onboarding requests" });
+    }
+  });
+
+  // Review onboarding request - Operations Director only
+  app.patch('/api/onboarding-requests/:id/review', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ error: "Access denied. Operations Director role required." });
+      }
+
+      const { id } = req.params;
+      const { status, rejectionReason } = req.body;
+
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status. Must be 'approved' or 'rejected'." });
+      }
+
+      if (status === 'rejected' && !rejectionReason?.trim()) {
+        return res.status(400).json({ error: "Rejection reason is required when rejecting an application." });
+      }
+
+      const reviewedRequest = await storage.reviewOnboardingRequest(
+        id, 
+        status, 
+        currentUser.id, 
+        rejectionReason?.trim()
+      );
+
+      res.json(reviewedRequest);
+    } catch (error) {
+      console.error("Error reviewing onboarding request:", error);
+      res.status(500).json({ error: "Failed to review onboarding request" });
     }
   });
 
