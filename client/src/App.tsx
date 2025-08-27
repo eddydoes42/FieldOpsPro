@@ -24,6 +24,7 @@ import TeamReports from "@/pages/team-reports";
 import TeamPage from "@/pages/team";
 import Onboarding from "@/pages/onboarding";
 import WorkOrders from "@/pages/work-orders";
+import WorkOrderDetail from "@/pages/work-order-detail";
 import Messages from "@/pages/messages";
 import Calendar from "@/pages/calendar";
 import TimeTracking from "@/pages/time-tracking";
@@ -385,6 +386,13 @@ function Router() {
               <div>
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <WorkOrders /> : <Landing />}
+              </div>
+            </Route>
+
+            <Route path="/work-orders/:id">
+              <div>
+                <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                {isAuthenticated ? <WorkOrderDetail /> : <Landing />}
               </div>
             </Route>
 

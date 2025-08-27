@@ -233,6 +233,22 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Job-specific threaded messages table
+export const jobMessages = pgTable("job_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  message: text("message").notNull(),
+  attachments: text("attachments").array().default(sql`ARRAY[]::text[]`), // array of file URLs/paths
+  isImportant: boolean("is_important").default(false), // pinned/flagged messages
+  isPinned: boolean("is_pinned").default(false), // pinned to top of thread
+  mentionedUserIds: text("mentioned_user_ids").array().default(sql`ARRAY[]::text[]`), // @mentions
+  sentAt: timestamp("sent_at").defaultNow(),
+  editedAt: timestamp("edited_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Work Order Tasks table
 export const workOrderTasks = pgTable("work_order_tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -622,6 +638,17 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
+export const jobMessagesRelations = relations(jobMessages, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [jobMessages.workOrderId],
+    references: [workOrders.id],
+  }),
+  sender: one(users, {
+    fields: [jobMessages.senderId],
+    references: [users.id],
+  }),
+}));
+
 export const workOrderTasksRelations = relations(workOrderTasks, ({ one }) => ({
   workOrder: one(workOrders, {
     fields: [workOrderTasks.workOrderId],
@@ -760,6 +787,14 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   createdAt: true,
   readAt: true,
+});
+
+export const insertJobMessageSchema = createInsertSchema(jobMessages).omit({
+  id: true,
+  sentAt: true,
+  editedAt: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertWorkOrderTaskSchema = createInsertSchema(workOrderTasks).omit({
@@ -906,6 +941,9 @@ export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+export type JobMessage = typeof jobMessages.$inferSelect;
+export type InsertJobMessage = z.infer<typeof insertJobMessageSchema>;
 
 export type WorkOrderTask = typeof workOrderTasks.$inferSelect;
 export type InsertWorkOrderTask = z.infer<typeof insertWorkOrderTaskSchema>;

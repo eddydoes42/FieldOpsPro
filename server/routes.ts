@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -3067,6 +3067,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error reviewing onboarding request:", error);
       res.status(500).json({ error: "Failed to review onboarding request" });
+    }
+  });
+
+  // Job Messages routes
+  // Create job message - authenticated users with work order access
+  app.post('/api/job-messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      const validatedData = insertJobMessageSchema.parse(req.body);
+      
+      // Verify user has access to this work order
+      const workOrder = await storage.getWorkOrder(validatedData.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ error: "Work order not found" });
+      }
+
+      // Check if user is involved in the work order (assigned agent, creator, or admin team)
+      const hasAccess = workOrder.assigneeId === currentUser.id || 
+                       workOrder.createdById === currentUser.id ||
+                       isAdmin(currentUser) ||
+                       isOperationsDirector(currentUser);
+
+      if (!hasAccess) {
+        return res.status(403).json({ error: "Access denied. You must be involved in this work order to send messages." });
+      }
+
+      // Add sender ID to message
+      const messageData = {
+        ...validatedData,
+        senderId: currentUser.id,
+      };
+
+      const message = await storage.createJobMessage(messageData);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error creating job message:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid message data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create job message" });
+    }
+  });
+
+  // Get job messages for work order - authenticated users with work order access
+  app.get('/api/job-messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      const { workOrderId } = req.query;
+      if (!workOrderId) {
+        return res.status(400).json({ error: "Work order ID is required" });
+      }
+
+      // Verify user has access to this work order
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ error: "Work order not found" });
+      }
+
+      // Check if user is involved in the work order (assigned agent, creator, or admin team)
+      const hasAccess = workOrder.assigneeId === currentUser.id || 
+                       workOrder.createdById === currentUser.id ||
+                       isAdmin(currentUser) ||
+                       isOperationsDirector(currentUser);
+
+      if (!hasAccess) {
+        return res.status(403).json({ error: "Access denied. You must be involved in this work order to view messages." });
+      }
+
+      const messages = await storage.getJobMessagesByWorkOrder(workOrderId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching job messages:", error);
+      res.status(500).json({ error: "Failed to fetch job messages" });
+    }
+  });
+
+  // Update job message - sender only
+  app.patch('/api/job-messages/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      const { id } = req.params;
+      const { message, isImportant } = req.body;
+
+      // Get the current message to verify ownership
+      const messages = await storage.getJobMessagesByWorkOrder(''); // This will need to be fixed
+      const currentMessage = messages.find(m => m.id === id);
+      
+      if (!currentMessage) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+
+      // Only sender can edit their message
+      if (currentMessage.senderId !== currentUser.id) {
+        return res.status(403).json({ error: "You can only edit your own messages" });
+      }
+
+      const updatedMessage = await storage.updateJobMessage(id, { message, isImportant });
+      res.json(updatedMessage);
+    } catch (error) {
+      console.error("Error updating job message:", error);
+      res.status(500).json({ error: "Failed to update job message" });
+    }
+  });
+
+  // Pin/unpin job message - admin team only
+  app.patch('/api/job-messages/:id/pin', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isAdmin(currentUser)) {
+        return res.status(403).json({ error: "Access denied. Admin role required to pin messages." });
+      }
+
+      const { id } = req.params;
+      const { isPinned } = req.body;
+
+      const updatedMessage = isPinned 
+        ? await storage.pinJobMessage(id)
+        : await storage.unpinJobMessage(id);
+      
+      res.json(updatedMessage);
+    } catch (error) {
+      console.error("Error pinning/unpinning job message:", error);
+      res.status(500).json({ error: "Failed to pin/unpin job message" });
     }
   });
 

@@ -27,7 +27,9 @@ import {
   DollarSign,
   Plus,
   CheckSquare,
-  Square
+  Square,
+  MessageCircle,
+  ExternalLink
 } from "lucide-react";
 
 interface WorkOrder {
@@ -257,6 +259,20 @@ export default function WorkOrderCardPopup({
               {isEditing ? 'Edit Work Order' : 'Work Order Details'}
             </DialogTitle>
             <div className="flex items-center gap-2">
+              {/* Messages & Detail Button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  onClose();
+                  navigate(`/work-order/${workOrder.id}`);
+                }}
+                data-testid="button-view-messages"
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Messages
+              </Button>
+              
               {canEdit && !isEditing && (
                 <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                   <Edit className="h-4 w-4 mr-2" />

@@ -5,6 +5,7 @@ import {
   workOrders,
   timeEntries,
   messages,
+  jobMessages,
   workOrderTasks,
   workOrderIssues,
   notifications,
@@ -23,6 +24,7 @@ import {
   accessRequests,
   jobRequests,
   onboardingRequests,
+  jobMessages,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -68,6 +70,8 @@ import {
   type InsertAccessRequest,
   type JobRequest,
   type InsertJobRequest,
+  type JobMessage,
+  type InsertJobMessage,
   type ExclusiveNetwork,
   type InsertExclusiveNetwork,
   type OnboardingRequest,
@@ -142,6 +146,13 @@ export interface IStorage {
   getMessagesBySender(senderId: string): Promise<Message[]>;
   getMessagesForWorkOrder(workOrderId: string): Promise<Message[]>;
   markMessageAsRead(id: string): Promise<Message>;
+  
+  // Job Message operations
+  createJobMessage(jobMessage: InsertJobMessage): Promise<JobMessage>;
+  getJobMessagesByWorkOrder(workOrderId: string): Promise<JobMessage[]>;
+  updateJobMessage(id: string, updates: Partial<InsertJobMessage>): Promise<JobMessage>;
+  pinJobMessage(id: string): Promise<JobMessage>;
+  unpinJobMessage(id: string): Promise<JobMessage>;
   getAllMessages(): Promise<Message[]>;
   getUserMessages(userId: string): Promise<Message[]>;
   getMessage(id: string): Promise<Message | undefined>;
@@ -2428,6 +2439,73 @@ export class DatabaseStorage implements IStorage {
     }
     
     return request;
+  }
+
+  // Job Message operations
+  async createJobMessage(jobMessage: InsertJobMessage): Promise<JobMessage> {
+    const [message] = await db
+      .insert(jobMessages)
+      .values(jobMessage)
+      .returning();
+    return message;
+  }
+
+  async getJobMessagesByWorkOrder(workOrderId: string): Promise<JobMessage[]> {
+    return await db
+      .select({
+        id: jobMessages.id,
+        workOrderId: jobMessages.workOrderId,
+        senderId: jobMessages.senderId,
+        message: jobMessages.message,
+        attachments: jobMessages.attachments,
+        isImportant: jobMessages.isImportant,
+        isPinned: jobMessages.isPinned,
+        mentionedUserIds: jobMessages.mentionedUserIds,
+        sentAt: jobMessages.sentAt,
+        editedAt: jobMessages.editedAt,
+        createdAt: jobMessages.createdAt,
+        updatedAt: jobMessages.updatedAt,
+        sender: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          roles: users.roles,
+          companyId: users.companyId,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
+      .from(jobMessages)
+      .leftJoin(users, eq(jobMessages.senderId, users.id))
+      .where(eq(jobMessages.workOrderId, workOrderId))
+      .orderBy(desc(jobMessages.sentAt));
+  }
+
+  async updateJobMessage(id: string, updates: Partial<InsertJobMessage>): Promise<JobMessage> {
+    const [message] = await db
+      .update(jobMessages)
+      .set({ ...updates, updatedAt: new Date(), editedAt: new Date() })
+      .where(eq(jobMessages.id, id))
+      .returning();
+    return message;
+  }
+
+  async pinJobMessage(id: string): Promise<JobMessage> {
+    const [message] = await db
+      .update(jobMessages)
+      .set({ isPinned: true, updatedAt: new Date() })
+      .where(eq(jobMessages.id, id))
+      .returning();
+    return message;
+  }
+
+  async unpinJobMessage(id: string): Promise<JobMessage> {
+    const [message] = await db
+      .update(jobMessages)
+      .set({ isPinned: false, updatedAt: new Date() })
+      .where(eq(jobMessages.id, id))
+      .returning();
+    return message;
   }
 }
 
