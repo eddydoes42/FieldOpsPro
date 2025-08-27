@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
+import { logWorkOrderAction, logIssueAction, logUserAction, logAssignmentAction, AUDIT_ACTIONS } from "./auditLogger";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -362,6 +363,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const updatedWorkOrder = await storage.updateWorkOrderStatus(id, updateData);
+      
+      // Log audit trail for work order confirmation
+      await logWorkOrderAction(
+        id,
+        AUDIT_ACTIONS.UPDATED,
+        currentUser.id,
+        { status: workOrder.status },
+        { status: 'confirmed' },
+        'Work order confirmed by assigned agent'
+      );
+      
       res.json(updatedWorkOrder);
     } catch (error) {
       console.error("Error confirming work order:", error);
@@ -422,6 +434,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedWorkOrder = await storage.updateWorkOrderStatus(id, updateData);
+      
+      // Log audit trail for work order status update
+      await logWorkOrderAction(
+        id,
+        AUDIT_ACTIONS.UPDATED,
+        currentUser.id,
+        { workStatus: workOrder.workStatus },
+        { workStatus: workStatus },
+        `Work status changed to ${workStatus}`
+      );
+      
       res.json(updatedWorkOrder);
     } catch (error) {
       console.error("Error updating work order status:", error);
@@ -1275,6 +1298,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const issue = await storage.createStructuredIssue(validatedData);
+      
+      // Log audit trail for issue creation
+      await logIssueAction(
+        issue.id,
+        AUDIT_ACTIONS.CREATED,
+        currentUser.id,
+        undefined,
+        {
+          workOrderId: issue.workOrderId,
+          category: issue.category,
+          severity: issue.severity,
+          title: issue.title,
+          status: issue.status
+        },
+        `New issue created: ${issue.title}`
+      );
       
       // If high severity, notify managers/administrators
       if (validatedData.severity === 'high') {
@@ -3316,6 +3355,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error pinning/unpinning job message:", error);
       res.status(500).json({ error: "Failed to pin/unpin job message" });
+    }
+  });
+
+  // Audit Log routes
+  // Get audit logs for admin dashboard - Admin team and Operations Director only
+  app.get('/api/audit-logs', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (!isOperationsDirector(currentUser) && !isAdmin(currentUser))) {
+        return res.status(403).json({ error: "Access denied. Admin role or Operations Director required." });
+      }
+
+      const { entityType, userId, startDate, endDate, limit = 50, offset = 0 } = req.query;
+      
+      const filters: any = {};
+      if (entityType) filters.entityType = entityType;
+      if (userId) filters.userId = userId;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+
+      const auditLogs = await storage.getAuditLogsForAdmin(filters);
+      res.json(auditLogs);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ error: "Failed to fetch audit logs" });
+    }
+  });
+
+  // Get audit logs for a specific entity - Admin team and Operations Director only
+  app.get('/api/audit-logs/entity/:entityType/:entityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || (!isOperationsDirector(currentUser) && !isAdmin(currentUser))) {
+        return res.status(403).json({ error: "Access denied. Admin role or Operations Director required." });
+      }
+
+      const { entityType, entityId } = req.params;
+      const auditLogs = await storage.getAuditLogsByEntity(entityType, entityId);
+      res.json(auditLogs);
+    } catch (error) {
+      console.error("Error fetching entity audit logs:", error);
+      res.status(500).json({ error: "Failed to fetch entity audit logs" });
+    }
+  });
+
+  // Get all audit logs with pagination - Operations Director only
+  app.get('/api/audit-logs/all', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ error: "Access denied. Operations Director role required." });
+      }
+
+      const { limit = 100, offset = 0 } = req.query;
+      const auditLogs = await storage.getAllAuditLogs(Number(limit), Number(offset));
+      res.json(auditLogs);
+    } catch (error) {
+      console.error("Error fetching all audit logs:", error);
+      res.status(500).json({ error: "Failed to fetch all audit logs" });
     }
   });
 

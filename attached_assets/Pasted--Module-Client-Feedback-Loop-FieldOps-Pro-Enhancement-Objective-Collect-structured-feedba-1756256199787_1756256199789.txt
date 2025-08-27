@@ -1,0 +1,63 @@
+## Module: Client Feedback Loop (FieldOps Pro Enhancement)
+
+### Objective:
+Collect structured feedback from Client Companies after a work order is marked complete, integrating responses into agent performance data and service quality metrics.
+
+---
+
+### Affected Roles:
+- Client Admin / Manager (feedback giver)
+- Field Agent / Service Company (feedback receiver)
+- Operations Director (oversight)
+
+### Affected Pages:
+- `/work-order/:id` (completion flow)
+- `/admin-dashboard/feedback` (admin feedback overview)
+
+---
+
+### Implementation Steps:
+
+1. **Trigger on Completion**
+   - When a work order status changes to “Completed”:
+     - Prompt the Client role with a “Provide Feedback” modal
+     - Modal is optional but encouraged; allow “Skip” option
+
+2. **Feedback Form Fields**
+   - Star Rating (1–5)
+   - Category Ratings (e.g., Communication, Timeliness, Quality)
+   - Comments (optional text area)
+   - Checkbox: “Would hire this agent/company again?”
+
+3. **Backend API**
+   - Create `POST /api/feedback` to save responses
+   - Create `GET /api/feedback?workOrderId=abc123` for admins/managers to view
+   - Create `GET /api/feedback?agentId=user456` for aggregated performance data
+
+4. **Database Schema**
+   - Add `feedback` table:
+     id SERIAL PRIMARY KEY,
+     work_order_id UUID REFERENCES work_orders(id),
+     given_by UUID REFERENCES users(id),
+     given_to UUID REFERENCES users(id),
+     stars INT CHECK (stars BETWEEN 1 AND 5),
+     category_scores JSONB,
+     comments TEXT,
+     would_hire_again BOOLEAN,
+     created_at TIMESTAMP DEFAULT NOW()
+
+5. **Admin Dashboard**
+   - New tab: “Client Feedback”
+   - View feedback by work order, agent, or date range
+   - Filter by low ratings for follow‑up
+
+6. **Notifications**
+   - Notify the Service Company and Field Agent of new feedback
+   - Optionally notify Operations Director for ratings ≤ 3 stars
+
+---
+
+### Notes:
+- Integrates cleanly with your existing rating system (can reuse bidirectional star logic).
+- Feedback can later feed into **Agent Performance Analytics**.
+- Consider anonymizing client names in agent view to reduce bias in future interactions.

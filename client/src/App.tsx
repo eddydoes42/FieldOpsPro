@@ -45,6 +45,7 @@ import ProjectManagerDashboard from '@/pages/project-manager-dashboard';
 import JobRequestsPage from '@/pages/job-requests';
 import Apply from '@/pages/apply';
 import OnboardingRequests from '@/pages/onboarding-requests';
+import AuditLogsPage from '@/pages/audit-logs';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -535,6 +536,26 @@ function Router() {
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'administrator'} />
                       <AdminDashboard />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+
+            <Route path="/audit-logs">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasAuditAccess = ['operations_director', 'administrator'].includes(effectiveRole);
+                // Only allow Operations Directors superuser access when NOT role testing
+                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
+                
+                if (isAuthenticated && (hasAuditAccess || isSuperUserAccess)) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      <AuditLogsPage />
                     </div>
                   );
                 }

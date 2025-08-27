@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp, FileText, AlertTriangle } from "lucide-react";
+import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp, FileText, AlertTriangle, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
@@ -374,7 +374,7 @@ export default function OperationsDirectorDashboard() {
 
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
           {/* Things to Approve Button */}
           <Card 
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors relative"
@@ -464,6 +464,24 @@ export default function OperationsDirectorDashboard() {
               </div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 text-center">
                 Recent Setups
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            onClick={() => setLocation('/audit-logs')}
+            data-testid="button-audit-logs"
+          >
+            <CardContent className="p-6 h-32 flex flex-col justify-between">
+              <div className="flex flex-col items-center justify-center flex-1">
+                <Shield className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mb-2" />
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  Audit
+                </p>
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 text-center">
+                System Trail
               </p>
             </CardContent>
           </Card>

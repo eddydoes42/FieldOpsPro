@@ -9,6 +9,7 @@ import {
   workOrderTasks,
   workOrderIssues,
   structuredIssues,
+  auditLogs,
   notifications,
   clientFieldAgentRatings,
   clientDispatcherRatings,
@@ -25,7 +26,6 @@ import {
   accessRequests,
   jobRequests,
   onboardingRequests,
-  jobMessages,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -43,6 +43,8 @@ import {
   type InsertWorkOrderIssue,
   type StructuredIssue,
   type InsertStructuredIssue,
+  type AuditLog,
+  type InsertAuditLog,
   type Notification,
   type InsertNotification,
   type ClientFieldAgentRating,
@@ -300,6 +302,20 @@ export interface IStorage {
   getJobRequestsByCompany(companyId: string): Promise<JobRequest[]>;
   getJobRequestsByAgent(agentId: string): Promise<JobRequest[]>;
   reviewJobRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, rejectionReason?: string): Promise<JobRequest>;
+
+  // Structured Issue operations (enhanced issue reporting)
+  createStructuredIssue(issue: InsertStructuredIssue): Promise<StructuredIssue>;
+  getStructuredIssue(id: string): Promise<StructuredIssue | undefined>;
+  getStructuredIssues(workOrderId?: string): Promise<StructuredIssue[]>;
+  updateStructuredIssue(id: string, updates: Partial<InsertStructuredIssue>): Promise<StructuredIssue>;
+  getStructuredIssueById(id: string): Promise<StructuredIssue | null>;
+
+  // Audit Log operations (operational transparency)
+  createAuditLog(auditLog: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogsByEntity(entityType: string, entityId: string): Promise<AuditLog[]>;
+  getAuditLogsByUser(userId: string): Promise<AuditLog[]>;
+  getAllAuditLogs(limit?: number, offset?: number): Promise<AuditLog[]>;
+  getAuditLogsForAdmin(filters?: { entityType?: string; userId?: string; startDate?: Date; endDate?: Date }): Promise<AuditLog[]>;
 
   // Onboarding Request operations
   createOnboardingRequest(request: InsertOnboardingRequest): Promise<OnboardingRequest>;
@@ -1187,6 +1203,135 @@ export class DatabaseStorage implements IStorage {
       .from(structuredIssues)
       .where(eq(structuredIssues.id, id));
     return issue || null;
+  }
+
+  async getStructuredIssue(id: string): Promise<StructuredIssue | undefined> {
+    const [issue] = await db
+      .select()
+      .from(structuredIssues)
+      .where(eq(structuredIssues.id, id));
+    return issue;
+  }
+
+  // Audit Log operations
+  async createAuditLog(auditLogData: InsertAuditLog): Promise<AuditLog> {
+    const [auditLog] = await db
+      .insert(auditLogs)
+      .values(auditLogData)
+      .returning();
+    return auditLog;
+  }
+
+  async getAuditLogsByEntity(entityType: string, entityId: string): Promise<AuditLog[]> {
+    const logs = await db
+      .select({
+        id: auditLogs.id,
+        entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
+        action: auditLogs.action,
+        performedBy: auditLogs.performedBy,
+        previousState: auditLogs.previousState,
+        newState: auditLogs.newState,
+        reason: auditLogs.reason,
+        metadata: auditLogs.metadata,
+        timestamp: auditLogs.timestamp,
+        performer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        }
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(and(eq(auditLogs.entityType, entityType), eq(auditLogs.entityId, entityId)))
+      .orderBy(desc(auditLogs.timestamp));
+    
+    return logs as AuditLog[];
+  }
+
+  async getAuditLogsByUser(userId: string): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.performedBy, userId))
+      .orderBy(desc(auditLogs.timestamp));
+  }
+
+  async getAllAuditLogs(limit = 100, offset = 0): Promise<AuditLog[]> {
+    const logs = await db
+      .select({
+        id: auditLogs.id,
+        entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
+        action: auditLogs.action,
+        performedBy: auditLogs.performedBy,
+        previousState: auditLogs.previousState,
+        newState: auditLogs.newState,
+        reason: auditLogs.reason,
+        metadata: auditLogs.metadata,
+        timestamp: auditLogs.timestamp,
+        performer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        }
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.performedBy, users.id))
+      .orderBy(desc(auditLogs.timestamp))
+      .limit(limit)
+      .offset(offset);
+    
+    return logs as AuditLog[];
+  }
+
+  async getAuditLogsForAdmin(filters?: { entityType?: string; userId?: string; startDate?: Date; endDate?: Date }): Promise<AuditLog[]> {
+    const conditions = [];
+    
+    if (filters?.entityType) {
+      conditions.push(eq(auditLogs.entityType, filters.entityType));
+    }
+    
+    if (filters?.userId) {
+      conditions.push(eq(auditLogs.performedBy, filters.userId));
+    }
+    
+    if (filters?.startDate) {
+      conditions.push(sql`${auditLogs.timestamp} >= ${filters.startDate}`);
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(sql`${auditLogs.timestamp} <= ${filters.endDate}`);
+    }
+
+    const logs = await db
+      .select({
+        id: auditLogs.id,
+        entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
+        action: auditLogs.action,
+        performedBy: auditLogs.performedBy,
+        previousState: auditLogs.previousState,
+        newState: auditLogs.newState,
+        reason: auditLogs.reason,
+        metadata: auditLogs.metadata,
+        timestamp: auditLogs.timestamp,
+        performer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        }
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(auditLogs.timestamp))
+      .limit(200);
+    
+    return logs as AuditLog[];
   }
 
   // Notification operations

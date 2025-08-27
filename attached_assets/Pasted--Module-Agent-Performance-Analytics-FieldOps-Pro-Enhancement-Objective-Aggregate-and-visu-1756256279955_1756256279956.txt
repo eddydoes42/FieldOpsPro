@@ -1,0 +1,69 @@
+## Module: Agent Performance Analytics (FieldOps Pro Enhancement)
+
+### Objective:
+Aggregate and visualize operational, service quality, and compliance data for each Field Agent and Service Company, enabling performance tracking over time.
+
+---
+
+### Data Inputs:
+- Job completion stats (from Work Orders)
+- Issue history (from Issue Creation module)
+- Audit trail entries (from Audit Trail System)
+- Client feedback ratings & comments (from Client Feedback Loop)
+- Timeliness metrics (start/end times vs. schedule)
+
+---
+
+### Affected Roles:
+- Operations Director (full analytics access)
+- Client Company Admin (view only for agents assigned to them)
+- Service Company Admin (view only for their agents)
+
+---
+
+### Affected Pages:
+- `/admin-dashboard/analytics`
+- `/service-company-dashboard/analytics`
+
+---
+
+### Implementation Steps:
+
+1. **Backend Aggregation**
+   - Create `/api/performance-metrics?agentId=xyz`
+     - Returns:
+       - Total jobs completed
+       - Avg. completion time
+       - % on‑time starts/finishes
+       - Avg. star rating
+       - Issue count & resolution rate
+       - Audit trail compliance score (based on required log events)
+   - Support filters: date range, job type, client
+
+2. **Database Schema**
+   - New table `performance_snapshots` (optional for historical tracking):
+     id SERIAL PRIMARY KEY,
+     agent_id UUID REFERENCES users(id),
+     period_start DATE,
+     period_end DATE,
+     metrics JSONB,
+     created_at TIMESTAMP DEFAULT NOW()
+
+3. **Frontend Visualization**
+   - Charts: line graph for performance over time, bar charts for category scores
+   - Color‑coded indicators (e.g., red for low on‑time %, green for high avg. rating)
+   - Drill‑down: click agent to see detailed job & feedback breakdown
+
+4. **Notifications (Optional)**
+   - Alert Ops Director when an agent’s metrics drop below thresholds (e.g., rating <3 for two consecutive weeks)
+   - Notify Service Company Admin when their top‑performing agents hit milestones
+
+5. **Permissions**
+   - Ensure role‑based access to prevent cross‑company data leaks
+
+---
+
+### Notes:
+- Built to be **extensible** for future predictive analytics (e.g., forecasting risk of job failure).
+- Can export metrics to CSV for external HR/performance review processes.
+- Integrates seamlessly with existing data models — no redesign of core tables required.

@@ -294,6 +294,20 @@ export const structuredIssues = pgTable("structured_issues", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Audit Logs for tracking all system actions
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: varchar("entity_type").notNull(), // work_order, issue, user_action, approval, assignment, project
+  entityId: varchar("entity_id").notNull(), // ID of the affected entity
+  action: varchar("action").notNull(), // created, updated, assigned, resolved, escalated, approved, rejected, deleted, restored
+  performedBy: varchar("performed_by").notNull().references(() => users.id),
+  previousState: text("previous_state"), // JSON string of previous values
+  newState: text("new_state"), // JSON string of new values
+  reason: text("reason"), // Optional reason for the action
+  metadata: text("metadata"), // Additional context as JSON (e.g., IP address, user agent, etc.)
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
 // Notifications table for work order confirmations
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -850,6 +864,11 @@ export const insertStructuredIssueSchema = createInsertSchema(structuredIssues).
   reviewedAt: true,
 });
 
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
 export const insertIssueSchema = createInsertSchema(issues).omit({
   id: true,
   createdAt: true,
@@ -1034,6 +1053,12 @@ export type InsertApprovalRequest = z.infer<typeof insertApprovalRequestSchema>;
 
 export type JobRequest = typeof jobRequests.$inferSelect;
 export type InsertJobRequest = z.infer<typeof insertJobRequestSchema>;
+
+export type StructuredIssue = typeof structuredIssues.$inferSelect;
+export type InsertStructuredIssue = z.infer<typeof insertStructuredIssueSchema>;
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
