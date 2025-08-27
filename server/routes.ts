@@ -2153,6 +2153,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PERFORMANCE ANALYTICS ROUTES
+  
+  // Get performance metrics for an agent
+  app.get('/api/performance-metrics/:agentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { agentId } = req.params;
+      const { dateFrom, dateTo } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'field_agent', 'client'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Field agents can only view their own metrics
+      if (hasAnyRole(currentUser, ['field_agent']) && agentId !== userId) {
+        return res.status(403).json({ message: "Access denied. Can only view own performance metrics." });
+      }
+
+      // Client companies can only view agents who worked on their work orders
+      if (isClient(currentUser)) {
+        const clientWorkOrders = await storage.getWorkOrdersByClientCompany(currentUser.id);
+        const hasWorkedForClient = clientWorkOrders.some(wo => wo.assignedAgent === agentId);
+        
+        if (!hasWorkedForClient) {
+          return res.status(403).json({ message: "Access denied. Agent has not worked on your projects." });
+        }
+      }
+
+      // Service company admins can only view their own company's agents
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        const agent = await storage.getUser(agentId);
+        if (!agent || agent.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only view your company's agents." });
+        }
+      }
+
+      const metrics = await storage.calculateAgentPerformanceMetrics(agentId, dateFrom, dateTo);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching performance metrics:", error);
+      res.status(500).json({ message: "Failed to fetch performance metrics" });
+    }
+  });
+
+  // Get performance snapshots for an agent
+  app.get('/api/performance-snapshots/:agentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { agentId } = req.params;
+      const { limit = 10 } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'field_agent'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Field agents can only view their own snapshots
+      if (hasAnyRole(currentUser, ['field_agent']) && agentId !== userId) {
+        return res.status(403).json({ message: "Access denied. Can only view own performance snapshots." });
+      }
+
+      // Service company admins can only view their own company's agents
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        const agent = await storage.getUser(agentId);
+        if (!agent || agent.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only view your company's agents." });
+        }
+      }
+
+      const snapshots = await storage.getPerformanceSnapshots(agentId, parseInt(limit as string));
+      res.json(snapshots);
+    } catch (error) {
+      console.error("Error fetching performance snapshots:", error);
+      res.status(500).json({ message: "Failed to fetch performance snapshots" });
+    }
+  });
+
+  // Create a performance snapshot (for scheduled tasks or manual triggers)
+  app.post('/api/performance-snapshots', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied. Only Operations Director and admin teams can create performance snapshots." });
+      }
+
+      const { agentId, periodStart, periodEnd } = req.body;
+
+      if (!agentId || !periodStart || !periodEnd) {
+        return res.status(400).json({ message: "Agent ID, period start, and period end are required." });
+      }
+
+      // Calculate metrics for the specified period
+      const metrics = await storage.calculateAgentPerformanceMetrics(agentId, periodStart, periodEnd);
+
+      // Create snapshot
+      const snapshotData = {
+        agentId,
+        periodStart: new Date(periodStart),
+        periodEnd: new Date(periodEnd),
+        metrics: metrics
+      };
+
+      const snapshot = await storage.createPerformanceSnapshot(snapshotData);
+      res.status(201).json(snapshot);
+    } catch (error: any) {
+      console.error("Error creating performance snapshot:", error);
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid snapshot data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create performance snapshot" });
+    }
+  });
+
   // ===== CLIENT FEEDBACK LOOP ROUTES =====
 
   // Create feedback after work order completion

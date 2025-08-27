@@ -9,6 +9,7 @@ import {
   integer,
   decimal,
   boolean,
+  date,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -317,6 +318,16 @@ export const feedback = pgTable("feedback", {
   categoryScores: jsonb("category_scores"),
   comments: text("comments"),
   wouldHireAgain: boolean("would_hire_again"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Performance snapshots for historical tracking and analytics
+export const performanceSnapshots = pgTable("performance_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull().references(() => users.id),
+  periodStart: date("period_start").notNull(),
+  periodEnd: date("period_end").notNull(),
+  metrics: jsonb("metrics").notNull(), // JSON object containing all performance metrics
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -831,6 +842,13 @@ export const feedbackRelations = relations(feedback, ({ one }) => ({
   }),
 }));
 
+export const performanceSnapshotsRelations = relations(performanceSnapshots, ({ one }) => ({
+  agent: one(users, {
+    fields: [performanceSnapshots.agentId],
+    references: [users.id],
+  }),
+}));
+
 // Role validation schema
 export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client'])).min(1);
 
@@ -942,6 +960,11 @@ export const insertExclusiveNetworkSchema = createInsertSchema(exclusiveNetworks
 });
 
 export const insertFeedbackSchema = createInsertSchema(feedback).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPerformanceSnapshotSchema = createInsertSchema(performanceSnapshots).omit({
   id: true,
   createdAt: true,
 });
@@ -1096,6 +1119,9 @@ export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+
+export type PerformanceSnapshot = typeof performanceSnapshots.$inferSelect;
+export type InsertPerformanceSnapshot = z.infer<typeof insertPerformanceSnapshotSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {

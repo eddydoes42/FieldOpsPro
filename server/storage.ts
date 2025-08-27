@@ -1964,6 +1964,151 @@ export class DatabaseStorage implements IStorage {
       .offset(filters.offset);
   }
 
+  // Performance Analytics operations
+  async createPerformanceSnapshot(snapshot: InsertPerformanceSnapshot): Promise<PerformanceSnapshot> {
+    const [newSnapshot] = await db
+      .insert(performanceSnapshots)
+      .values(snapshot)
+      .returning();
+    return newSnapshot;
+  }
+
+  async getPerformanceSnapshots(agentId: string, limit: number = 10): Promise<PerformanceSnapshot[]> {
+    return await db
+      .select()
+      .from(performanceSnapshots)
+      .where(eq(performanceSnapshots.agentId, agentId))
+      .orderBy(desc(performanceSnapshots.createdAt))
+      .limit(limit);
+  }
+
+  async calculateAgentPerformanceMetrics(agentId: string, dateFrom?: string, dateTo?: string): Promise<any> {
+    const conditions = [eq(workOrders.assignedAgent, agentId)];
+    
+    if (dateFrom) {
+      conditions.push(sql`${workOrders.createdAt} >= ${new Date(dateFrom)}`);
+    }
+    
+    if (dateTo) {
+      conditions.push(sql`${workOrders.createdAt} <= ${new Date(dateTo)}`);
+    }
+
+    // Get work order completion stats
+    const completedWorkOrders = await db
+      .select({
+        id: workOrders.id,
+        status: workOrders.status,
+        scheduledStart: workOrders.scheduledStart,
+        actualStart: workOrders.actualStart,
+        scheduledEnd: workOrders.scheduledEnd,
+        completedAt: workOrders.completedAt,
+        estimatedHours: workOrders.estimatedHours,
+        actualHours: workOrders.actualHours,
+        createdAt: workOrders.createdAt
+      })
+      .from(workOrders)
+      .where(and(...conditions))
+      .orderBy(desc(workOrders.createdAt));
+
+    const totalJobs = completedWorkOrders.length;
+    const completedJobs = completedWorkOrders.filter(wo => wo.status === 'completed').length;
+    
+    // Calculate average completion time
+    const completedWithActualHours = completedWorkOrders.filter(wo => wo.actualHours && wo.status === 'completed');
+    const avgCompletionTime = completedWithActualHours.length > 0 
+      ? completedWithActualHours.reduce((sum, wo) => sum + (wo.actualHours || 0), 0) / completedWithActualHours.length 
+      : 0;
+
+    // Calculate on-time performance
+    const onTimeStarts = completedWorkOrders.filter(wo => {
+      if (!wo.scheduledStart || !wo.actualStart) return false;
+      return new Date(wo.actualStart) <= new Date(wo.scheduledStart);
+    }).length;
+
+    const onTimeFinishes = completedWorkOrders.filter(wo => {
+      if (!wo.scheduledEnd || !wo.completedAt) return false;
+      return new Date(wo.completedAt) <= new Date(wo.scheduledEnd);
+    }).length;
+
+    const onTimeStartPercentage = totalJobs > 0 ? (onTimeStarts / totalJobs) * 100 : 0;
+    const onTimeFinishPercentage = totalJobs > 0 ? (onTimeFinishes / totalJobs) * 100 : 0;
+
+    // Get feedback ratings
+    const feedbackRatings = await db
+      .select({
+        stars: feedback.stars,
+        categoryScores: feedback.categoryScores,
+        wouldHireAgain: feedback.wouldHireAgain,
+        createdAt: feedback.createdAt
+      })
+      .from(feedback)
+      .where(eq(feedback.givenTo, agentId))
+      .orderBy(desc(feedback.createdAt));
+
+    const avgStarRating = feedbackRatings.length > 0 
+      ? feedbackRatings.reduce((sum, rating) => sum + rating.stars, 0) / feedbackRatings.length 
+      : 0;
+
+    const wouldHireAgainCount = feedbackRatings.filter(rating => rating.wouldHireAgain === true).length;
+    const wouldHireAgainPercentage = feedbackRatings.length > 0 
+      ? (wouldHireAgainCount / feedbackRatings.length) * 100 
+      : 0;
+
+    // Get issues count
+    const issuesCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(structuredIssues)
+      .innerJoin(workOrders, eq(structuredIssues.workOrderId, workOrders.id))
+      .where(and(eq(workOrders.assignedAgent, agentId), ...conditions.slice(1)));
+
+    const totalIssues = issuesCount[0]?.count || 0;
+
+    // Get resolved issues count
+    const resolvedIssuesCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(structuredIssues)
+      .innerJoin(workOrders, eq(structuredIssues.workOrderId, workOrders.id))
+      .where(and(
+        eq(workOrders.assignedAgent, agentId), 
+        eq(structuredIssues.status, 'resolved'),
+        ...conditions.slice(1)
+      ));
+
+    const resolvedIssues = resolvedIssuesCount[0]?.count || 0;
+    const issueResolutionRate = totalIssues > 0 ? (resolvedIssues / totalIssues) * 100 : 0;
+
+    // Calculate audit trail compliance score (based on required log events)
+    const auditLogs = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(auditLogs)
+      .where(and(eq(auditLogs.performedBy, agentId), ...conditions.slice(1)));
+
+    const auditLogCount = auditLogs[0]?.count || 0;
+    
+    // Compliance score: number of audit logs per completed job (higher is better)
+    const complianceScore = completedJobs > 0 ? (auditLogCount / completedJobs) : 0;
+
+    return {
+      agentId,
+      totalJobs,
+      completedJobs,
+      avgCompletionTime: Math.round(avgCompletionTime * 100) / 100,
+      onTimeStartPercentage: Math.round(onTimeStartPercentage * 100) / 100,
+      onTimeFinishPercentage: Math.round(onTimeFinishPercentage * 100) / 100,
+      avgStarRating: Math.round(avgStarRating * 100) / 100,
+      totalFeedback: feedbackRatings.length,
+      wouldHireAgainPercentage: Math.round(wouldHireAgainPercentage * 100) / 100,
+      totalIssues,
+      resolvedIssues,
+      issueResolutionRate: Math.round(issueResolutionRate * 100) / 100,
+      complianceScore: Math.round(complianceScore * 100) / 100,
+      dateRange: {
+        from: dateFrom || null,
+        to: dateTo || null
+      }
+    };
+  }
+
   // Exclusive Network operations
   async createExclusiveNetworkMember(member: InsertExclusiveNetworkMember): Promise<ExclusiveNetworkMember> {
     const [newMember] = await db.insert(exclusiveNetworkMembers).values(member).returning();
