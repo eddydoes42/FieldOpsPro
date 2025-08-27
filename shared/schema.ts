@@ -277,6 +277,23 @@ export const workOrderIssues = pgTable("work_order_issues", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Structured Issues table for enhanced issue reporting tied to work orders
+export const structuredIssues = pgTable("structured_issues", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id),
+  type: varchar("type").notNull(), // hazard, delay, equipment, other
+  description: text("description").notNull(),
+  severity: varchar("severity").notNull().default("low"), // low, medium, high
+  status: varchar("status").notNull().default("open"), // open, resolved, escalated
+  attachments: text("attachments").array().default(sql`ARRAY[]::text[]`), // array of file URLs
+  reviewedById: varchar("reviewed_by_id").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  resolution: text("resolution"), // resolution notes when closed
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Notifications table for work order confirmations
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -671,6 +688,21 @@ export const workOrderIssuesRelations = relations(workOrderIssues, ({ one }) => 
   }),
 }));
 
+export const structuredIssuesRelations = relations(structuredIssues, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [structuredIssues.workOrderId],
+    references: [workOrders.id],
+  }),
+  reporter: one(users, {
+    fields: [structuredIssues.reporterId],
+    references: [users.id],
+  }),
+  reviewedBy: one(users, {
+    fields: [structuredIssues.reviewedById],
+    references: [users.id],
+  }),
+}));
+
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.userId],
@@ -809,6 +841,13 @@ export const insertWorkOrderIssueSchema = createInsertSchema(workOrderIssues).om
   createdAt: true,
   updatedAt: true,
   resolvedAt: true,
+});
+
+export const insertStructuredIssueSchema = createInsertSchema(structuredIssues).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true,
 });
 
 export const insertIssueSchema = createInsertSchema(issues).omit({
@@ -950,6 +989,9 @@ export type InsertWorkOrderTask = z.infer<typeof insertWorkOrderTaskSchema>;
 
 export type WorkOrderIssue = typeof workOrderIssues.$inferSelect;
 export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;
+
+export type StructuredIssue = typeof structuredIssues.$inferSelect;
+export type InsertStructuredIssue = z.infer<typeof insertStructuredIssueSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;

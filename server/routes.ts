@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -1257,6 +1257,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting work order task:", error);
       res.status(500).json({ message: "Failed to delete work order task" });
+    }
+  });
+
+  // Structured Issues API
+  app.post('/api/structured-issues', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Validate the request data
+      const validatedData = insertStructuredIssueSchema.parse({
+        ...req.body,
+        reporterId: currentUser.id,
+      });
+
+      const issue = await storage.createStructuredIssue(validatedData);
+      
+      // If high severity, notify managers/administrators
+      if (validatedData.severity === 'high') {
+        // Create notifications for managers+ in the same company
+        const adminUsers = await storage.getUsersByCompany(currentUser.companyId || '', ['manager', 'administrator']);
+        for (const adminUser of adminUsers) {
+          await storage.createNotification({
+            userId: adminUser.id,
+            workOrderId: validatedData.workOrderId,
+            type: 'high_severity_issue',
+            title: `High Severity Issue: ${validatedData.type}`,
+            message: `New high severity issue reported by ${currentUser.firstName} ${currentUser.lastName}: ${validatedData.description.substring(0, 100)}...`,
+            isRead: false,
+          });
+        }
+      }
+
+      res.status(201).json(issue);
+    } catch (error) {
+      console.error("Error creating structured issue:", error);
+      res.status(500).json({ message: "Failed to create structured issue" });
+    }
+  });
+
+  app.get('/api/structured-issues', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { workOrderId } = req.query;
+      
+      // Field agents can only see their own issues, managers+ can see all
+      let issues;
+      if (isFieldAgent(currentUser) && !canManageUsers(currentUser)) {
+        // Field agents see only their reported issues
+        const allIssues = await storage.getStructuredIssues(workOrderId as string);
+        issues = allIssues.filter(issue => issue.reporterId === currentUser.id);
+      } else {
+        // Managers+ see all issues, optionally filtered by work order
+        issues = await storage.getStructuredIssues(workOrderId as string);
+      }
+
+      res.json(issues);
+    } catch (error) {
+      console.error("Error fetching structured issues:", error);
+      res.status(500).json({ message: "Failed to fetch structured issues" });
+    }
+  });
+
+  app.patch('/api/structured-issues/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !canManageUsers(currentUser)) {
+        return res.status(403).json({ message: "Only managers and administrators can update issues" });
+      }
+
+      const { id } = req.params;
+      const updates = { 
+        ...req.body,
+        reviewedById: currentUser.id,
+        reviewedAt: new Date(),
+      };
+
+      const issue = await storage.updateStructuredIssue(id, updates);
+      res.json(issue);
+    } catch (error) {
+      console.error("Error updating structured issue:", error);
+      res.status(500).json({ message: "Failed to update structured issue" });
+    }
+  });
+
+  app.get('/api/structured-issues/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { id } = req.params;
+      const issue = await storage.getStructuredIssueById(id);
+      
+      if (!issue) {
+        return res.status(404).json({ message: "Issue not found" });
+      }
+
+      // Check permissions: field agents can only see their own issues
+      if (isFieldAgent(currentUser) && !canManageUsers(currentUser) && issue.reporterId !== currentUser.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(issue);
+    } catch (error) {
+      console.error("Error fetching structured issue:", error);
+      res.status(500).json({ message: "Failed to fetch structured issue" });
     }
   });
 

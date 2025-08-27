@@ -8,6 +8,7 @@ import {
   jobMessages,
   workOrderTasks,
   workOrderIssues,
+  structuredIssues,
   notifications,
   clientFieldAgentRatings,
   clientDispatcherRatings,
@@ -40,6 +41,8 @@ import {
   type InsertWorkOrderTask,
   type WorkOrderIssue,
   type InsertWorkOrderIssue,
+  type StructuredIssue,
+  type InsertStructuredIssue,
   type Notification,
   type InsertNotification,
   type ClientFieldAgentRating,
@@ -1118,6 +1121,72 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(workOrderIssues)
       .orderBy(desc(workOrderIssues.createdAt));
+  }
+
+  // Structured Issue operations
+  async getStructuredIssues(workOrderId?: string): Promise<StructuredIssue[]> {
+    const query = db
+      .select({
+        id: structuredIssues.id,
+        workOrderId: structuredIssues.workOrderId,
+        reporterId: structuredIssues.reporterId,
+        type: structuredIssues.type,
+        description: structuredIssues.description,
+        severity: structuredIssues.severity,
+        status: structuredIssues.status,
+        attachments: structuredIssues.attachments,
+        reviewedById: structuredIssues.reviewedById,
+        reviewedAt: structuredIssues.reviewedAt,
+        resolution: structuredIssues.resolution,
+        createdAt: structuredIssues.createdAt,
+        updatedAt: structuredIssues.updatedAt,
+        reporter: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+        workOrder: {
+          title: workOrders.title,
+          location: workOrders.location,
+        }
+      })
+      .from(structuredIssues)
+      .leftJoin(users, eq(structuredIssues.reporterId, users.id))
+      .leftJoin(workOrders, eq(structuredIssues.workOrderId, workOrders.id));
+    
+    if (workOrderId) {
+      query.where(eq(structuredIssues.workOrderId, workOrderId));
+    }
+    
+    return query.orderBy(desc(structuredIssues.createdAt));
+  }
+
+  async createStructuredIssue(issueData: InsertStructuredIssue): Promise<StructuredIssue> {
+    const [issue] = await db
+      .insert(structuredIssues)
+      .values(issueData)
+      .returning();
+    return issue;
+  }
+
+  async updateStructuredIssue(id: string, updates: Partial<InsertStructuredIssue>): Promise<StructuredIssue> {
+    const [issue] = await db
+      .update(structuredIssues)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(structuredIssues.id, id))
+      .returning();
+    return issue;
+  }
+
+  async getStructuredIssueById(id: string): Promise<StructuredIssue | null> {
+    const [issue] = await db
+      .select()
+      .from(structuredIssues)
+      .where(eq(structuredIssues.id, id));
+    return issue || null;
   }
 
   // Notification operations

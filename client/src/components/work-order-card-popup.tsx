@@ -31,6 +31,7 @@ import {
   MessageCircle,
   ExternalLink
 } from "lucide-react";
+import CreateIssueModal from './create-issue-modal';
 
 interface WorkOrder {
   id: string;
@@ -82,6 +83,7 @@ export default function WorkOrderCardPopup({
   const [isEditing, setIsEditing] = useState(false);
   const [, navigate] = useLocation();
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [newTaskForm, setNewTaskForm] = useState({
     title: '',
     description: '',
@@ -271,6 +273,17 @@ export default function WorkOrderCardPopup({
               >
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Messages
+              </Button>
+              
+              {/* Create Issue Button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsIssueModalOpen(true)}
+                data-testid="button-create-issue-popup"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Report Issue
               </Button>
               
               {canEdit && !isEditing && (
@@ -812,6 +825,13 @@ export default function WorkOrderCardPopup({
           </Card>
         </div>
       </DialogContent>
+      
+      {/* Create Issue Modal */}
+      <CreateIssueModal
+        workOrderId={workOrder.id}
+        isOpen={isIssueModalOpen}
+        onClose={() => setIsIssueModalOpen(false)}
+      />
     </Dialog>
   );
 }

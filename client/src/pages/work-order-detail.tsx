@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, MapPin, Calendar, Clock, DollarSign, AlertCircle, MessageSquare, CheckSquare, FileText } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Clock, DollarSign, AlertCircle, MessageSquare, CheckSquare, FileText, AlertTriangle } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
 import JobMessagesTab from '@/components/job-messages-tab';
 import WorkOrderTasks from '@/components/work-order-tasks';
+import CreateIssueModal from '@/components/create-issue-modal';
+import IssuesTab from '@/components/issues-tab';
 import type { WorkOrder, User } from '@shared/schema';
 
 interface WorkOrderWithRelations extends WorkOrder {
@@ -22,6 +24,7 @@ interface WorkOrderWithRelations extends WorkOrder {
 export default function WorkOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   
   // Fetch work order details
   const { data: workOrder, isLoading, error } = useQuery({
@@ -255,7 +258,7 @@ export default function WorkOrderDetail() {
 
       {/* Tabbed Content */}
       <Tabs defaultValue="messages" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="messages" className="flex items-center gap-2" data-testid="tab-messages">
             <MessageSquare className="w-4 h-4" />
             Messages
@@ -264,9 +267,13 @@ export default function WorkOrderDetail() {
             <CheckSquare className="w-4 h-4" />
             Tasks
           </TabsTrigger>
+          <TabsTrigger value="issues" className="flex items-center gap-2" data-testid="tab-issues">
+            <AlertTriangle className="w-4 h-4" />
+            Issues
+          </TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-2" data-testid="tab-details">
             <FileText className="w-4 h-4" />
-            Additional Details
+            Details
           </TabsTrigger>
         </TabsList>
 
@@ -280,6 +287,27 @@ export default function WorkOrderDetail() {
 
         <TabsContent value="tasks" className="mt-6">
           <WorkOrderTasks workOrderId={workOrder?.id || ''} userRole={currentUser?.roles?.[0] || 'field_agent'} />
+        </TabsContent>
+
+        <TabsContent value="issues" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Issue Reports</h3>
+              <Button 
+                onClick={() => setIsIssueModalOpen(true)}
+                className="flex items-center gap-2"
+                data-testid="button-create-issue"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Report Issue
+              </Button>
+            </div>
+            
+            <IssuesTab 
+              workOrderId={workOrder?.id} 
+              canReview={isAdmin}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="details" className="mt-6">
@@ -357,6 +385,13 @@ export default function WorkOrderDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Create Issue Modal */}
+      <CreateIssueModal
+        workOrderId={workOrder?.id || ''}
+        isOpen={isIssueModalOpen}
+        onClose={() => setIsIssueModalOpen(false)}
+      />
     </div>
   );
 }
