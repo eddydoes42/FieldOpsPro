@@ -2269,6 +2269,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== SERVICE QUALITY DASHBOARD ROUTES =====
+  
+  // Get service quality metrics for a company
+  app.get('/api/service-quality/:companyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { companyId } = req.params;
+      const { dateFrom, dateTo } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'client'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Service company admins can only view their own company's data
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        if (companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only view your company's service quality data." });
+        }
+      }
+
+      // Client companies can only view service companies they have worked with
+      if (isClient(currentUser)) {
+        const clientWorkOrders = await storage.getWorkOrdersByClientCompany(currentUser.id);
+        const hasWorkedWithCompany = clientWorkOrders.some(wo => wo.companyId === companyId);
+        
+        if (!hasWorkedWithCompany) {
+          return res.status(403).json({ message: "Access denied. No work history with this service company." });
+        }
+      }
+
+      const metrics = await storage.calculateServiceQualityMetrics(companyId, dateFrom, dateTo);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching service quality metrics:", error);
+      res.status(500).json({ message: "Failed to fetch service quality metrics" });
+    }
+  });
+
+  // Get service quality snapshots for a company
+  app.get('/api/service-quality-snapshots/:companyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { companyId } = req.params;
+      const { limit = 10 } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Service company admins can only view their own company's snapshots
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        if (companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only view your company's service quality snapshots." });
+        }
+      }
+
+      const snapshots = await storage.getServiceQualitySnapshots(companyId, parseInt(limit as string));
+      res.json(snapshots);
+    } catch (error) {
+      console.error("Error fetching service quality snapshots:", error);
+      res.status(500).json({ message: "Failed to fetch service quality snapshots" });
+    }
+  });
+
+  // Create a service quality snapshot (for scheduled tasks or manual triggers)
+  app.post('/api/service-quality-snapshots', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied. Only Operations Director and admin teams can create service quality snapshots." });
+      }
+
+      const { companyId, periodStart, periodEnd } = req.body;
+
+      if (!companyId || !periodStart || !periodEnd) {
+        return res.status(400).json({ message: "Company ID, period start, and period end are required." });
+      }
+
+      // Service company admins can only create snapshots for their own company
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        if (companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only create snapshots for your company." });
+        }
+      }
+
+      // Calculate metrics for the specified period
+      const metrics = await storage.calculateServiceQualityMetrics(companyId, periodStart, periodEnd);
+
+      // Create snapshot
+      const snapshotData = {
+        companyId,
+        periodStart: new Date(periodStart),
+        periodEnd: new Date(periodEnd),
+        metrics: metrics
+      };
+
+      const snapshot = await storage.createServiceQualitySnapshot(snapshotData);
+      res.status(201).json(snapshot);
+    } catch (error: any) {
+      console.error("Error creating service quality snapshot:", error);
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid snapshot data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create service quality snapshot" });
+    }
+  });
+
   // ===== CLIENT FEEDBACK LOOP ROUTES =====
 
   // Create feedback after work order completion

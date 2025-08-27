@@ -27,6 +27,8 @@ import {
   jobRequests,
   onboardingRequests,
   feedback,
+  performanceSnapshots,
+  serviceQualitySnapshots,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -84,6 +86,10 @@ import {
   type InsertOnboardingRequest,
   type Feedback,
   type InsertFeedback,
+  type PerformanceSnapshot,
+  type InsertPerformanceSnapshot,
+  type ServiceQualitySnapshot,
+  type InsertServiceQualitySnapshot,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -2102,6 +2108,201 @@ export class DatabaseStorage implements IStorage {
       resolvedIssues,
       issueResolutionRate: Math.round(issueResolutionRate * 100) / 100,
       complianceScore: Math.round(complianceScore * 100) / 100,
+      dateRange: {
+        from: dateFrom || null,
+        to: dateTo || null
+      }
+    };
+  }
+
+  // Service Quality operations
+  async createServiceQualitySnapshot(snapshot: InsertServiceQualitySnapshot): Promise<ServiceQualitySnapshot> {
+    const [newSnapshot] = await db
+      .insert(serviceQualitySnapshots)
+      .values(snapshot)
+      .returning();
+    return newSnapshot;
+  }
+
+  async getServiceQualitySnapshots(companyId: string, limit: number = 10): Promise<ServiceQualitySnapshot[]> {
+    return await db
+      .select()
+      .from(serviceQualitySnapshots)
+      .where(eq(serviceQualitySnapshots.companyId, companyId))
+      .orderBy(desc(serviceQualitySnapshots.createdAt))
+      .limit(limit);
+  }
+
+  async calculateServiceQualityMetrics(companyId: string, dateFrom?: string, dateTo?: string): Promise<any> {
+    const conditions = [eq(workOrders.companyId, companyId)];
+    
+    if (dateFrom) {
+      conditions.push(sql`${workOrders.createdAt} >= ${new Date(dateFrom)}`);
+    }
+    
+    if (dateTo) {
+      conditions.push(sql`${workOrders.createdAt} <= ${new Date(dateTo)}`);
+    }
+
+    // Get all work orders for the company in the specified period
+    const companyWorkOrders = await db
+      .select({
+        id: workOrders.id,
+        status: workOrders.status,
+        assignedAgent: workOrders.assignedAgent,
+        scheduledStart: workOrders.scheduledStart,
+        actualStart: workOrders.actualStart,
+        scheduledEnd: workOrders.scheduledEnd,
+        completedAt: workOrders.completedAt,
+        estimatedHours: workOrders.estimatedHours,
+        actualHours: workOrders.actualHours,
+        createdAt: workOrders.createdAt
+      })
+      .from(workOrders)
+      .where(and(...conditions))
+      .orderBy(desc(workOrders.createdAt));
+
+    const totalJobs = companyWorkOrders.length;
+    const completedJobs = companyWorkOrders.filter(wo => wo.status === 'completed').length;
+
+    // Calculate job volume trends by day for the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const recentJobs = companyWorkOrders.filter(wo => 
+      new Date(wo.createdAt) >= thirtyDaysAgo
+    );
+
+    const jobVolumeByDay = new Map();
+    recentJobs.forEach(job => {
+      const dayKey = new Date(job.createdAt).toISOString().split('T')[0];
+      jobVolumeByDay.set(dayKey, (jobVolumeByDay.get(dayKey) || 0) + 1);
+    });
+
+    // Calculate timeliness metrics
+    const onTimeStarts = companyWorkOrders.filter(wo => {
+      if (!wo.scheduledStart || !wo.actualStart) return false;
+      return new Date(wo.actualStart) <= new Date(wo.scheduledStart);
+    }).length;
+
+    const onTimeFinishes = companyWorkOrders.filter(wo => {
+      if (!wo.scheduledEnd || !wo.completedAt) return false;
+      return new Date(wo.completedAt) <= new Date(wo.scheduledEnd);
+    }).length;
+
+    const onTimeStartPercentage = totalJobs > 0 ? (onTimeStarts / totalJobs) * 100 : 0;
+    const onTimeFinishPercentage = totalJobs > 0 ? (onTimeFinishes / totalJobs) * 100 : 0;
+    const serviceComplianceScore = (onTimeStartPercentage + onTimeFinishPercentage) / 2;
+
+    // Get feedback data for all agents in this company
+    const companyUsers = await db.select().from(users).where(eq(users.companyId, companyId));
+    const agentIds = companyUsers.map(user => user.id);
+
+    let totalFeedback = 0;
+    let totalStarsSum = 0;
+    let wouldHireAgainCount = 0;
+
+    if (agentIds.length > 0) {
+      const feedbackData = await db
+        .select({
+          stars: feedback.stars,
+          wouldHireAgain: feedback.wouldHireAgain,
+          createdAt: feedback.createdAt
+        })
+        .from(feedback)
+        .where(sql`${feedback.givenTo} = ANY(${agentIds})`);
+
+      // Filter by date range if specified
+      const filteredFeedback = feedbackData.filter(f => {
+        if (dateFrom && new Date(f.createdAt) < new Date(dateFrom)) return false;
+        if (dateTo && new Date(f.createdAt) > new Date(dateTo)) return false;
+        return true;
+      });
+
+      totalFeedback = filteredFeedback.length;
+      totalStarsSum = filteredFeedback.reduce((sum, f) => sum + f.stars, 0);
+      wouldHireAgainCount = filteredFeedback.filter(f => f.wouldHireAgain === true).length;
+    }
+
+    const avgClientSatisfaction = totalFeedback > 0 ? totalStarsSum / totalFeedback : 0;
+    const wouldHireAgainPercentage = totalFeedback > 0 ? (wouldHireAgainCount / totalFeedback) * 100 : 0;
+    const overallClientSatisfactionScore = totalFeedback > 0 
+      ? (avgClientSatisfaction * 20 + wouldHireAgainPercentage) / 2 // Convert 5-star to 100-point scale and average with hire-again %
+      : 0;
+
+    // Get issues data for company work orders
+    const workOrderIds = companyWorkOrders.map(wo => wo.id);
+    let totalIssues = 0;
+    let resolvedIssues = 0;
+    let avgResolutionTime = 0;
+
+    if (workOrderIds.length > 0) {
+      const issuesData = await db
+        .select({
+          id: structuredIssues.id,
+          status: structuredIssues.status,
+          priority: structuredIssues.priority,
+          createdAt: structuredIssues.createdAt,
+          reviewedAt: structuredIssues.reviewedAt
+        })
+        .from(structuredIssues)
+        .where(sql`${structuredIssues.workOrderId} = ANY(${workOrderIds})`);
+
+      totalIssues = issuesData.length;
+      resolvedIssues = issuesData.filter(issue => issue.status === 'resolved').length;
+
+      // Calculate average resolution time for resolved issues
+      const resolvedIssuesWithTime = issuesData.filter(issue => 
+        issue.status === 'resolved' && issue.reviewedAt
+      );
+
+      if (resolvedIssuesWithTime.length > 0) {
+        const totalResolutionTime = resolvedIssuesWithTime.reduce((sum, issue) => {
+          const created = new Date(issue.createdAt).getTime();
+          const resolved = new Date(issue.reviewedAt!).getTime();
+          return sum + (resolved - created);
+        }, 0);
+        
+        avgResolutionTime = totalResolutionTime / resolvedIssuesWithTime.length / (1000 * 60 * 60); // Convert to hours
+      }
+    }
+
+    const issueRate = completedJobs > 0 ? (totalIssues / completedJobs) * 100 : 0;
+    const issueResolutionRate = totalIssues > 0 ? (resolvedIssues / totalIssues) * 100 : 0;
+
+    // Get audit compliance score for the company
+    let auditComplianceScore = 0;
+    if (agentIds.length > 0) {
+      const auditLogs = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(auditLogs)
+        .where(sql`${auditLogs.performedBy} = ANY(${agentIds})`);
+
+      const auditLogCount = auditLogs[0]?.count || 0;
+      auditComplianceScore = completedJobs > 0 ? (auditLogCount / completedJobs) : 0;
+    }
+
+    return {
+      companyId,
+      totalJobs,
+      completedJobs,
+      jobVolumeData: Array.from(jobVolumeByDay.entries()).map(([date, count]) => ({
+        date,
+        count
+      })),
+      overallClientSatisfactionScore: Math.round(overallClientSatisfactionScore * 100) / 100,
+      avgClientSatisfaction: Math.round(avgClientSatisfaction * 100) / 100,
+      wouldHireAgainPercentage: Math.round(wouldHireAgainPercentage * 100) / 100,
+      totalFeedback,
+      serviceComplianceScore: Math.round(serviceComplianceScore * 100) / 100,
+      onTimeStartPercentage: Math.round(onTimeStartPercentage * 100) / 100,
+      onTimeFinishPercentage: Math.round(onTimeFinishPercentage * 100) / 100,
+      issueRate: Math.round(issueRate * 100) / 100,
+      totalIssues,
+      resolvedIssues,
+      issueResolutionRate: Math.round(issueResolutionRate * 100) / 100,
+      avgResolutionTimeHours: Math.round(avgResolutionTime * 100) / 100,
+      auditComplianceScore: Math.round(auditComplianceScore * 100) / 100,
       dateRange: {
         from: dateFrom || null,
         to: dateTo || null

@@ -331,6 +331,16 @@ export const performanceSnapshots = pgTable("performance_snapshots", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Service quality snapshots for company-level dashboard insights
+export const serviceQualitySnapshots = pgTable("service_quality_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  periodStart: date("period_start").notNull(),
+  periodEnd: date("period_end").notNull(),
+  metrics: jsonb("metrics").notNull(), // JSON object containing all service quality metrics
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Notifications table for work order confirmations
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -969,6 +979,11 @@ export const insertPerformanceSnapshotSchema = createInsertSchema(performanceSna
   createdAt: true,
 });
 
+export const insertServiceQualitySnapshotSchema = createInsertSchema(serviceQualitySnapshots).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertJobNetworkPostSchema = createInsertSchema(jobNetworkPosts).omit({
   id: true,
   createdAt: true,
@@ -1122,6 +1137,9 @@ export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 
 export type PerformanceSnapshot = typeof performanceSnapshots.$inferSelect;
 export type InsertPerformanceSnapshot = z.infer<typeof insertPerformanceSnapshotSchema>;
+
+export type ServiceQualitySnapshot = typeof serviceQualitySnapshots.$inferSelect;
+export type InsertServiceQualitySnapshot = z.infer<typeof insertServiceQualitySnapshotSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
