@@ -398,6 +398,21 @@ export const workOrderRequests = pgTable("work_order_requests", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Job Requests - For Field Agents to request assignment to work orders
+export const jobRequests = pgTable("job_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  agentId: varchar("agent_id").notNull().references(() => users.id),
+  status: varchar("status").notNull().default("requested"), // requested, approved, rejected
+  message: text("message"), // Optional message from field agent
+  requestedAt: timestamp("requested_at").defaultNow(),
+  reviewedBy: varchar("reviewed_by").references(() => users.id), // Admin who reviewed
+  reviewedAt: timestamp("reviewed_at"),
+  rejectionReason: text("rejection_reason"), // Optional reason for rejection
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Exclusive Network Members - Tracks which service companies clients have added to their exclusive network
 export const exclusiveNetworkMembers = pgTable("exclusive_network_members", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -686,6 +701,23 @@ export const serviceClientRatingsRelations = relations(serviceClientRatings, ({ 
   }),
 }));
 
+export const jobRequestsRelations = relations(jobRequests, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [jobRequests.workOrderId],
+    references: [workOrders.id],
+  }),
+  agent: one(users, {
+    fields: [jobRequests.agentId],
+    references: [users.id],
+    relationName: "requestingAgent"
+  }),
+  reviewedBy: one(users, {
+    fields: [jobRequests.reviewedBy],
+    references: [users.id],
+    relationName: "reviewingAdmin"
+  }),
+}));
+
 // Role validation schema
 export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client'])).min(1);
 
@@ -838,6 +870,14 @@ export const insertApprovalRequestSchema = createInsertSchema(approvalRequests).
   reviewerId: true,
 });
 
+export const insertJobRequestSchema = createInsertSchema(jobRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -900,6 +940,9 @@ export type InsertProjectAssignment = z.infer<typeof insertProjectAssignmentSche
 
 export type ApprovalRequest = typeof approvalRequests.$inferSelect;
 export type InsertApprovalRequest = z.infer<typeof insertApprovalRequestSchema>;
+
+export type JobRequest = typeof jobRequests.$inferSelect;
+export type InsertJobRequest = z.infer<typeof insertJobRequestSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {

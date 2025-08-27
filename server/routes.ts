@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertWorkOrderTaskSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -2698,6 +2698,316 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Job Request routes - Field Agents can request assignment to work orders
+  app.post('/api/job-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let currentUser = await storage.getUser(userId);
+      
+      // Check if user is testing a role (for Operations Directors)
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      
+      if (currentUser && isOperationsDirector(currentUser) && testingRole) {
+        // Switch to test user based on role and company type
+        let testUserEmail = '';
+        
+        if (testingRole === 'field_agent') {
+          testUserEmail = 'testfieldagent@testcompany.com';
+        } else if (testingRole === 'field_engineer') {
+          testUserEmail = 'testfieldengineer@testcompany.com';
+        }
+        
+        if (testUserEmail) {
+          const testUser = await storage.getUserByEmail(testUserEmail);
+          if (testUser) {
+            currentUser = testUser;
+          }
+        }
+      }
+      
+      if (!currentUser || !isFieldLevel(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Field Agents and Field Engineers only." });
+      }
+
+      const requestData = insertJobRequestSchema.parse(req.body);
+      
+      // Ensure the agent is the current user
+      const jobRequest = await storage.createJobRequest({
+        ...requestData,
+        agentId: currentUser.id,
+      });
+      
+      res.json(jobRequest);
+    } catch (error) {
+      console.error("Error creating job request:", error);
+      res.status(500).json({ message: "Failed to create job request" });
+    }
+  });
+
+  // Get job requests for a company (for admin review)
+  app.get('/api/job-requests/company/:companyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let currentUser = await storage.getUser(userId);
+      
+      // Check if user is testing a role (for Operations Directors)
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      
+      if (currentUser && isOperationsDirector(currentUser) && testingRole) {
+        // Switch to test user based on role and company type
+        let testUserEmail = '';
+        
+        if (testingRole === 'administrator') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testadmin@testclient.com'
+            : 'testadmin@testcompany.com';
+        } else if (testingRole === 'manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testmanager@testclient.com'
+            : 'testmanager@testcompany.com';
+        } else if (testingRole === 'dispatcher') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testdispatcher@testclient.com'
+            : 'testdispatcher@testcompany.com';
+        }
+        
+        if (testUserEmail) {
+          const testUser = await storage.getUserByEmail(testUserEmail);
+          if (testUser) {
+            currentUser = testUser;
+          }
+        }
+      }
+      
+      if (!currentUser || !canManageWorkOrders(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Admin team required." });
+      }
+
+      const companyId = req.params.companyId;
+      const jobRequests = await storage.getJobRequestsByCompany(companyId);
+      res.json(jobRequests);
+    } catch (error) {
+      console.error("Error fetching job requests:", error);
+      res.status(500).json({ message: "Failed to fetch job requests" });
+    }
+  });
+
+  // Get job requests for a specific agent
+  app.get('/api/job-requests/agent/:agentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let currentUser = await storage.getUser(userId);
+      
+      // Check if user is testing a role (for Operations Directors)
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      
+      if (currentUser && isOperationsDirector(currentUser) && testingRole) {
+        // Switch to test user based on role and company type
+        let testUserEmail = '';
+        
+        if (testingRole === 'field_agent') {
+          testUserEmail = 'testfieldagent@testcompany.com';
+        } else if (testingRole === 'field_engineer') {
+          testUserEmail = 'testfieldengineer@testcompany.com';
+        }
+        
+        if (testUserEmail) {
+          const testUser = await storage.getUserByEmail(testUserEmail);
+          if (testUser) {
+            currentUser = testUser;
+          }
+        }
+      }
+      
+      const agentId = req.params.agentId;
+      
+      // Users can only view their own job requests unless they're admin
+      if (!currentUser || (currentUser.id !== agentId && !canManageWorkOrders(currentUser))) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      const jobRequests = await storage.getJobRequestsByAgent(agentId);
+      res.json(jobRequests);
+    } catch (error) {
+      console.error("Error fetching job requests:", error);
+      res.status(500).json({ message: "Failed to fetch job requests" });
+    }
+  });
+
+  // Review job request (approve/reject)
+  app.patch('/api/job-requests/:requestId/review', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let currentUser = await storage.getUser(userId);
+      
+      // Check if user is testing a role (for Operations Directors)
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      
+      if (currentUser && isOperationsDirector(currentUser) && testingRole) {
+        // Switch to test user based on role and company type
+        let testUserEmail = '';
+        
+        if (testingRole === 'administrator') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testadmin@testclient.com'
+            : 'testadmin@testcompany.com';
+        } else if (testingRole === 'manager') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testmanager@testclient.com'
+            : 'testmanager@testcompany.com';
+        } else if (testingRole === 'dispatcher') {
+          testUserEmail = testingCompanyType === 'client' 
+            ? 'testdispatcher@testclient.com'
+            : 'testdispatcher@testcompany.com';
+        }
+        
+        if (testUserEmail) {
+          const testUser = await storage.getUserByEmail(testUserEmail);
+          if (testUser) {
+            currentUser = testUser;
+          }
+        }
+      }
+      
+      if (!currentUser || !canManageWorkOrders(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Admin team required." });
+      }
+
+      const { requestId } = req.params;
+      const { status, rejectionReason } = req.body;
+
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be 'approved' or 'rejected'." });
+      }
+
+      const updatedRequest = await storage.reviewJobRequest(requestId, status, currentUser.id, rejectionReason);
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error reviewing job request:", error);
+      res.status(500).json({ message: "Failed to review job request" });
+    }
+  });
+
+  // ==================================================
+  // JOB REQUESTS ROUTES
+  // ==================================================
+  
+  // Create job request (field agents requesting work orders)
+  app.post("/api/job-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { workOrderId, message } = req.body;
+      
+      if (!workOrderId) {
+        return res.status(400).json({ error: "Work order ID is required" });
+      }
+
+      // Check if work order exists and is unassigned
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ error: "Work order not found" });
+      }
+
+      if (workOrder.assigneeId) {
+        return res.status(400).json({ error: "Work order is already assigned" });
+      }
+
+      // Check if user already has a pending request for this work order
+      const existingRequests = await storage.getJobRequestsByAgent(currentUser.id);
+      const existingRequest = existingRequests.find(r => 
+        r.workOrderId === workOrderId && r.status === 'requested'
+      );
+      
+      if (existingRequest) {
+        return res.status(400).json({ error: "You already have a pending request for this work order" });
+      }
+
+      const jobRequest = await storage.createJobRequest({
+        workOrderId,
+        agentId: currentUser.id,
+        message,
+        status: 'requested',
+        requestedAt: new Date(),
+      });
+
+      res.json(jobRequest);
+    } catch (error) {
+      console.error("Error creating job request:", error);
+      res.status(500).json({ error: "Failed to create job request" });
+    }
+  });
+
+  // Get job requests for admin review (by company)
+  app.get("/api/job-requests/company/:companyId", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { companyId } = req.params;
+      const userRoles = currentUser.roles || [];
+      
+      // Only administrators, managers, and dispatchers can view job requests
+      if (!userRoles.some((role: string) => ['administrator', 'manager', 'dispatcher'].includes(role))) {
+        return res.status(403).json({ error: "Insufficient permissions" });
+      }
+
+      const jobRequests = await storage.getJobRequestsByCompany(companyId);
+      res.json(jobRequests);
+    } catch (error) {
+      console.error("Error fetching job requests:", error);
+      res.status(500).json({ error: "Failed to fetch job requests" });
+    }
+  });
+
+  // Review job request (approve/reject)
+  app.patch("/api/job-requests/:requestId/review", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { requestId } = req.params;
+      const { status, rejectionReason } = req.body;
+      
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: "Status must be 'approved' or 'rejected'" });
+      }
+
+      const userRoles = currentUser.roles || [];
+      
+      // Only administrators, managers, and dispatchers can review job requests
+      if (!userRoles.some((role: string) => ['administrator', 'manager', 'dispatcher'].includes(role))) {
+        return res.status(403).json({ error: "Insufficient permissions" });
+      }
+
+      const reviewData = {
+        status: status as 'approved' | 'rejected',
+        reviewedBy: currentUser.id,
+        rejectionReason,
+      };
+
+      const reviewedRequest = await storage.reviewJobRequest(requestId, reviewData);
+      res.json(reviewedRequest);
+    } catch (error) {
+      console.error("Error reviewing job request:", error);
+      res.status(500).json({ error: "Failed to review job request" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
+
+
+

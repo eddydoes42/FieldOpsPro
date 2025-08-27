@@ -1,0 +1,60 @@
+## Module: Job Visibility Logic (FieldOps Pro Enhancement)
+
+### Objective:
+Refine job visibility in the Job Network by introducing geo-targeting and skill-based filters. This ensures Field Agents only see jobs relevant to their location and expertise, aligning with Field Nation’s targeting model while preserving FieldOps Pro’s Exclusive Network logic.
+
+---
+
+### Affected Roles:
+- Field Agent (job viewer)
+- Client Admin / Dispatcher (job poster)
+
+### Affected Pages:
+- `/job-network` (Field Agent view)
+- `/post-job` or `/job-editor` (Client Admin view)
+
+---
+
+### Implementation Steps:
+
+1. **Frontend (Job Posting Form)**
+   - Add optional fields to `/post-job`:
+     - Job Location (address or coordinates)
+     - Required Skills (multi-select dropdown)
+     - Visibility Scope:
+       - “Public to Qualified Agents”
+       - “Exclusive Network Only”
+
+2. **Backend API**
+   - Update job schema to include:
+     - `location` (lat/lng or address)
+     - `required_skills` (array of skill tags)
+     - `visibility_scope` (enum: public, exclusive)
+   - Modify `GET /api/jobs` to:
+     - Filter jobs based on agent’s location radius (e.g., within 50 miles)
+     - Match agent’s skill tags to job’s required skills
+     - Respect visibility scope (exclusive jobs only shown to invited agents)
+
+3. **Database Schema**
+   - Update `jobs` table:
+     location GEOGRAPHY(Point, 4326),
+     required_skills TEXT[],
+     visibility_scope TEXT CHECK (visibility_scope IN ('public', 'exclusive'))
+
+4. **Frontend (Field Agent View)**
+   - In `/job-network`, show only jobs:
+     - Within agent’s location radius
+     - Matching at least one required skill
+     - That are marked “public” or explicitly shared with agent
+
+5. **Admin Controls**
+   - Allow Client Admins to override visibility manually:
+     - “Share with specific agents” (dropdown or search)
+     - “Invite to apply” (triggers notification)
+
+---
+
+### Notes:
+- Preserve Exclusive Network logic—this module **adds targeting**, not replaces existing sharing mechanisms.
+- Consider adding a “Job Visibility Preview” for Admins to see how their post will appear to agents.
+- Optionally allow agents to update their location and skill tags in their profile.

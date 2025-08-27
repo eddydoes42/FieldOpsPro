@@ -21,6 +21,7 @@ import {
   projectAssignments,
   approvalRequests,
   accessRequests,
+  jobRequests,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -64,6 +65,8 @@ import {
   type InsertApprovalRequest,
   type AccessRequest,
   type InsertAccessRequest,
+  type JobRequest,
+  type InsertJobRequest,
   type ExclusiveNetwork,
   type InsertExclusiveNetwork,
 } from "@shared/schema";
@@ -273,6 +276,13 @@ export interface IStorage {
   getPendingAccessRequests(): Promise<AccessRequest[]>;
   updateAccessRequest(id: string, updates: Partial<InsertAccessRequest>): Promise<AccessRequest>;
   reviewAccessRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, notes?: string): Promise<AccessRequest>;
+  
+  // Job Requests operations
+  createJobRequest(request: InsertJobRequest): Promise<JobRequest>;
+  getJobRequestsByWorkOrder(workOrderId: string): Promise<JobRequest[]>;
+  getJobRequestsByCompany(companyId: string): Promise<JobRequest[]>;
+  getJobRequestsByAgent(agentId: string): Promise<JobRequest[]>;
+  reviewJobRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, rejectionReason?: string): Promise<JobRequest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2156,6 +2166,168 @@ export class DatabaseStorage implements IStorage {
       .from(workOrders)
       .where(eq(workOrders.status, 'completed'))
       .orderBy(desc(workOrders.completedAt));
+  }
+
+  // Job Requests operations
+  async createJobRequest(request: InsertJobRequest): Promise<JobRequest> {
+    const [jobRequest] = await db
+      .insert(jobRequests)
+      .values(request)
+      .returning();
+    return jobRequest;
+  }
+
+  async getJobRequestsByWorkOrder(workOrderId: string): Promise<JobRequest[]> {
+    return await db
+      .select()
+      .from(jobRequests)
+      .where(eq(jobRequests.workOrderId, workOrderId));
+  }
+
+  async getJobRequestsByCompany(companyId: string): Promise<JobRequest[]> {
+    return await db
+      .select({
+        id: jobRequests.id,
+        workOrderId: jobRequests.workOrderId,
+        agentId: jobRequests.agentId,
+        status: jobRequests.status,
+        message: jobRequests.message,
+        requestedAt: jobRequests.requestedAt,
+        reviewedBy: jobRequests.reviewedBy,
+        reviewedAt: jobRequests.reviewedAt,
+        rejectionReason: jobRequests.rejectionReason,
+        createdAt: jobRequests.createdAt,
+        updatedAt: jobRequests.updatedAt,
+        // Include agent information
+        agentName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        agentEmail: users.email,
+        // Include work order information
+        workOrderTitle: workOrders.title,
+        workOrderLocation: workOrders.location,
+        workOrderStatus: workOrders.status,
+      })
+      .from(jobRequests)
+      .leftJoin(users, eq(jobRequests.agentId, users.id))
+      .leftJoin(workOrders, eq(jobRequests.workOrderId, workOrders.id))
+      .where(eq(users.companyId, companyId));
+  }
+
+  async getJobRequestsByAgent(agentId: string): Promise<JobRequest[]> {
+    return await db
+      .select()
+      .from(jobRequests)
+      .where(eq(jobRequests.agentId, agentId));
+  }
+
+  async reviewJobRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, rejectionReason?: string): Promise<JobRequest> {
+    const [updated] = await db
+      .update(jobRequests)
+      .set({
+        status,
+        reviewedBy: reviewedById,
+        reviewedAt: new Date(),
+        rejectionReason: status === 'rejected' ? rejectionReason : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(jobRequests.id, id))
+      .returning();
+
+    // If approved, assign the work order to the agent
+    if (status === 'approved' && updated) {
+      await db
+        .update(workOrders)
+        .set({
+          assignedTo: updated.agentId,
+          status: 'assigned',
+          updatedAt: new Date(),
+        })
+        .where(eq(workOrders.id, updated.workOrderId));
+    }
+
+    return updated;
+  }
+  // ==================================================
+  // JOB REQUESTS OPERATIONS
+  // ==================================================
+
+  async createJobRequest(requestData: InsertJobRequest): Promise<JobRequest> {
+    const [request] = await db.insert(jobRequests).values(requestData).returning();
+    return request;
+  }
+
+  async getJobRequestsByCompany(companyId: string): Promise<any[]> {
+    // Get job requests for work orders belonging to this company
+    return await db
+      .select({
+        id: jobRequests.id,
+        workOrderId: jobRequests.workOrderId,
+        agentId: jobRequests.agentId,
+        status: jobRequests.status,
+        message: jobRequests.message,
+        requestedAt: jobRequests.requestedAt,
+        reviewedBy: jobRequests.reviewedBy,
+        reviewedAt: jobRequests.reviewedAt,
+        rejectionReason: jobRequests.rejectionReason,
+        createdAt: jobRequests.createdAt,
+        updatedAt: jobRequests.updatedAt,
+        // Agent info
+        agentName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        agentEmail: users.email,
+        // Work order info
+        workOrderTitle: workOrders.title,
+        workOrderLocation: workOrders.location,
+        workOrderStatus: workOrders.status,
+      })
+      .from(jobRequests)
+      .innerJoin(workOrders, eq(jobRequests.workOrderId, workOrders.id))
+      .innerJoin(users, eq(jobRequests.agentId, users.id))
+      .where(eq(workOrders.companyId, companyId))
+      .orderBy(desc(jobRequests.requestedAt));
+  }
+
+  async getJobRequestsByAgent(agentId: string): Promise<JobRequest[]> {
+    return await db
+      .select()
+      .from(jobRequests)
+      .where(eq(jobRequests.agentId, agentId))
+      .orderBy(desc(jobRequests.requestedAt));
+  }
+
+  async reviewJobRequest(requestId: string, reviewData: { 
+    status: 'approved' | 'rejected'; 
+    reviewedBy: string; 
+    rejectionReason?: string 
+  }): Promise<JobRequest> {
+    const [request] = await db
+      .update(jobRequests)
+      .set({
+        status: reviewData.status,
+        reviewedBy: reviewData.reviewedBy,
+        reviewedAt: new Date(),
+        rejectionReason: reviewData.rejectionReason,
+        updatedAt: new Date(),
+      })
+      .where(eq(jobRequests.id, requestId))
+      .returning();
+    
+    // If approved, assign the work order to the agent
+    if (reviewData.status === 'approved' && request) {
+      await db
+        .update(workOrders)
+        .set({
+          assigneeId: request.agentId,
+          status: 'assigned',
+          updatedAt: new Date(),
+        })
+        .where(eq(workOrders.id, request.workOrderId));
+    }
+    
+    return request;
+  }
+
+  async getJobRequest(requestId: string): Promise<JobRequest | undefined> {
+    const [request] = await db.select().from(jobRequests).where(eq(jobRequests.id, requestId));
+    return request;
   }
 }
 

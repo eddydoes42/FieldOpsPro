@@ -151,8 +151,10 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           links: [
             { path: '/admin-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
-            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' }, { path: "/project-network", label: "Project Network", icon: "fas fa-project-diagram" },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+            { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/job-requests', label: 'Job Requests', icon: 'fas fa-hand-paper' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
             { path: '/onboarding', label: 'Team Member Information', icon: 'fas fa-user-plus' },
@@ -177,8 +179,10 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           links: [
             { path: '/manager-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
-            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' }, { path: "/project-network", label: "Project Network", icon: "fas fa-project-diagram" },
+            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+            { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/job-requests', label: 'Job Requests', icon: 'fas fa-hand-paper' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
             { path: '/onboarding', label: 'Team Member Information', icon: 'fas fa-user-plus' },
@@ -192,6 +196,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/dispatcher-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/job-requests', label: 'Job Requests', icon: 'fas fa-hand-paper' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]

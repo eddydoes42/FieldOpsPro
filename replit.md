@@ -97,28 +97,4 @@ The application features a modern design built on Tailwind CSS and shadcn/ui, pr
 - **Talent Network Page**: New page accessible to clients showing field agent cards from all companies with clickable detailed agent profiles and company associations
 - **Icon-Based Navigation**: Complete transition from text-based "Back to Dashboard" buttons to intuitive Home (🏠) and Back (←) icons across all pages including Talent Network
 
-## External Dependencies
-
-### Database & ORM
-- **PostgreSQL**
-- **Drizzle ORM**
-- **Neon Database**
-
-### Authentication
-- **Replit OAuth**
-- **connect-pg-simple**
-- **Passport.js**
-
-### Frontend Libraries
-- **React**
-- **TanStack Query**
-- **React Hook Form**
-- **wouter**
-- **shadcn/ui**
-- **Radix UI**
-- **Tailwind CSS**
-
-### Backend Dependencies
-- **Express.js**
-- **Zod**
-- **date-fns**
+##

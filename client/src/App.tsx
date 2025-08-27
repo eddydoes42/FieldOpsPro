@@ -41,6 +41,7 @@ const JobNetwork = React.lazy(() => import('@/pages/job-network'));
 import TalentNetworkPage from '@/pages/talent-network';
 import ProjectNetworkPage from '@/pages/project-network';
 import ProjectManagerDashboard from '@/pages/project-manager-dashboard';
+import JobRequestsPage from '@/pages/job-requests';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -383,6 +384,26 @@ function Router() {
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                 {isAuthenticated ? <WorkOrders /> : <Landing />}
               </div>
+            </Route>
+
+            <Route path="/job-requests">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasJobRequestAccess = ['administrator', 'manager', 'dispatcher'].includes(effectiveRole);
+                // Only allow Operations Directors superuser access when NOT role testing
+                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
+                
+                if (isAuthenticated && (hasJobRequestAccess || isSuperUserAccess)) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      <JobRequestsPage />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
             </Route>
 
             <Route path="/job-network">
