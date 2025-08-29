@@ -1683,22 +1683,29 @@ export type InsertAgentLocation = z.infer<typeof insertAgentLocationSchema>;
 
 // Role utility functions
 // Operations Director role bypass helper
-function hasOperationsDirectorBypass(user: User | null): boolean {
+function hasOperationsDirectorBypass(user: User | null, testingRole?: string, testingCompanyType?: string): boolean {
   if (!user) return false;
   
   // Check if user is Operations Director AND not in role testing mode
   const isOD = user.roles?.includes('operations_director') && !user.companyId;
   if (!isOD) return false;
   
-  // Check if role testing is active (browser environment only)
-  if (typeof window !== 'undefined') {
-    const testingRole = localStorage.getItem('testingRole');
-    const testingCompanyType = localStorage.getItem('testingCompanyType');
-    
-    // If testing role is active, don't apply bypass
-    if (testingRole && testingCompanyType) {
-      return false;
-    }
+  // Check for role testing from parameters (server-side) or localStorage (client-side)
+  let isRoleTesting = false;
+  
+  if (testingRole && testingCompanyType) {
+    // Server-side: role testing detected from headers
+    isRoleTesting = true;
+  } else if (typeof window !== 'undefined') {
+    // Client-side: check localStorage
+    const localTestingRole = localStorage.getItem('testingRole');
+    const localTestingCompanyType = localStorage.getItem('testingCompanyType');
+    isRoleTesting = !!(localTestingRole && localTestingCompanyType);
+  }
+  
+  // If testing role is active, don't apply bypass
+  if (isRoleTesting) {
+    return false;
   }
   
   return true;

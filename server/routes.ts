@@ -13,6 +13,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Helper function to get testing role info from request headers
+  function getTestingRoleInfo(req: any) {
+    return {
+      testingRole: req.headers['x-testing-role'] as string | undefined,
+      testingCompanyType: req.headers['x-testing-company-type'] as string | undefined
+    };
+  }
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {

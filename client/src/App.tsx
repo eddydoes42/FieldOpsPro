@@ -446,13 +446,14 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
-                // Only allow Operations Directors superuser access when NOT role testing
+                // Operations Director bypass - can access Job Network when not in role testing mode
                 const isRoleTesting = !!testingRole || !!permanentRole;
-                const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
+                const isODBypass = isOperationsDirector(user as any) && !isRoleTesting;
                 
-                if (isAuthenticated && (hasJobNetworkAccess || isSuperUserAccess)) {
+                if (isAuthenticated && (hasJobNetworkAccess || isODBypass)) {
                   return (
                     <Suspense fallback={<div className="p-4">Loading job network...</div>}>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || effectiveRole} />
                       <JobNetwork 
                         user={user as any} 
                         testingRole={testingRole || undefined}

@@ -37,11 +37,15 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
   // Check if user is truly an operations director (has operations_director role AND no companyId)
   const isOperationsDirector = hasOperationsDirectorRole && !(user as any)?.companyId;
   
+  // Check if Operations Director is in role testing mode
+  const isRoleTesting = !!localStorage.getItem('testingRole') || !!localStorage.getItem('selectedRole');
+  const isODBypass = isOperationsDirector && !isRoleTesting;
+  
   // Check if user is a company administrator (has admin role but has a companyId, or admin role without operations director role)
   const isCompanyAdmin = isAdmin && ((user as any)?.companyId || !hasOperationsDirectorRole);
   
-  const canManageUsers = isAdmin || isManager;
-  const canCreateWorkOrders = isAdmin || isManager || isDispatcher;
+  const canManageUsers = isAdmin || isManager || isODBypass;
+  const canCreateWorkOrders = isAdmin || isManager || isDispatcher || isODBypass;
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -171,7 +175,7 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
               )}
               
               {/* Company Admin User Management */}
-              {isCompanyAdmin && (
+              {(isCompanyAdmin || isODBypass) && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 h-9 text-sm"
@@ -180,7 +184,7 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                   <UserPlus className="h-4 w-4 text-blue-500" />
                   <span>Add Team Member</span>
                   <Badge variant="secondary" className="ml-auto text-xs">
-                    Admin
+                    {isODBypass ? 'OpsDir' : 'Admin'}
                   </Badge>
                 </Button>
               )}
@@ -201,7 +205,7 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
               )}
               
               {/* Work Order Creation for Company Admins, Managers, Dispatchers */}
-              {(isCompanyAdmin || (isManager && !isOperationsDirector) || (isDispatcher && !isOperationsDirector)) && (
+              {(isCompanyAdmin || (isManager && !isOperationsDirector) || (isDispatcher && !isOperationsDirector) || isODBypass) && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 h-9 text-sm"
@@ -209,6 +213,11 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                 >
                   <Plus className="h-4 w-4 text-green-500" />
                   <span>Create Work Order</span>
+                  {isODBypass && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      OpsDir
+                    </Badge>
+                  )}
                 </Button>
               )}
             </div>
