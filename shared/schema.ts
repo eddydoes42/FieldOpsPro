@@ -282,7 +282,33 @@ export const workOrderTools = pgTable("work_order_tools", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Work Order Documents table
+// Enhanced Documents table for projects, work orders, and tasks
+export const documents = pgTable("documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Flexible linking to different entities
+  entityType: varchar("entity_type").notNull(), // 'project', 'work_order', 'task'
+  entityId: varchar("entity_id").notNull(), // ID of the linked entity
+  filename: varchar("filename").notNull(),
+  originalFilename: varchar("original_filename").notNull(),
+  fileUrl: varchar("file_url").notNull(), // Object storage URL
+  mimeType: varchar("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(), // in bytes
+  category: varchar("category").notNull(), // 'pre_visit', 'during_visit', 'post_visit'
+  description: text("description"),
+  uploadedById: varchar("uploaded_by_id").notNull().references(() => users.id),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  isRequired: boolean("is_required").default(false),
+  isCompleted: boolean("is_completed").default(false), // for forms/checklists
+  completedById: varchar("completed_by_id").references(() => users.id),
+  completedAt: timestamp("completed_at"),
+  orderIndex: integer("order_index").default(0),
+  // Metadata for additional context
+  metadata: jsonb("metadata"), // Additional file metadata as JSON
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Work Order Documents table (legacy - keeping for compatibility)
 export const workOrderDocuments = pgTable("work_order_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
@@ -1201,6 +1227,13 @@ export const insertWorkOrderDocumentSchema = createInsertSchema(workOrderDocumen
   completedAt: true,
 });
 
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  uploadedAt: true,
+});
+
 export const insertWorkOrderIssueSchema = createInsertSchema(workOrderIssues).omit({
   id: true,
   createdAt: true,
@@ -1434,6 +1467,9 @@ export type InsertWorkOrderTool = z.infer<typeof insertWorkOrderToolSchema>;
 
 export type WorkOrderDocument = typeof workOrderDocuments.$inferSelect;
 export type InsertWorkOrderDocument = z.infer<typeof insertWorkOrderDocumentSchema>;
+
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 
 export type WorkOrderIssue = typeof workOrderIssues.$inferSelect;
 export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;

@@ -18,6 +18,7 @@ import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquar
 import { useLocation } from 'wouter';
 import { canCreateProjects, canViewProjectNetwork, isOperationsDirector } from '@shared/schema';
 import type { Project, InsertProject } from '@shared/schema';
+import { DocumentUploader } from '@/components/DocumentUploader';
 
 const projectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -786,6 +787,41 @@ export default function ProjectNetwork() {
                       </div>
                     </div>
 
+                    {/* Document Upload Section */}
+                    <div className="space-y-4 border-t pt-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Project Documents</h3>
+                        <span className="text-sm text-gray-500">Upload initial project files (optional)</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-blue-600">Pre-Visit Documents</h4>
+                          <p className="text-xs text-gray-600">Site plans, requirements, specifications</p>
+                          {/* We'll add pre-visit DocumentUploader here once project is created */}
+                          <div className="text-xs text-gray-500 italic">
+                            Upload documents after project creation
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-green-600">During-Visit Documents</h4>
+                          <p className="text-xs text-gray-600">Work logs, photos, progress reports</p>
+                          <div className="text-xs text-gray-500 italic">
+                            Upload documents after project creation
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-purple-600">Post-Visit Documents</h4>
+                          <p className="text-xs text-gray-600">Completion reports, certificates, invoices</p>
+                          <div className="text-xs text-gray-500 italic">
+                            Upload documents after project creation
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="flex justify-end space-x-2 pt-4">
                       <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); resetFormState(); }}>
                         Cancel
@@ -1221,6 +1257,64 @@ export default function ProjectNetwork() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedProject.workersNeeded} workers needed
                   </p>
+                </div>
+
+                {/* Project Documents Section */}
+                <div className="border-t pt-6">
+                  <h3 className="font-semibold text-lg mb-4">Project Documents</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Pre-Visit Documents */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-blue-600 flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Pre-Visit Documents
+                      </h4>
+                      <p className="text-xs text-gray-600">Site plans, requirements, specifications</p>
+                      
+                      <DocumentUploader
+                        entityType="project"
+                        entityId={selectedProject.id}
+                        category="pre-visit"
+                        maxFiles={10}
+                        acceptedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+                      />
+                    </div>
+                    
+                    {/* During-Visit Documents */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-green-600 flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        During-Visit Documents
+                      </h4>
+                      <p className="text-xs text-gray-600">Work logs, photos, progress reports</p>
+                      
+                      <DocumentUploader
+                        entityType="project"
+                        entityId={selectedProject.id}
+                        category="during-visit"
+                        maxFiles={20}
+                        acceptedFileTypes={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
+                      />
+                    </div>
+                    
+                    {/* Post-Visit Documents */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-purple-600 flex items-center">
+                        <CheckSquare className="h-4 w-4 mr-2" />
+                        Post-Visit Documents
+                      </h4>
+                      <p className="text-xs text-gray-600">Completion reports, certificates, invoices</p>
+                      
+                      <DocumentUploader
+                        entityType="project"
+                        entityId={selectedProject.id}
+                        category="post-visit"
+                        maxFiles={15}
+                        acceptedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {selectedProject.requirements && selectedProject.requirements.length > 0 && (

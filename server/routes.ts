@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectPermission } from "./objectAcl";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, insertDocumentSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel } from "@shared/schema";
 import { logWorkOrderAction, logIssueAction, logUserAction, logAssignmentAction, AUDIT_ACTIONS } from "./auditLogger";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -5715,6 +5717,228 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating heartbeat settings:", error);
       res.status(500).json({ message: "Failed to update heartbeat settings" });
+    }
+  });
+
+  // Document management API routes
+  
+  // Get upload URL for documents
+  app.post('/api/documents/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  // Create document record
+  app.post('/api/documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const validatedData = insertDocumentSchema.parse({
+        ...req.body,
+        uploadedById: userId,
+      });
+
+      // Validate entity access based on entityType
+      if (validatedData.entityType === 'work_order') {
+        const workOrder = await storage.getWorkOrder(validatedData.entityId);
+        if (!workOrder) {
+          return res.status(404).json({ message: "Work order not found" });
+        }
+        // Check if user can access this work order
+        if (!isOperationsDirector(currentUser) && 
+            workOrder.companyId !== currentUser.companyId &&
+            workOrder.assigneeId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (validatedData.entityType === 'project') {
+        const project = await storage.getProject(validatedData.entityId);
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        // Check if user can access this project
+        if (!isOperationsDirector(currentUser) && 
+            project.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (validatedData.entityType === 'task') {
+        const task = await storage.getWorkOrderTask(validatedData.entityId);
+        if (!task) {
+          return res.status(404).json({ message: "Task not found" });
+        }
+        // Get associated work order for access check
+        const workOrder = await storage.getWorkOrder(task.workOrderId);
+        if (!workOrder) {
+          return res.status(404).json({ message: "Associated work order not found" });
+        }
+        if (!isOperationsDirector(currentUser) && 
+            workOrder.companyId !== currentUser.companyId &&
+            workOrder.assigneeId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      // Set ACL policy for the uploaded file
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        validatedData.fileUrl,
+        {
+          owner: userId,
+          visibility: "private", // Documents are private by default
+        }
+      );
+
+      // Update the file URL with normalized path
+      validatedData.fileUrl = normalizedPath;
+
+      const document = await storage.createDocument(validatedData);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Error creating document:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid document data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create document" });
+    }
+  });
+
+  // Get documents for an entity
+  app.get('/api/documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const { entityType, entityId } = req.query;
+      if (!entityType || !entityId) {
+        return res.status(400).json({ message: "entityType and entityId are required" });
+      }
+
+      // Validate entity access
+      if (entityType === 'work_order') {
+        const workOrder = await storage.getWorkOrder(entityId);
+        if (!workOrder) {
+          return res.status(404).json({ message: "Work order not found" });
+        }
+        if (!isOperationsDirector(currentUser) && 
+            workOrder.companyId !== currentUser.companyId &&
+            workOrder.assigneeId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (entityType === 'project') {
+        const project = await storage.getProject(entityId);
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        if (!isOperationsDirector(currentUser) && 
+            project.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (entityType === 'task') {
+        const task = await storage.getWorkOrderTask(entityId);
+        if (!task) {
+          return res.status(404).json({ message: "Task not found" });
+        }
+        const workOrder = await storage.getWorkOrder(task.workOrderId);
+        if (!workOrder) {
+          return res.status(404).json({ message: "Associated work order not found" });
+        }
+        if (!isOperationsDirector(currentUser) && 
+            workOrder.companyId !== currentUser.companyId &&
+            workOrder.assigneeId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      const documents = await storage.getDocuments(entityType, entityId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  // Serve document files (with access control)
+  app.get('/objects/:objectPath(*)', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const objectStorageService = new ObjectStorageService();
+      
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        userId: userId,
+        requestedPermission: ObjectPermission.READ,
+      });
+      
+      if (!canAccess) {
+        return res.sendStatus(403);
+      }
+      
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving document:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  // Delete document
+  app.delete('/api/documents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const documentId = req.params.id;
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Check if user can delete this document
+      const isOwner = document.uploadedById === userId;
+      const isAdmin = hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager']);
+      
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: "Access denied. Only document owner or admin can delete." });
+      }
+
+      // Validate entity access
+      if (document.entityType === 'work_order') {
+        const workOrder = await storage.getWorkOrder(document.entityId);
+        if (workOrder && !isOperationsDirector(currentUser) && 
+            workOrder.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (document.entityType === 'project') {
+        const project = await storage.getProject(document.entityId);
+        if (project && !isOperationsDirector(currentUser) && 
+            project.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      await storage.deleteDocument(documentId);
+      res.json({ message: "Document deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ message: "Failed to delete document" });
     }
   });
 

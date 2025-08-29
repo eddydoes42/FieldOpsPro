@@ -9,6 +9,7 @@ import {
   workOrderTasks,
   workOrderTools,
   workOrderDocuments,
+  documents,
   workOrderIssues,
   structuredIssues,
   auditLogs,
@@ -112,6 +113,8 @@ import {
   type InsertWorkOrderTool,
   type WorkOrderDocument,
   type InsertWorkOrderDocument,
+  type Document,
+  type InsertDocument,
   type Bid,
   type InsertBid,
   type Credential,
@@ -319,6 +322,13 @@ export interface IStorage {
   updateWorkOrderTool(id: string, updates: Partial<InsertWorkOrderTool>): Promise<WorkOrderTool>;
   deleteWorkOrderTool(id: string): Promise<void>;
   confirmToolAvailability(id: string, confirmedById: string): Promise<WorkOrderTool>;
+
+  // Document operations
+  createDocument(document: InsertDocument): Promise<Document>;
+  getDocuments(entityType: string, entityId: string): Promise<Document[]>;
+  getDocument(id: string): Promise<Document | undefined>;
+  updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document>;
+  deleteDocument(id: string): Promise<void>;
 
   // Work Order Documents operations
   createWorkOrderDocument(document: InsertWorkOrderDocument): Promise<WorkOrderDocument>;
@@ -4467,6 +4477,38 @@ export class DatabaseStorage implements IStorage {
       .values(logData)
       .returning();
     return log;
+  }
+
+  // Document operations
+  async createDocument(document: InsertDocument): Promise<Document> {
+    const [doc] = await db.insert(documents).values(document).returning();
+    return doc;
+  }
+
+  async getDocuments(entityType: string, entityId: string): Promise<Document[]> {
+    return await db
+      .select()
+      .from(documents)
+      .where(and(eq(documents.entityType, entityType), eq(documents.entityId, entityId)))
+      .orderBy(documents.orderIndex, documents.createdAt);
+  }
+
+  async getDocument(id: string): Promise<Document | undefined> {
+    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
+    return doc;
+  }
+
+  async updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document> {
+    const [doc] = await db
+      .update(documents)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(documents.id, id))
+      .returning();
+    return doc;
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
   }
 }
 

@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 import Navigation from '@/components/navigation';
 import RoleSwitcher from '@/components/role-switcher';
+import { DocumentUploader } from '@/components/DocumentUploader';
 
 
 
@@ -1002,6 +1003,40 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               })}
                             </div>
                           )}
+                        </div>
+
+                        {/* Document Upload Section */}
+                        <div className="space-y-4 border-t pt-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">Work Order Documents</h3>
+                            <span className="text-sm text-gray-500">Upload initial work order files (optional)</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium text-blue-600">Pre-Visit Documents</h4>
+                              <p className="text-xs text-gray-600">Job specifications, site plans, requirements</p>
+                              <div className="text-xs text-gray-500 italic">
+                                Upload documents after work order creation
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium text-green-600">During-Visit Documents</h4>
+                              <p className="text-xs text-gray-600">Work logs, photos, progress reports</p>
+                              <div className="text-xs text-gray-500 italic">
+                                Upload documents after work order creation
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium text-purple-600">Post-Visit Documents</h4>
+                              <p className="text-xs text-gray-600">Completion reports, certificates, invoices</p>
+                              <div className="text-xs text-gray-500 italic">
+                                Upload documents after work order creation
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="flex justify-end space-x-2">

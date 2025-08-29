@@ -1,0 +1,31 @@
+Proceed with Phase 2 of the FieldOps Pro upgrade plan per the Master 13‑Module All‑in‑One, starting from M3. Implement backend and frontend builds in parallel where APIs are stable.
+
+Phase 2 Build Order:
+1. M3 — Job Visibility Logic (depends on M2)
+2. M5 — Issue Creation System (benefits from M4)
+3. NEW MODULE — Project Heartbeat Monitor (build after M5, before M7):
+   - Project Detail page only; literal EKG animation with color cues (Green ≤90 BPM, Yellow 91–130, Orange 131–170, Red 171–179, Flatline ≥180).
+   - Baseline: 70 BPM; Failure: 180 BPM.
+   - Escalations: Issue Created +10, Missed Check‑In +15, Unresolved Issue ≥1h +5 (+5 every 12h), Denied Deliverable +10, Over Budget +10, Uncompleted Tasks on Complete +5.
+   - Positives: Issue Resolved −10, On‑Time Check‑In −10, Approved Deliverables −10, All Tasks Completed −5 (50% effect if multiple escalations active).
+   - On failure: mark project failed; auto‑review Service Company members (default 3★, configurable by Client Company Admin). Client Company not auto‑reviewed; if at fault, cap rating at 4★.
+   - Event triggers from Issue Creation, Check‑In, Deliverable workflow, Budget tracking, Task completion.
+   - Purely visual; BPM state in memory; optional `project_health_log` table.
+4. NEW MODULE — Document Uploading Feature (build after Heartbeat Monitor, before M7):
+   - Add "Upload Documents" button to Project and Work Order creation forms.
+   - On click: upload one or more files (PDF, DOCX, XLSX, JPG, PNG).
+   - Categorize by timing: Pre‑visit, During visit, Post‑visit.
+   - Integrate with existing "number of required documents" field in Project creation.
+   - Allow Work Order assignees to upload documents at the task level; visible in task detail view.
+   - Store metadata: id, linked entity (project/work order/task), category, file_url, uploaded_by, uploaded_at.
+   - Role‑based access: creators + assigned agents can upload; view follows existing visibility rules.
+   - Frontend: file picker, list of uploaded docs with filename, category, uploader, timestamp; allow deletion by uploader/admin before completion.
+   - Backend: `documents` table; API POST /api/documents, GET /api/documents?entityType=...&entityId=..., DELETE /api/documents/:id.
+5. M7 — Client Feedback Loop
+6. M8 — Agent Performance Analytics (needs M6, M5, M7)
+7. M9 — Service Quality Dashboard (needs M8)
+8. M10 — Predictive Risk & Early Intervention (needs M9)
+9. M13 — Smart Match (needs M11, M12)
+10. M16 — Incentive & Recognition Engine (needs M8, M7)
+
+Maintain FieldOps Pro’s existing design and structure. Implement each module as a discrete, testable component with feature flags. Preserve backward compatibility with existing APIs and data.
