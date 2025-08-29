@@ -1,329 +1,363 @@
 import { useState } from "react";
-import type { ReactNode } from "react";
-import Uppy from "@uppy/core";
-import { DashboardModal } from "@uppy/react";
-// Uppy CSS imports removed - will be handled by project CSS
-import AwsS3 from "@uppy/aws-s3";
-import type { UploadResult } from "@uppy/core";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { FileText, Trash2, Upload, Download } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { Progress } from "@/components/ui/progress";
+import { X, Upload, FileText, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Document } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface DocumentUploaderProps {
-  entityType: "project" | "work_order" | "task";
+  entityType: "work_order" | "project" | "task";
   entityId: string;
   maxNumberOfFiles?: number;
-  maxFileSize?: number;
+  maxFileSize?: number; // in bytes
   allowedFileTypes?: string[];
-  buttonClassName?: string;
-  children?: ReactNode;
-  disabled?: boolean;
+  onComplete?: () => void;
+  onCancel?: () => void;
 }
 
-interface DocumentMetadata {
-  category: "pre_visit" | "during_visit" | "post_visit";
-  description?: string;
-  isRequired?: boolean;
+interface UploadingFile {
+  file: File;
+  progress: number;
+  category: string;
+  status: "pending" | "uploading" | "complete" | "error";
+  error?: string;
 }
 
 /**
- * A comprehensive document uploader component for projects, work orders, and tasks.
- * 
- * Features:
- * - Upload multiple documents with metadata
- * - Categorize documents by timing (pre/during/post visit)
- * - Role-based access control
- * - File type validation (PDF, DOCX, XLSX, JPG, PNG)
- * - Real-time document list with management capabilities
- * - Integration with object storage
+ * Document uploader component with file validation and progress tracking
  */
 export function DocumentUploader({
   entityType,
   entityId,
-  maxNumberOfFiles = 10,
+  maxNumberOfFiles = 1,
   maxFileSize = 52428800, // 50MB default
   allowedFileTypes = [".pdf", ".docx", ".xlsx", ".jpg", ".jpeg", ".png"],
-  buttonClassName,
-  children,
-  disabled = false,
+  onComplete,
+  onCancel,
 }: DocumentUploaderProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showModal, setShowModal] = useState(false);
-  const [documentMetadata, setDocumentMetadata] = useState<DocumentMetadata>({
-    category: "pre_visit",
-    description: "",
-    isRequired: false,
-  });
+  const [selectedFiles, setSelectedFiles] = useState<UploadingFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Query to fetch existing documents
-  const { data: documents = [], isLoading } = useQuery<Document[]>({
-    queryKey: [`/api/documents?entityType=${entityType}&entityId=${entityId}`],
-    enabled: !!entityId,
-  });
+  const uploadMutation = useMutation({
+    mutationFn: async (uploadingFile: UploadingFile) => {
+      const formData = new FormData();
+      formData.append("file", uploadingFile.file);
+      formData.append("entityType", entityType);
+      formData.append("entityId", entityId);
+      formData.append("category", uploadingFile.category);
 
-  // Mutation to delete a document
-  const deleteDocumentMutation = useMutation({
-    mutationFn: async (documentId: string) => {
-      const response = await apiRequest("DELETE", `/api/documents/${documentId}`);
+      const response = await apiRequest("POST", "/api/documents/upload", formData);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/documents?entityType=${entityType}&entityId=${entityId}`] 
-      });
-      toast({
-        title: "Success",
-        description: "Document deleted successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete document",
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: [`/api/documents`] });
     },
   });
 
-  // Uppy instance configuration
-  const [uppy] = useState(() =>
-    new Uppy({
-      restrictions: {
-        maxNumberOfFiles,
-        maxFileSize,
-        allowedFileTypes,
-      },
-      autoProceed: false,
-    })
-      .use(AwsS3, {
-        shouldUseMultipart: false,
-        getUploadParameters: async () => {
-          const response = await apiRequest("POST", "/api/documents/upload");
-          const data = await response.json();
-          return {
-            method: "PUT",
-            url: data.uploadURL,
-          };
-        },
-      })
-      .on("complete", async (result) => {
-        if (result.successful.length > 0) {
-          for (const file of result.successful) {
-            try {
-              // Create document record in database
-              await apiRequest("POST", "/api/documents", {
-                entityType,
-                entityId,
-                filename: file.meta.name,
-                originalFilename: file.meta.name,
-                fileUrl: file.uploadURL,
-                mimeType: file.meta.type,
-                fileSize: file.size,
-                category: documentMetadata.category,
-                description: documentMetadata.description,
-                isRequired: documentMetadata.isRequired,
-              });
-            } catch (error) {
-              console.error("Error creating document record:", error);
-              toast({
-                title: "Error",
-                description: "Failed to save document metadata",
-                variant: "destructive",
-              });
-            }
-          }
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    
+    if (selectedFiles.length + files.length > maxNumberOfFiles) {
+      toast({
+        title: "Too many files",
+        description: `You can only upload ${maxNumberOfFiles} file(s) maximum.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validFiles: UploadingFile[] = [];
+    
+    for (const file of files) {
+      // Check file size
+      if (file.size > maxFileSize) {
+        toast({
+          title: "File too large",
+          description: `${file.name} is larger than ${Math.round(maxFileSize / 1024 / 1024)}MB.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      // Check file type
+      const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
+      if (allowedFileTypes.length > 0 && !allowedFileTypes.includes(fileExtension)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not an allowed file type.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      validFiles.push({
+        file,
+        progress: 0,
+        category: "reference", // default category
+        status: "pending",
+      });
+    }
+
+    setSelectedFiles(prev => [...prev, ...validFiles]);
+    event.target.value = ""; // Reset input
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateFileCategory = (index: number, category: string) => {
+    setSelectedFiles(prev => 
+      prev.map((file, i) => i === index ? { ...file, category } : file)
+    );
+  };
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return;
+
+    setIsUploading(true);
+
+    try {
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const uploadingFile = selectedFiles[i];
+        
+        // Update status to uploading
+        setSelectedFiles(prev => 
+          prev.map((file, index) => 
+            index === i ? { ...file, status: "uploading" as const, progress: 0 } : file
+          )
+        );
+
+        try {
+          // Simulate progress (since we can't track real upload progress easily with fetch)
+          let progress = 0;
+          const progressInterval = setInterval(() => {
+            progress += 10;
+            setSelectedFiles(prev => 
+              prev.map((file, index) => 
+                index === i ? { ...file, progress: Math.min(progress, 90) } : file
+              )
+            );
+          }, 100);
+
+          await uploadMutation.mutateAsync(uploadingFile);
+
+          clearInterval(progressInterval);
           
-          // Refresh documents list
-          queryClient.invalidateQueries({ 
-            queryKey: [`/api/documents?entityType=${entityType}&entityId=${entityId}`] 
-          });
-          
-          toast({
-            title: "Success",
-            description: `${result.successful.length} document(s) uploaded successfully`,
-          });
-          
-          // Reset metadata form
-          setDocumentMetadata({
-            category: "pre_visit",
-            description: "",
-            isRequired: false,
-          });
+          // Update to complete
+          setSelectedFiles(prev => 
+            prev.map((file, index) => 
+              index === i ? { ...file, status: "complete" as const, progress: 100 } : file
+            )
+          );
+        } catch (error: any) {
+          console.error("Upload error:", error);
+          setSelectedFiles(prev => 
+            prev.map((file, index) => 
+              index === i ? { 
+                ...file, 
+                status: "error" as const, 
+                progress: 0,
+                error: error.message || "Upload failed"
+              } : file
+            )
+          );
         }
-      })
-  );
+      }
 
-  const handleDelete = (documentId: string) => {
-    if (confirm("Are you sure you want to delete this document?")) {
-      deleteDocumentMutation.mutate(documentId);
+      // Check if all uploads completed successfully
+      const allComplete = selectedFiles.every(file => file.status === "complete");
+      if (allComplete) {
+        toast({
+          title: "Upload complete",
+          description: `${selectedFiles.length} file(s) uploaded successfully.`,
+        });
+        onComplete?.();
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const getCategoryBadgeColor = (category: string) => {
+  const getCategoryLabel = (category: string) => {
     switch (category) {
-      case "pre_visit": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "during_visit": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "post_visit": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+      case "reference": return "📄 Reference";
+      case "procedure": return "📋 Procedure";
+      case "checklist": return "✅ Checklist";
+      case "form": return "📝 Form";
+      case "pre_visit": return "🚗 Pre-Visit";
+      case "during_visit": return "🔧 During Visit";
+      case "post_visit": return "📋 Post-Visit";
+      default: return "📄 Other";
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "complete": return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "error": return <X className="h-4 w-4 text-red-500" />;
+      case "uploading": return <Upload className="h-4 w-4 text-blue-500 animate-pulse" />;
+      default: return <FileText className="h-4 w-4 text-muted-foreground" />;
+    }
   };
 
-  if (isLoading) {
-    return <div className="animate-pulse">Loading documents...</div>;
-  }
+  const canUpload = selectedFiles.length > 0 && 
+    selectedFiles.every(file => file.category && file.status !== "uploading") &&
+    !isUploading;
 
   return (
-    <div className="space-y-4">
-      {/* Upload Button */}
-      <Button 
-        onClick={() => setShowModal(true)} 
-        className={buttonClassName}
-        disabled={disabled}
-        data-testid="button-upload-documents"
-      >
-        <Upload className="w-4 h-4 mr-2" />
-        {children || "Upload Documents"}
-      </Button>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">Upload Documents</CardTitle>
+          {onCancel && (
+            <Button variant="ghost" size="sm" onClick={onCancel}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Upload up to {maxNumberOfFiles} file(s). Max size: {Math.round(maxFileSize / 1024 / 1024)}MB each.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* File Input */}
+        <div>
+          <Input
+            type="file"
+            multiple={maxNumberOfFiles > 1}
+            accept={allowedFileTypes.join(",")}
+            onChange={handleFileSelect}
+            disabled={isUploading || selectedFiles.length >= maxNumberOfFiles}
+            className="cursor-pointer"
+          />
+          {allowedFileTypes.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Allowed types: {allowedFileTypes.join(", ")}
+            </p>
+          )}
+        </div>
 
-      {/* Documents List */}
-      {documents.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Uploaded Documents ({documents.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {documents.map((doc) => (
-                <div 
-                  key={doc.id} 
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                  data-testid={`document-item-${doc.id}`}
-                >
-                  <div className="flex items-center space-x-3 flex-1">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" title={doc.originalFilename}>
-                        {doc.originalFilename}
-                      </p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge className={getCategoryBadgeColor(doc.category)}>
-                          {doc.category.replace("_", " ")}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {formatFileSize(doc.fileSize)}
-                        </span>
-                        {doc.isRequired && (
-                          <Badge variant="outline" className="text-xs">
-                            Required
-                          </Badge>
-                        )}
-                      </div>
-                      {doc.description && (
-                        <p className="text-xs text-muted-foreground mt-1 truncate" title={doc.description}>
-                          {doc.description}
-                        </p>
-                      )}
+        {/* Selected Files */}
+        {selectedFiles.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Selected Files ({selectedFiles.length}/{maxNumberOfFiles})</h4>
+            {selectedFiles.map((uploadingFile, index) => (
+              <Card key={index} className="p-3">
+                <div className="space-y-3">
+                  {/* File Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(uploadingFile.status)}
+                      <span className="text-sm font-medium truncate">
+                        {uploadingFile.file.name}
+                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {Math.round(uploadingFile.file.size / 1024)} KB
+                      </Badge>
                     </div>
+                    {uploadingFile.status === "pending" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(doc.fileUrl, "_blank")}
-                      data-testid={`button-download-${doc.id}`}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(doc.id)}
-                      disabled={deleteDocumentMutation.isPending}
-                      data-testid={`button-delete-${doc.id}`}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Upload Modal */}
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-        plugins={["Dashboard"]}
-        metaFields={[
-          {
-            id: "category",
-            name: "Category",
-            render: ({ value, onChange }: any) => (
-              <Select value={value || "pre_visit"} onValueChange={onChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pre_visit">Pre-visit</SelectItem>
-                  <SelectItem value="during_visit">During visit</SelectItem>
-                  <SelectItem value="post_visit">Post-visit</SelectItem>
-                </SelectContent>
-              </Select>
-            ),
-          },
-          {
-            id: "description",
-            name: "Description",
-            render: ({ value, onChange }: any) => (
-              <Textarea
-                value={value || ""}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder="Optional description..."
-                rows={2}
-              />
-            ),
-          },
-          {
-            id: "isRequired",
-            name: "Required Document",
-            render: ({ value, onChange }: any) => (
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={value || false}
-                  onChange={(e) => onChange(e.target.checked)}
-                  id="required-checkbox"
-                />
-                <Label htmlFor="required-checkbox">Mark as required</Label>
-              </div>
-            ),
-          },
-        ]}
-      />
-    </div>
+                  {/* Category Selection */}
+                  {uploadingFile.status === "pending" && (
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Category *</label>
+                      <Select 
+                        value={uploadingFile.category} 
+                        onValueChange={(value) => updateFileCategory(index, value)}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="reference">📄 Reference</SelectItem>
+                          <SelectItem value="procedure">📋 Procedure</SelectItem>
+                          <SelectItem value="checklist">✅ Checklist</SelectItem>
+                          <SelectItem value="form">📝 Form</SelectItem>
+                          <SelectItem value="pre_visit">🚗 Pre-Visit</SelectItem>
+                          <SelectItem value="during_visit">🔧 During Visit</SelectItem>
+                          <SelectItem value="post_visit">📋 Post-Visit</SelectItem>
+                          <SelectItem value="other">📄 Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Progress Bar */}
+                  {uploadingFile.status === "uploading" && (
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span>Uploading...</span>
+                        <span>{uploadingFile.progress}%</span>
+                      </div>
+                      <Progress value={uploadingFile.progress} className="h-2" />
+                    </div>
+                  )}
+
+                  {/* Error Message */}
+                  {uploadingFile.status === "error" && uploadingFile.error && (
+                    <p className="text-xs text-red-600">{uploadingFile.error}</p>
+                  )}
+
+                  {/* Success Message */}
+                  {uploadingFile.status === "complete" && (
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-100 text-green-800">
+                        {getCategoryLabel(uploadingFile.category)}
+                      </Badge>
+                      <span className="text-xs text-green-600">Uploaded successfully</span>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-4">
+          {onCancel && (
+            <Button variant="outline" onClick={onCancel} disabled={isUploading}>
+              Cancel
+            </Button>
+          )}
+          <Button 
+            onClick={handleUpload} 
+            disabled={!canUpload}
+            className="flex-1"
+          >
+            {isUploading ? (
+              <>
+                <Upload className="h-4 w-4 mr-2 animate-pulse" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload {selectedFiles.length} File(s)
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
+
+export default DocumentUploader;

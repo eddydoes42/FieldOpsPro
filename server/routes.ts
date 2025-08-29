@@ -6417,6 +6417,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document upload management routes
+  app.get('/api/documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const entityType = req.query.entityType;
+      const entityId = req.query.entityId;
+      
+      if (!entityType || !entityId) {
+        return res.status(400).json({ message: "entityType and entityId are required" });
+      }
+      
+      // Check permissions based on entity type
+      if (entityType === 'work_order') {
+        const workOrder = await storage.getWorkOrder(entityId);
+        if (!workOrder) {
+          return res.status(404).json({ message: "Work order not found" });
+        }
+        if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      // Return simulated document list for now
+      // In real implementation, this would query a documents table
+      const documents = [];
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  app.post('/api/documents/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Only Service Company users can upload documents
+      if (isClient(currentUser)) {
+        return res.status(403).json({ message: "Client Company users cannot upload documents" });
+      }
+
+      const { entityType, entityId, category } = req.body;
+      
+      if (!entityType || !entityId || !category) {
+        return res.status(400).json({ message: "entityType, entityId, and category are required" });
+      }
+
+      // Check if documents are required for this entity
+      let documentsRequired = 0;
+      if (entityType === 'work_order') {
+        const workOrder = await storage.getWorkOrder(entityId);
+        if (!workOrder) {
+          return res.status(404).json({ message: "Work order not found" });
+        }
+        documentsRequired = workOrder.documentsRequired || 0;
+        
+        // Check permissions
+        if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      if (documentsRequired === 0) {
+        return res.status(400).json({ message: "No documents are required for this work order" });
+      }
+
+      // For now, simulate document upload
+      // In real implementation, handle actual file upload with multer/formidable
+      const document = {
+        id: Math.random().toString(36).substr(2, 9),
+        entityType,
+        entityId,
+        category,
+        filename: `document_${Date.now()}.pdf`,
+        originalFilename: "uploaded_document.pdf",
+        uploadedAt: new Date().toISOString(),
+        uploadedById: currentUser.id,
+      };
+
+      res.json(document);
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

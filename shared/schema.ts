@@ -169,6 +169,8 @@ export const workOrders = pgTable("work_orders", {
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   requiredSkills: text("required_skills").array().default(sql`ARRAY[]::TEXT[]`),
   visibilityScope: varchar("visibility_scope").default("public"), // "public" or "exclusive"
+  // Documents Required field
+  documentsRequired: integer("documents_required").default(0), // number of documents required to be uploaded
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -762,6 +764,8 @@ export const projects = pgTable("projects", {
   assignedById: varchar("assigned_by_id").references(() => users.id), // admin who assigned it
   tools: text("tools").array(), // required tools
   requirements: text("requirements").array(), // project requirements
+  // Documents Required field
+  documentsRequired: integer("documents_required").default(0), // number of documents required to be uploaded
   // Budget deduction workflow fields
   budgetStatus: varchar("budget_status").notNull().default("pending"), // pending, approved, deducted, cancelled
   budgetApprovedById: varchar("budget_approved_by_id").references(() => users.id),

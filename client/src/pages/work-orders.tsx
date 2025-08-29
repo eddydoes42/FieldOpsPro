@@ -17,6 +17,7 @@ import Navigation from "@/components/navigation";
 import WorkOrderTasks from "@/components/work-order-tasks";
 import PaymentStatusButton from "@/components/payment-status-button";
 import { FieldAgentRatingForm, DispatcherRatingForm, ClientRatingForm } from "@/components/rating-system";
+import DocumentUploadControl from "@/components/DocumentUploadControl";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 // Rating trigger hook removed for now
@@ -44,6 +45,7 @@ interface WorkOrder {
   paymentStatus?: string | null;
   paymentUpdatedById?: string | null;
   paymentUpdatedAt?: string | null;
+  documentsRequired?: number;
 }
 
 interface User {
@@ -1671,6 +1673,18 @@ export default function WorkOrders() {
                 </div>
 
 
+
+                {/* Document Upload Section */}
+                <div className="space-y-4 border-t pt-6">
+                  <h3 className="text-lg font-semibold text-foreground">Document Requirements</h3>
+                  <DocumentUploadControl
+                    entityType="work_order"
+                    entityId={selectedWorkOrder.id}
+                    documentsRequired={selectedWorkOrder.documentsRequired || 0}
+                    canUpload={!isClient}
+                    disabled={selectedWorkOrder.status === 'completed'}
+                  />
+                </div>
 
                 {/* Task Management Section */}
                 <div className="space-y-4 border-t pt-6">

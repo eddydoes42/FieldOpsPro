@@ -37,6 +37,8 @@ const workOrderFormSchema = insertWorkOrderSchema.extend({
   budgetType: z.string().optional(),
   budgetAmount: z.string().optional(),
   devicesInstalled: z.string().optional(),
+  // Documents Required field
+  documentsRequired: z.string().optional(),
 });
 
 interface Task {
@@ -127,6 +129,8 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
         budgetType: workOrderData.budgetType || null,
         budgetAmount: workOrderData.budgetAmount ? parseFloat(workOrderData.budgetAmount) : null,
         devicesInstalled: workOrderData.devicesInstalled ? parseInt(workOrderData.devicesInstalled) : null,
+        // Include documents required if provided
+        documentsRequired: workOrderData.documentsRequired ? parseInt(workOrderData.documentsRequired) : 0,
       };
       const response = await apiRequest("POST", "/api/work-orders", data);
       const createdWorkOrder = await response.json();
@@ -807,6 +811,29 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                               />
                             </FormControl>
                             <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="documentsRequired"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Documents Required</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min="0" 
+                                max="20" 
+                                step="1"
+                                placeholder="0"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                            <p className="text-xs text-muted-foreground">
+                              document(s) to be uploaded by Service Company users
+                            </p>
                           </FormItem>
                         )}
                       />
