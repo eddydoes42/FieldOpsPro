@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp, FileText, AlertTriangle, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Navigation from "@/components/navigation";
-import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
+
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
@@ -49,9 +49,7 @@ export default function OperationsDirectorDashboard() {
   const [selectedApprovalRequest, setSelectedApprovalRequest] = useState<any>(null);
   const [showApprovalDetailsDialog, setShowApprovalDetailsDialog] = useState(false);
   const [, setLocation] = useLocation();
-  const [currentActiveRole, setCurrentActiveRole] = useState(
-    localStorage.getItem('permanentRole') || 'operations_director'
-  );
+  // Operations Director has a single active role (operations_director)
   const [testingRole, setTestingRole] = useState<string>('');
   const [selectedTestRole, setSelectedTestRole] = useState<string>(
     localStorage.getItem('testingCompanyType') === 'service' ? localStorage.getItem('testingRole') || '' : ''
@@ -322,15 +320,7 @@ export default function OperationsDirectorDashboard() {
         </div>
       </div>
       
-      <Navigation 
-        currentActiveRole={localStorage.getItem('permanentRole') || 'operations_director'} 
-        onPermanentRoleSwitch={(role) => {
-          localStorage.setItem('permanentRole', role);
-          localStorage.setItem('selectedRole', role);
-          // Navigate to appropriate dashboard based on role
-          window.location.href = '/dashboard';
-        }}
-      />
+      <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

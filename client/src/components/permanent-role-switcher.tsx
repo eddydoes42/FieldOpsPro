@@ -29,7 +29,7 @@ const availableRoles = [
   },
   { 
     value: 'administrator', 
-    label: 'Service Admin',
+    label: 'Administrator',
     shortLabel: 'Admin',
     icon: Shield,
     color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
@@ -40,11 +40,26 @@ const availableRoles = [
 export default function PermanentRoleSwitcher({ currentActiveRole, onRoleSwitch }: PermanentRoleSwitcherProps) {
   const { user } = useAuth();
 
+  // Check if Operations Director is in Role Test mode
+  const isRoleTesting = localStorage.getItem('testingRole') && localStorage.getItem('testingCompanyType');
+  
   // Only show for users who have both operations director and administrator roles
   const hasOpsDirector = isOperationsDirector(user as any);
   const hasAdmin = hasRole(user as any, 'administrator');
   
-  // Only show switcher if user has both roles
+  // For Operations Directors: only show switcher if they're in Role Test mode
+  if (hasOpsDirector && !hasAdmin) {
+    // Pure Operations Director - don't show role switcher unless in Role Test mode
+    return null;
+  }
+  
+  // For users with both roles: show switcher only if not OD or if OD is in Role Test mode
+  if (hasOpsDirector && hasAdmin && !isRoleTesting) {
+    // Operations Director with admin role but not testing - don't show switcher
+    return null;
+  }
+  
+  // Only show switcher if user has both roles (and if OD, they must be in Role Test mode)
   if (!hasOpsDirector || !hasAdmin) {
     return null;
   }

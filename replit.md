@@ -9,6 +9,14 @@ FieldOps Pro is a comprehensive field operations management platform designed to
 - Structured Issue Creation System (M5) with advanced reporting, auto-escalation, analytics, and comprehensive issue tracking
 - Client Feedback Loop (M6) with multi-tier rating system, analytics dashboard, and automated feedback collection workflows
 
+**Latest Updates (December 2024):**
+- Fixed Upload Document modal auto-opening issue - modal now only opens on explicit button click
+- Implemented comprehensive Operations Director global role bypass for all permission checks with 20+ updated role functions
+- Removed persistent role selector dropdown from OD dashboard when not in Role Test mode while preserving Role Test functionality
+- Operations Director now has god-mode access to all functions except when in Role Test mode
+- Enhanced DocumentUploader component with comprehensive error handling and reliable file picker triggering
+- Cleaned up Service Admin references for Operations Director accounts
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies"). Organizations providing work orders and projects to Service Companies should be referred to as "Client Companies" (not just "Companies")
