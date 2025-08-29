@@ -1,0 +1,198 @@
+## Objective:
+Enhance FieldOps Pro with 13 modules that blend key Field Nation functionalities with FieldOps Pro’s unique innovations — while preserving the current design, structure, and workflows. All changes should be additive, not disruptive.
+
+---
+
+############################
+# TIER 1 — CORE PARITY
+############################
+
+### Module 1: Job Request System
+- Add “Request to Accept” button for Field Agents on unassigned jobs.
+- Admins approve/reject requests.
+- New `job_requests` table with status tracking.
+- Admin dashboard tab for pending requests.
+
+---
+
+### Module 2: Contractor Onboarding Flow
+- Public `/apply` form for vetted contractors.
+- Stores applications in `onboarding_requests` table.
+- Admin review/approve/reject flow.
+- Approved contractors get accounts with default role.
+
+---
+
+### Module 3: Job Visibility Logic
+- Add job location, required skills, and visibility scope fields.
+- Filter jobs by agent location radius and skill match.
+- Respect Exclusive Network rules.
+
+---
+
+### Module 4: Role‑Aware Messaging Hub
+- `messages` table with `visibility_roles` JSONB.
+- Threaded, job‑linked messages with file attachments.
+- Role‑based visibility (Client ↔ Agent, internal notes hidden).
+- Notifications for new messages.
+
+---
+
+### Module 5: Issue Creation System
+- “Create Issue” button on work orders.
+- `issues` table with type, severity, status, attachments.
+- Manager+ approval for high‑severity issues.
+- Admin dashboard tab for issue management.
+
+---
+
+### Module 6: Audit Trail System
+- `audit_logs` table for key actions (entity, action, user, timestamp, metadata).
+- Log work order changes, issue resolutions, approvals.
+- Admin dashboard “Audit Trail” tab with filters.
+
+---
+
+############################
+# TIER 2 — QUALITY & ANALYTICS
+############################
+
+### Module 7: Client Feedback Loop
+- Prompt Client role for feedback after job completion.
+- `feedback` table with stars, category scores, comments, hire‑again flag.
+- Admin dashboard “Client Feedback” tab.
+
+---
+
+### Module 8: Agent Performance Analytics
+- Aggregate jobs completed, avg. rating, on‑time %, issue rate, compliance score.
+- `/api/performance-metrics?agentId=...`.
+- Charts and drill‑downs in admin dashboard.
+
+---
+
+### Module 9: Service Quality Dashboard
+- Company‑level KPIs: satisfaction score, compliance, issue rate, resolution speed, job volume trends.
+- Optional `service_quality_snapshots` table for historical tracking.
+
+---
+
+### Module 10: Predictive Risk & Early Intervention
+- Calculate rolling averages and detect negative shifts.
+- Risk scoring (0–100) with weighted metrics.
+- Alerts for high‑risk agents/companies.
+- `risk_scores` and `risk_interventions` tables.
+
+---
+
+############################
+# TIER 3 — DIFFERENTIATION
+############################
+
+### Module 11: Job Category Profitability & Efficiency Analysis
+- Add `category` field to work orders.
+- `/api/category-performance` returns margin %, completion time, volume.
+- Dashboard widget + optional chart.
+
+---
+
+### Module 12: Enhanced Work Order Search & Filters
+- Extend `/api/work-orders` with location radius, skill tags, pay range, schedule, status.
+- Geo‑index service addresses.
+- Collapsible filter panel in UI.
+
+---
+
+### Module 13: Smart Match / Recommended Assignments
+- Match agents by skills, proximity, rating, timeliness, past success.
+- `/api/recommend-agents?workOrderId=...`.
+- “Recommended Agents” section in assignment UI.
+
+---
+
+### Module 14: Bid & Proposal System
+- `bids` table linked to work orders and users.
+- Submit/view/accept/decline bids.
+- Updates work order status on acceptance.
+
+---
+
+### Module 15: Credential & Compliance Vault
+- `credentials` table with type, file_url, expires_at, status.
+- Profile tab for upload/view/renew.
+- Alerts 30 days before expiry.
+- Compliance indicator in agent list.
+
+---
+
+### Module 16: Incentive & Recognition Engine
+- Points/badges for high ratings, on‑time completions, zero issues.
+- `recognition` table.
+- Badge icons on profiles, leaderboard view.
+- Optional monthly recognition email.
+
+---
+
+## Parallelized Build Order & Dependencies
+
+### Phase 1 — Independent Foundations (can be built in parallel)
+- M1 Job Request System
+- M2 Contractor Onboarding Flow
+- M4 Role‑Aware Messaging Hub
+- M6 Audit Trail System
+- M11 Job Category Profitability & Efficiency Analysis
+- M12 Enhanced Work Order Search & Filters
+- M14 Bid & Proposal System
+- M15 Credential & Compliance Vault
+
+---
+
+### Phase 2 — Dependent Enhancements
+- M3 Job Visibility Logic → depends on M2 (Onboarding Flow)
+- M5 Issue Creation System → benefits from M4 (Messaging Hub)
+- M7 Client Feedback Loop → requires completed job flow
+- M8 Agent Performance Analytics → needs M6 (Audit Trail), M5 (Issues), M7 (Feedback)
+- M9 Service Quality Dashboard → needs M8 (Analytics)
+- M10 Predictive Risk & Early Intervention → needs M9 (Service Quality Dashboard)
+- M13 Smart Match → depends on M11 (Profitability) + M12 (Enhanced Search)
+- M16 Incentive & Recognition Engine → depends on M8 (Analytics) + M7 (Feedback)
+
+---
+
+## Visual Dependency Map
+
+          ┌──────────────────────────────────────────────────────────┐
+          │ Phase 1 — Independent Foundations (Parallel)              │
+          ├──────────────────────────────────────────────────────────┤
+          │ [M1] Job Request System                                    │
+          │ [M2] Contractor Onboarding Flow                            │
+          │ [M4] Role‑Aware Messaging Hub                              │
+          │ [M6] Audit Trail System                                    │
+          │ [M11] Job Category Profitability & Efficiency Analysis     │
+          │ [M12] Enhanced Work Order Search & Filters                 │
+          │ [M14] Bid & Proposal System                                │
+          │ [M15] Credential & Compliance Vault                        │
+          └──────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+          ┌──────────────────────────────────────────────────────────┐
+          │ Phase 2 — Dependent Enhancements                          │
+          ├──────────────────────────────────────────────────────────┤
+          │ [M3] Job Visibility Logic → depends on M2                  │
+          │ [M5] Issue Creation System → benefits from M4               │
+          │ [M7] Client Feedback Loop → requires completed job flow    │
+          │ [M8] Agent Performance Analytics → needs M6, M5, M7        │
+          │ [M9] Service Quality Dashboard → needs M8                   │
+          │ [M10] Predictive Risk & Early Intervention → needs M9      │
+          │ [M13] Smart Match → depends on M11 + M12                    │
+          │ [M16] Incentive & Recognition Engine → needs M8 + M7       │
+          └──────────────────────────────────────────────────────────┘
+
+---
+
+### General Implementation Notes:
+- Maintain FieldOps Pro’s existing UI/UX style and role-based access controls.
+- All modules should be implemented as discrete, testable components.
+- Use feature flags for staged rollout.
+- Ensure new database tables and fields have proper indexing and foreign keys.
+- Preserve backward compatibility with existing APIs and data.

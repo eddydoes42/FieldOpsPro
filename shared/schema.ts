@@ -265,6 +265,39 @@ export const workOrderTasks = pgTable("work_order_tasks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Work Order Tools table
+export const workOrderTools = pgTable("work_order_tools", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  category: varchar("category").notNull(), // hardware, software, safety, testing, other
+  isRequired: boolean("is_required").default(true),
+  isAvailable: boolean("is_available").default(false), // whether agent has confirmed they have this tool
+  confirmedById: varchar("confirmed_by_id").references(() => users.id),
+  confirmedAt: timestamp("confirmed_at"),
+  orderIndex: integer("order_index").default(0), // for ordering tools
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Work Order Documents table
+export const workOrderDocuments = pgTable("work_order_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  category: varchar("category").notNull(), // reference, procedure, checklist, form, other
+  fileUrl: varchar("file_url"), // URL to uploaded document
+  isRequired: boolean("is_required").default(true),
+  isCompleted: boolean("is_completed").default(false), // for forms/checklists that need completion
+  completedById: varchar("completed_by_id").references(() => users.id),
+  completedAt: timestamp("completed_at"),
+  orderIndex: integer("order_index").default(0), // for ordering documents
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Work Order Issues table
 export const workOrderIssues = pgTable("work_order_issues", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -954,6 +987,20 @@ export const insertWorkOrderTaskSchema = createInsertSchema(workOrderTasks).omit
   completedAt: true,
 });
 
+export const insertWorkOrderToolSchema = createInsertSchema(workOrderTools).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  confirmedAt: true,
+});
+
+export const insertWorkOrderDocumentSchema = createInsertSchema(workOrderDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+});
+
 export const insertWorkOrderIssueSchema = createInsertSchema(workOrderIssues).omit({
   id: true,
   createdAt: true,
@@ -1135,6 +1182,12 @@ export type InsertJobMessage = z.infer<typeof insertJobMessageSchema>;
 
 export type WorkOrderTask = typeof workOrderTasks.$inferSelect;
 export type InsertWorkOrderTask = z.infer<typeof insertWorkOrderTaskSchema>;
+
+export type WorkOrderTool = typeof workOrderTools.$inferSelect;
+export type InsertWorkOrderTool = z.infer<typeof insertWorkOrderToolSchema>;
+
+export type WorkOrderDocument = typeof workOrderDocuments.$inferSelect;
+export type InsertWorkOrderDocument = z.infer<typeof insertWorkOrderDocumentSchema>;
 
 export type WorkOrderIssue = typeof workOrderIssues.$inferSelect;
 export type InsertWorkOrderIssue = z.infer<typeof insertWorkOrderIssueSchema>;

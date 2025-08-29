@@ -1,0 +1,102 @@
+## Objective:
+Enhance FieldOps Pro with seven differentiation modules that extend marketplace functionality, engagement, and operational intelligence — while preserving the current design, structure, and workflows. All changes should be additive, not disruptive.
+
+---
+
+### Module 1: Job Category Profitability & Efficiency Analysis
+- Add `category` field to work orders (if not present).
+- Backend endpoint `/api/category-performance?companyId=abc&dateRange=...` returns:
+  - Avg. margin %, avg. completion time, volume by category.
+- Dashboard widget: sortable table for margin, efficiency, volume.
+- Optional chart: profit vs. time per category.
+- Data can feed into Smart Match for high-margin prioritization.
+
+---
+
+### Module 2: Role‑Aware Messaging Hub
+- Create `messages` table with `visibility_roles` JSONB field.
+- API: `POST /api/messages`, `GET /api/messages?workOrderId=...`.
+- Frontend: tab or panel on work order detail page.
+- Role-based visibility (e.g., Client ↔ Agent, internal Ops notes hidden externally).
+- File attachment support (PDF, image, doc).
+- Notifications: badge count on work order list.
+
+---
+
+### Module 3: Enhanced Work Order Search & Filters
+- Extend `/api/work-orders` to accept:
+  - Location radius (geo query)
+  - Skill tags
+  - Pay rate range
+  - Schedule window
+  - Status (open, in progress, completed)
+- Index service address geo coords.
+- Frontend: collapsible filter panel on Work Orders page.
+
+---
+
+### Module 4: Smart Match / Recommended Assignments
+- Matching algorithm:
+  - Filter by required skill tags
+  - Filter by proximity radius (optional)
+  - Sort by avg. rating, timeliness %, past job success
+- API: `/api/recommend-agents?workOrderId=...`.
+- UI: "Recommended Agents" section on work order assignment screen.
+
+---
+
+### Module 5: Bid & Proposal System
+- New `bids` table linked to `work_orders` and `users`.
+- API: `POST /api/bids`, `GET /api/bids?workOrderId=...`.
+- UI: "View Bids" button for job posters, "Submit Bid" form for providers.
+- Accept/decline flow updates work order status.
+
+---
+
+### Module 6: Credential & Compliance Vault
+- `credentials` table:
+  - id, user_id, type, file_url, expires_at, status
+- UI tab in user profile: upload, view, renew credentials.
+- Auto alerts 30 days before expiry to user + admin.
+- Compliance status indicator in agent list.
+
+---
+
+### Module 7: Incentive & Recognition Engine
+- Points logic triggered by completed work orders meeting criteria (e.g., high ratings, on-time, zero issues).
+- `recognition` table: id, user_id, badge_type, points, awarded_at.
+- UI: Badge icons on agent profiles, leaderboard view.
+- Optional monthly recognition email.
+
+---
+
+## Parallelized Build Order & Dependencies
+
+### Step 1 — Independent Foundations (can be built in parallel)
+- **Module 1: Job Category Profitability & Efficiency Analysis**  
+- **Module 2: Role‑Aware Messaging Hub**  
+- **Module 3: Enhanced Work Order Search & Filters**  
+- **Module 5: Bid & Proposal System**  
+- **Module 6: Credential & Compliance Vault**  
+
+These modules have no hard dependencies on each other and can be developed simultaneously.
+
+---
+
+### Step 2 — Dependent Enhancements
+- **Module 4: Smart Match / Recommended Assignments**  
+  *Depends on:* Module 1 (for category data) and Module 3 (for filtering logic).  
+  Build after those are complete.
+
+- **Module 7: Incentive & Recognition Engine**  
+  *Depends on:* Performance and feedback data from existing analytics modules (already in core parity phase).  
+  Build after analytics are stable.
+
+---
+
+### General Implementation Notes:
+- Maintain FieldOps Pro’s existing UI/UX style and role-based access controls.
+- All modules should be implemented as discrete, testable components.
+- Use feature flags where possible for staged rollout.
+- Ensure new database tables and fields have proper indexing and foreign keys.
+- Preserve backward compatibility with existing APIs and data.

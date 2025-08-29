@@ -2680,6 +2680,279 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== WORK ORDER TOOLS & DOCUMENTS ROUTES =====
+
+  // Get work order tools
+  app.get('/api/work-orders/:workOrderId/tools', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { workOrderId } = req.params;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Get the work order to check permissions
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if user can access this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tools = await storage.getWorkOrderTools(workOrderId);
+      res.json(tools);
+    } catch (error) {
+      console.error("Error fetching work order tools:", error);
+      res.status(500).json({ message: "Failed to fetch work order tools" });
+    }
+  });
+
+  // Create work order tool
+  app.post('/api/work-orders/:workOrderId/tools', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { workOrderId } = req.params;
+      const { name, description, category, isRequired, orderIndex } = req.body;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (!hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Admin team access required." });
+      }
+
+      // Get the work order to check permissions
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const toolData = {
+        workOrderId,
+        name,
+        description,
+        category,
+        isRequired: isRequired ?? true,
+        orderIndex: orderIndex ?? 0
+      };
+
+      const tool = await storage.createWorkOrderTool(toolData);
+      res.status(201).json(tool);
+    } catch (error) {
+      console.error("Error creating work order tool:", error);
+      res.status(500).json({ message: "Failed to create work order tool" });
+    }
+  });
+
+  // Update work order tool
+  app.put('/api/work-orders/tools/:toolId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { toolId } = req.params;
+      const updates = req.body;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const tool = await storage.updateWorkOrderTool(toolId, updates);
+      res.json(tool);
+    } catch (error) {
+      console.error("Error updating work order tool:", error);
+      res.status(500).json({ message: "Failed to update work order tool" });
+    }
+  });
+
+  // Confirm tool availability
+  app.post('/api/work-orders/tools/:toolId/confirm', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { toolId } = req.params;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const tool = await storage.confirmToolAvailability(toolId, userId);
+      res.json(tool);
+    } catch (error) {
+      console.error("Error confirming tool availability:", error);
+      res.status(500).json({ message: "Failed to confirm tool availability" });
+    }
+  });
+
+  // Delete work order tool
+  app.delete('/api/work-orders/tools/:toolId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { toolId } = req.params;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (!hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Admin team access required." });
+      }
+
+      await storage.deleteWorkOrderTool(toolId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting work order tool:", error);
+      res.status(500).json({ message: "Failed to delete work order tool" });
+    }
+  });
+
+  // Get work order documents
+  app.get('/api/work-orders/:workOrderId/documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { workOrderId } = req.params;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Get the work order to check permissions
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if user can access this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const documents = await storage.getWorkOrderDocuments(workOrderId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching work order documents:", error);
+      res.status(500).json({ message: "Failed to fetch work order documents" });
+    }
+  });
+
+  // Create work order document
+  app.post('/api/work-orders/:workOrderId/documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { workOrderId } = req.params;
+      const { name, description, category, fileUrl, isRequired, orderIndex } = req.body;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (!hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Admin team access required." });
+      }
+
+      // Get the work order to check permissions
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const documentData = {
+        workOrderId,
+        name,
+        description,
+        category,
+        fileUrl,
+        isRequired: isRequired ?? true,
+        orderIndex: orderIndex ?? 0
+      };
+
+      const document = await storage.createWorkOrderDocument(documentData);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Error creating work order document:", error);
+      res.status(500).json({ message: "Failed to create work order document" });
+    }
+  });
+
+  // Update work order document
+  app.put('/api/work-orders/documents/:documentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { documentId } = req.params;
+      const updates = req.body;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const document = await storage.updateWorkOrderDocument(documentId, updates);
+      res.json(document);
+    } catch (error) {
+      console.error("Error updating work order document:", error);
+      res.status(500).json({ message: "Failed to update work order document" });
+    }
+  });
+
+  // Mark document completed
+  app.post('/api/work-orders/documents/:documentId/complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { documentId } = req.params;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const document = await storage.markDocumentCompleted(documentId, userId);
+      res.json(document);
+    } catch (error) {
+      console.error("Error marking document completed:", error);
+      res.status(500).json({ message: "Failed to mark document completed" });
+    }
+  });
+
+  // Delete work order document
+  app.delete('/api/work-orders/documents/:documentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { documentId } = req.params;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (!hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'dispatcher'])) {
+        return res.status(403).json({ message: "Access denied. Admin team access required." });
+      }
+
+      await storage.deleteWorkOrderDocument(documentId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting work order document:", error);
+      res.status(500).json({ message: "Failed to delete work order document" });
+    }
+  });
+
   // ===== CLIENT FEEDBACK LOOP ROUTES =====
 
   // Create feedback after work order completion

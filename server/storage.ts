@@ -7,6 +7,8 @@ import {
   messages,
   jobMessages,
   workOrderTasks,
+  workOrderTools,
+  workOrderDocuments,
   workOrderIssues,
   structuredIssues,
   auditLogs,
@@ -96,10 +98,15 @@ import {
   type InsertRiskScore,
   type RiskIntervention,
   type InsertRiskIntervention,
+  type WorkOrderTool,
+  type InsertWorkOrderTool,
+  type WorkOrderDocument,
+  type InsertWorkOrderDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { nanoid } from "nanoid";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -148,6 +155,18 @@ export interface IStorage {
   scheduleWorkOrder(id: string): Promise<WorkOrder>;
   deleteWorkOrder(id: string): Promise<void>;
   assignWorkOrderAgent(workOrderId: string, assigneeId: string): Promise<WorkOrder>;
+
+  // Work Order Tools operations
+  createWorkOrderTool(tool: InsertWorkOrderTool): Promise<WorkOrderTool>;
+  getWorkOrderTools(workOrderId: string): Promise<WorkOrderTool[]>;
+  updateWorkOrderTool(id: string, updates: Partial<InsertWorkOrderTool>): Promise<WorkOrderTool>;
+  deleteWorkOrderTool(id: string): Promise<void>;
+
+  // Work Order Documents operations
+  createWorkOrderDocument(document: InsertWorkOrderDocument): Promise<WorkOrderDocument>;
+  getWorkOrderDocuments(workOrderId: string): Promise<WorkOrderDocument[]>;
+  updateWorkOrderDocument(id: string, updates: Partial<InsertWorkOrderDocument>): Promise<WorkOrderDocument>;
+  deleteWorkOrderDocument(id: string): Promise<void>;
 
   // Time Entry operations
   createTimeEntry(timeEntry: InsertTimeEntry): Promise<TimeEntry>;
@@ -265,6 +284,20 @@ export interface IStorage {
   getDispatcherRatings(dispatcherId: string): Promise<ClientDispatcherRating[]>;
   getClientRatings(clientId: string): Promise<ServiceClientRating[]>;
   updateUserRatings(userId: string): Promise<void>;
+
+  // Work Order Tools operations
+  createWorkOrderTool(tool: InsertWorkOrderTool): Promise<WorkOrderTool>;
+  getWorkOrderTools(workOrderId: string): Promise<WorkOrderTool[]>;
+  updateWorkOrderTool(id: string, updates: Partial<InsertWorkOrderTool>): Promise<WorkOrderTool>;
+  deleteWorkOrderTool(id: string): Promise<void>;
+  confirmToolAvailability(id: string, confirmedById: string): Promise<WorkOrderTool>;
+
+  // Work Order Documents operations
+  createWorkOrderDocument(document: InsertWorkOrderDocument): Promise<WorkOrderDocument>;
+  getWorkOrderDocuments(workOrderId: string): Promise<WorkOrderDocument[]>;
+  updateWorkOrderDocument(id: string, updates: Partial<InsertWorkOrderDocument>): Promise<WorkOrderDocument>;
+  deleteWorkOrderDocument(id: string): Promise<void>;
+  markDocumentCompleted(id: string, completedById: string): Promise<WorkOrderDocument>;
 
   // Feedback operations (Client Feedback Loop)
   createFeedback(feedback: InsertFeedback): Promise<Feedback>;
@@ -652,7 +685,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Work Order operations
-  async createWorkOrder(workOrderData: InsertWorkOrder): Promise<WorkOrder> {
+  async createWorkOrder(workOrderData: InsertWorkOrder & { tools?: any[], documents?: any[] }): Promise<WorkOrder> {
     // Generate 6-digit work order ID
     const allOrders = await db.select({ id: workOrders.id }).from(workOrders).orderBy(workOrders.id);
     let nextNumber = 1;
@@ -676,6 +709,35 @@ export class DatabaseStorage implements IStorage {
       id: workOrderId,
       status: 'scheduled' // Always start with scheduled status
     }).returning();
+
+    // Create work order tools if provided
+    if (workOrderData.tools && workOrderData.tools.length > 0) {
+      const toolsData = workOrderData.tools.map(tool => ({
+        id: nanoid(),
+        workOrderId: workOrder.id,
+        name: tool.name,
+        description: tool.description || null,
+        category: tool.category,
+        isRequired: tool.isRequired,
+      }));
+      
+      await db.insert(workOrderTools).values(toolsData);
+    }
+
+    // Create work order documents if provided
+    if (workOrderData.documents && workOrderData.documents.length > 0) {
+      const documentsData = workOrderData.documents.map(doc => ({
+        id: nanoid(),
+        workOrderId: workOrder.id,
+        name: doc.name,
+        description: doc.description || null,
+        category: doc.category,
+        fileUrl: doc.fileUrl || null,
+        isRequired: doc.isRequired,
+      }));
+      
+      await db.insert(workOrderDocuments).values(documentsData);
+    }
 
     // Create a notification for 24 hours before the due date (if there's an assignee and due date)
     if (workOrderData.assigneeId && workOrderData.dueDate) {
@@ -3397,6 +3459,104 @@ export class DatabaseStorage implements IStorage {
     }
     
     return { agents, companies };
+  }
+
+  // Work Order Tools operations
+  async createWorkOrderTool(tool: InsertWorkOrderTool): Promise<WorkOrderTool> {
+    const [newTool] = await db
+      .insert(workOrderTools)
+      .values(tool)
+      .returning();
+    return newTool;
+  }
+
+  async getWorkOrderTools(workOrderId: string): Promise<WorkOrderTool[]> {
+    return await db
+      .select()
+      .from(workOrderTools)
+      .where(eq(workOrderTools.workOrderId, workOrderId))
+      .orderBy(workOrderTools.orderIndex, workOrderTools.createdAt);
+  }
+
+  async updateWorkOrderTool(id: string, updates: Partial<InsertWorkOrderTool>): Promise<WorkOrderTool> {
+    const [updated] = await db
+      .update(workOrderTools)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(workOrderTools.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWorkOrderTool(id: string): Promise<void> {
+    await db
+      .delete(workOrderTools)
+      .where(eq(workOrderTools.id, id));
+  }
+
+  async confirmToolAvailability(id: string, confirmedById: string): Promise<WorkOrderTool> {
+    const [updated] = await db
+      .update(workOrderTools)
+      .set({
+        isAvailable: true,
+        confirmedById,
+        confirmedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(workOrderTools.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Work Order Documents operations
+  async createWorkOrderDocument(document: InsertWorkOrderDocument): Promise<WorkOrderDocument> {
+    const [newDocument] = await db
+      .insert(workOrderDocuments)
+      .values(document)
+      .returning();
+    return newDocument;
+  }
+
+  async getWorkOrderDocuments(workOrderId: string): Promise<WorkOrderDocument[]> {
+    return await db
+      .select()
+      .from(workOrderDocuments)
+      .where(eq(workOrderDocuments.workOrderId, workOrderId))
+      .orderBy(workOrderDocuments.orderIndex, workOrderDocuments.createdAt);
+  }
+
+  async updateWorkOrderDocument(id: string, updates: Partial<InsertWorkOrderDocument>): Promise<WorkOrderDocument> {
+    const [updated] = await db
+      .update(workOrderDocuments)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(workOrderDocuments.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWorkOrderDocument(id: string): Promise<void> {
+    await db
+      .delete(workOrderDocuments)
+      .where(eq(workOrderDocuments.id, id));
+  }
+
+  async markDocumentCompleted(id: string, completedById: string): Promise<WorkOrderDocument> {
+    const [updated] = await db
+      .update(workOrderDocuments)
+      .set({
+        isCompleted: true,
+        completedById,
+        completedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(workOrderDocuments.id, id))
+      .returning();
+    return updated;
   }
 }
 

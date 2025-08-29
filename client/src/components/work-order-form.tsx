@@ -45,6 +45,21 @@ interface Task {
   category: 'pre_visit' | 'on_site' | 'post_site';
 }
 
+interface Tool {
+  name: string;
+  description: string;
+  category: 'hardware' | 'software' | 'safety' | 'testing' | 'other';
+  isRequired: boolean;
+}
+
+interface Document {
+  name: string;
+  description: string;
+  category: 'reference' | 'procedure' | 'checklist' | 'form' | 'other';
+  fileUrl?: string;
+  isRequired: boolean;
+}
+
 interface WorkOrderFormProps {
   onClose?: () => void;
   onSuccess: () => void;
@@ -59,6 +74,23 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
     title: '',
     description: '',
     category: 'pre_visit'
+  });
+
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [newTool, setNewTool] = useState<Tool>({
+    name: '',
+    description: '',
+    category: 'hardware',
+    isRequired: true
+  });
+
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [newDocument, setNewDocument] = useState<Document>({
+    name: '',
+    description: '',
+    category: 'reference',
+    fileUrl: '',
+    isRequired: true
   });
 
   const { data: fieldAgents } = useQuery({
@@ -156,8 +188,15 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
   });
 
   const onSubmit = (data: any) => {
-    console.log("Submitting work order data:", { ...data, isClient, tasks });
-    createWorkOrderMutation.mutate(data);
+    const submissionData = {
+      ...data,
+      isClient,
+      tasks,
+      tools,
+      documents
+    };
+    console.log("Submitting work order data:", submissionData);
+    createWorkOrderMutation.mutate(submissionData);
   };
 
   const handleAddTask = () => {
@@ -182,6 +221,50 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
     setTasks(tasks.filter((_, i) => i !== index));
   };
 
+  const handleAddTool = () => {
+    if (!newTool.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Tool name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTools([...tools, newTool]);
+    setNewTool({ name: '', description: '', category: 'hardware', isRequired: true });
+    toast({
+      title: "Tool Added",
+      description: "Tool has been added to the work order",
+    });
+  };
+
+  const handleRemoveTool = (index: number) => {
+    setTools(tools.filter((_, i) => i !== index));
+  };
+
+  const handleAddDocument = () => {
+    if (!newDocument.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Document name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDocuments([...documents, newDocument]);
+    setNewDocument({ name: '', description: '', category: 'reference', fileUrl: '', isRequired: true });
+    toast({
+      title: "Document Added",
+      description: "Document has been added to the work order",
+    });
+  };
+
+  const handleRemoveDocument = (index: number) => {
+    setDocuments(documents.filter((_, i) => i !== index));
+  };
+
   const getCategoryLabel = (category: string) => {
     switch (category) {
       case 'pre_visit': return '🚗 Pre-Site';
@@ -196,6 +279,50 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
       case 'pre_visit': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'on_site': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
       case 'post_site': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+  };
+
+  const getToolCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'hardware': return '⚙️ Hardware';
+      case 'software': return '💻 Software';
+      case 'safety': return '🦺 Safety';
+      case 'testing': return '🔍 Testing';
+      case 'other': return '🔧 Other';
+      default: return category;
+    }
+  };
+
+  const getToolCategoryColor = (category: string) => {
+    switch (category) {
+      case 'hardware': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      case 'software': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'safety': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'testing': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'other': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+  };
+
+  const getDocumentCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'reference': return '📖 Reference';
+      case 'procedure': return '📋 Procedure';
+      case 'checklist': return '✅ Checklist';
+      case 'form': return '📄 Form';
+      case 'other': return '📎 Other';
+      default: return category;
+    }
+  };
+
+  const getDocumentCategoryColor = (category: string) => {
+    switch (category) {
+      case 'reference': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
+      case 'procedure': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      case 'checklist': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'form': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'other': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
   };
@@ -796,6 +923,284 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                     })}
                   </div>
                 )}
+                </div>
+              )}
+
+              {/* Tools Management - Only visible to management */}
+              {!isClient && (
+                <div className="bg-purple-50 dark:bg-purple-950 p-3 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-semibold text-purple-900 dark:text-purple-100">🔧 Required Tools</h3>
+                    <Badge variant="secondary" className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 text-xs">
+                      {tools.length} tools specified
+                    </Badge>
+                  </div>
+                  
+                  {/* Add Tool Form */}
+                  <Card className="mb-3 border-dashed border-2 border-purple-300 dark:border-purple-700">
+                    <CardContent className="pt-3 pb-3">
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Category</label>
+                            <Select 
+                              value={newTool.category} 
+                              onValueChange={(value) => setNewTool({ ...newTool, category: value as any })}
+                            >
+                              <SelectTrigger className="mt-1 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="hardware">⚙️ Hardware</SelectItem>
+                                <SelectItem value="software">💻 Software</SelectItem>
+                                <SelectItem value="safety">🦺 Safety</SelectItem>
+                                <SelectItem value="testing">🔍 Testing</SelectItem>
+                                <SelectItem value="other">🔧 Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Tool Name</label>
+                            <Input
+                              value={newTool.name}
+                              onChange={(e) => setNewTool({ ...newTool, name: e.target.value })}
+                              placeholder="Enter tool name"
+                              className="mt-1 h-8"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Description (Optional)</label>
+                          <Textarea
+                            value={newTool.description}
+                            onChange={(e) => setNewTool({ ...newTool, description: e.target.value })}
+                            placeholder="Enter tool description"
+                            rows={1}
+                            className="mt-1 min-h-[32px]"
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={newTool.isRequired}
+                            onChange={(e) => setNewTool({ ...newTool, isRequired: e.target.checked })}
+                            className="w-3 h-3"
+                          />
+                          <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Required Tool</label>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleAddTool}
+                          size="sm"
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white h-8"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add Tool to Work Order
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Tools List */}
+                  {tools.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      {['hardware', 'software', 'safety', 'testing', 'other'].map(category => {
+                        const categoryTools = tools.filter(tool => tool.category === category);
+                        if (categoryTools.length === 0) return null;
+                        
+                        return (
+                          <div key={category}>
+                            <h5 className="text-xs font-semibold text-purple-800 dark:text-purple-200 mb-1">
+                              {getToolCategoryLabel(category)} ({categoryTools.length})
+                            </h5>
+                            <div className="space-y-1">
+                              {categoryTools.map((tool, index) => {
+                                const globalIndex = tools.findIndex(t => t === tool);
+                                return (
+                                  <div
+                                    key={globalIndex}
+                                    className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                  >
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <Badge className={getToolCategoryColor(tool.category)} variant="secondary">
+                                          {getToolCategoryLabel(tool.category)}
+                                        </Badge>
+                                        <span className="font-medium text-sm">{tool.name}</span>
+                                        {tool.isRequired && (
+                                          <Badge variant="destructive" className="text-xs">Required</Badge>
+                                        )}
+                                      </div>
+                                      {tool.description && (
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                          {tool.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveTool(globalIndex)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Documents Management - Only visible to management */}
+              {!isClient && (
+                <div className="bg-indigo-50 dark:bg-indigo-950 p-3 rounded-lg border-2 border-indigo-200 dark:border-indigo-800">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-semibold text-indigo-900 dark:text-indigo-100">📄 Required Documents</h3>
+                    <Badge variant="secondary" className="bg-indigo-200 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200 text-xs">
+                      {documents.length} documents specified
+                    </Badge>
+                  </div>
+                  
+                  {/* Add Document Form */}
+                  <Card className="mb-3 border-dashed border-2 border-indigo-300 dark:border-indigo-700">
+                    <CardContent className="pt-3 pb-3">
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs font-medium text-indigo-900 dark:text-indigo-100">Category</label>
+                            <Select 
+                              value={newDocument.category} 
+                              onValueChange={(value) => setNewDocument({ ...newDocument, category: value as any })}
+                            >
+                              <SelectTrigger className="mt-1 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="reference">📖 Reference</SelectItem>
+                                <SelectItem value="procedure">📋 Procedure</SelectItem>
+                                <SelectItem value="checklist">✅ Checklist</SelectItem>
+                                <SelectItem value="form">📄 Form</SelectItem>
+                                <SelectItem value="other">📎 Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-indigo-900 dark:text-indigo-100">Document Name</label>
+                            <Input
+                              value={newDocument.name}
+                              onChange={(e) => setNewDocument({ ...newDocument, name: e.target.value })}
+                              placeholder="Enter document name"
+                              className="mt-1 h-8"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-indigo-900 dark:text-indigo-100">Description (Optional)</label>
+                          <Textarea
+                            value={newDocument.description}
+                            onChange={(e) => setNewDocument({ ...newDocument, description: e.target.value })}
+                            placeholder="Enter document description"
+                            rows={1}
+                            className="mt-1 min-h-[32px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-indigo-900 dark:text-indigo-100">File URL (Optional)</label>
+                          <Input
+                            value={newDocument.fileUrl || ''}
+                            onChange={(e) => setNewDocument({ ...newDocument, fileUrl: e.target.value })}
+                            placeholder="Enter document URL or file path"
+                            className="mt-1 h-8"
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={newDocument.isRequired}
+                            onChange={(e) => setNewDocument({ ...newDocument, isRequired: e.target.checked })}
+                            className="w-3 h-3"
+                          />
+                          <label className="text-xs font-medium text-indigo-900 dark:text-indigo-100">Required Document</label>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleAddDocument}
+                          size="sm"
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-8"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add Document to Work Order
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Documents List */}
+                  {documents.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      {['reference', 'procedure', 'checklist', 'form', 'other'].map(category => {
+                        const categoryDocs = documents.filter(doc => doc.category === category);
+                        if (categoryDocs.length === 0) return null;
+                        
+                        return (
+                          <div key={category}>
+                            <h5 className="text-xs font-semibold text-indigo-800 dark:text-indigo-200 mb-1">
+                              {getDocumentCategoryLabel(category)} ({categoryDocs.length})
+                            </h5>
+                            <div className="space-y-1">
+                              {categoryDocs.map((doc, index) => {
+                                const globalIndex = documents.findIndex(d => d === doc);
+                                return (
+                                  <div
+                                    key={globalIndex}
+                                    className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                  >
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <Badge className={getDocumentCategoryColor(doc.category)} variant="secondary">
+                                          {getDocumentCategoryLabel(doc.category)}
+                                        </Badge>
+                                        <span className="font-medium text-sm">{doc.name}</span>
+                                        {doc.isRequired && (
+                                          <Badge variant="destructive" className="text-xs">Required</Badge>
+                                        )}
+                                      </div>
+                                      {doc.description && (
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                          {doc.description}
+                                        </p>
+                                      )}
+                                      {doc.fileUrl && (
+                                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                          📎 {doc.fileUrl}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveDocument(globalIndex)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
