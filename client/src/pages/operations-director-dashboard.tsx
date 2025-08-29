@@ -12,6 +12,7 @@ import AdminOnboardingForm from "@/components/admin-onboarding-form";
 import { Company, AccessRequest, insertUserSchema } from "../../../shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatCurrency, formatBudget } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

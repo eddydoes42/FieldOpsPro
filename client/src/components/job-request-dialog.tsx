@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatCurrency, formatBudget } from "@/lib/utils";
 import { MapPin, Clock, DollarSign, User, MessageSquare } from "lucide-react";
 
 interface WorkOrder {
@@ -90,12 +91,7 @@ export default function JobRequestDialog({ workOrder, isOpen, onClose }: JobRequ
     );
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  // Using imported formatCurrency from utils
 
   if (!workOrder) return null;
 

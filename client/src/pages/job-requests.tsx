@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatCurrency, parseCurrency } from "@/lib/utils";
 import Navigation from "@/components/navigation";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
 import { Clock, CheckCircle, XCircle, User, MapPin, Calendar, MessageSquare, AlertTriangle } from "lucide-react";

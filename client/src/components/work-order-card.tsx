@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
+import { formatCurrency, formatBudget } from "@/lib/utils";
 
 interface WorkOrderCardProps {
   workOrder: any;
@@ -94,6 +95,14 @@ export default function WorkOrderCard({ workOrder, onStatusChange, showActions =
               <div>
                 <h5 className="text-sm font-medium text-gray-900 mb-1">Point of Contact</h5>
                 <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{workOrder.pointOfContact}</p>
+              </div>
+            )}
+            {workOrder.budget && (
+              <div>
+                <h5 className="text-sm font-medium text-gray-900 mb-1">Budget</h5>
+                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded font-semibold">
+                  {formatBudget(workOrder.budget, workOrder.budgetType)}
+                </p>
               </div>
             )}
           </CollapsibleContent>

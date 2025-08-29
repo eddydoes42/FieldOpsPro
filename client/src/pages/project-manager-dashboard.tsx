@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquare, AlertCircle, Home } from 'lucide-react';
 import { useLocation } from 'wouter';
 import type { Project } from '@shared/schema';
+import { formatCurrency, formatBudget } from '@/lib/utils';
 
 export default function ProjectManagerDashboard() {
   const { user } = useAuth();
@@ -88,12 +89,7 @@ export default function ProjectManagerDashboard() {
     p.status === 'completed'
   );
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  // Import formatCurrency from utils instead of defining locally
 
   const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString();

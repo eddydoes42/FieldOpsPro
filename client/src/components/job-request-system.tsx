@@ -24,6 +24,7 @@ import {
   Filter
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { formatBudget, formatCurrency } from "@/lib/utils";
 
 interface JobRequest {
   id: string;
@@ -581,7 +582,7 @@ export default function JobRequestSystem({
                 </div>
                 <div className="flex items-center space-x-2">
                   <DollarSign className="w-4 h-4 text-gray-400" />
-                  <span>${request.budget} {request.budgetType}</span>
+                  <span>{formatBudget(request.budget, request.budgetType)}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-gray-400" />

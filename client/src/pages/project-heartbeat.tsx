@@ -17,6 +17,7 @@ import {
   Calendar
 } from 'lucide-react';
 import Navigation from '@/components/navigation';
+import { formatCurrency, formatBudget } from '@/lib/utils';
 import ProjectHeartbeatMonitor from '@/components/project-heartbeat-monitor';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -162,12 +163,7 @@ export default function ProjectHeartbeatPage() {
     });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  // Using imported formatCurrency from utils
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
