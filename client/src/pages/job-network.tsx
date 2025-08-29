@@ -736,6 +736,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                 <FormControl>
                                   <Input 
                                     type="datetime-local"
+                                    className="text-white dark:text-white bg-gray-800 dark:bg-gray-800 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
                                     {...field} 
                                   />
                                 </FormControl>

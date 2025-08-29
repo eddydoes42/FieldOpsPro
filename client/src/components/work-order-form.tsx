@@ -436,7 +436,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                         <FormControl>
                           <Input 
                             type="datetime-local"
-                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            className="text-white dark:text-white bg-gray-800 dark:bg-gray-800 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
                             {...field} 
                           />
                         </FormControl>
@@ -777,7 +777,11 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                           <FormItem>
                             <FormLabel>Due Date</FormLabel>
                             <FormControl>
-                              <Input type="datetime-local" {...field} />
+                              <Input 
+                                type="datetime-local" 
+                                className="text-white dark:text-white bg-gray-800 dark:bg-gray-800 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
