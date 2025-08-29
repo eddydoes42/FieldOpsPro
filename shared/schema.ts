@@ -1682,45 +1682,99 @@ export type AgentLocation = typeof agentLocations.$inferSelect;
 export type InsertAgentLocation = z.infer<typeof insertAgentLocationSchema>;
 
 // Role utility functions
+// Operations Director role bypass helper
+function hasOperationsDirectorBypass(user: User | null): boolean {
+  if (!user) return false;
+  
+  // Check if user is Operations Director AND not in role testing mode
+  const isOD = user.roles?.includes('operations_director') && !user.companyId;
+  if (!isOD) return false;
+  
+  // Check if role testing is active (browser environment only)
+  if (typeof window !== 'undefined') {
+    const testingRole = localStorage.getItem('testingRole');
+    const testingCompanyType = localStorage.getItem('testingCompanyType');
+    
+    // If testing role is active, don't apply bypass
+    if (testingRole && testingCompanyType) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 export function hasRole(user: User | null, role: string): boolean {
   if (!user || !user.roles) return false;
+  
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return user.roles.includes(role);
 }
 
 export function hasAnyRole(user: User | null, roles: string[]): boolean {
   if (!user || !user.roles) return false;
+  
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return roles.some(role => user.roles.includes(role));
 }
 
 export function isAdmin(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'administrator');
 }
 
 export function isManager(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'manager');
 }
 
 export function isFieldAgent(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'field_agent');
 }
 
 export function isFieldEngineer(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'field_engineer');
 }
 
 export function isFieldLevel(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['field_agent', 'field_engineer']);
 }
 
 export function isClient(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'client');
 }
 
 export function canViewJobNetwork(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager', 'dispatcher', 'client']);
 }
 
 export function canRequestWorkOrder(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
 }
 
@@ -1729,50 +1783,86 @@ export function isOperationsDirector(user: User | null): boolean {
 }
 
 export function canManageUsers(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager']);
 }
 
 export function canDeleteAdmin(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user);
 }
 
 export function canDeleteProjectManager(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['operations_director', 'administrator']);
 }
 
 export function canDeleteManager(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager']);
 }
 
 export function canDeleteDispatcher(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager']);
 }
 
 export function canSelfAssignWorkOrders(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['field_engineer']);
 }
 
 export function canMessageOperationsDirector(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'administrator');
 }
 
 export function canManageWorkOrders(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
 }
 
 export function canViewBudgets(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer']);
 }
 
 export function canViewAllOrders(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
 }
 
 export function canOnboardAdmins(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'operations_director');
 }
 
 export function canManageCompanies(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasRole(user, 'operations_director');
 }
 
@@ -1792,46 +1882,78 @@ export function getPrimaryRole(user: User | null): string {
 
 // Admin Team and Chief Team utility functions
 export function isAdminTeam(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
   return hasAnyRole(user, ['administrator', 'project_manager', 'manager', 'field_engineer']);
 }
 
 export function isChiefTeam(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['administrator', 'project_manager']);
 }
 
 export function canViewBudgetsFieldEngineer(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return hasAnyRole(user, ['administrator', 'project_manager', 'manager', 'field_engineer']);
 }
 
 export function canCreateProjects(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || hasRole(user, 'project_manager');
 }
 
 export function canEditProjects(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || hasRole(user, 'project_manager');
 }
 
 export function canDeleteProjects(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || hasRole(user, 'project_manager');
 }
 
 export function canAssignProjects(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || hasRole(user, 'project_manager');
 }
 
 export function canViewProjectNetwork(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || isAdminTeam(user);
 }
 
 export function canPostToJobNetwork(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || isAdminTeam(user) || isClient(user);
 }
 
 export function canViewExclusiveNetwork(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || isAdminTeam(user);
 }
 
 export function canAssignWorkOrders(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
   return isOperationsDirector(user) || isAdminTeam(user);
 }
 

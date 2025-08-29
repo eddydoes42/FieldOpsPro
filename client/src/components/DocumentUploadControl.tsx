@@ -37,7 +37,13 @@ export function DocumentUploadControl({
   disabled = false,
 }: DocumentUploadControlProps) {
   const { toast } = useToast();
+  // Ensure modal starts closed and only opens on explicit button click
   const [showUploader, setShowUploader] = useState(false);
+  
+  // Reset modal state when component mounts or entityId changes
+  useEffect(() => {
+    setShowUploader(false);
+  }, [entityId]);
 
   // Query to fetch existing documents
   const { data: documents = [], isLoading } = useQuery<Document[]>({

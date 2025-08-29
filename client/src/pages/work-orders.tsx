@@ -19,7 +19,7 @@ import PaymentStatusButton from "@/components/payment-status-button";
 import { FieldAgentRatingForm, DispatcherRatingForm, ClientRatingForm } from "@/components/rating-system";
 import DocumentUploadControl from "@/components/DocumentUploadControl";
 import { TaskDocumentUpload } from "@/components/TaskDocumentUpload";
-import { FilePickerTest } from "@/components/FilePickerTest";
+
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 // Rating trigger hook removed for now
@@ -1676,11 +1676,6 @@ export default function WorkOrders() {
                 </div>
 
 
-
-                {/* File Picker Test Section - for debugging */}
-                <div className="space-y-4 border-t pt-6">
-                  <FilePickerTest />
-                </div>
 
                 {/* Document Upload Section */}
                 <div className="space-y-4 border-t pt-6">
