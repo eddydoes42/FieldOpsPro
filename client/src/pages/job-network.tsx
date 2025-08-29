@@ -23,7 +23,10 @@ import {
   Eye,
   ArrowLeft,
   Home,
-  Trash2
+  Trash2,
+  Upload,
+  FileText,
+  X
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -103,6 +106,10 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     category: 'hardware',
     isRequired: true
   });
+
+  // Initial File Upload State
+  const [initialFiles, setInitialFiles] = useState<File[]>([]);
+  const [showInitialFileUploader, setShowInitialFileUploader] = useState(false);
 
 
 
@@ -232,6 +239,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       workOrderForm.reset();
       setTasks([]);
       setTools([]);
+      setInitialFiles([]);
       toast({
         title: 'Success',
         description: 'Work order created successfully',
@@ -324,6 +332,22 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
 
   const handleRemoveTool = (index: number) => {
     setTools(tools.filter((_, i) => i !== index));
+  };
+
+  // Initial File Upload Handlers
+  const handleInitialFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      setInitialFiles(prev => [...prev, ...files]);
+      toast({
+        title: "Files Selected",
+        description: `${files.length} file(s) added for upload when work order is created`,
+      });
+    }
+  };
+
+  const handleRemoveInitialFile = (index: number) => {
+    setInitialFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   // Category Label Functions
@@ -1009,8 +1033,46 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         <div className="space-y-4 border-t pt-4">
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-semibold">Work Order Documents</h3>
-                            <span className="text-sm text-gray-500">Upload initial work order files (optional)</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowInitialFileUploader(true)}
+                              className="flex items-center gap-2"
+                            >
+                              <Upload className="h-4 w-4" />
+                              Upload Files
+                            </Button>
                           </div>
+                          
+                          {/* Show uploaded initial files */}
+                          {initialFiles.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium text-gray-700">Initial Files ({initialFiles.length})</h4>
+                              <div className="space-y-1">
+                                {initialFiles.map((file, index) => (
+                                  <div key={index} className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="h-4 w-4 text-blue-600" />
+                                      <span className="text-sm font-medium">{file.name}</span>
+                                      <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">
+                                        {(file.size / 1024 / 1024).toFixed(1)}MB
+                                      </Badge>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveInitialFile(index)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
@@ -1038,6 +1100,47 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             </div>
                           </div>
                         </div>
+
+                        {/* Initial File Upload Modal */}
+                        {showInitialFileUploader && (
+                          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Upload Initial Files</h3>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setShowInitialFileUploader(false)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="space-y-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Select files to be automatically uploaded when the work order is created and posted to the network.
+                                </p>
+                                <Input
+                                  type="file"
+                                  multiple
+                                  accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.txt"
+                                  onChange={handleInitialFileSelect}
+                                  className="cursor-pointer"
+                                />
+                                <p className="text-xs text-gray-500">
+                                  Allowed types: PDF, DOCX, XLSX, JPG, PNG, TXT
+                                </p>
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setShowInitialFileUploader(false)}
+                                  >
+                                    Done
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="flex justify-end space-x-2">
                           <Button 
