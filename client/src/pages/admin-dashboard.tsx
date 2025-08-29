@@ -136,14 +136,14 @@ export default function AdminDashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/team')}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 overflow-hidden">
               <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0">
                   <i className="fas fa-users text-blue-600 dark:text-blue-400 text-sm"></i>
                 </div>
-                <div className="ml-3">
-                  <p className="text-xs font-medium text-muted-foreground">Total Users</p>
-                  <p className="text-lg font-bold text-foreground">
+                <div className="ml-3 min-w-0 flex-1">
+                  <p className="text-xs font-medium text-muted-foreground truncate">Total Users</p>
+                  <p className="text-lg font-bold text-foreground truncate">
                     {statsLoading ? '...' : (stats as any)?.totalUsers || 0}
                   </p>
                 </div>
@@ -152,14 +152,14 @@ export default function AdminDashboard() {
           </Card>
           
           <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/work-orders?status=in_progress')}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 overflow-hidden">
               <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 flex-shrink-0">
                   <i className="fas fa-clipboard-check text-green-600 dark:text-green-400 text-sm"></i>
                 </div>
-                <div className="ml-3">
-                  <p className="text-xs font-medium text-muted-foreground">Active Work Orders</p>
-                  <p className="text-lg font-bold text-foreground">
+                <div className="ml-3 min-w-0 flex-1">
+                  <p className="text-xs font-medium text-muted-foreground truncate">Active Work Orders</p>
+                  <p className="text-lg font-bold text-foreground truncate">
                     {statsLoading ? '...' : (stats as any)?.activeOrders || 0}
                   </p>
                 </div>
@@ -168,14 +168,14 @@ export default function AdminDashboard() {
           </Card>
           
           <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/work-orders?status=completed')}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 overflow-hidden">
               <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
+                <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex-shrink-0">
                   <i className="fas fa-check-circle text-yellow-600 dark:text-yellow-400 text-sm"></i>
                 </div>
-                <div className="ml-3">
-                  <p className="text-xs font-medium text-muted-foreground">Completed Orders</p>
-                  <p className="text-lg font-bold text-foreground">
+                <div className="ml-3 min-w-0 flex-1">
+                  <p className="text-xs font-medium text-muted-foreground truncate">Completed Orders</p>
+                  <p className="text-lg font-bold text-foreground truncate">
                     {statsLoading ? '...' : (stats as any)?.completedOrders || 0}
                   </p>
                 </div>
@@ -184,14 +184,14 @@ export default function AdminDashboard() {
           </Card>
           
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 overflow-hidden">
               <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
                   <i className="fas fa-percentage text-purple-600 dark:text-purple-400 text-sm"></i>
                 </div>
-                <div className="ml-3">
-                  <p className="text-xs font-medium text-muted-foreground">Completion Rate</p>
-                  <p className="text-lg font-bold text-foreground">
+                <div className="ml-3 min-w-0 flex-1">
+                  <p className="text-xs font-medium text-muted-foreground truncate">Completion Rate</p>
+                  <p className="text-lg font-bold text-foreground truncate">
                     {statsLoading ? '...' : (stats as any)?.totalOrders > 0 ? Math.round(((stats as any)?.completedOrders / (stats as any)?.totalOrders) * 100) + '%' : '0%'}
                   </p>
                 </div>

@@ -150,45 +150,45 @@ export default function ProjectManagerDashboard() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-        <Card className="p-3">
+        <Card className="p-3 overflow-hidden">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-lg font-bold">{myProjects.length}</div>
-              <p className="text-xs text-muted-foreground">Total Projects</p>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-bold truncate">{myProjects.length}</div>
+              <p className="text-xs text-muted-foreground truncate">Total Projects</p>
             </div>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <Briefcase className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
           </div>
         </Card>
 
-        <Card className="p-3">
+        <Card className="p-3 overflow-hidden">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-lg font-bold">{activeProjects.length}</div>
-              <p className="text-xs text-muted-foreground">Active</p>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-bold truncate">{activeProjects.length}</div>
+              <p className="text-xs text-muted-foreground truncate">Active</p>
             </div>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
           </div>
         </Card>
 
-        <Card className="p-3">
+        <Card className="p-3 overflow-hidden">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-lg font-bold">{completedProjects.length}</div>
-              <p className="text-xs text-muted-foreground">Completed</p>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-bold truncate">{completedProjects.length}</div>
+              <p className="text-xs text-muted-foreground truncate">Completed</p>
             </div>
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+            <CheckSquare className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
           </div>
         </Card>
 
-        <Card className="p-3">
+        <Card className="p-3 overflow-hidden">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-lg font-bold">
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-bold truncate">
                 {formatCurrency(myProjects.reduce((sum, p) => sum + Number(p.budget || 0), 0))}
               </div>
-              <p className="text-xs text-muted-foreground">Budget</p>
+              <p className="text-xs text-muted-foreground truncate">Budget</p>
             </div>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
           </div>
         </Card>
       </div>

@@ -124,17 +124,17 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setLocation('/team')}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4 overflow-hidden">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                     Team Members
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                     {(teamMembers as any[]).length}
                   </p>
                 </div>
-                <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <Users className="h-8 w-8 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />
               </div>
             </CardContent>
           </Card>
@@ -143,17 +143,17 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setLocation('/work-orders')}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4 overflow-hidden">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                     Active Work Orders
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                     {activeWorkOrders.length}
                   </p>
                 </div>
-                <Briefcase className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <Briefcase className="h-8 w-8 text-green-600 dark:text-green-400 flex-shrink-0 ml-2" />
               </div>
             </CardContent>
           </Card>
@@ -162,17 +162,17 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setLocation('/team')}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4 overflow-hidden">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                     Admin Team
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                     {adminTeamMembers.length}
                   </p>
                 </div>
-                <Building2 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                <Building2 className="h-8 w-8 text-purple-600 dark:text-purple-400 flex-shrink-0 ml-2" />
               </div>
             </CardContent>
           </Card>
@@ -181,17 +181,17 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setLocation('/messages')}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4 overflow-hidden">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                     Unread Messages
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                     {(messages as any[]).filter((m: any) => !m.isRead).length}
                   </p>
                 </div>
-                <MessageSquare className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                <MessageSquare className="h-8 w-8 text-orange-600 dark:text-orange-400 flex-shrink-0 ml-2" />
               </div>
             </CardContent>
           </Card>
