@@ -66,6 +66,7 @@ interface Task {
   title: string;
   description: string;
   category: 'pre_visit' | 'on_site' | 'post_site';
+  documentsRequired: number;
 }
 
 interface Tool {
@@ -97,7 +98,8 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   const [newTask, setNewTask] = useState<Task>({
     title: '',
     description: '',
-    category: 'pre_visit'
+    category: 'pre_visit',
+    documentsRequired: 0
   });
   const [tools, setTools] = useState<Tool[]>([]);
   const [newTool, setNewTool] = useState<Tool>({
@@ -300,7 +302,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     }
 
     setTasks([...tasks, newTask]);
-    setNewTask({ title: '', description: '', category: 'pre_visit' });
+    setNewTask({ title: '', description: '', category: 'pre_visit', documentsRequired: 0 });
     toast({
       title: "Task Added",
       description: "Task has been added to the work order",
@@ -833,6 +835,21 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                     className="mt-1 min-h-[32px]"
                                   />
                                 </div>
+                                <div>
+                                  <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Documents Required</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="10"
+                                    value={newTask.documentsRequired}
+                                    onChange={(e) => setNewTask({ ...newTask, documentsRequired: parseInt(e.target.value) || 0 })}
+                                    placeholder="0"
+                                    className="mt-1 h-8"
+                                  />
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Number of documents Service Company users must upload for this task (0 = none required)
+                                  </p>
+                                </div>
                                 <Button
                                   type="button"
                                   onClick={handleAddTask}
@@ -872,6 +889,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                                   {getCategoryLabel(task.category)}
                                                 </Badge>
                                                 <span className="font-medium text-sm">{task.title}</span>
+                                                {task.documentsRequired > 0 && (
+                                                  <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
+                                                    📄 {task.documentsRequired} doc{task.documentsRequired !== 1 ? 's' : ''} required
+                                                  </Badge>
+                                                )}
                                               </div>
                                               {task.description && (
                                                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">

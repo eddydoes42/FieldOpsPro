@@ -260,6 +260,7 @@ export const workOrderTasks = pgTable("work_order_tasks", {
   title: varchar("title").notNull(),
   description: text("description"),
   category: varchar("category").notNull(), // pre_visit, on_site, post_site
+  documentsRequired: integer("documents_required").default(0), // number of documents that must be uploaded for this task
   isCompleted: boolean("is_completed").default(false),
   completedById: varchar("completed_by_id").references(() => users.id),
   completedAt: timestamp("completed_at"),
