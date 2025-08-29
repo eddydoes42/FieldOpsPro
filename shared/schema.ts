@@ -1685,3 +1685,81 @@ export const insertOnboardingRequestSchema = createInsertSchema(onboardingReques
 });
 
 export type InsertOnboardingRequestType = z.infer<typeof insertOnboardingRequestSchema>;
+
+// Project Heartbeat Monitor table - tracks project health and status
+export const projectHeartbeats = pgTable("project_heartbeats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  projectStatus: varchar("project_status").notNull().default("healthy"), // healthy, at_risk, delayed, critical
+  healthScore: integer("health_score").notNull().default(100), // 0-100 health score
+  lastActivity: timestamp("last_activity").defaultNow(),
+  checkInsCompleted: integer("check_ins_completed").default(0),
+  totalCheckInsRequired: integer("total_check_ins_required").default(1),
+  budgetUtilization: decimal("budget_utilization", { precision: 5, scale: 2 }).default("0.00"), // percentage of budget used
+  timeUtilization: decimal("time_utilization", { precision: 5, scale: 2 }).default("0.00"), // percentage of time used
+  deliverableProgress: decimal("deliverable_progress", { precision: 5, scale: 2 }).default("0.00"), // percentage of deliverables complete
+  riskFactors: text("risk_factors").array().default(sql`ARRAY[]::TEXT[]`), // array of risk factors detected
+  alerts: text("alerts").array().default(sql`ARRAY[]::TEXT[]`), // array of current alerts
+  lastHealthCheck: timestamp("last_health_check").defaultNow(),
+  nextHealthCheck: timestamp("next_health_check"),
+  monitoringEnabled: boolean("monitoring_enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Heartbeat Events table - tracks individual heartbeat events
+export const heartbeatEvents = pgTable("heartbeat_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  heartbeatId: varchar("heartbeat_id").notNull().references(() => projectHeartbeats.id),
+  eventType: varchar("event_type").notNull(), // check_in, deliverable_update, budget_update, issue_reported, status_change
+  eventData: jsonb("event_data"), // JSON data for the event
+  impact: varchar("impact").notNull().default("neutral"), // positive, neutral, negative
+  healthScoreChange: integer("health_score_change").default(0), // change in health score
+  triggeredBy: varchar("triggered_by").references(() => users.id),
+  automaticEvent: boolean("automatic_event").default(false), // true if triggered automatically
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Project Heartbeat Relations
+export const projectHeartbeatsRelations = relations(projectHeartbeats, ({ one, many }) => ({
+  workOrder: one(workOrders, {
+    fields: [projectHeartbeats.workOrderId],
+    references: [workOrders.id],
+  }),
+  events: many(heartbeatEvents),
+}));
+
+export const heartbeatEventsRelations = relations(heartbeatEvents, ({ one }) => ({
+  heartbeat: one(projectHeartbeats, {
+    fields: [heartbeatEvents.heartbeatId],
+    references: [projectHeartbeats.id],
+  }),
+  triggeredByUser: one(users, {
+    fields: [heartbeatEvents.triggeredBy],
+    references: [users.id],
+  }),
+}));
+
+// Project Heartbeat types
+export type ProjectHeartbeat = typeof projectHeartbeats.$inferSelect;
+export type InsertProjectHeartbeat = typeof projectHeartbeats.$inferInsert;
+
+export const insertProjectHeartbeatSchema = createInsertSchema(projectHeartbeats).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertProjectHeartbeatType = z.infer<typeof insertProjectHeartbeatSchema>;
+
+// Heartbeat Event types
+export type HeartbeatEvent = typeof heartbeatEvents.$inferSelect;
+export type InsertHeartbeatEvent = typeof heartbeatEvents.$inferInsert;
+
+export const insertHeartbeatEventSchema = createInsertSchema(heartbeatEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertHeartbeatEventType = z.infer<typeof insertHeartbeatEventSchema>;

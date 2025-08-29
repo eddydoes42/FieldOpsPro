@@ -40,6 +40,8 @@ import {
   agentRecommendations,
   agentSkills,
   agentLocations,
+  projectHeartbeats,
+  heartbeatEvents,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -123,6 +125,10 @@ import {
   type InsertAgentSkill,
   type AgentLocation,
   type InsertAgentLocation,
+  type ProjectHeartbeat,
+  type InsertProjectHeartbeat,
+  type HeartbeatEvent,
+  type InsertHeartbeatEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -4041,6 +4047,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(agentSkills.id, id));
   }
 
+  async deleteAgentSkills(agentId: string): Promise<void> {
+    await db
+      .delete(agentSkills)
+      .where(eq(agentSkills.agentId, agentId));
+  }
+
   async verifyAgentSkill(id: string, verifiedById: string): Promise<AgentSkill> {
     const [verifiedSkill] = await db
       .update(agentSkills)
@@ -4078,6 +4090,10 @@ export class DatabaseStorage implements IStorage {
       .from(agentLocations)
       .where(and(eq(agentLocations.agentId, agentId), eq(agentLocations.isPrimary, true)));
     return location;
+  }
+
+  async getAgentPrimaryLocation(agentId: string): Promise<AgentLocation | undefined> {
+    return this.getPrimaryAgentLocation(agentId);
   }
 
   async updateAgentLocation(id: string, updates: Partial<InsertAgentLocation>): Promise<AgentLocation> {
@@ -4180,6 +4196,213 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query.orderBy(desc(workOrders.createdAt));
+  }
+
+  // Job Visibility Logic (Module 3)
+  async getVisibleJobsForAgent(filters: {
+    agentId: string;
+    agentLocation?: { lat: number; lng: number };
+    agentSkills: string[];
+    radiusKm: number;
+    respectExclusiveNetworks?: boolean;
+  }): Promise<WorkOrder[]> {
+    let query = db.select().from(workOrders);
+    const conditions = [];
+
+    // Only show available/open work orders
+    conditions.push(inArray(workOrders.status, ["scheduled", "confirmed"]));
+
+    // Location radius filtering if agent location is provided
+    if (filters.agentLocation && filters.radiusKm > 0) {
+      const { lat, lng } = filters.agentLocation;
+      const latRange = filters.radiusKm / 111; // Rough km to degree conversion
+      const lngRange = filters.radiusKm / (111 * Math.cos(lat * Math.PI / 180));
+      
+      conditions.push(
+        and(
+          gte(workOrders.latitude, lat - latRange),
+          lte(workOrders.latitude, lat + latRange),
+          gte(workOrders.longitude, lng - lngRange),
+          lte(workOrders.longitude, lng + lngRange)
+        )
+      );
+    }
+
+    // Skills matching - show jobs that either require no specific skills or match agent skills
+    if (filters.agentSkills.length > 0) {
+      const skillConditions = filters.agentSkills.map(skill =>
+        sql`${workOrders.requiredSkills} && ARRAY[${skill}]::text[]`
+      );
+      // Include jobs with no required skills or jobs that match agent skills
+      conditions.push(
+        or(
+          eq(sql`array_length(${workOrders.requiredSkills}, 1)`, null),
+          or(...skillConditions)
+        )
+      );
+    }
+
+    // Respect exclusive networks if enabled
+    if (filters.respectExclusiveNetworks) {
+      // Only show public jobs or jobs from companies in exclusive networks
+      conditions.push(
+        or(
+          eq(workOrders.visibilityScope, "public"),
+          eq(workOrders.visibilityScope, "exclusive")
+        )
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(workOrders.createdAt));
+  }
+
+  // Project Heartbeat Monitor operations
+  async createProjectHeartbeat(heartbeat: InsertProjectHeartbeat): Promise<ProjectHeartbeat> {
+    const heartbeatId = nanoid();
+    const [newHeartbeat] = await db
+      .insert(projectHeartbeats)
+      .values({ ...heartbeat, id: heartbeatId })
+      .returning();
+    return newHeartbeat;
+  }
+
+  async getProjectHeartbeat(workOrderId: string): Promise<ProjectHeartbeat | undefined> {
+    const [heartbeat] = await db
+      .select()
+      .from(projectHeartbeats)
+      .where(eq(projectHeartbeats.workOrderId, workOrderId));
+    return heartbeat;
+  }
+
+  async updateProjectHeartbeat(id: string, updates: Partial<InsertProjectHeartbeat>): Promise<ProjectHeartbeat> {
+    const [updatedHeartbeat] = await db
+      .update(projectHeartbeats)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(projectHeartbeats.id, id))
+      .returning();
+    return updatedHeartbeat;
+  }
+
+  async deleteProjectHeartbeat(id: string): Promise<void> {
+    await db
+      .delete(projectHeartbeats)
+      .where(eq(projectHeartbeats.id, id));
+  }
+
+  async createHeartbeatEvent(event: InsertHeartbeatEvent): Promise<HeartbeatEvent> {
+    const eventId = nanoid();
+    const [newEvent] = await db
+      .insert(heartbeatEvents)
+      .values({ ...event, id: eventId })
+      .returning();
+    return newEvent;
+  }
+
+  async getHeartbeatEvents(heartbeatId: string): Promise<HeartbeatEvent[]> {
+    return await db
+      .select()
+      .from(heartbeatEvents)
+      .where(eq(heartbeatEvents.heartbeatId, heartbeatId))
+      .orderBy(desc(heartbeatEvents.createdAt));
+  }
+
+  async updateHealthScore(heartbeatId: string, newScore: number, changeReason: string, triggeredBy?: string): Promise<ProjectHeartbeat> {
+    // Update the heartbeat health score
+    const [updatedHeartbeat] = await db
+      .update(projectHeartbeats)
+      .set({ 
+        healthScore: newScore,
+        lastHealthCheck: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(projectHeartbeats.id, heartbeatId))
+      .returning();
+
+    // Create an event for the health score change
+    await this.createHeartbeatEvent({
+      heartbeatId,
+      eventType: 'health_score_change',
+      eventData: { newScore, reason: changeReason },
+      impact: newScore >= 80 ? 'positive' : newScore >= 60 ? 'neutral' : 'negative',
+      healthScoreChange: newScore - (updatedHeartbeat.healthScore || 100),
+      triggeredBy,
+      automaticEvent: !triggeredBy,
+      notes: changeReason
+    });
+
+    return updatedHeartbeat;
+  }
+
+  async triggerHeartbeatEvent(workOrderId: string, eventType: string, eventData: any, triggeredBy?: string): Promise<void> {
+    const heartbeat = await this.getProjectHeartbeat(workOrderId);
+    if (!heartbeat || !heartbeat.monitoringEnabled) return;
+
+    // Calculate health score impact based on event type
+    let healthScoreChange = 0;
+    let impact: 'positive' | 'neutral' | 'negative' = 'neutral';
+
+    switch (eventType) {
+      case 'check_in':
+        healthScoreChange = 5;
+        impact = 'positive';
+        break;
+      case 'deliverable_update':
+        healthScoreChange = eventData.progress > 0 ? 10 : -5;
+        impact = eventData.progress > 0 ? 'positive' : 'negative';
+        break;
+      case 'budget_update':
+        healthScoreChange = eventData.overBudget ? -10 : 0;
+        impact = eventData.overBudget ? 'negative' : 'neutral';
+        break;
+      case 'issue_reported':
+        healthScoreChange = eventData.severity === 'high' ? -15 : -5;
+        impact = 'negative';
+        break;
+      case 'status_change':
+        healthScoreChange = eventData.newStatus === 'completed' ? 20 : 0;
+        impact = eventData.newStatus === 'completed' ? 'positive' : 'neutral';
+        break;
+    }
+
+    // Create the event
+    await this.createHeartbeatEvent({
+      heartbeatId: heartbeat.id,
+      eventType,
+      eventData,
+      impact,
+      healthScoreChange,
+      triggeredBy,
+      automaticEvent: !triggeredBy
+    });
+
+    // Update health score if there's a change
+    if (healthScoreChange !== 0) {
+      const newScore = Math.max(0, Math.min(100, heartbeat.healthScore + healthScoreChange));
+      await this.updateHealthScore(heartbeat.id, newScore, `${eventType} event`, triggeredBy);
+    }
+  }
+
+  async getProjectHealthSummary(companyId?: string): Promise<any> {
+    let query = db
+      .select({
+        workOrderId: projectHeartbeats.workOrderId,
+        projectStatus: projectHeartbeats.projectStatus,
+        healthScore: projectHeartbeats.healthScore,
+        workOrderTitle: workOrders.title,
+        lastActivity: projectHeartbeats.lastActivity
+      })
+      .from(projectHeartbeats)
+      .leftJoin(workOrders, eq(projectHeartbeats.workOrderId, workOrders.id));
+
+    if (companyId) {
+      query = query.where(eq(workOrders.companyId, companyId));
+    }
+
+    return await query.orderBy(desc(projectHeartbeats.lastActivity));
   }
 }
 

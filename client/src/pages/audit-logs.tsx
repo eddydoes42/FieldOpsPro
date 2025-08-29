@@ -31,8 +31,8 @@ interface AuditLog {
 
 export default function AuditLogsPage() {
   const [location] = useLocation();
-  const [entityTypeFilter, setEntityTypeFilter] = useState("");
-  const [actionFilter, setActionFilter] = useState("");
+  const [entityTypeFilter, setEntityTypeFilter] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
   const [userFilter, setUserFilter] = useState("");
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
@@ -41,8 +41,8 @@ export default function AuditLogsPage() {
     queryKey: ['/api/audit-logs', entityTypeFilter, actionFilter, userFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (entityTypeFilter) params.append('entityType', entityTypeFilter);
-      if (actionFilter) params.append('action', actionFilter);
+      if (entityTypeFilter && entityTypeFilter !== 'all') params.append('entityType', entityTypeFilter);
+      if (actionFilter && actionFilter !== 'all') params.append('action', actionFilter);
       if (userFilter) params.append('userId', userFilter);
       
       const response = await fetch(`/api/audit-logs?${params.toString()}`);
@@ -54,8 +54,8 @@ export default function AuditLogsPage() {
   });
 
   const clearFilters = () => {
-    setEntityTypeFilter("");
-    setActionFilter("");
+    setEntityTypeFilter("all");
+    setActionFilter("all");
     setUserFilter("");
   };
 
@@ -163,7 +163,7 @@ export default function AuditLogsPage() {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="work_order">Work Orders</SelectItem>
                   <SelectItem value="issue">Issues</SelectItem>
                   <SelectItem value="user_action">User Actions</SelectItem>
@@ -180,7 +180,7 @@ export default function AuditLogsPage() {
                   <SelectValue placeholder="All actions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All actions</SelectItem>
+                  <SelectItem value="all">All actions</SelectItem>
                   <SelectItem value="created">Created</SelectItem>
                   <SelectItem value="updated">Updated</SelectItem>
                   <SelectItem value="deleted">Deleted</SelectItem>

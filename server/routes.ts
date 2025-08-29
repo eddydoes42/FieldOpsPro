@@ -3101,6 +3101,272 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== MODULE 3: JOB VISIBILITY LOGIC ROUTES =====
+
+  // Get visible jobs for field agents based on location and skills
+  app.get('/api/jobs/visible', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !isFieldAgent(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Field agent role required." });
+      }
+
+      const { radiusKm = 50, skillsOnly = false } = req.query;
+      
+      // Get agent's location and skills
+      const agentLocation = await storage.getAgentPrimaryLocation(currentUser.id);
+      const agentSkills = await storage.getAgentSkills(currentUser.id);
+      
+      if (!agentLocation && skillsOnly === 'false') {
+        return res.status(400).json({ message: "Agent location not set. Please update your profile." });
+      }
+
+      // Get filtered work orders based on visibility logic
+      const visibleJobs = await storage.getVisibleJobsForAgent({
+        agentId: currentUser.id,
+        agentLocation: agentLocation && agentLocation.latitude && agentLocation.longitude ? {
+          lat: parseFloat(agentLocation.latitude.toString()),
+          lng: parseFloat(agentLocation.longitude.toString())
+        } : undefined,
+        agentSkills: agentSkills.map(s => s.skillName),
+        radiusKm: parseInt(radiusKm as string),
+        respectExclusiveNetworks: true
+      });
+
+      res.json(visibleJobs);
+    } catch (error) {
+      console.error("Error fetching visible jobs:", error);
+      res.status(500).json({ message: "Failed to fetch visible jobs" });
+    }
+  });
+
+  // Update agent location and skills for job visibility
+  app.put('/api/agent/profile/location', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !isFieldAgent(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Field agent role required." });
+      }
+
+      const { address, latitude, longitude, isPrimary = true } = req.body;
+      
+      if (!address || !latitude || !longitude) {
+        return res.status(400).json({ message: "Address, latitude, and longitude are required" });
+      }
+
+      const location = await storage.createAgentLocation({
+        agentId: currentUser.id,
+        address,
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
+        isPrimary
+      });
+
+      res.json(location);
+    } catch (error) {
+      console.error("Error updating agent location:", error);
+      res.status(500).json({ message: "Failed to update location" });
+    }
+  });
+
+  // Update agent skills for job matching
+  app.put('/api/agent/profile/skills', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !isFieldAgent(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Field agent role required." });
+      }
+
+      const { skills } = req.body;
+      
+      if (!Array.isArray(skills)) {
+        return res.status(400).json({ message: "Skills must be an array" });
+      }
+
+      // Remove existing skills and add new ones
+      await storage.deleteAgentSkills(currentUser.id);
+      
+      const newSkills = [];
+      for (const skill of skills) {
+        const newSkill = await storage.createAgentSkill({
+          agentId: currentUser.id,
+          skillName: skill.skillName,
+          proficiencyLevel: skill.proficiencyLevel || 'intermediate',
+          verified: false
+        });
+        newSkills.push(newSkill);
+      }
+
+      res.json(newSkills);
+    } catch (error) {
+      console.error("Error updating agent skills:", error);
+      res.status(500).json({ message: "Failed to update skills" });
+    }
+  });
+
+  // Get agent's current profile (location and skills)
+  app.get('/api/agent/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !isFieldAgent(currentUser)) {
+        return res.status(403).json({ message: "Access denied. Field agent role required." });
+      }
+
+      const [location, skills] = await Promise.all([
+        storage.getAgentPrimaryLocation(currentUser.id),
+        storage.getAgentSkills(currentUser.id)
+      ]);
+
+      res.json({
+        location,
+        skills,
+        agentInfo: {
+          id: currentUser.id,
+          firstName: currentUser.firstName,
+          lastName: currentUser.lastName,
+          email: currentUser.email
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching agent profile:", error);
+      res.status(500).json({ message: "Failed to fetch agent profile" });
+    }
+  });
+
+  // ===== PROJECT HEARTBEAT MONITOR ROUTES =====
+
+  // Get project heartbeat for a work order
+  app.get('/api/project-heartbeat/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher']))) {
+        return res.status(403).json({ message: "Access denied. Admin role required." });
+      }
+
+      const heartbeat = await storage.getProjectHeartbeat(req.params.workOrderId);
+      res.json(heartbeat);
+    } catch (error) {
+      console.error("Error fetching project heartbeat:", error);
+      res.status(500).json({ message: "Failed to fetch project heartbeat" });
+    }
+  });
+
+  // Create project heartbeat for a work order
+  app.post('/api/project-heartbeat', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied. Manager role required." });
+      }
+
+      const heartbeat = await storage.createProjectHeartbeat(req.body);
+      res.status(201).json(heartbeat);
+    } catch (error) {
+      console.error("Error creating project heartbeat:", error);
+      res.status(500).json({ message: "Failed to create project heartbeat" });
+    }
+  });
+
+  // Update project heartbeat
+  app.put('/api/project-heartbeat/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied. Manager role required." });
+      }
+
+      const heartbeat = await storage.updateProjectHeartbeat(req.params.id, req.body);
+      res.json(heartbeat);
+    } catch (error) {
+      console.error("Error updating project heartbeat:", error);
+      res.status(500).json({ message: "Failed to update project heartbeat" });
+    }
+  });
+
+  // Trigger heartbeat event (for field agents to trigger events)
+  app.post('/api/project-heartbeat/event', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { workOrderId, eventType, eventData } = req.body;
+      
+      // Field agents can only trigger certain events for their own work orders
+      if (isFieldAgent(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher'])) {
+        const workOrder = await storage.getWorkOrder(workOrderId);
+        if (!workOrder || workOrder.assigneeId !== currentUser.id) {
+          return res.status(403).json({ message: "Access denied. You can only trigger events for your assigned work orders." });
+        }
+        
+        // Field agents can only trigger check-in and deliverable update events
+        if (!['check_in', 'deliverable_update'].includes(eventType)) {
+          return res.status(403).json({ message: "Access denied. You can only trigger check-in and deliverable update events." });
+        }
+      }
+
+      await storage.triggerHeartbeatEvent(workOrderId, eventType, eventData, currentUser.id);
+      res.json({ success: true, message: "Heartbeat event triggered successfully" });
+    } catch (error) {
+      console.error("Error triggering heartbeat event:", error);
+      res.status(500).json({ message: "Failed to trigger heartbeat event" });
+    }
+  });
+
+  // Get heartbeat events for a project
+  app.get('/api/project-heartbeat/:heartbeatId/events', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher']))) {
+        return res.status(403).json({ message: "Access denied. Admin role required." });
+      }
+
+      const events = await storage.getHeartbeatEvents(req.params.heartbeatId);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching heartbeat events:", error);
+      res.status(500).json({ message: "Failed to fetch heartbeat events" });
+    }
+  });
+
+  // Get project health summary
+  app.get('/api/project-health-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher']))) {
+        return res.status(403).json({ message: "Access denied. Admin role required." });
+      }
+
+      const companyId = isOperationsDirector(currentUser) ? undefined : currentUser.companyId;
+      const summary = await storage.getProjectHealthSummary(companyId);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching project health summary:", error);
+      res.status(500).json({ message: "Failed to fetch project health summary" });
+    }
+  });
+
   // ===== CLIENT MANAGEMENT & JOB NETWORK ROUTES =====
 
   // Client work orders route
