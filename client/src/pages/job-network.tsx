@@ -265,7 +265,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   const onWorkOrderSubmit = (data: any) => {
     createWorkOrderMutation.mutate({
       ...data,
-      budget: data.budget ? parseFloat(parseCurrency(data.budget)) : null,
+      budgetAmount: data.budget ? parseFloat(parseCurrency(data.budget)) : null,
       estimatedHours: data.estimatedHours ? parseInt(data.estimatedHours) : null,
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
       tasks,
