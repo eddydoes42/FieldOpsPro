@@ -117,6 +117,7 @@ export const workOrders = pgTable("work_orders", {
   pointOfContact: varchar("point_of_contact"),
   priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
   status: varchar("status").notNull().default("scheduled"), // scheduled, confirmed, in_progress, pending, completed, cancelled
+  category: varchar("category"), // Module 11: for profitability analysis - network_installation, maintenance, troubleshooting, upgrade, etc.
   assigneeId: varchar("assignee_id").references(() => users.id),
   createdById: varchar("created_by_id").references(() => users.id),
   estimatedHours: decimal("estimated_hours", { precision: 5, scale: 2 }),
@@ -627,6 +628,59 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Bids table (Module 14: Bid & Proposal System)
+export const bids = pgTable("bids", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  userId: varchar("user_id").notNull().references(() => users.id), // field agent submitting bid
+  bidAmount: decimal("bid_amount", { precision: 10, scale: 2 }).notNull(),
+  proposedStartDate: timestamp("proposed_start_date"),
+  estimatedCompletionHours: decimal("estimated_completion_hours", { precision: 5, scale: 2 }),
+  proposal: text("proposal"), // detailed proposal text
+  status: varchar("status").notNull().default("pending"), // pending, accepted, rejected, withdrawn
+  notes: text("notes"), // admin notes on decision
+  acceptedAt: timestamp("accepted_at"),
+  acceptedById: varchar("accepted_by_id").references(() => users.id), // admin who accepted
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Credentials table (Module 15: Credential & Compliance Vault)
+export const credentials = pgTable("credentials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  credentialType: varchar("credential_type").notNull(), // certification, license, training, insurance
+  name: varchar("name").notNull(), // e.g. "CompTIA Network+", "Electrical License"
+  issuingOrganization: varchar("issuing_organization"), // e.g. "CompTIA", "State Board"
+  credentialNumber: varchar("credential_number"), // license/cert number
+  fileUrl: varchar("file_url"), // uploaded document
+  issuedAt: timestamp("issued_at"),
+  expiresAt: timestamp("expires_at"),
+  status: varchar("status").notNull().default("active"), // active, expired, suspended, revoked
+  isVerified: boolean("is_verified").default(false), // admin verification
+  verifiedById: varchar("verified_by_id").references(() => users.id),
+  verifiedAt: timestamp("verified_at"),
+  renewalReminderSent: boolean("renewal_reminder_sent").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Recognition table (Module 16: Incentive & Recognition Engine)
+export const recognition = pgTable("recognition", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: varchar("type").notNull(), // badge, points, achievement
+  category: varchar("category").notNull(), // excellence, timeliness, customer_satisfaction, compliance
+  title: varchar("title").notNull(), // "5-Star Professional", "On-Time Champion"
+  description: text("description"),
+  points: integer("points").default(0), // points awarded
+  iconUrl: varchar("icon_url"), // badge icon
+  awardedById: varchar("awarded_by_id").references(() => users.id), // who awarded it
+  awardedAt: timestamp("awarded_at").defaultNow(),
+  isVisible: boolean("is_visible").default(true), // show on profile
+  metadata: jsonb("metadata"), // additional award context
+});
+
 // Project requirements table (for more structured requirements)
 export const projectRequirements = pgTable("project_requirements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1089,6 +1143,28 @@ export const insertRiskInterventionSchema = createInsertSchema(riskInterventions
   updatedAt: true,
 });
 
+export const insertBidSchema = createInsertSchema(bids).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  acceptedAt: true,
+  acceptedById: true,
+});
+
+export const insertCredentialSchema = createInsertSchema(credentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  verifiedById: true,
+  verifiedAt: true,
+  renewalReminderSent: true,
+});
+
+export const insertRecognitionSchema = createInsertSchema(recognition).omit({
+  id: true,
+  awardedAt: true,
+});
+
 export const insertJobNetworkPostSchema = createInsertSchema(jobNetworkPosts).omit({
   id: true,
   createdAt: true,
@@ -1254,6 +1330,15 @@ export type InsertRiskScore = z.infer<typeof insertRiskScoreSchema>;
 
 export type RiskIntervention = typeof riskInterventions.$inferSelect;
 export type InsertRiskIntervention = z.infer<typeof insertRiskInterventionSchema>;
+
+export type Bid = typeof bids.$inferSelect;
+export type InsertBid = z.infer<typeof insertBidSchema>;
+
+export type Credential = typeof credentials.$inferSelect;
+export type InsertCredential = z.infer<typeof insertCredentialSchema>;
+
+export type Recognition = typeof recognition.$inferSelect;
+export type InsertRecognition = z.infer<typeof insertRecognitionSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {

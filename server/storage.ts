@@ -33,6 +33,9 @@ import {
   serviceQualitySnapshots,
   riskScores,
   riskInterventions,
+  bids,
+  credentials,
+  recognition,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -102,6 +105,12 @@ import {
   type InsertWorkOrderTool,
   type WorkOrderDocument,
   type InsertWorkOrderDocument,
+  type Bid,
+  type InsertBid,
+  type Credential,
+  type InsertCredential,
+  type Recognition,
+  type InsertRecognition,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -384,6 +393,38 @@ export interface IStorage {
   getAllOnboardingRequests(): Promise<OnboardingRequest[]>;
   getOnboardingRequest(id: string): Promise<OnboardingRequest | undefined>;
   reviewOnboardingRequest(id: string, status: 'approved' | 'rejected', reviewedById: string, rejectionReason?: string): Promise<OnboardingRequest>;
+
+  // Bid operations (Module 14)
+  createBid(bid: InsertBid): Promise<Bid>;
+  getBid(id: string): Promise<Bid | undefined>;
+  getBidsForWorkOrder(workOrderId: string): Promise<Bid[]>;
+  getBidsForUser(userId: string): Promise<Bid[]>;
+  updateBid(id: string, updates: Partial<InsertBid>): Promise<Bid>;
+  acceptBid(id: string, acceptedById: string): Promise<Bid>;
+  rejectBid(id: string, notes?: string): Promise<Bid>;
+
+  // Credential operations (Module 15)
+  createCredential(credential: InsertCredential): Promise<Credential>;
+  getCredential(id: string): Promise<Credential | undefined>;
+  getUserCredentials(userId: string): Promise<Credential[]>;
+  updateCredential(id: string, updates: Partial<InsertCredential>): Promise<Credential>;
+  deleteCredential(id: string): Promise<void>;
+  getExpiringCredentials(daysFromNow: number): Promise<Credential[]>;
+
+  // Recognition operations (Module 16)
+  createRecognition(recognition: InsertRecognition): Promise<Recognition>;
+  getUserRecognition(userId: string): Promise<Recognition[]>;
+  updateRecognition(id: string, updates: Partial<InsertRecognition>): Promise<Recognition>;
+  deleteRecognition(id: string): Promise<void>;
+
+  // Category Performance operations (Module 11)
+  getCategoryPerformanceMetrics(): Promise<{
+    category: string;
+    totalJobs: number;
+    averageMargin: number;
+    averageCompletionHours: number;
+    totalRevenue: number;
+  }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3557,6 +3598,188 @@ export class DatabaseStorage implements IStorage {
       .where(eq(workOrderDocuments.id, id))
       .returning();
     return updated;
+  }
+
+  // Bid operations (Module 14)
+  async createBid(bidData: InsertBid): Promise<Bid> {
+    const bidId = nanoid();
+    const [bid] = await db.insert(bids).values({
+      ...bidData,
+      id: bidId,
+    }).returning();
+    return bid;
+  }
+
+  async getBid(id: string): Promise<Bid | undefined> {
+    const [bid] = await db.select().from(bids).where(eq(bids.id, id));
+    return bid;
+  }
+
+  async getBidsForWorkOrder(workOrderId: string): Promise<Bid[]> {
+    return await db.select().from(bids).where(eq(bids.workOrderId, workOrderId)).orderBy(desc(bids.createdAt));
+  }
+
+  async getBidsForUser(userId: string): Promise<Bid[]> {
+    return await db.select().from(bids).where(eq(bids.userId, userId)).orderBy(desc(bids.createdAt));
+  }
+
+  async updateBid(id: string, updates: Partial<InsertBid>): Promise<Bid> {
+    const [updated] = await db
+      .update(bids)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(bids.id, id))
+      .returning();
+    return updated;
+  }
+
+  async acceptBid(id: string, acceptedById: string): Promise<Bid> {
+    const [updated] = await db
+      .update(bids)
+      .set({
+        status: 'accepted',
+        acceptedAt: new Date(),
+        acceptedById,
+        updatedAt: new Date(),
+      })
+      .where(eq(bids.id, id))
+      .returning();
+    
+    // Update work order with the bid winner
+    if (updated) {
+      await db
+        .update(workOrders)
+        .set({
+          assigneeId: updated.userId,
+          budgetAmount: updated.bidAmount,
+          status: 'confirmed',
+        })
+        .where(eq(workOrders.id, updated.workOrderId));
+    }
+    
+    return updated;
+  }
+
+  async rejectBid(id: string, notes?: string): Promise<Bid> {
+    const [updated] = await db
+      .update(bids)
+      .set({
+        status: 'rejected',
+        notes,
+        updatedAt: new Date(),
+      })
+      .where(eq(bids.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Credential operations (Module 15)
+  async createCredential(credentialData: InsertCredential): Promise<Credential> {
+    const credentialId = nanoid();
+    const [credential] = await db.insert(credentials).values({
+      ...credentialData,
+      id: credentialId,
+    }).returning();
+    return credential;
+  }
+
+  async getCredential(id: string): Promise<Credential | undefined> {
+    const [credential] = await db.select().from(credentials).where(eq(credentials.id, id));
+    return credential;
+  }
+
+  async getUserCredentials(userId: string): Promise<Credential[]> {
+    return await db.select().from(credentials).where(eq(credentials.userId, userId)).orderBy(desc(credentials.createdAt));
+  }
+
+  async updateCredential(id: string, updates: Partial<InsertCredential>): Promise<Credential> {
+    const [updated] = await db
+      .update(credentials)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(credentials.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCredential(id: string): Promise<void> {
+    await db.delete(credentials).where(eq(credentials.id, id));
+  }
+
+  async getExpiringCredentials(daysFromNow: number): Promise<Credential[]> {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + daysFromNow);
+    
+    return await db
+      .select()
+      .from(credentials)
+      .where(
+        and(
+          eq(credentials.status, 'active'),
+          sql`${credentials.expiresAt} <= ${futureDate}`,
+          eq(credentials.renewalReminderSent, false)
+        )
+      );
+  }
+
+  // Recognition operations (Module 16)
+  async createRecognition(recognitionData: InsertRecognition): Promise<Recognition> {
+    const recognitionId = nanoid();
+    const [newRecognition] = await db.insert(recognition).values({
+      ...recognitionData,
+      id: recognitionId,
+    }).returning();
+    return newRecognition;
+  }
+
+  async getUserRecognition(userId: string): Promise<Recognition[]> {
+    return await db.select().from(recognition).where(eq(recognition.userId, userId)).orderBy(desc(recognition.awardedAt));
+  }
+
+  async updateRecognition(id: string, updates: Partial<InsertRecognition>): Promise<Recognition> {
+    const [updated] = await db
+      .update(recognition)
+      .set(updates)
+      .where(eq(recognition.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteRecognition(id: string): Promise<void> {
+    await db.delete(recognition).where(eq(recognition.id, id));
+  }
+
+  // Category Performance operations (Module 11)
+  async getCategoryPerformanceMetrics(): Promise<{
+    category: string;
+    totalJobs: number;
+    averageMargin: number;
+    averageCompletionHours: number;
+    totalRevenue: number;
+  }[]> {
+    const results = await db
+      .select({
+        category: workOrders.category,
+        totalJobs: count(workOrders.id),
+        averageMargin: avg(workOrders.profitMargin),
+        averageCompletionHours: avg(workOrders.actualHours),
+        totalRevenue: sum(workOrders.budgetAmount),
+      })
+      .from(workOrders)
+      .where(
+        and(
+          isNotNull(workOrders.category),
+          eq(workOrders.status, 'completed')
+        )
+      )
+      .groupBy(workOrders.category)
+      .orderBy(desc(sum(workOrders.budgetAmount)));
+
+    return results.map(result => ({
+      category: result.category || 'Uncategorized',
+      totalJobs: Number(result.totalJobs) || 0,
+      averageMargin: Number(result.averageMargin) || 0,
+      averageCompletionHours: Number(result.averageCompletionHours) || 0,
+      totalRevenue: Number(result.totalRevenue) || 0,
+    }));
   }
 }
 

@@ -4492,6 +4492,417 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== PHASE 1 EXPANSION MODULE ROUTES =====
+
+  // Module 11: Job Category Profitability Analysis
+  app.get('/api/category-performance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const metrics = await storage.getCategoryPerformanceMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching category performance:", error);
+      res.status(500).json({ message: "Failed to fetch category performance metrics" });
+    }
+  });
+
+  // Module 14: Bid & Proposal System
+
+  // Create bid
+  app.post('/api/bids', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['field_agent', 'field_engineer', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Validate the work order exists and is biddable
+      const workOrder = await storage.getWorkOrder(req.body.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      if (workOrder.status !== 'scheduled' && workOrder.status !== 'pending') {
+        return res.status(400).json({ message: "Work order is not available for bidding" });
+      }
+
+      const bidData = {
+        ...req.body,
+        userId,
+        companyId: currentUser.companyId,
+        status: 'pending' as const,
+      };
+
+      const bid = await storage.createBid(bidData);
+      res.status(201).json(bid);
+    } catch (error) {
+      console.error("Error creating bid:", error);
+      res.status(500).json({ message: "Failed to create bid" });
+    }
+  });
+
+  // Get bids for work order
+  app.get('/api/work-orders/:workOrderId/bids', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { workOrderId } = req.params;
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Only operations director, work order creator, or company admins can see all bids
+      if (!isOperationsDirector(currentUser) && 
+          workOrder.createdById !== userId && 
+          workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const bids = await storage.getBidsForWorkOrder(workOrderId);
+      res.json(bids);
+    } catch (error) {
+      console.error("Error fetching bids:", error);
+      res.status(500).json({ message: "Failed to fetch bids" });
+    }
+  });
+
+  // Get user's bids
+  app.get('/api/users/:userId/bids', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestingUserId = req.user.claims.sub;
+      const currentUser = await storage.getUser(requestingUserId);
+      const { userId } = req.params;
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Users can only see their own bids unless they're admins or operations director
+      if (userId !== requestingUserId && 
+          !isOperationsDirector(currentUser) && 
+          !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const bids = await storage.getBidsForUser(userId);
+      res.json(bids);
+    } catch (error) {
+      console.error("Error fetching user bids:", error);
+      res.status(500).json({ message: "Failed to fetch user bids" });
+    }
+  });
+
+  // Accept bid
+  app.put('/api/bids/:bidId/accept', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { bidId } = req.params;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const bid = await storage.getBid(bidId);
+      if (!bid) {
+        return res.status(404).json({ message: "Bid not found" });
+      }
+
+      const workOrder = await storage.getWorkOrder(bid.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Verify user can accept bids for this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const acceptedBid = await storage.acceptBid(bidId, userId);
+      res.json(acceptedBid);
+    } catch (error) {
+      console.error("Error accepting bid:", error);
+      res.status(500).json({ message: "Failed to accept bid" });
+    }
+  });
+
+  // Reject bid
+  app.put('/api/bids/:bidId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { bidId } = req.params;
+      const { notes } = req.body;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const bid = await storage.getBid(bidId);
+      if (!bid) {
+        return res.status(404).json({ message: "Bid not found" });
+      }
+
+      const workOrder = await storage.getWorkOrder(bid.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Verify user can reject bids for this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const rejectedBid = await storage.rejectBid(bidId, notes);
+      res.json(rejectedBid);
+    } catch (error) {
+      console.error("Error rejecting bid:", error);
+      res.status(500).json({ message: "Failed to reject bid" });
+    }
+  });
+
+  // Module 15: Credential & Compliance Vault
+
+  // Create credential
+  app.post('/api/credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const credentialData = {
+        ...req.body,
+        userId: req.body.userId || userId, // Allow admins to create for others
+      };
+
+      // Only operations director, admins, or the user themselves can create credentials
+      if (credentialData.userId !== userId && 
+          !isOperationsDirector(currentUser) && 
+          !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const credential = await storage.createCredential(credentialData);
+      res.status(201).json(credential);
+    } catch (error) {
+      console.error("Error creating credential:", error);
+      res.status(500).json({ message: "Failed to create credential" });
+    }
+  });
+
+  // Get user credentials
+  app.get('/api/users/:userId/credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestingUserId = req.user.claims.sub;
+      const currentUser = await storage.getUser(requestingUserId);
+      const { userId } = req.params;
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Users can see their own credentials, admins can see company credentials
+      if (userId !== requestingUserId && 
+          !isOperationsDirector(currentUser) && 
+          !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const credentials = await storage.getUserCredentials(userId);
+      res.json(credentials);
+    } catch (error) {
+      console.error("Error fetching user credentials:", error);
+      res.status(500).json({ message: "Failed to fetch credentials" });
+    }
+  });
+
+  // Update credential
+  app.put('/api/credentials/:credentialId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { credentialId } = req.params;
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const credential = await storage.getCredential(credentialId);
+      if (!credential) {
+        return res.status(404).json({ message: "Credential not found" });
+      }
+
+      // Only the credential owner, operations director, or admins can update
+      if (credential.userId !== userId && 
+          !isOperationsDirector(currentUser) && 
+          !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedCredential = await storage.updateCredential(credentialId, req.body);
+      res.json(updatedCredential);
+    } catch (error) {
+      console.error("Error updating credential:", error);
+      res.status(500).json({ message: "Failed to update credential" });
+    }
+  });
+
+  // Get expiring credentials
+  app.get('/api/credentials/expiring', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { days = 30 } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const expiringCredentials = await storage.getExpiringCredentials(Number(days));
+      res.json(expiringCredentials);
+    } catch (error) {
+      console.error("Error fetching expiring credentials:", error);
+      res.status(500).json({ message: "Failed to fetch expiring credentials" });
+    }
+  });
+
+  // Delete credential
+  app.delete('/api/credentials/:credentialId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { credentialId } = req.params;
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const credential = await storage.getCredential(credentialId);
+      if (!credential) {
+        return res.status(404).json({ message: "Credential not found" });
+      }
+
+      // Only the credential owner, operations director, or admins can delete
+      if (credential.userId !== userId && 
+          !isOperationsDirector(currentUser) && 
+          !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteCredential(credentialId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting credential:", error);
+      res.status(500).json({ message: "Failed to delete credential" });
+    }
+  });
+
+  // Module 16: Field Agent Recognition & Achievements
+
+  // Create recognition
+  app.post('/api/recognition', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const recognitionData = {
+        ...req.body,
+        awardedById: userId,
+      };
+
+      const recognition = await storage.createRecognition(recognitionData);
+      res.status(201).json(recognition);
+    } catch (error) {
+      console.error("Error creating recognition:", error);
+      res.status(500).json({ message: "Failed to create recognition" });
+    }
+  });
+
+  // Get user recognition
+  app.get('/api/users/:userId/recognition', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestingUserId = req.user.claims.sub;
+      const currentUser = await storage.getUser(requestingUserId);
+      const { userId } = req.params;
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Users can see their own recognition, admins can see company recognition
+      if (userId !== requestingUserId && 
+          !isOperationsDirector(currentUser) && 
+          !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const recognitions = await storage.getUserRecognition(userId);
+      res.json(recognitions);
+    } catch (error) {
+      console.error("Error fetching user recognition:", error);
+      res.status(500).json({ message: "Failed to fetch recognition" });
+    }
+  });
+
+  // Update recognition
+  app.put('/api/recognition/:recognitionId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { recognitionId } = req.params;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const updatedRecognition = await storage.updateRecognition(recognitionId, req.body);
+      res.json(updatedRecognition);
+    } catch (error) {
+      console.error("Error updating recognition:", error);
+      res.status(500).json({ message: "Failed to update recognition" });
+    }
+  });
+
+  // Delete recognition
+  app.delete('/api/recognition/:recognitionId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { recognitionId } = req.params;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      await storage.deleteRecognition(recognitionId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting recognition:", error);
+      res.status(500).json({ message: "Failed to delete recognition" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
