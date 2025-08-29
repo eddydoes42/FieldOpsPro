@@ -41,7 +41,8 @@ import {
   agentSkills,
   agentLocations,
   projectHeartbeats,
-  heartbeatEvents,
+  projectHeartbeatEvents,
+  projectHealthLog,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -4403,6 +4404,69 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query.orderBy(desc(projectHeartbeats.lastActivity));
+  }
+
+  // Project Heartbeat CRUD operations for Phase 2 implementation
+  async createProjectHeartbeat(heartbeatData: any): Promise<any> {
+    const [heartbeat] = await db
+      .insert(projectHeartbeats)
+      .values(heartbeatData)
+      .returning();
+    return heartbeat;
+  }
+
+  async getProjectHeartbeat(workOrderId: string): Promise<any> {
+    const [heartbeat] = await db
+      .select()
+      .from(projectHeartbeats)
+      .where(eq(projectHeartbeats.workOrderId, workOrderId));
+    return heartbeat;
+  }
+
+  async getProjectHeartbeatById(heartbeatId: string): Promise<any> {
+    const [heartbeat] = await db
+      .select()
+      .from(projectHeartbeats)
+      .where(eq(projectHeartbeats.id, heartbeatId));
+    return heartbeat;
+  }
+
+  async updateProjectHeartbeat(heartbeatId: string, updates: any): Promise<any> {
+    const [updatedHeartbeat] = await db
+      .update(projectHeartbeats)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(projectHeartbeats.id, heartbeatId))
+      .returning();
+    return updatedHeartbeat;
+  }
+
+  async createProjectHeartbeatEvent(eventData: any): Promise<any> {
+    const [event] = await db
+      .insert(projectHeartbeatEvents)
+      .values(eventData)
+      .returning();
+    return event;
+  }
+
+  async getProjectHeartbeatEvents(heartbeatId: string, limit: number = 50, offset: number = 0): Promise<any[]> {
+    return await db
+      .select()
+      .from(projectHeartbeatEvents)
+      .where(eq(projectHeartbeatEvents.heartbeatId, heartbeatId))
+      .orderBy(desc(projectHeartbeatEvents.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async createProjectHealthLog(logData: any): Promise<any> {
+    const [log] = await db
+      .insert(projectHealthLog)
+      .values(logData)
+      .returning();
+    return log;
   }
 }
 

@@ -42,6 +42,7 @@ const JobNetwork = React.lazy(() => import('@/pages/job-network'));
 import TalentNetworkPage from '@/pages/talent-network';
 import ProjectNetworkPage from '@/pages/project-network';
 import ProjectManagerDashboard from '@/pages/project-manager-dashboard';
+import ProjectHeartbeatPage from '@/pages/project-heartbeat';
 import JobRequestsPage from '@/pages/job-requests';
 import Apply from '@/pages/apply';
 import OnboardingRequests from '@/pages/onboarding-requests';
@@ -497,6 +498,26 @@ function Router() {
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                       <ProjectNetworkPage />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+
+            <Route path="/project-heartbeat">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                const hasProjectHeartbeatAccess = ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer'].includes(effectiveRole);
+                // Only allow Operations Directors superuser access when NOT role testing
+                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
+                
+                if (isAuthenticated && (hasProjectHeartbeatAccess || isSuperUserAccess)) {
+                  return (
+                    <div>
+                      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
+                      <ProjectHeartbeatPage />
                     </div>
                   );
                 }

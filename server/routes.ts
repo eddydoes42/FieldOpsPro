@@ -5435,6 +5435,289 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== PROJECT HEARTBEAT MONITOR ROUTES =====
+
+  // Get project heartbeat for a work order
+  app.get('/api/project-heartbeat/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { workOrderId } = req.params;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Get the work order to check permissions
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if user can access this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      let heartbeat = await storage.getProjectHeartbeat(workOrderId);
+      
+      // Create heartbeat if it doesn't exist
+      if (!heartbeat) {
+        heartbeat = await storage.createProjectHeartbeat({
+          workOrderId,
+          currentBpm: 70,
+          healthScore: 100,
+          projectStatus: 'healthy',
+          monitoringEnabled: true,
+          escalationCount: 0,
+          failureThreshold: 180,
+          baselineBpm: 70
+        });
+      }
+
+      res.json(heartbeat);
+    } catch (error) {
+      console.error("Error fetching project heartbeat:", error);
+      res.status(500).json({ message: "Failed to fetch project heartbeat" });
+    }
+  });
+
+  // Get heartbeat events for a project
+  app.get('/api/project-heartbeat/:heartbeatId/events', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { heartbeatId } = req.params;
+      const { limit = 50, offset = 0 } = req.query;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Get the heartbeat and associated work order to check permissions
+      const heartbeat = await storage.getProjectHeartbeatById(heartbeatId);
+      if (!heartbeat) {
+        return res.status(404).json({ message: "Project heartbeat not found" });
+      }
+
+      const workOrder = await storage.getWorkOrder(heartbeat.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if user can access this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const events = await storage.getProjectHeartbeatEvents(heartbeatId, parseInt(limit as string), parseInt(offset as string));
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching heartbeat events:", error);
+      res.status(500).json({ message: "Failed to fetch heartbeat events" });
+    }
+  });
+
+  // Trigger a heartbeat event
+  app.post('/api/project-heartbeat/event', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { workOrderId, eventType, eventData, impact, notes } = req.body;
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Get the work order to check permissions
+      const workOrder = await storage.getWorkOrder(workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if user can access this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get or create project heartbeat
+      let heartbeat = await storage.getProjectHeartbeat(workOrderId);
+      if (!heartbeat) {
+        heartbeat = await storage.createProjectHeartbeat({
+          workOrderId,
+          currentBpm: 70,
+          healthScore: 100,
+          projectStatus: 'healthy',
+          monitoringEnabled: true,
+          escalationCount: 0,
+          failureThreshold: 180,
+          baselineBpm: 70
+        });
+      }
+
+      // Calculate health score change based on event type
+      let healthScoreChange = 0;
+      const determinedImpact = impact || 'neutral';
+
+      switch (eventType) {
+        case 'issue_created':
+          healthScoreChange = 10;
+          break;
+        case 'missed_checkin':
+          healthScoreChange = 15;
+          break;
+        case 'unresolved_issue':
+          healthScoreChange = 5;
+          break;
+        case 'denied_deliverable':
+          healthScoreChange = 10;
+          break;
+        case 'over_budget':
+          healthScoreChange = 10;
+          break;
+        case 'uncompleted_tasks':
+          healthScoreChange = 5;
+          break;
+        case 'issue_resolved':
+          healthScoreChange = -10;
+          break;
+        case 'check_in':
+          healthScoreChange = -10;
+          break;
+        case 'approved_deliverable':
+          healthScoreChange = -10;
+          break;
+        case 'tasks_completed':
+          healthScoreChange = -5;
+          break;
+        default:
+          healthScoreChange = 0;
+      }
+
+      // Reduce positive effects if multiple escalations are active
+      if (healthScoreChange < 0 && heartbeat.escalationCount > 1) {
+        healthScoreChange = Math.round(healthScoreChange * 0.5);
+      }
+
+      // Create heartbeat event
+      const event = await storage.createProjectHeartbeatEvent({
+        heartbeatId: heartbeat.id,
+        eventType,
+        eventData: eventData || {},
+        impact: healthScoreChange > 0 ? 'negative' : healthScoreChange < 0 ? 'positive' : 'neutral',
+        healthScoreChange,
+        triggeredBy: userId,
+        automaticEvent: false,
+        notes
+      });
+
+      // Update heartbeat health score and BPM
+      const newHealthScore = Math.max(0, Math.min(100, heartbeat.healthScore - healthScoreChange));
+      const newBpm = Math.max(70, Math.min(180, 70 + ((100 - newHealthScore) * 1.1)));
+      const newEscalationCount = healthScoreChange > 0 ? heartbeat.escalationCount + 1 : Math.max(0, heartbeat.escalationCount - 1);
+      
+      let projectFailed = false;
+      let autoReviewTriggered = false;
+
+      // Check for project failure
+      if (newBpm >= 180) {
+        projectFailed = true;
+        autoReviewTriggered = true;
+      }
+
+      await storage.updateProjectHeartbeat(heartbeat.id, {
+        currentBpm: Math.round(newBpm),
+        healthScore: newHealthScore,
+        projectStatus: newBpm >= 180 ? 'failed' : newBpm >= 171 ? 'critical' : newBpm >= 131 ? 'high_stress' : newBpm >= 91 ? 'elevated' : 'healthy',
+        escalationCount: newEscalationCount,
+        projectFailed,
+        autoReviewTriggered,
+        failedAt: projectFailed ? new Date() : undefined,
+        lastActivity: new Date()
+      });
+
+      // Log heartbeat change to health log
+      await storage.createProjectHealthLog({
+        workOrderId,
+        bpm: Math.round(newBpm),
+        healthScore: newHealthScore,
+        eventType,
+        eventId: event.id,
+        projectStatus: newBpm >= 180 ? 'failed' : newBpm >= 171 ? 'critical' : newBpm >= 131 ? 'high_stress' : newBpm >= 91 ? 'elevated' : 'healthy',
+        escalationCount: newEscalationCount
+      });
+
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating heartbeat event:", error);
+      res.status(500).json({ message: "Failed to create heartbeat event" });
+    }
+  });
+
+  // Get project health summary for all projects
+  app.get('/api/project-health-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      let companyId = undefined;
+      if (!isOperationsDirector(currentUser)) {
+        companyId = currentUser.companyId;
+      }
+
+      const summary = await storage.getProjectHealthSummary(companyId);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching project health summary:", error);
+      res.status(500).json({ message: "Failed to fetch project health summary" });
+    }
+  });
+
+  // Update heartbeat monitoring settings
+  app.put('/api/project-heartbeat/:heartbeatId/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { heartbeatId } = req.params;
+      const { monitoringEnabled, failureThreshold, baselineBpm } = req.body;
+
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin access required." });
+      }
+
+      // Get the heartbeat and associated work order to check permissions
+      const heartbeat = await storage.getProjectHeartbeatById(heartbeatId);
+      if (!heartbeat) {
+        return res.status(404).json({ message: "Project heartbeat not found" });
+      }
+
+      const workOrder = await storage.getWorkOrder(heartbeat.workOrderId);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Check if user can access this work order
+      if (!isOperationsDirector(currentUser) && workOrder.companyId !== currentUser.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updates: any = {};
+      if (typeof monitoringEnabled === 'boolean') updates.monitoringEnabled = monitoringEnabled;
+      if (failureThreshold) updates.failureThreshold = failureThreshold;
+      if (baselineBpm) updates.baselineBpm = baselineBpm;
+
+      const updatedHeartbeat = await storage.updateProjectHeartbeat(heartbeatId, updates);
+      res.json(updatedHeartbeat);
+    } catch (error) {
+      console.error("Error updating heartbeat settings:", error);
+      res.status(500).json({ message: "Failed to update heartbeat settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
