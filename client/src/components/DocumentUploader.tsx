@@ -63,51 +63,61 @@ export function DocumentUploader({
   });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    
-    if (selectedFiles.length + files.length > maxNumberOfFiles) {
-      toast({
-        title: "Too many files",
-        description: `You can only upload ${maxNumberOfFiles} file(s) maximum.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const validFiles: UploadingFile[] = [];
-    
-    for (const file of files) {
-      // Check file size
-      if (file.size > maxFileSize) {
+    try {
+      console.log('handleFileSelect called with event:', event);
+      console.log('event.target.files:', event.target.files);
+      
+      const files = Array.from(event.target.files || []);
+      console.log('Converted files array:', files);
+      
+      if (selectedFiles.length + files.length > maxNumberOfFiles) {
+        console.log('Too many files selected:', selectedFiles.length + files.length, 'max:', maxNumberOfFiles);
         toast({
-          title: "File too large",
-          description: `${file.name} is larger than ${Math.round(maxFileSize / 1024 / 1024)}MB.`,
+          title: "Too many files",
+          description: `You can only upload ${maxNumberOfFiles} file(s) maximum.`,
           variant: "destructive",
         });
-        continue;
+        return;
       }
 
-      // Check file type
-      const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
-      if (allowedFileTypes.length > 0 && !allowedFileTypes.includes(fileExtension)) {
-        toast({
-          title: "Invalid file type",
-          description: `${file.name} is not an allowed file type.`,
-          variant: "destructive",
+      const validFiles: UploadingFile[] = [];
+      
+      for (const file of files) {
+        // Check file size
+        if (file.size > maxFileSize) {
+          toast({
+            title: "File too large",
+            description: `${file.name} is larger than ${Math.round(maxFileSize / 1024 / 1024)}MB.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Check file type
+        const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
+        if (allowedFileTypes.length > 0 && !allowedFileTypes.includes(fileExtension)) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not an allowed file type.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        validFiles.push({
+          file,
+          progress: 0,
+          category: "reference", // default category
+          status: "pending",
         });
-        continue;
       }
 
-      validFiles.push({
-        file,
-        progress: 0,
-        category: "reference", // default category
-        status: "pending",
-      });
+      console.log('Valid files to add:', validFiles);
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      event.target.value = ""; // Reset input
+    } catch (error) {
+      console.error('Error in handleFileSelect:', error);
     }
-
-    setSelectedFiles(prev => [...prev, ...validFiles]);
-    event.target.value = ""; // Reset input
   };
 
   const removeFile = (index: number) => {
@@ -235,16 +245,42 @@ export function DocumentUploader({
             ref={fileInputRef}
             type="file"
             multiple={maxNumberOfFiles > 1}
-            accept={allowedFileTypes.join(",")}
-            onChange={handleFileSelect}
+            accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png"
+            onChange={(event) => {
+              try {
+                console.log('File input onChange triggered');
+                console.log('Selected files:', event.target.files);
+                handleFileSelect(event);
+              } catch (error) {
+                console.error('Error in file input onChange:', error);
+              }
+            }}
             disabled={isUploading || selectedFiles.length >= maxNumberOfFiles}
             className="hidden"
+            data-testid="file-input"
           />
           <Button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              try {
+                console.log('Browse Files button clicked');
+                console.log('File input ref:', fileInputRef.current);
+                
+                if (!fileInputRef.current) {
+                  console.error('File input ref is null');
+                  return;
+                }
+                
+                console.log('Triggering file input click...');
+                fileInputRef.current.click();
+                console.log('File input click triggered');
+              } catch (error) {
+                console.error('Error triggering file picker:', error);
+              }
+            }}
             disabled={isUploading || selectedFiles.length >= maxNumberOfFiles}
             variant="outline"
             className="w-full h-20 border-2 border-dashed hover:border-solid flex flex-col items-center justify-center gap-2"
+            data-testid="browse-files-button"
           >
             <Upload className="h-6 w-6" />
             <span className="text-sm font-medium">

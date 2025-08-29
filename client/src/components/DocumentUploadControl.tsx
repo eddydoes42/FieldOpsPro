@@ -126,9 +126,17 @@ export function DocumentUploadControl({
       {showUploadButton && (
         <div className="flex justify-center">
           <Button
-            onClick={() => setShowUploader(true)}
+            onClick={() => {
+              try {
+                console.log('Upload Document button clicked');
+                setShowUploader(true);
+              } catch (error) {
+                console.error('Error showing uploader:', error);
+              }
+            }}
             className="flex items-center gap-2"
             disabled={disabled}
+            data-testid="upload-document-button"
           >
             <Upload className="h-4 w-4" />
             Upload Document ({maxAdditionalFiles} remaining)

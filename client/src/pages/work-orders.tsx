@@ -19,6 +19,7 @@ import PaymentStatusButton from "@/components/payment-status-button";
 import { FieldAgentRatingForm, DispatcherRatingForm, ClientRatingForm } from "@/components/rating-system";
 import DocumentUploadControl from "@/components/DocumentUploadControl";
 import { TaskDocumentUpload } from "@/components/TaskDocumentUpload";
+import { FilePickerTest } from "@/components/FilePickerTest";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 // Rating trigger hook removed for now
@@ -78,6 +79,7 @@ interface WorkOrderTask {
   title: string;
   description: string | null;
   category: string; // pre_visit, on_site, post_site
+  documentsRequired: number; // number of documents required for this task
   isCompleted: boolean;
   completedById: string | null;
   completedAt: string | null;
@@ -1675,6 +1677,11 @@ export default function WorkOrders() {
 
 
 
+                {/* File Picker Test Section - for debugging */}
+                <div className="space-y-4 border-t pt-6">
+                  <FilePickerTest />
+                </div>
+
                 {/* Document Upload Section */}
                 <div className="space-y-4 border-t pt-6">
                   <h3 className="text-lg font-semibold text-foreground">Document Requirements</h3>
@@ -1682,7 +1689,7 @@ export default function WorkOrders() {
                     entityType="work_order"
                     entityId={selectedWorkOrder.id}
                     documentsRequired={selectedWorkOrder.documentsRequired || 0}
-                    canUpload={!isClient}
+                    canUpload={true}
                     disabled={selectedWorkOrder.status === 'completed'}
                   />
                 </div>
@@ -1771,7 +1778,7 @@ export default function WorkOrders() {
                                     )}
                                     
                                     {/* Task Document Upload for Service Company users */}
-                                    {task.documentsRequired > 0 && user?.companyId && (
+                                    {task.documentsRequired > 0 && (user as any)?.companyId && (
                                       <div className="ml-7 mt-3">
                                         <TaskDocumentUpload
                                           taskId={task.id}
