@@ -36,6 +36,10 @@ import {
   bids,
   credentials,
   recognition,
+  workOrderFilters,
+  agentRecommendations,
+  agentSkills,
+  agentLocations,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -111,6 +115,14 @@ import {
   type InsertCredential,
   type Recognition,
   type InsertRecognition,
+  type WorkOrderFilter,
+  type InsertWorkOrderFilter,
+  type AgentRecommendation,
+  type InsertAgentRecommendation,
+  type AgentSkill,
+  type InsertAgentSkill,
+  type AgentLocation,
+  type InsertAgentLocation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -425,6 +437,47 @@ export interface IStorage {
     averageCompletionHours: number;
     totalRevenue: number;
   }[]>;
+
+  // Work Order Filter operations (Module 12)
+  createWorkOrderFilter(filter: InsertWorkOrderFilter): Promise<WorkOrderFilter>;
+  getWorkOrderFilter(workOrderId: string): Promise<WorkOrderFilter | undefined>;
+  updateWorkOrderFilter(workOrderId: string, updates: Partial<InsertWorkOrderFilter>): Promise<WorkOrderFilter>;
+  deleteWorkOrderFilter(workOrderId: string): Promise<void>;
+
+  // Agent Recommendation operations (Module 13)
+  createAgentRecommendation(recommendation: InsertAgentRecommendation): Promise<AgentRecommendation>;
+  getAgentRecommendations(workOrderId: string): Promise<AgentRecommendation[]>;
+  updateAgentRecommendation(id: string, updates: Partial<InsertAgentRecommendation>): Promise<AgentRecommendation>;
+  deleteAgentRecommendation(id: string): Promise<void>;
+  generateRecommendationsForWorkOrder(workOrderId: string): Promise<AgentRecommendation[]>;
+
+  // Agent Skills operations (Module 3)
+  createAgentSkill(skill: InsertAgentSkill): Promise<AgentSkill>;
+  getAgentSkills(agentId: string): Promise<AgentSkill[]>;
+  updateAgentSkill(id: string, updates: Partial<InsertAgentSkill>): Promise<AgentSkill>;
+  deleteAgentSkill(id: string): Promise<void>;
+  verifyAgentSkill(id: string, verifiedById: string): Promise<AgentSkill>;
+
+  // Agent Location operations (Module 3)
+  createAgentLocation(location: InsertAgentLocation): Promise<AgentLocation>;
+  getAgentLocations(agentId: string): Promise<AgentLocation[]>;
+  getPrimaryAgentLocation(agentId: string): Promise<AgentLocation | undefined>;
+  updateAgentLocation(id: string, updates: Partial<InsertAgentLocation>): Promise<AgentLocation>;
+  deleteAgentLocation(id: string): Promise<void>;
+  setPrimaryLocation(agentId: string, locationId: string): Promise<void>;
+
+  // Enhanced Search operations (Module 12)
+  searchWorkOrdersWithFilters(filters: {
+    skillTags?: string[];
+    locationRadius?: number;
+    minPayRate?: number;
+    maxPayRate?: number;
+    urgencyLevel?: string;
+    experienceRequired?: string;
+    certificationRequired?: string[];
+    equipmentProvided?: boolean;
+    agentLocation?: { lat: number; lng: number };
+  }): Promise<WorkOrder[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3780,6 +3833,353 @@ export class DatabaseStorage implements IStorage {
       averageCompletionHours: Number(result.averageCompletionHours) || 0,
       totalRevenue: Number(result.totalRevenue) || 0,
     }));
+  }
+
+  // Work Order Filter operations (Module 12)
+  async createWorkOrderFilter(filter: InsertWorkOrderFilter): Promise<WorkOrderFilter> {
+    const filterId = nanoid();
+    const [newFilter] = await db
+      .insert(workOrderFilters)
+      .values({ ...filter, id: filterId })
+      .returning();
+    return newFilter;
+  }
+
+  async getWorkOrderFilter(workOrderId: string): Promise<WorkOrderFilter | undefined> {
+    const [filter] = await db
+      .select()
+      .from(workOrderFilters)
+      .where(eq(workOrderFilters.workOrderId, workOrderId));
+    return filter;
+  }
+
+  async updateWorkOrderFilter(workOrderId: string, updates: Partial<InsertWorkOrderFilter>): Promise<WorkOrderFilter> {
+    const [updatedFilter] = await db
+      .update(workOrderFilters)
+      .set(updates)
+      .where(eq(workOrderFilters.workOrderId, workOrderId))
+      .returning();
+    return updatedFilter;
+  }
+
+  async deleteWorkOrderFilter(workOrderId: string): Promise<void> {
+    await db
+      .delete(workOrderFilters)
+      .where(eq(workOrderFilters.workOrderId, workOrderId));
+  }
+
+  // Agent Recommendation operations (Module 13)
+  async createAgentRecommendation(recommendation: InsertAgentRecommendation): Promise<AgentRecommendation> {
+    const recommendationId = nanoid();
+    const [newRecommendation] = await db
+      .insert(agentRecommendations)
+      .values({ ...recommendation, id: recommendationId })
+      .returning();
+    return newRecommendation;
+  }
+
+  async getAgentRecommendations(workOrderId: string): Promise<AgentRecommendation[]> {
+    return await db
+      .select()
+      .from(agentRecommendations)
+      .where(eq(agentRecommendations.workOrderId, workOrderId))
+      .orderBy(desc(agentRecommendations.score));
+  }
+
+  async updateAgentRecommendation(id: string, updates: Partial<InsertAgentRecommendation>): Promise<AgentRecommendation> {
+    const [updatedRecommendation] = await db
+      .update(agentRecommendations)
+      .set(updates)
+      .where(eq(agentRecommendations.id, id))
+      .returning();
+    return updatedRecommendation;
+  }
+
+  async deleteAgentRecommendation(id: string): Promise<void> {
+    await db
+      .delete(agentRecommendations)
+      .where(eq(agentRecommendations.id, id));
+  }
+
+  async generateRecommendationsForWorkOrder(workOrderId: string): Promise<AgentRecommendation[]> {
+    // Get work order details
+    const [workOrder] = await db
+      .select()
+      .from(workOrders)
+      .where(eq(workOrders.id, workOrderId));
+
+    if (!workOrder) return [];
+
+    // Get all field agents with their skills and locations
+    const agents = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        skills: agentSkills.skill,
+        latitude: agentLocations.latitude,
+        longitude: agentLocations.longitude,
+      })
+      .from(users)
+      .leftJoin(agentSkills, eq(users.id, agentSkills.agentId))
+      .leftJoin(agentLocations, eq(users.id, agentLocations.agentId))
+      .where(sql`'field_agent' = ANY(${users.roles})`);
+
+    // Generate recommendations with scoring
+    const recommendations: InsertAgentRecommendation[] = [];
+    const agentMap = new Map();
+
+    agents.forEach(agent => {
+      if (!agentMap.has(agent.id)) {
+        agentMap.set(agent.id, {
+          id: agent.id,
+          username: agent.username,
+          skills: [],
+          latitude: agent.latitude,
+          longitude: agent.longitude,
+        });
+      }
+      if (agent.skills) {
+        agentMap.get(agent.id).skills.push(agent.skills);
+      }
+    });
+
+    for (const [agentId, agentData] of agentMap) {
+      let score = 50; // Base score
+      let reasoning = "Base agent score";
+
+      // Skill matching
+      if (workOrder.skillsRequired && agentData.skills.length > 0) {
+        const requiredSkills = Array.isArray(workOrder.skillsRequired) 
+          ? workOrder.skillsRequired 
+          : [workOrder.skillsRequired];
+        
+        const matchingSkills = requiredSkills.filter(skill => 
+          agentData.skills.some(agentSkill => 
+            agentSkill.toLowerCase().includes(skill.toLowerCase())
+          )
+        );
+
+        score += matchingSkills.length * 20;
+        if (matchingSkills.length > 0) {
+          reasoning += `, matching skills: ${matchingSkills.join(', ')}`;
+        }
+      }
+
+      // Location proximity (if both have coordinates)
+      if (workOrder.latitude && workOrder.longitude && 
+          agentData.latitude && agentData.longitude) {
+        const distance = this.calculateDistance(
+          workOrder.latitude, workOrder.longitude,
+          agentData.latitude, agentData.longitude
+        );
+        
+        if (distance < 10) score += 30;
+        else if (distance < 25) score += 20;
+        else if (distance < 50) score += 10;
+        
+        reasoning += `, distance: ${distance.toFixed(1)}km`;
+      }
+
+      recommendations.push({
+        workOrderId,
+        agentId,
+        score: Math.min(score, 100),
+        reasoning,
+        status: 'pending',
+      });
+    }
+
+    // Save recommendations
+    if (recommendations.length > 0) {
+      await db.insert(agentRecommendations).values(recommendations);
+    }
+
+    return await this.getAgentRecommendations(workOrderId);
+  }
+
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // Agent Skills operations (Module 3)
+  async createAgentSkill(skill: InsertAgentSkill): Promise<AgentSkill> {
+    const skillId = nanoid();
+    const [newSkill] = await db
+      .insert(agentSkills)
+      .values({ ...skill, id: skillId })
+      .returning();
+    return newSkill;
+  }
+
+  async getAgentSkills(agentId: string): Promise<AgentSkill[]> {
+    return await db
+      .select()
+      .from(agentSkills)
+      .where(eq(agentSkills.agentId, agentId))
+      .orderBy(desc(agentSkills.createdAt));
+  }
+
+  async updateAgentSkill(id: string, updates: Partial<InsertAgentSkill>): Promise<AgentSkill> {
+    const [updatedSkill] = await db
+      .update(agentSkills)
+      .set(updates)
+      .where(eq(agentSkills.id, id))
+      .returning();
+    return updatedSkill;
+  }
+
+  async deleteAgentSkill(id: string): Promise<void> {
+    await db
+      .delete(agentSkills)
+      .where(eq(agentSkills.id, id));
+  }
+
+  async verifyAgentSkill(id: string, verifiedById: string): Promise<AgentSkill> {
+    const [verifiedSkill] = await db
+      .update(agentSkills)
+      .set({
+        verified: true,
+        verifiedBy: verifiedById,
+        verifiedAt: new Date(),
+      })
+      .where(eq(agentSkills.id, id))
+      .returning();
+    return verifiedSkill;
+  }
+
+  // Agent Location operations (Module 3)
+  async createAgentLocation(location: InsertAgentLocation): Promise<AgentLocation> {
+    const locationId = nanoid();
+    const [newLocation] = await db
+      .insert(agentLocations)
+      .values({ ...location, id: locationId })
+      .returning();
+    return newLocation;
+  }
+
+  async getAgentLocations(agentId: string): Promise<AgentLocation[]> {
+    return await db
+      .select()
+      .from(agentLocations)
+      .where(eq(agentLocations.agentId, agentId))
+      .orderBy(desc(agentLocations.isPrimary), desc(agentLocations.createdAt));
+  }
+
+  async getPrimaryAgentLocation(agentId: string): Promise<AgentLocation | undefined> {
+    const [location] = await db
+      .select()
+      .from(agentLocations)
+      .where(and(eq(agentLocations.agentId, agentId), eq(agentLocations.isPrimary, true)));
+    return location;
+  }
+
+  async updateAgentLocation(id: string, updates: Partial<InsertAgentLocation>): Promise<AgentLocation> {
+    const [updatedLocation] = await db
+      .update(agentLocations)
+      .set(updates)
+      .where(eq(agentLocations.id, id))
+      .returning();
+    return updatedLocation;
+  }
+
+  async deleteAgentLocation(id: string): Promise<void> {
+    await db
+      .delete(agentLocations)
+      .where(eq(agentLocations.id, id));
+  }
+
+  async setPrimaryLocation(agentId: string, locationId: string): Promise<void> {
+    // First, set all locations for this agent to non-primary
+    await db
+      .update(agentLocations)
+      .set({ isPrimary: false })
+      .where(eq(agentLocations.agentId, agentId));
+
+    // Then set the specified location as primary
+    await db
+      .update(agentLocations)
+      .set({ isPrimary: true })
+      .where(eq(agentLocations.id, locationId));
+  }
+
+  // Enhanced Search operations (Module 12)
+  async searchWorkOrdersWithFilters(filters: {
+    skillTags?: string[];
+    locationRadius?: number;
+    minPayRate?: number;
+    maxPayRate?: number;
+    urgencyLevel?: string;
+    experienceRequired?: string;
+    certificationRequired?: string[];
+    equipmentProvided?: boolean;
+    agentLocation?: { lat: number; lng: number };
+  }): Promise<WorkOrder[]> {
+    let query = db.select().from(workOrders);
+    const conditions = [];
+
+    // Only show available work orders
+    conditions.push(eq(workOrders.status, "Open"));
+
+    // Pay rate filtering
+    if (filters.minPayRate) {
+      conditions.push(gte(sql`CAST(${workOrders.budget} AS NUMERIC)`, filters.minPayRate));
+    }
+    if (filters.maxPayRate) {
+      conditions.push(lte(sql`CAST(${workOrders.budget} AS NUMERIC)`, filters.maxPayRate));
+    }
+
+    // Urgency level filtering
+    if (filters.urgencyLevel) {
+      conditions.push(eq(workOrders.urgencyLevel, filters.urgencyLevel));
+    }
+
+    // Experience level filtering
+    if (filters.experienceRequired) {
+      conditions.push(ilike(workOrders.description, `%${filters.experienceRequired}%`));
+    }
+
+    // Equipment provided filtering
+    if (filters.equipmentProvided !== undefined) {
+      conditions.push(eq(workOrders.equipmentProvided, filters.equipmentProvided));
+    }
+
+    // Skills filtering
+    if (filters.skillTags && filters.skillTags.length > 0) {
+      const skillConditions = filters.skillTags.map(skill =>
+        ilike(workOrders.skillsRequired, `%${skill}%`)
+      );
+      conditions.push(or(...skillConditions));
+    }
+
+    // Location radius filtering
+    if (filters.agentLocation && filters.locationRadius) {
+      // This is a simplified implementation - in production you'd use PostGIS
+      const { lat, lng } = filters.agentLocation;
+      const latRange = filters.locationRadius / 111; // Rough km to degree conversion
+      const lngRange = filters.locationRadius / (111 * Math.cos(lat * Math.PI / 180));
+      
+      conditions.push(
+        and(
+          gte(workOrders.latitude, lat - latRange),
+          lte(workOrders.latitude, lat + latRange),
+          gte(workOrders.longitude, lng - lngRange),
+          lte(workOrders.longitude, lng + lngRange)
+        )
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(workOrders.createdAt));
   }
 }
 

@@ -1307,18 +1307,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         undefined,
         {
           workOrderId: issue.workOrderId,
-          category: issue.category,
+          category: issue.type,
           severity: issue.severity,
-          title: issue.title,
+          title: issue.type,
           status: issue.status
         },
-        `New issue created: ${issue.title}`
+        `New issue created: ${issue.type}`
       );
       
       // If high severity, notify managers/administrators
       if (validatedData.severity === 'high') {
         // Create notifications for managers+ in the same company
-        const adminUsers = await storage.getUsersByCompany(currentUser.companyId || '', ['manager', 'administrator']);
+        const managers = await storage.getUsersByRole('manager');
+        const administrators = await storage.getUsersByRole('administrator');
+        const adminUsers = [...managers, ...administrators];
         for (const adminUser of adminUsers) {
           await storage.createNotification({
             userId: adminUser.id,
@@ -2174,8 +2176,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Client companies can only view agents who worked on their work orders
       if (isClient(currentUser)) {
-        const clientWorkOrders = await storage.getWorkOrdersByClientCompany(currentUser.id);
-        const hasWorkedForClient = clientWorkOrders.some(wo => wo.assignedAgent === agentId);
+        const clientWorkOrders = await storage.getWorkOrdersByCreator(currentUser.id);
+        const hasWorkedForClient = clientWorkOrders.some((wo: any) => wo.assignedAgent === agentId);
         
         if (!hasWorkedForClient) {
           return res.status(403).json({ message: "Access denied. Agent has not worked on your projects." });
@@ -2253,8 +2255,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create snapshot
       const snapshotData = {
         agentId,
-        periodStart: new Date(periodStart),
-        periodEnd: new Date(periodEnd),
+        periodStart: periodStart,
+        periodEnd: periodEnd,
         metrics: metrics
       };
 
@@ -2292,8 +2294,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Client companies can only view service companies they have worked with
       if (isClient(currentUser)) {
-        const clientWorkOrders = await storage.getWorkOrdersByClientCompany(currentUser.id);
-        const hasWorkedWithCompany = clientWorkOrders.some(wo => wo.companyId === companyId);
+        const clientWorkOrders = await storage.getWorkOrdersByCreator(currentUser.id);
+        const hasWorkedWithCompany = clientWorkOrders.some((wo: any) => wo.companyId === companyId);
         
         if (!hasWorkedWithCompany) {
           return res.status(403).json({ message: "Access denied. No work history with this service company." });
@@ -2364,8 +2366,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create snapshot
       const snapshotData = {
         companyId,
-        periodStart: new Date(periodStart),
-        periodEnd: new Date(periodEnd),
+        periodStart: periodStart,
+        periodEnd: periodEnd,
         metrics: metrics
       };
 
@@ -2457,8 +2459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType,
         entityId,
         score: riskAnalysis.score,
-        periodStart: new Date(periodStart),
-        periodEnd: new Date(periodEnd),
+        periodStart: periodStart,
+        periodEnd: periodEnd,
         flaggedMetrics: riskAnalysis.flaggedMetrics
       };
 
@@ -3083,7 +3085,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { stars, dateFrom, dateTo, agentId, limit = 50, offset = 0 } = req.query;
       
       const feedback = await storage.getAllFeedback({
-        companyId: isOperationsDirector(currentUser) ? undefined : currentUser.companyId,
+        companyId: isOperationsDirector(currentUser) ? undefined : currentUser.companyId || undefined,
         stars: stars ? parseInt(stars as string) : undefined,
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
@@ -4900,6 +4902,270 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting recognition:", error);
       res.status(500).json({ message: "Failed to delete recognition" });
+    }
+  });
+
+  // Work Order Filter routes (Module 12 - Resource Optimization Engine)
+  app.post('/api/work-order-filters', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const filter = await storage.createWorkOrderFilter(req.body);
+      res.json(filter);
+    } catch (error) {
+      console.error("Error creating work order filter:", error);
+      res.status(500).json({ message: "Failed to create filter" });
+    }
+  });
+
+  app.get('/api/work-order-filters/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const filter = await storage.getWorkOrderFilter(req.params.workOrderId);
+      res.json(filter);
+    } catch (error) {
+      console.error("Error fetching work order filter:", error);
+      res.status(500).json({ message: "Failed to fetch filter" });
+    }
+  });
+
+  app.put('/api/work-order-filters/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const filter = await storage.updateWorkOrderFilter(req.params.workOrderId, req.body);
+      res.json(filter);
+    } catch (error) {
+      console.error("Error updating work order filter:", error);
+      res.status(500).json({ message: "Failed to update filter" });
+    }
+  });
+
+  app.delete('/api/work-order-filters/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteWorkOrderFilter(req.params.workOrderId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting work order filter:", error);
+      res.status(500).json({ message: "Failed to delete filter" });
+    }
+  });
+
+  // Enhanced Search routes (Module 12)
+  app.post('/api/work-orders/search', isAuthenticated, async (req: any, res) => {
+    try {
+      const workOrders = await storage.searchWorkOrdersWithFilters(req.body);
+      res.json(workOrders);
+    } catch (error) {
+      console.error("Error searching work orders:", error);
+      res.status(500).json({ message: "Failed to search work orders" });
+    }
+  });
+
+  // Agent Recommendation routes (Module 13 - Smart Routing & Dispatch)
+  app.post('/api/agent-recommendations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const recommendation = await storage.createAgentRecommendation(req.body);
+      res.json(recommendation);
+    } catch (error) {
+      console.error("Error creating agent recommendation:", error);
+      res.status(500).json({ message: "Failed to create recommendation" });
+    }
+  });
+
+  app.get('/api/agent-recommendations/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const recommendations = await storage.getAgentRecommendations(req.params.workOrderId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error fetching agent recommendations:", error);
+      res.status(500).json({ message: "Failed to fetch recommendations" });
+    }
+  });
+
+  app.post('/api/agent-recommendations/generate/:workOrderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const recommendations = await storage.generateRecommendationsForWorkOrder(req.params.workOrderId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error generating agent recommendations:", error);
+      res.status(500).json({ message: "Failed to generate recommendations" });
+    }
+  });
+
+  app.put('/api/agent-recommendations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const recommendation = await storage.updateAgentRecommendation(req.params.id, req.body);
+      res.json(recommendation);
+    } catch (error) {
+      console.error("Error updating agent recommendation:", error);
+      res.status(500).json({ message: "Failed to update recommendation" });
+    }
+  });
+
+  app.delete('/api/agent-recommendations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      await storage.deleteAgentRecommendation(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting agent recommendation:", error);
+      res.status(500).json({ message: "Failed to delete recommendation" });
+    }
+  });
+
+  // Agent Skills routes (Module 3 - Enhanced Agent Capabilities)
+  app.post('/api/agent-skills', isAuthenticated, async (req: any, res) => {
+    try {
+      const skill = await storage.createAgentSkill(req.body);
+      res.json(skill);
+    } catch (error) {
+      console.error("Error creating agent skill:", error);
+      res.status(500).json({ message: "Failed to create skill" });
+    }
+  });
+
+  app.get('/api/agent-skills/:agentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const skills = await storage.getAgentSkills(req.params.agentId);
+      res.json(skills);
+    } catch (error) {
+      console.error("Error fetching agent skills:", error);
+      res.status(500).json({ message: "Failed to fetch skills" });
+    }
+  });
+
+  app.put('/api/agent-skills/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const skill = await storage.updateAgentSkill(req.params.id, req.body);
+      res.json(skill);
+    } catch (error) {
+      console.error("Error updating agent skill:", error);
+      res.status(500).json({ message: "Failed to update skill" });
+    }
+  });
+
+  app.put('/api/agent-skills/:id/verify', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const skill = await storage.verifyAgentSkill(req.params.id, userId);
+      res.json(skill);
+    } catch (error) {
+      console.error("Error verifying agent skill:", error);
+      res.status(500).json({ message: "Failed to verify skill" });
+    }
+  });
+
+  app.delete('/api/agent-skills/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteAgentSkill(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting agent skill:", error);
+      res.status(500).json({ message: "Failed to delete skill" });
+    }
+  });
+
+  // Agent Location routes (Module 3 - Enhanced Agent Capabilities)
+  app.post('/api/agent-locations', isAuthenticated, async (req: any, res) => {
+    try {
+      const location = await storage.createAgentLocation(req.body);
+      res.json(location);
+    } catch (error) {
+      console.error("Error creating agent location:", error);
+      res.status(500).json({ message: "Failed to create location" });
+    }
+  });
+
+  app.get('/api/agent-locations/:agentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const locations = await storage.getAgentLocations(req.params.agentId);
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching agent locations:", error);
+      res.status(500).json({ message: "Failed to fetch locations" });
+    }
+  });
+
+  app.get('/api/agent-locations/:agentId/primary', isAuthenticated, async (req: any, res) => {
+    try {
+      const location = await storage.getPrimaryAgentLocation(req.params.agentId);
+      res.json(location);
+    } catch (error) {
+      console.error("Error fetching primary agent location:", error);
+      res.status(500).json({ message: "Failed to fetch primary location" });
+    }
+  });
+
+  app.put('/api/agent-locations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const location = await storage.updateAgentLocation(req.params.id, req.body);
+      res.json(location);
+    } catch (error) {
+      console.error("Error updating agent location:", error);
+      res.status(500).json({ message: "Failed to update location" });
+    }
+  });
+
+  app.put('/api/agent-locations/:agentId/primary/:locationId', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.setPrimaryLocation(req.params.agentId, req.params.locationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting primary location:", error);
+      res.status(500).json({ message: "Failed to set primary location" });
+    }
+  });
+
+  app.delete('/api/agent-locations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteAgentLocation(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting agent location:", error);
+      res.status(500).json({ message: "Failed to delete location" });
     }
   });
 

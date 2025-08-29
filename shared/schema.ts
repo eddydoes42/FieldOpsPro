@@ -681,6 +681,69 @@ export const recognition = pgTable("recognition", {
   metadata: jsonb("metadata"), // additional award context
 });
 
+// Module 12: Enhanced Work Order Search & Filters
+export const workOrderFilters = pgTable("work_order_filters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  skillTags: jsonb("skill_tags"), // array of required skills
+  locationRadius: integer("location_radius"), // search radius in miles
+  minPayRate: decimal("min_pay_rate", { precision: 10, scale: 2 }),
+  maxPayRate: decimal("max_pay_rate", { precision: 10, scale: 2 }),
+  urgencyLevel: varchar("urgency_level"), // standard, urgent, emergency
+  experienceRequired: varchar("experience_required"), // entry, mid, senior
+  certificationRequired: jsonb("certification_required"), // array of required certifications
+  equipmentProvided: boolean("equipment_provided").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Module 13: Smart Match / Recommended Assignments
+export const agentRecommendations = pgTable("agent_recommendations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").notNull().references(() => workOrders.id),
+  agentId: varchar("agent_id").notNull().references(() => users.id),
+  matchScore: decimal("match_score", { precision: 5, scale: 2 }), // 0-100 compatibility score
+  skillsMatch: decimal("skills_match", { precision: 5, scale: 2 }), // 0-100 skills compatibility
+  proximityScore: decimal("proximity_score", { precision: 5, scale: 2 }), // 0-100 location score
+  performanceScore: decimal("performance_score", { precision: 5, scale: 2 }), // 0-100 past performance
+  availabilityScore: decimal("availability_score", { precision: 5, scale: 2 }), // 0-100 schedule compatibility
+  reasoning: text("reasoning"), // explanation of recommendation
+  isRecommended: boolean("is_recommended").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  calculatedBy: varchar("calculated_by"), // system or user ID
+});
+
+// Module 3: Job Visibility Logic (Enhanced location and skills)
+export const agentSkills = pgTable("agent_skills", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull().references(() => users.id),
+  skillName: varchar("skill_name").notNull(),
+  proficiencyLevel: varchar("proficiency_level").notNull(), // beginner, intermediate, advanced, expert
+  yearsExperience: integer("years_experience"),
+  certificationLevel: varchar("certification_level"), // none, basic, advanced, professional
+  verifiedBy: varchar("verified_by").references(() => users.id), // who verified this skill
+  verifiedAt: timestamp("verified_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const agentLocations = pgTable("agent_locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull().references(() => users.id),
+  address: text("address"),
+  city: varchar("city"),
+  state: varchar("state"),
+  zipCode: varchar("zip_code"),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  serviceRadius: integer("service_radius").default(25), // miles willing to travel
+  isPrimary: boolean("is_primary").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Project requirements table (for more structured requirements)
 export const projectRequirements = pgTable("project_requirements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -993,6 +1056,42 @@ export const riskInterventionsRelations = relations(riskInterventions, ({ one })
   }),
 }));
 
+export const workOrderFiltersRelations = relations(workOrderFilters, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [workOrderFilters.workOrderId],
+    references: [workOrders.id],
+  }),
+}));
+
+export const agentRecommendationsRelations = relations(agentRecommendations, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [agentRecommendations.workOrderId],
+    references: [workOrders.id],
+  }),
+  agent: one(users, {
+    fields: [agentRecommendations.agentId],
+    references: [users.id],
+  }),
+}));
+
+export const agentSkillsRelations = relations(agentSkills, ({ one }) => ({
+  agent: one(users, {
+    fields: [agentSkills.agentId],
+    references: [users.id],
+  }),
+  verifiedBy: one(users, {
+    fields: [agentSkills.verifiedBy],
+    references: [users.id],
+  }),
+}));
+
+export const agentLocationsRelations = relations(agentLocations, ({ one }) => ({
+  agent: one(users, {
+    fields: [agentLocations.agentId],
+    references: [users.id],
+  }),
+}));
+
 // Role validation schema
 export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client'])).min(1);
 
@@ -1235,6 +1334,30 @@ export const insertJobRequestSchema = createInsertSchema(jobRequests).omit({
   reviewedBy: true,
 });
 
+export const insertWorkOrderFilterSchema = createInsertSchema(workOrderFilters).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAgentRecommendationSchema = createInsertSchema(agentRecommendations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAgentSkillSchema = createInsertSchema(agentSkills).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  verifiedAt: true,
+});
+
+export const insertAgentLocationSchema = createInsertSchema(agentLocations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -1339,6 +1462,18 @@ export type InsertCredential = z.infer<typeof insertCredentialSchema>;
 
 export type Recognition = typeof recognition.$inferSelect;
 export type InsertRecognition = z.infer<typeof insertRecognitionSchema>;
+
+export type WorkOrderFilter = typeof workOrderFilters.$inferSelect;
+export type InsertWorkOrderFilter = z.infer<typeof insertWorkOrderFilterSchema>;
+
+export type AgentRecommendation = typeof agentRecommendations.$inferSelect;
+export type InsertAgentRecommendation = z.infer<typeof insertAgentRecommendationSchema>;
+
+export type AgentSkill = typeof agentSkills.$inferSelect;
+export type InsertAgentSkill = z.infer<typeof insertAgentSkillSchema>;
+
+export type AgentLocation = typeof agentLocations.$inferSelect;
+export type InsertAgentLocation = z.infer<typeof insertAgentLocationSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
