@@ -29,6 +29,8 @@ import {
   feedback,
   performanceSnapshots,
   serviceQualitySnapshots,
+  riskScores,
+  riskInterventions,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -90,6 +92,10 @@ import {
   type InsertPerformanceSnapshot,
   type ServiceQualitySnapshot,
   type InsertServiceQualitySnapshot,
+  type RiskScore,
+  type InsertRiskScore,
+  type RiskIntervention,
+  type InsertRiskIntervention,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
@@ -3156,6 +3162,241 @@ export class DatabaseStorage implements IStorage {
       .where(eq(jobMessages.id, id))
       .returning();
     return message;
+  }
+
+  // Risk Analysis operations
+  async createRiskScore(riskScore: InsertRiskScore): Promise<RiskScore> {
+    const [newScore] = await db
+      .insert(riskScores)
+      .values(riskScore)
+      .returning();
+    return newScore;
+  }
+
+  async getRiskScores(entityType?: string, entityId?: string, limit: number = 50): Promise<RiskScore[]> {
+    let query = db.select().from(riskScores);
+    
+    const conditions = [];
+    if (entityType) {
+      conditions.push(eq(riskScores.entityType, entityType));
+    }
+    if (entityId) {
+      conditions.push(eq(riskScores.entityId, entityId));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query
+      .orderBy(desc(riskScores.createdAt))
+      .limit(limit);
+  }
+
+  async getHighRiskEntities(threshold: number = 70): Promise<RiskScore[]> {
+    return await db
+      .select()
+      .from(riskScores)
+      .where(sql`${riskScores.score} >= ${threshold}`)
+      .orderBy(desc(riskScores.score), desc(riskScores.createdAt));
+  }
+
+  async calculateRiskScore(entityType: string, entityId: string, periodStart: string, periodEnd: string): Promise<{
+    score: number;
+    flaggedMetrics: Record<string, any>;
+  }> {
+    const flaggedMetrics: Record<string, any> = {};
+    let totalWeightedScore = 0;
+    
+    if (entityType === 'agent') {
+      // Get agent performance metrics
+      const agentMetrics = await this.calculateAgentPerformanceMetrics(entityId, periodStart, periodEnd);
+      
+      // Calculate risk factors for agents
+      let clientSatisfactionScore = 100;
+      let timelinessScore = 100;
+      let issueScore = 100;
+      let complianceScore = 100;
+      
+      // Client Satisfaction (40% weight)
+      if (agentMetrics.avgStarRating < 3.5) {
+        clientSatisfactionScore = (agentMetrics.avgStarRating / 5) * 100;
+        flaggedMetrics.clientSatisfaction = {
+          current: agentMetrics.avgStarRating,
+          threshold: 3.5,
+          severity: agentMetrics.avgStarRating < 2.5 ? 'high' : 'medium'
+        };
+      }
+      
+      // Timeliness (20% weight)
+      const avgTimelinessScore = (agentMetrics.onTimeStartPercentage + agentMetrics.onTimeFinishPercentage) / 2;
+      if (avgTimelinessScore < 80) {
+        timelinessScore = avgTimelinessScore;
+        flaggedMetrics.timeliness = {
+          current: avgTimelinessScore,
+          threshold: 80,
+          severity: avgTimelinessScore < 60 ? 'high' : 'medium'
+        };
+      }
+      
+      // Issue Rate (30% weight)
+      if (agentMetrics.issueResolutionRate < 85) {
+        issueScore = agentMetrics.issueResolutionRate;
+        flaggedMetrics.issueResolution = {
+          current: agentMetrics.issueResolutionRate,
+          threshold: 85,
+          severity: agentMetrics.issueResolutionRate < 70 ? 'high' : 'medium'
+        };
+      }
+      
+      // Compliance (10% weight)
+      if (agentMetrics.complianceScore < 0.8) {
+        complianceScore = agentMetrics.complianceScore * 100;
+        flaggedMetrics.compliance = {
+          current: agentMetrics.complianceScore,
+          threshold: 0.8,
+          severity: agentMetrics.complianceScore < 0.6 ? 'high' : 'medium'
+        };
+      }
+      
+      // Weighted risk score calculation (lower score = higher risk)
+      totalWeightedScore = (
+        (clientSatisfactionScore * 0.4) +
+        (timelinessScore * 0.2) +
+        (issueScore * 0.3) +
+        (complianceScore * 0.1)
+      );
+      
+    } else if (entityType === 'company') {
+      // Get company service quality metrics
+      const companyMetrics = await this.calculateServiceQualityMetrics(entityId, periodStart, periodEnd);
+      
+      // Calculate risk factors for companies
+      let clientSatisfactionScore = 100;
+      let timelinessScore = 100;
+      let issueScore = 100;
+      let complianceScore = 100;
+      
+      // Client Satisfaction (40% weight)
+      if (companyMetrics.avgClientSatisfaction < 3.5) {
+        clientSatisfactionScore = (companyMetrics.avgClientSatisfaction / 5) * 100;
+        flaggedMetrics.clientSatisfaction = {
+          current: companyMetrics.avgClientSatisfaction,
+          threshold: 3.5,
+          severity: companyMetrics.avgClientSatisfaction < 2.5 ? 'high' : 'medium'
+        };
+      }
+      
+      // Service Timeliness (20% weight)
+      if (companyMetrics.serviceComplianceScore < 80) {
+        timelinessScore = companyMetrics.serviceComplianceScore;
+        flaggedMetrics.timeliness = {
+          current: companyMetrics.serviceComplianceScore,
+          threshold: 80,
+          severity: companyMetrics.serviceComplianceScore < 60 ? 'high' : 'medium'
+        };
+      }
+      
+      // Issue Rate (30% weight)
+      if (companyMetrics.issueRate > 15) {
+        issueScore = Math.max(0, 100 - companyMetrics.issueRate);
+        flaggedMetrics.issueRate = {
+          current: companyMetrics.issueRate,
+          threshold: 15,
+          severity: companyMetrics.issueRate > 25 ? 'high' : 'medium'
+        };
+      }
+      
+      // Compliance (10% weight)
+      if (companyMetrics.auditComplianceScore < 0.8) {
+        complianceScore = companyMetrics.auditComplianceScore * 100;
+        flaggedMetrics.compliance = {
+          current: companyMetrics.auditComplianceScore,
+          threshold: 0.8,
+          severity: companyMetrics.auditComplianceScore < 0.6 ? 'high' : 'medium'
+        };
+      }
+      
+      // Weighted risk score calculation (lower score = higher risk)
+      totalWeightedScore = (
+        (clientSatisfactionScore * 0.4) +
+        (timelinessScore * 0.2) +
+        (issueScore * 0.3) +
+        (complianceScore * 0.1)
+      );
+    }
+    
+    // Convert to risk score (0-100, where higher = more risk)
+    const riskScore = Math.max(0, Math.min(100, 100 - totalWeightedScore));
+    
+    return {
+      score: Math.round(riskScore),
+      flaggedMetrics
+    };
+  }
+
+  async createRiskIntervention(intervention: InsertRiskIntervention): Promise<RiskIntervention> {
+    const [newIntervention] = await db
+      .insert(riskInterventions)
+      .values(intervention)
+      .returning();
+    return newIntervention;
+  }
+
+  async getRiskInterventions(riskId?: string, assignedTo?: string): Promise<RiskIntervention[]> {
+    let query = db.select().from(riskInterventions);
+    
+    const conditions = [];
+    if (riskId) {
+      conditions.push(eq(riskInterventions.riskId, riskId));
+    }
+    if (assignedTo) {
+      conditions.push(eq(riskInterventions.assignedTo, assignedTo));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(riskInterventions.createdAt));
+  }
+
+  async updateRiskIntervention(id: string, updates: Partial<InsertRiskIntervention & { completedAt?: Date }>): Promise<RiskIntervention> {
+    const [updated] = await db
+      .update(riskInterventions)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(riskInterventions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getEntitiesAtRisk(threshold: number = 70): Promise<{
+    agents: Array<{ agent: any; riskScore: RiskScore }>;
+    companies: Array<{ company: any; riskScore: RiskScore }>;
+  }> {
+    const highRiskScores = await this.getHighRiskEntities(threshold);
+    
+    const agents = [];
+    const companies = [];
+    
+    for (const riskScore of highRiskScores) {
+      if (riskScore.entityType === 'agent') {
+        const agent = await this.getUser(riskScore.entityId);
+        if (agent) {
+          agents.push({ agent, riskScore });
+        }
+      } else if (riskScore.entityType === 'company') {
+        const company = await this.getCompany(riskScore.entityId);
+        if (company) {
+          companies.push({ company, riskScore });
+        }
+      }
+    }
+    
+    return { agents, companies };
   }
 }
 

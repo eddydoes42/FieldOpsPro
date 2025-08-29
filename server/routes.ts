@@ -2380,6 +2380,306 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== PREDICTIVE RISK ANALYSIS ROUTES =====
+  
+  // Get risk scores for entities (agents or companies)
+  app.get('/api/risk-scores', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { entityType, entityId, limit = 50, threshold } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      // Service company admins can only view risks for their own company/agents
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        if (entityType === 'company' && entityId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only view your company's risk data." });
+        }
+        if (entityType === 'agent') {
+          const agent = await storage.getUser(entityId);
+          if (!agent || agent.companyId !== currentUser.companyId) {
+            return res.status(403).json({ message: "Access denied. Can only view your company's agents' risk data." });
+          }
+        }
+      }
+
+      let riskScores;
+      if (threshold) {
+        riskScores = await storage.getHighRiskEntities(parseInt(threshold as string));
+      } else {
+        riskScores = await storage.getRiskScores(entityType, entityId, parseInt(limit as string));
+      }
+
+      res.json(riskScores);
+    } catch (error) {
+      console.error("Error fetching risk scores:", error);
+      res.status(500).json({ message: "Failed to fetch risk scores" });
+    }
+  });
+
+  // Calculate and create risk score for an entity
+  app.post('/api/risk-scores/calculate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || (!isOperationsDirector(currentUser) && !hasAnyRole(currentUser, ['administrator', 'manager']))) {
+        return res.status(403).json({ message: "Access denied. Only Operations Director and admin teams can calculate risk scores." });
+      }
+
+      const { entityType, entityId, periodStart, periodEnd } = req.body;
+
+      if (!entityType || !entityId || !periodStart || !periodEnd) {
+        return res.status(400).json({ message: "Entity type, entity ID, period start, and period end are required." });
+      }
+
+      // Service company admins can only calculate risks for their own company/agents
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        if (entityType === 'company' && entityId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only calculate risk for your company." });
+        }
+        if (entityType === 'agent') {
+          const agent = await storage.getUser(entityId);
+          if (!agent || agent.companyId !== currentUser.companyId) {
+            return res.status(403).json({ message: "Access denied. Can only calculate risk for your company's agents." });
+          }
+        }
+      }
+
+      // Calculate risk score and flagged metrics
+      const riskAnalysis = await storage.calculateRiskScore(entityType, entityId, periodStart, periodEnd);
+
+      // Create risk score record
+      const riskScoreData = {
+        entityType,
+        entityId,
+        score: riskAnalysis.score,
+        periodStart: new Date(periodStart),
+        periodEnd: new Date(periodEnd),
+        flaggedMetrics: riskAnalysis.flaggedMetrics
+      };
+
+      const riskScore = await storage.createRiskScore(riskScoreData);
+      res.status(201).json(riskScore);
+    } catch (error: any) {
+      console.error("Error calculating risk score:", error);
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid risk score data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to calculate risk score" });
+    }
+  });
+
+  // Get entities at risk above threshold
+  app.get('/api/risk-monitor', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { threshold = 70 } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      let entitiesAtRisk;
+      if (isOperationsDirector(currentUser)) {
+        // Operations Director can see all entities at risk
+        entitiesAtRisk = await storage.getEntitiesAtRisk(parseInt(threshold as string));
+      } else {
+        // Service company admins can only see their company's risks
+        const companyRiskScores = await storage.getRiskScores('company', currentUser.companyId!);
+        const agentRiskScores = await storage.getRiskScores('agent');
+        
+        // Filter agent risks to only company agents
+        const companyAgents = await storage.getUsersByRole('field_agent');
+        const companyAgentIds = companyAgents
+          .filter(agent => agent.companyId === currentUser.companyId)
+          .map(agent => agent.id);
+        
+        const filteredAgentRiskScores = agentRiskScores.filter(score => 
+          companyAgentIds.includes(score.entityId) && 
+          score.score >= parseInt(threshold as string)
+        );
+
+        const filteredCompanyRiskScores = companyRiskScores.filter(score => 
+          score.score >= parseInt(threshold as string)
+        );
+
+        const agents = [];
+        const companies = [];
+        
+        for (const riskScore of filteredAgentRiskScores) {
+          const agent = await storage.getUser(riskScore.entityId);
+          if (agent) {
+            agents.push({ agent, riskScore });
+          }
+        }
+        
+        for (const riskScore of filteredCompanyRiskScores) {
+          const company = await storage.getCompany(riskScore.entityId);
+          if (company) {
+            companies.push({ company, riskScore });
+          }
+        }
+        
+        entitiesAtRisk = { agents, companies };
+      }
+
+      res.json(entitiesAtRisk);
+    } catch (error) {
+      console.error("Error fetching entities at risk:", error);
+      res.status(500).json({ message: "Failed to fetch entities at risk" });
+    }
+  });
+
+  // Create risk intervention
+  app.post('/api/risk-interventions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Admin level access required." });
+      }
+
+      const { riskId, action, assignedTo, notes } = req.body;
+
+      if (!riskId || !action) {
+        return res.status(400).json({ message: "Risk ID and action are required." });
+      }
+
+      // Verify risk score exists and user has access
+      const riskScore = await storage.getRiskScores().then(scores => 
+        scores.find(score => score.id === riskId)
+      );
+      
+      if (!riskScore) {
+        return res.status(404).json({ message: "Risk score not found." });
+      }
+
+      // Service company admins can only create interventions for their company's risks
+      if (hasAnyRole(currentUser, ['administrator', 'manager']) && !isOperationsDirector(currentUser)) {
+        if (riskScore.entityType === 'company' && riskScore.entityId !== currentUser.companyId) {
+          return res.status(403).json({ message: "Access denied. Can only create interventions for your company's risks." });
+        }
+        if (riskScore.entityType === 'agent') {
+          const agent = await storage.getUser(riskScore.entityId);
+          if (!agent || agent.companyId !== currentUser.companyId) {
+            return res.status(403).json({ message: "Access denied. Can only create interventions for your company's agents." });
+          }
+        }
+      }
+
+      const interventionData = {
+        riskId,
+        action,
+        assignedTo: assignedTo || userId,
+        notes,
+        status: 'open' as const
+      };
+
+      const intervention = await storage.createRiskIntervention(interventionData);
+      res.status(201).json(intervention);
+    } catch (error: any) {
+      console.error("Error creating risk intervention:", error);
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid intervention data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create risk intervention" });
+    }
+  });
+
+  // Get risk interventions
+  app.get('/api/risk-interventions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { riskId, assignedTo } = req.query;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'field_agent'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      let interventions;
+      if (isOperationsDirector(currentUser)) {
+        // Operations Director can see all interventions
+        interventions = await storage.getRiskInterventions(riskId, assignedTo);
+      } else if (hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        // Admin team can see company interventions
+        interventions = await storage.getRiskInterventions(riskId, assignedTo);
+        // Filter to only company-related interventions
+        const filteredInterventions = [];
+        for (const intervention of interventions) {
+          const riskScore = await storage.getRiskScores().then(scores => 
+            scores.find(score => score.id === intervention.riskId)
+          );
+          if (riskScore) {
+            if (riskScore.entityType === 'company' && riskScore.entityId === currentUser.companyId) {
+              filteredInterventions.push(intervention);
+            } else if (riskScore.entityType === 'agent') {
+              const agent = await storage.getUser(riskScore.entityId);
+              if (agent && agent.companyId === currentUser.companyId) {
+                filteredInterventions.push(intervention);
+              }
+            }
+          }
+        }
+        interventions = filteredInterventions;
+      } else {
+        // Field agents can only see interventions assigned to them
+        interventions = await storage.getRiskInterventions(riskId, userId);
+      }
+
+      res.json(interventions);
+    } catch (error) {
+      console.error("Error fetching risk interventions:", error);
+      res.status(500).json({ message: "Failed to fetch risk interventions" });
+    }
+  });
+
+  // Update risk intervention status
+  app.put('/api/risk-interventions/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      const { id } = req.params;
+      const { status, notes, completedAt } = req.body;
+      
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'field_agent'])) {
+        return res.status(403).json({ message: "Access denied." });
+      }
+
+      // Get intervention to verify permissions
+      const interventions = await storage.getRiskInterventions();
+      const intervention = interventions.find(i => i.id === id);
+      
+      if (!intervention) {
+        return res.status(404).json({ message: "Risk intervention not found." });
+      }
+
+      // Users can only update interventions assigned to them or if they're admin/operations director
+      if (intervention.assignedTo !== userId && 
+          !isOperationsDirector(currentUser) && 
+          !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Access denied. Can only update interventions assigned to you." });
+      }
+
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (notes) updates.notes = notes;
+      if (completedAt) updates.completedAt = new Date(completedAt);
+
+      const updatedIntervention = await storage.updateRiskIntervention(id, updates);
+      res.json(updatedIntervention);
+    } catch (error) {
+      console.error("Error updating risk intervention:", error);
+      res.status(500).json({ message: "Failed to update risk intervention" });
+    }
+  });
+
   // ===== CLIENT FEEDBACK LOOP ROUTES =====
 
   // Create feedback after work order completion

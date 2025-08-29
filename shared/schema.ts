@@ -341,6 +341,31 @@ export const serviceQualitySnapshots = pgTable("service_quality_snapshots", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Risk Scores table for predictive risk analysis
+export const riskScores = pgTable("risk_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: varchar("entity_type").notNull(), // 'agent' or 'company'
+  entityId: varchar("entity_id").notNull(),
+  score: integer("score").notNull(), // 0-100 risk score
+  periodStart: date("period_start").notNull(),
+  periodEnd: date("period_end").notNull(),
+  flaggedMetrics: jsonb("flagged_metrics").notNull(), // JSON object with flagged metrics and thresholds
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Risk Interventions table for tracking follow-up actions
+export const riskInterventions = pgTable("risk_interventions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  riskId: varchar("risk_id").notNull().references(() => riskScores.id),
+  action: text("action").notNull(), // Description of intervention action
+  assignedTo: varchar("assigned_to").references(() => users.id), // User assigned to handle intervention
+  status: varchar("status").notNull().default("open"), // 'open', 'in_progress', 'closed'
+  notes: text("notes"), // Additional notes or follow-up information
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  completedAt: timestamp("completed_at"), // When intervention was completed
+});
+
 // Notifications table for work order confirmations
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -859,6 +884,28 @@ export const performanceSnapshotsRelations = relations(performanceSnapshots, ({ 
   }),
 }));
 
+export const serviceQualitySnapshotsRelations = relations(serviceQualitySnapshots, ({ one }) => ({
+  company: one(companies, {
+    fields: [serviceQualitySnapshots.companyId],
+    references: [companies.id],
+  }),
+}));
+
+export const riskScoresRelations = relations(riskScores, ({ one, many }) => ({
+  interventions: many(riskInterventions),
+}));
+
+export const riskInterventionsRelations = relations(riskInterventions, ({ one }) => ({
+  riskScore: one(riskScores, {
+    fields: [riskInterventions.riskId],
+    references: [riskScores.id],
+  }),
+  assignedUser: one(users, {
+    fields: [riskInterventions.assignedTo],
+    references: [users.id],
+  }),
+}));
+
 // Role validation schema
 export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client'])).min(1);
 
@@ -982,6 +1029,17 @@ export const insertPerformanceSnapshotSchema = createInsertSchema(performanceSna
 export const insertServiceQualitySnapshotSchema = createInsertSchema(serviceQualitySnapshots).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertRiskScoreSchema = createInsertSchema(riskScores).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertRiskInterventionSchema = createInsertSchema(riskInterventions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertJobNetworkPostSchema = createInsertSchema(jobNetworkPosts).omit({
@@ -1126,9 +1184,6 @@ export type InsertApprovalRequest = z.infer<typeof insertApprovalRequestSchema>;
 export type JobRequest = typeof jobRequests.$inferSelect;
 export type InsertJobRequest = z.infer<typeof insertJobRequestSchema>;
 
-export type StructuredIssue = typeof structuredIssues.$inferSelect;
-export type InsertStructuredIssue = z.infer<typeof insertStructuredIssueSchema>;
-
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
@@ -1140,6 +1195,12 @@ export type InsertPerformanceSnapshot = z.infer<typeof insertPerformanceSnapshot
 
 export type ServiceQualitySnapshot = typeof serviceQualitySnapshots.$inferSelect;
 export type InsertServiceQualitySnapshot = z.infer<typeof insertServiceQualitySnapshotSchema>;
+
+export type RiskScore = typeof riskScores.$inferSelect;
+export type InsertRiskScore = z.infer<typeof insertRiskScoreSchema>;
+
+export type RiskIntervention = typeof riskInterventions.$inferSelect;
+export type InsertRiskIntervention = z.infer<typeof insertRiskInterventionSchema>;
 
 // Role utility functions
 export function hasRole(user: User | null, role: string): boolean {
