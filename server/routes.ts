@@ -1238,6 +1238,205 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Structured Issues API (Module 5)
+  app.get("/api/structured-issues", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { workOrderId, status, severity, category, reporterId } = req.query;
+      const filters: any = {};
+      
+      if (workOrderId) filters.workOrderId = workOrderId;
+      if (status) filters.status = status;
+      if (severity) filters.severity = severity;
+      if (category) filters.category = category;
+      if (reporterId) filters.reporterId = reporterId;
+
+      // Apply role-based filtering
+      if (!hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        // Non-managers can only see issues from their company or that they reported
+        filters.companyId = currentUser.companyId;
+      }
+
+      const issues = await storage.getStructuredIssues(filters);
+      res.json(issues);
+    } catch (error) {
+      console.error("Error fetching structured issues:", error);
+      res.status(500).json({ message: "Failed to fetch structured issues" });
+    }
+  });
+
+  app.post("/api/structured-issues", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const issueData = {
+        ...req.body,
+        reportedById: currentUser.id,
+        companyId: currentUser.companyId,
+      };
+
+      const issue = await storage.createStructuredIssue(issueData);
+      
+      // Auto-escalate high severity issues
+      if (issue.severity === 'high' || issue.severity === 'critical') {
+        await storage.createEscalationNotification(issue.id, currentUser.companyId);
+      }
+
+      res.status(201).json(issue);
+    } catch (error) {
+      console.error("Error creating structured issue:", error);
+      res.status(500).json({ message: "Failed to create structured issue" });
+    }
+  });
+
+  app.patch("/api/structured-issues/:issueId", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { issueId } = req.params;
+      const updates = req.body;
+
+      // Only managers and above can resolve issues
+      if (updates.status === 'resolved' && !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Only managers can resolve issues" });
+      }
+
+      if (updates.status === 'resolved') {
+        updates.resolvedById = currentUser.id;
+        updates.resolvedAt = new Date();
+      }
+
+      const issue = await storage.updateStructuredIssue(issueId, updates);
+      res.json(issue);
+    } catch (error) {
+      console.error("Error updating structured issue:", error);
+      res.status(500).json({ message: "Failed to update structured issue" });
+    }
+  });
+
+  // Issue Analytics and Reporting
+  app.get("/api/structured-issues/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+
+      const { period = '30', companyId } = req.query;
+      const analytics = await storage.getIssueAnalytics({
+        period: parseInt(period as string),
+        companyId: companyId as string || currentUser.companyId,
+      });
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching issue analytics:", error);
+      res.status(500).json({ message: "Failed to fetch issue analytics" });
+    }
+  });
+
+  // Client Feedback System API (Module 6)
+  app.get("/api/ratings/existing/:workOrderId", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { workOrderId } = req.params;
+      const existingRatings = await storage.getExistingRatings(workOrderId, currentUser.id);
+      res.json(existingRatings);
+    } catch (error) {
+      console.error("Error fetching existing ratings:", error);
+      res.status(500).json({ message: "Failed to fetch existing ratings" });
+    }
+  });
+
+  app.get("/api/feedback/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { timeFrame = '30', category = 'all', companyId, agentId } = req.query;
+      
+      // Access control
+      if (agentId && !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager', 'field_agent'])) {
+        return res.status(403).json({ message: "Insufficient permissions to view agent analytics" });
+      }
+
+      if (hasAnyRole(currentUser, ['field_agent']) && agentId !== currentUser.id) {
+        return res.status(403).json({ message: "Field agents can only view their own analytics" });
+      }
+
+      const analytics = await storage.getFeedbackAnalytics({
+        timeFrame: parseInt(timeFrame as string),
+        category: category as string,
+        companyId: companyId as string || currentUser.companyId,
+        agentId: agentId as string,
+      });
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching feedback analytics:", error);
+      res.status(500).json({ message: "Failed to fetch feedback analytics" });
+    }
+  });
+
+  app.get("/api/feedback/trends", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { timeFrame = '30', companyId, agentId } = req.query;
+      
+      const trends = await storage.getFeedbackTrends({
+        timeFrame: parseInt(timeFrame as string),
+        companyId: companyId as string || currentUser.companyId,
+        agentId: agentId as string,
+      });
+
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching feedback trends:", error);
+      res.status(500).json({ message: "Failed to fetch feedback trends" });
+    }
+  });
+
+  // Bulk feedback operations
+  app.post("/api/feedback/bulk-request", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager'])) {
+        return res.status(403).json({ message: "Only managers can send bulk feedback requests" });
+      }
+
+      const { workOrderIds, reminderType = 'gentle' } = req.body;
+      const results = await storage.sendBulkFeedbackRequests(workOrderIds, reminderType, currentUser.id);
+      
+      res.json({
+        message: `Feedback requests sent for ${results.sent} work orders`,
+        details: results
+      });
+    } catch (error) {
+      console.error("Error sending bulk feedback requests:", error);
+      res.status(500).json({ message: "Failed to send bulk feedback requests" });
+    }
+  });
+
   app.post("/api/work-orders/:workOrderId/tasks", isAuthenticated, async (req: any, res) => {
     try {
       const { workOrderId } = req.params;

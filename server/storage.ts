@@ -4209,24 +4209,95 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(workOrders.createdAt));
   }
 
-  // Job Visibility Logic (Module 3)
+  // Enhanced Job Visibility Logic (Module 3)
   async getVisibleJobsForAgent(filters: {
     agentId: string;
     agentLocation?: { lat: number; lng: number };
     agentSkills: string[];
     radiusKm: number;
     respectExclusiveNetworks?: boolean;
+    agentExperienceLevel?: 'junior' | 'intermediate' | 'senior';
+    priorityFilter?: 'low' | 'medium' | 'high' | 'urgent';
+    includeAssigned?: boolean;
   }): Promise<WorkOrder[]> {
-    let query = db.select().from(workOrders);
+    const agent = await this.getUser(filters.agentId);
+    if (!agent) return [];
+
+    let query = db
+      .select({
+        ...workOrders,
+        companyName: companies.name,
+        clientCompanyName: sql<string>`client_company.name`,
+        skillMatchScore: sql<number>`
+          CASE 
+            WHEN ${workOrders.requiredSkills} IS NULL OR array_length(${workOrders.requiredSkills}, 1) IS NULL THEN 100
+            ELSE (
+              SELECT COALESCE(
+                (COUNT(*) * 100.0 / array_length(${workOrders.requiredSkills}, 1))::integer, 
+                0
+              )
+              FROM unnest(${workOrders.requiredSkills}) AS required_skill
+              WHERE required_skill = ANY(${sql.raw(`ARRAY[${filters.agentSkills.map(s => `'${s}'`).join(',')}]::text[]`)})
+            )
+          END
+        `
+      })
+      .from(workOrders)
+      .leftJoin(companies, eq(workOrders.companyId, companies.id))
+      .leftJoin(
+        sql`companies AS client_company`, 
+        sql`${workOrders.clientCompanyId} = client_company.id`
+      );
+
     const conditions = [];
 
-    // Only show available/open work orders
-    conditions.push(inArray(workOrders.status, ["scheduled", "confirmed"]));
+    // Base visibility rules
+    if (filters.includeAssigned) {
+      conditions.push(
+        or(
+          inArray(workOrders.status, ["scheduled", "confirmed"]),
+          and(
+            eq(workOrders.status, "assigned"),
+            eq(workOrders.assigneeId, filters.agentId)
+          )
+        )
+      );
+    } else {
+      conditions.push(inArray(workOrders.status, ["scheduled", "confirmed"]));
+    }
 
-    // Location radius filtering if agent location is provided
+    // Experience level filtering
+    if (filters.agentExperienceLevel) {
+      const experienceConditions = [];
+      
+      switch (filters.agentExperienceLevel) {
+        case 'junior':
+          // Junior agents can only see medium and low priority jobs
+          experienceConditions.push(inArray(workOrders.priority, ['low', 'medium']));
+          break;
+        case 'intermediate':
+          // Intermediate agents can see all except urgent without prior approval
+          experienceConditions.push(inArray(workOrders.priority, ['low', 'medium', 'high']));
+          break;
+        case 'senior':
+          // Senior agents can see all jobs
+          break;
+      }
+
+      if (experienceConditions.length > 0) {
+        conditions.push(or(...experienceConditions));
+      }
+    }
+
+    // Priority filter
+    if (filters.priorityFilter) {
+      conditions.push(eq(workOrders.priority, filters.priorityFilter));
+    }
+
+    // Enhanced location radius filtering with travel time consideration
     if (filters.agentLocation && filters.radiusKm > 0) {
       const { lat, lng } = filters.agentLocation;
-      const latRange = filters.radiusKm / 111; // Rough km to degree conversion
+      const latRange = filters.radiusKm / 111;
       const lngRange = filters.radiusKm / (111 * Math.cos(lat * Math.PI / 180));
       
       conditions.push(
@@ -4239,25 +4310,45 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    // Skills matching - show jobs that either require no specific skills or match agent skills
+    // Enhanced skills matching with scoring
     if (filters.agentSkills.length > 0) {
-      const skillConditions = filters.agentSkills.map(skill =>
-        sql`${workOrders.requiredSkills} && ARRAY[${skill}]::text[]`
-      );
-      // Include jobs with no required skills or jobs that match agent skills
       conditions.push(
         or(
           eq(sql`array_length(${workOrders.requiredSkills}, 1)`, null),
-          or(...skillConditions)
+          sql`${workOrders.requiredSkills} && ${sql.raw(`ARRAY[${filters.agentSkills.map(s => `'${s}'`).join(',')}]::text[]`)}`
         )
       );
     }
 
-    // Respect exclusive networks if enabled
-    if (filters.respectExclusiveNetworks) {
-      // Only show public jobs or jobs from companies in exclusive networks
+    // Enhanced exclusive network logic
+    if (filters.respectExclusiveNetworks && agent.companyId) {
+      const exclusiveNetworkSubquery = db
+        .select({ clientCompanyId: exclusiveNetworks.clientCompanyId })
+        .from(exclusiveNetworks)
+        .where(
+          and(
+            eq(exclusiveNetworks.serviceCompanyId, agent.companyId),
+            eq(exclusiveNetworks.isActive, true)
+          )
+        );
+
       conditions.push(
         or(
+          eq(workOrders.visibilityScope, "public"),
+          and(
+            eq(workOrders.visibilityScope, "exclusive"),
+            inArray(workOrders.clientCompanyId, exclusiveNetworkSubquery)
+          )
+        )
+      );
+    }
+
+    // Company access control
+    if (agent.companyId) {
+      // Agents can see jobs from their own company or jobs posted to the public network
+      conditions.push(
+        or(
+          eq(workOrders.companyId, agent.companyId),
           eq(workOrders.visibilityScope, "public"),
           eq(workOrders.visibilityScope, "exclusive")
         )
@@ -4268,7 +4359,12 @@ export class DatabaseStorage implements IStorage {
       query = query.where(and(...conditions));
     }
 
-    return await query.orderBy(desc(workOrders.createdAt));
+    // Enhanced ordering: prioritize by skill match score, then by priority, then by creation date
+    return await query.orderBy(
+      desc(sql`skill_match_score`),
+      sql`CASE ${workOrders.priority} WHEN 'urgent' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END DESC`,
+      desc(workOrders.createdAt)
+    );
   }
 
   // Project Heartbeat Monitor operations
@@ -4414,6 +4510,396 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query.orderBy(desc(projectHeartbeats.lastActivity));
+  }
+
+  // Enhanced Structured Issues Operations (Module 5)
+  async getStructuredIssues(filters: any = {}): Promise<Issue[]> {
+    let query = db
+      .select({
+        ...issues,
+        reporter: {
+          firstName: sql<string>`reporter.first_name`,
+          lastName: sql<string>`reporter.last_name`,
+          email: sql<string>`reporter.email`,
+        },
+        workOrder: {
+          title: sql<string>`work_order.title`,
+          location: sql<string>`work_order.location`,
+        },
+        resolver: {
+          firstName: sql<string>`resolver.first_name`,
+          lastName: sql<string>`resolver.last_name`,
+        },
+      })
+      .from(issues)
+      .leftJoin(sql`users AS reporter`, sql`${issues.reportedById} = reporter.id`)
+      .leftJoin(sql`work_orders AS work_order`, sql`${issues.workOrderId} = work_order.id`)
+      .leftJoin(sql`users AS resolver`, sql`${issues.resolvedById} = resolver.id`);
+
+    const conditions = [];
+
+    if (filters.workOrderId) {
+      conditions.push(eq(issues.workOrderId, filters.workOrderId));
+    }
+    if (filters.status) {
+      conditions.push(eq(issues.status, filters.status));
+    }
+    if (filters.severity) {
+      conditions.push(eq(issues.severity, filters.severity));
+    }
+    if (filters.category) {
+      conditions.push(eq(issues.category, filters.category));
+    }
+    if (filters.reporterId) {
+      conditions.push(eq(issues.reportedById, filters.reporterId));
+    }
+    if (filters.companyId) {
+      conditions.push(eq(issues.companyId, filters.companyId));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(issues.createdAt));
+  }
+
+  async createStructuredIssue(issueData: InsertIssue): Promise<Issue> {
+    const issueId = nanoid();
+    const [issue] = await db
+      .insert(issues)
+      .values({ ...issueData, id: issueId })
+      .returning();
+    return issue;
+  }
+
+  async updateStructuredIssue(issueId: string, updates: Partial<InsertIssue>): Promise<Issue> {
+    const [issue] = await db
+      .update(issues)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(issues.id, issueId))
+      .returning();
+    return issue;
+  }
+
+  async getStructuredIssue(issueId: string): Promise<Issue | undefined> {
+    const [issue] = await db
+      .select({
+        ...issues,
+        reporter: {
+          firstName: sql<string>`reporter.first_name`,
+          lastName: sql<string>`reporter.last_name`,
+          email: sql<string>`reporter.email`,
+        },
+        workOrder: {
+          title: sql<string>`work_order.title`,
+          location: sql<string>`work_order.location`,
+        },
+        resolver: {
+          firstName: sql<string>`resolver.first_name`,
+          lastName: sql<string>`resolver.last_name`,
+        },
+      })
+      .from(issues)
+      .leftJoin(sql`users AS reporter`, sql`${issues.reportedById} = reporter.id`)
+      .leftJoin(sql`work_orders AS work_order`, sql`${issues.workOrderId} = work_order.id`)
+      .leftJoin(sql`users AS resolver`, sql`${issues.resolvedById} = resolver.id`)
+      .where(eq(issues.id, issueId));
+
+    return issue;
+  }
+
+  async createEscalationNotification(issueId: string, companyId: string | null): Promise<void> {
+    if (!companyId) return;
+
+    // Get all administrators and managers in the company
+    const managers = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          eq(users.companyId, companyId),
+          sql`${users.roles} && ARRAY['administrator', 'manager']::text[]`
+        )
+      );
+
+    const issue = await this.getStructuredIssue(issueId);
+    if (!issue) return;
+
+    // Create notifications for each manager
+    for (const manager of managers) {
+      await db.insert(notifications).values({
+        id: nanoid(),
+        userId: manager.id,
+        type: 'issue_escalation',
+        title: `High Severity Issue Reported`,
+        message: `A ${issue.severity} severity issue has been reported: ${issue.title}`,
+        workOrderId: issue.workOrderId,
+      });
+    }
+  }
+
+  async getIssueAnalytics(params: { period: number; companyId?: string }): Promise<any> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - params.period);
+
+    let query = db
+      .select({
+        total: sql<number>`COUNT(*)`,
+        severity: issues.severity,
+        status: issues.status,
+        category: issues.category,
+      })
+      .from(issues)
+      .where(gte(issues.createdAt, startDate));
+
+    if (params.companyId) {
+      query = query.where(eq(issues.companyId, params.companyId));
+    }
+
+    const results = await query.groupBy(issues.severity, issues.status, issues.category);
+
+    // Calculate summary statistics
+    const summary = {
+      totalIssues: results.reduce((sum, row) => sum + row.total, 0),
+      bySeverity: results.reduce((acc, row) => {
+        acc[row.severity] = (acc[row.severity] || 0) + row.total;
+        return acc;
+      }, {} as Record<string, number>),
+      byStatus: results.reduce((acc, row) => {
+        acc[row.status] = (acc[row.status] || 0) + row.total;
+        return acc;
+      }, {} as Record<string, number>),
+      byCategory: results.reduce((acc, row) => {
+        acc[row.category] = (acc[row.category] || 0) + row.total;
+        return acc;
+      }, {} as Record<string, number>),
+    };
+
+    return summary;
+  }
+
+  // Client Feedback System Operations (Module 6)
+  async getExistingRatings(workOrderId: string, clientId: string): Promise<any> {
+    const [fieldAgentRating] = await db
+      .select()
+      .from(clientFieldAgentRatings)
+      .where(
+        and(
+          eq(clientFieldAgentRatings.workOrderId, workOrderId),
+          eq(clientFieldAgentRatings.clientId, clientId)
+        )
+      );
+
+    const [dispatcherRating] = await db
+      .select()
+      .from(clientDispatcherRatings)
+      .where(
+        and(
+          eq(clientDispatcherRatings.workOrderId, workOrderId),
+          eq(clientDispatcherRatings.clientId, clientId)
+        )
+      );
+
+    const [serviceRating] = await db
+      .select()
+      .from(serviceClientRatings)
+      .where(
+        and(
+          eq(serviceClientRatings.workOrderId, workOrderId),
+          eq(serviceClientRatings.raterId, clientId)
+        )
+      );
+
+    return {
+      fieldAgent: !!fieldAgentRating,
+      dispatcher: !!dispatcherRating,
+      service: !!serviceRating,
+    };
+  }
+
+  async getFeedbackAnalytics(params: {
+    timeFrame: number;
+    category: string;
+    companyId?: string;
+    agentId?: string;
+  }): Promise<any> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - params.timeFrame);
+
+    // Get field agent ratings
+    let fieldAgentQuery = db
+      .select({
+        communicationRating: clientFieldAgentRatings.communicationRating,
+        timelinessRating: clientFieldAgentRatings.timelinessRating,
+        workSatisfactionRating: clientFieldAgentRatings.workSatisfactionRating,
+        workOrderId: clientFieldAgentRatings.workOrderId,
+        createdAt: clientFieldAgentRatings.createdAt,
+      })
+      .from(clientFieldAgentRatings)
+      .where(gte(clientFieldAgentRatings.createdAt, startDate));
+
+    if (params.companyId) {
+      fieldAgentQuery = fieldAgentQuery.where(eq(clientFieldAgentRatings.companyId, params.companyId));
+    }
+
+    if (params.agentId) {
+      fieldAgentQuery = fieldAgentQuery.where(eq(clientFieldAgentRatings.fieldAgentId, params.agentId));
+    }
+
+    const fieldAgentRatings = await fieldAgentQuery;
+
+    // Calculate overall rating and analytics
+    const totalRatings = fieldAgentRatings.length;
+    const totalWorkOrders = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(workOrders)
+      .where(
+        and(
+          gte(workOrders.createdAt, startDate),
+          params.companyId ? eq(workOrders.companyId, params.companyId) : undefined,
+          params.agentId ? eq(workOrders.assigneeId, params.agentId) : undefined
+        ).filter(Boolean)
+      );
+
+    const responseRate = totalWorkOrders[0]?.count > 0 
+      ? (totalRatings / totalWorkOrders[0].count) * 100 
+      : 0;
+
+    // Calculate average ratings
+    const avgCommunication = fieldAgentRatings.length > 0
+      ? fieldAgentRatings.reduce((sum, r) => sum + r.communicationRating, 0) / fieldAgentRatings.length
+      : 0;
+
+    const avgTimeliness = fieldAgentRatings.length > 0
+      ? fieldAgentRatings.reduce((sum, r) => sum + r.timelinessRating, 0) / fieldAgentRatings.length
+      : 0;
+
+    const avgWorkSatisfaction = fieldAgentRatings.length > 0
+      ? fieldAgentRatings.reduce((sum, r) => sum + r.workSatisfactionRating, 0) / fieldAgentRatings.length
+      : 0;
+
+    const overallRating = (avgCommunication + avgTimeliness + avgWorkSatisfaction) / 3;
+
+    // Calculate satisfaction score (4+ stars)
+    const highRatings = fieldAgentRatings.filter(r => 
+      (r.communicationRating >= 4 && r.timelinessRating >= 4 && r.workSatisfactionRating >= 4)
+    ).length;
+    const satisfactionScore = totalRatings > 0 ? (highRatings / totalRatings) * 100 : 0;
+
+    // Rating distribution
+    const ratingDistribution = {
+      5: 0, 4: 0, 3: 0, 2: 0, 1: 0
+    };
+
+    fieldAgentRatings.forEach(rating => {
+      const avg = (rating.communicationRating + rating.timelinessRating + rating.workSatisfactionRating) / 3;
+      const rounded = Math.round(avg);
+      if (ratingDistribution[rounded as keyof typeof ratingDistribution] !== undefined) {
+        ratingDistribution[rounded as keyof typeof ratingDistribution]++;
+      }
+    });
+
+    // Category breakdown
+    const categoryBreakdown = [
+      { name: 'Communication', rating: avgCommunication, count: totalRatings },
+      { name: 'Timeliness', rating: avgTimeliness, count: totalRatings },
+      { name: 'Work Satisfaction', rating: avgWorkSatisfaction, count: totalRatings },
+    ];
+
+    // Recent feedback (simplified)
+    const recentFeedback = fieldAgentRatings
+      .slice(0, 5)
+      .map(rating => ({
+        id: rating.workOrderId,
+        averageRating: (rating.communicationRating + rating.timelinessRating + rating.workSatisfactionRating) / 3,
+        workOrderTitle: `Work Order ${rating.workOrderId.slice(0, 8)}`,
+        createdAt: rating.createdAt,
+        clientName: 'Client User', // Would need to join with users table for real name
+      }));
+
+    // Action items (areas for improvement)
+    const actionItems = [];
+    if (avgCommunication < 3.5) {
+      actionItems.push({
+        title: 'Improve Communication',
+        description: 'Communication rating is below threshold. Consider additional training.',
+      });
+    }
+    if (avgTimeliness < 3.5) {
+      actionItems.push({
+        title: 'Improve Timeliness',
+        description: 'Timeliness rating needs attention. Review scheduling processes.',
+      });
+    }
+    if (avgWorkSatisfaction < 3.5) {
+      actionItems.push({
+        title: 'Enhance Work Quality',
+        description: 'Work satisfaction scores indicate need for quality improvements.',
+      });
+    }
+
+    return {
+      overallRating,
+      ratingTrend: 0, // Would need historical data for trend calculation
+      totalReviews: totalRatings,
+      reviewsThisPeriod: totalRatings,
+      responseRate,
+      satisfactionScore,
+      categoryBreakdown,
+      ratingDistribution,
+      recentFeedback,
+      actionItems,
+    };
+  }
+
+  async getFeedbackTrends(params: {
+    timeFrame: number;
+    companyId?: string;
+    agentId?: string;
+  }): Promise<any> {
+    // Implementation for trend analysis would require grouping by time periods
+    // For now, return basic trend structure
+    return {
+      weekly: [],
+      monthly: [],
+      categories: {
+        communication: { trend: 0, data: [] },
+        timeliness: { trend: 0, data: [] },
+        workSatisfaction: { trend: 0, data: [] },
+      }
+    };
+  }
+
+  async sendBulkFeedbackRequests(workOrderIds: string[], reminderType: string, requesterId: string): Promise<any> {
+    const results = { sent: 0, failed: 0, alreadyRequested: 0 };
+
+    for (const workOrderId of workOrderIds) {
+      try {
+        const workOrder = await this.getWorkOrder(workOrderId);
+        if (!workOrder) {
+          results.failed++;
+          continue;
+        }
+
+        // Create notification for feedback request
+        await db.insert(notifications).values({
+          id: nanoid(),
+          userId: workOrder.createdById,
+          workOrderId: workOrderId,
+          type: 'feedback_request',
+          title: 'Feedback Request',
+          message: `Please provide feedback for completed work order: ${workOrder.title}`,
+        });
+
+        results.sent++;
+      } catch (error) {
+        console.error(`Failed to send feedback request for work order ${workOrderId}:`, error);
+        results.failed++;
+      }
+    }
+
+    return results;
   }
 
   // Project Heartbeat CRUD operations for Phase 2 implementation

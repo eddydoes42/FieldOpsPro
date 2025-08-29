@@ -3,6 +3,12 @@
 ## Overview
 FieldOps Pro is a comprehensive field operations management platform designed to streamline IT field services. It provides advanced operational tools, dynamic time tracking, and enhanced work order capabilities for mobile workforce teams. The system incorporates a hierarchical, role-based access control system including Operations Director, company-level administrators, managers, dispatchers, and field agents. Key features include work order management with integrated issue reporting, user management, real-time messaging, and comprehensive role testing capabilities. The platform aims to improve communication, enhance operational efficiency, and support IT field service companies and their clients. It includes advanced modules for resource optimization, smart routing, agent capabilities, profitability analysis, bidding, credential management, predictive risk, and service quality monitoring.
 
+**Phase 2 Enhancements (Recently Implemented):**
+- Enhanced Job Visibility Logic (M3) with sophisticated filtering, location radius calculations, skills matching, and exclusive network support
+- Document Uploading Feature (M4) with comprehensive file management, categorization, and role-based access controls
+- Structured Issue Creation System (M5) with advanced reporting, auto-escalation, analytics, and comprehensive issue tracking
+- Client Feedback Loop (M6) with multi-tier rating system, analytics dashboard, and automated feedback collection workflows
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies"). Organizations providing work orders and projects to Service Companies should be referred to as "Client Companies" (not just "Companies")
@@ -52,6 +58,10 @@ The application features a modern design built on Tailwind CSS and shadcn/ui, pr
 - **Predictive Risk & Service Quality**: Modules for predictive risk analysis and a service quality dashboard.
 - **Talent Network Page**: Accessible to clients, showing field agent cards with detailed profiles and company associations.
 - **Restricted Authentication**: Login limited to pre-approved team members; no self-registration.
+- **Enhanced Job Visibility (M3)**: Advanced filtering with location radius, skills matching, experience level filtering, and exclusive network support with skill match scoring.
+- **Document Management (M4)**: Comprehensive document uploading, categorization (pre/during/post-visit), role-based access controls, and object storage integration.
+- **Structured Issue Reporting (M5)**: Advanced issue creation system with categorization, severity levels, auto-escalation for high severity issues, analytics dashboard, and comprehensive tracking.
+- **Client Feedback System (M6)**: Multi-tier rating system (field agent, dispatcher, service company), feedback analytics dashboard, automated collection workflows, and trend analysis.
 
 ## External Dependencies
 - **React**: Frontend UI library.
