@@ -22,7 +22,8 @@ import {
   Filter,
   Eye,
   ArrowLeft,
-  Home
+  Home,
+  Trash2
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,6 +52,19 @@ const createWorkOrderSchema = insertWorkOrderSchema.extend({
   clientCompanyId: z.string().optional(), // For Operations Director posting on behalf of client
 });
 
+interface Task {
+  title: string;
+  description: string;
+  category: 'pre_visit' | 'on_site' | 'post_site';
+}
+
+interface Tool {
+  name: string;
+  description: string;
+  category: 'hardware' | 'software' | 'safety' | 'testing' | 'other';
+  isRequired: boolean;
+}
+
 interface JobNetworkProps {
   user: User;
   testingRole?: string;
@@ -67,6 +81,21 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   const [statusFilter, setStatusFilter] = useState('all');
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Task and Tool Management State
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTask, setNewTask] = useState<Task>({
+    title: '',
+    description: '',
+    category: 'pre_visit'
+  });
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [newTool, setNewTool] = useState<Tool>({
+    name: '',
+    description: '',
+    category: 'hardware',
+    isRequired: true
+  });
 
 
 
@@ -173,12 +202,29 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   // Create work order mutation
   const createWorkOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/work-orders', 'POST', data);
+      const response = await apiRequest('POST', '/api/work-orders', data);
+      const createdWorkOrder = await response.json();
+      
+      // Create tasks for the work order
+      if (tasks.length > 0) {
+        for (let i = 0; i < tasks.length; i++) {
+          const task = tasks[i];
+          await apiRequest('POST', `/api/work-orders/${createdWorkOrder.id}/tasks`, {
+            ...task,
+            orderIndex: i
+          });
+        }
+      }
+      
+      return createdWorkOrder;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/job-network'] });
       setIsCreateWorkOrderOpen(false);
       workOrderForm.reset();
+      setTasks([]);
+      setTools([]);
       toast({
         title: 'Success',
         description: 'Work order created successfully',
@@ -222,7 +268,96 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       budget: data.budget ? parseFloat(parseCurrency(data.budget)) : null,
       estimatedHours: data.estimatedHours ? parseInt(data.estimatedHours) : null,
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+      tasks,
+      tools
     });
+  };
+
+  // Task Management Functions
+  const handleAddTask = () => {
+    if (!newTask.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Task title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTasks([...tasks, newTask]);
+    setNewTask({ title: '', description: '', category: 'pre_visit' });
+    toast({
+      title: "Task Added",
+      description: "Task has been added to the work order",
+    });
+  };
+
+  const handleRemoveTask = (index: number) => {
+    setTasks(tasks.filter((_, i) => i !== index));
+  };
+
+  // Tool Management Functions
+  const handleAddTool = () => {
+    if (!newTool.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Tool name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTools([...tools, newTool]);
+    setNewTool({ name: '', description: '', category: 'hardware', isRequired: true });
+    toast({
+      title: "Tool Added",
+      description: "Tool has been added to the work order",
+    });
+  };
+
+  const handleRemoveTool = (index: number) => {
+    setTools(tools.filter((_, i) => i !== index));
+  };
+
+  // Category Label Functions
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'pre_visit': return '🚗 Pre-Site';
+      case 'on_site': return '🔧 On-Site';
+      case 'post_site': return '📋 Post-Site';
+      default: return category;
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'pre_visit': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'on_site': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      case 'post_site': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+  };
+
+  const getToolCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'hardware': return '⚙️ Hardware';
+      case 'software': return '💻 Software';
+      case 'safety': return '🦺 Safety';
+      case 'testing': return '🔍 Testing';
+      case 'other': return '🔧 Other';
+      default: return category;
+    }
+  };
+
+  const getToolCategoryColor = (category: string) => {
+    switch (category) {
+      case 'hardware': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      case 'software': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'safety': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'testing': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'other': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
   };
 
   const handleRequestJob = (job: any) => {
@@ -608,6 +743,252 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               </FormItem>
                             )}
                           />
+                        </div>
+
+                        {/* Tasks Section */}
+                        <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
+                            <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 text-xs">
+                              {tasks.length} tasks ready
+                            </Badge>
+                          </div>
+                          
+                          {/* Add Task Form */}
+                          <Card className="mb-3 border-dashed border-2 border-blue-300 dark:border-blue-700">
+                            <CardContent className="pt-3 pb-3">
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Category</label>
+                                    <Select 
+                                      value={newTask.category} 
+                                      onValueChange={(value) => setNewTask({ ...newTask, category: value as any })}
+                                    >
+                                      <SelectTrigger className="mt-1 h-8">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pre_visit">🚗 Pre-Site</SelectItem>
+                                        <SelectItem value="on_site">🔧 On-Site</SelectItem>
+                                        <SelectItem value="post_site">📋 Post-Site</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Task Title</label>
+                                    <Input
+                                      value={newTask.title}
+                                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                                      placeholder="Enter task title"
+                                      className="mt-1 h-8"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
+                                  <Textarea
+                                    value={newTask.description}
+                                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                                    placeholder="Enter task description"
+                                    rows={1}
+                                    className="mt-1 min-h-[32px]"
+                                  />
+                                </div>
+                                <Button
+                                  type="button"
+                                  onClick={handleAddTask}
+                                  size="sm"
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Add Task to Work Order
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Tasks List */}
+                          {tasks.length > 0 && (
+                            <div className="space-y-1">
+                              {['pre_visit', 'on_site', 'post_site'].map(category => {
+                                const categoryTasks = tasks.filter(task => task.category === category);
+                                if (categoryTasks.length === 0) return null;
+                                
+                                return (
+                                  <div key={category}>
+                                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                                      {getCategoryLabel(category)} ({categoryTasks.length})
+                                    </h4>
+                                    <div className="space-y-1">
+                                      {categoryTasks.map((task, index) => {
+                                        const globalIndex = tasks.findIndex(t => t === task);
+                                        return (
+                                          <div
+                                            key={globalIndex}
+                                            className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                          >
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2">
+                                                <Badge className={getCategoryColor(task.category)} variant="secondary">
+                                                  {getCategoryLabel(task.category)}
+                                                </Badge>
+                                                <span className="font-medium text-sm">{task.title}</span>
+                                              </div>
+                                              {task.description && (
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                                  {task.description}
+                                                </p>
+                                              )}
+                                            </div>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleRemoveTask(globalIndex)}
+                                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Tools Section */}
+                        <div className="bg-purple-50 dark:bg-purple-950 p-3 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-base font-semibold text-purple-900 dark:text-purple-100">🔧 Required Tools</h3>
+                            <Badge variant="secondary" className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 text-xs">
+                              {tools.length} tools specified
+                            </Badge>
+                          </div>
+                          
+                          {/* Add Tool Form */}
+                          <Card className="mb-3 border-dashed border-2 border-purple-300 dark:border-purple-700">
+                            <CardContent className="pt-3 pb-3">
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Category</label>
+                                    <Select 
+                                      value={newTool.category} 
+                                      onValueChange={(value) => setNewTool({ ...newTool, category: value as any })}
+                                    >
+                                      <SelectTrigger className="mt-1 h-8">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="hardware">⚙️ Hardware</SelectItem>
+                                        <SelectItem value="software">💻 Software</SelectItem>
+                                        <SelectItem value="safety">🦺 Safety</SelectItem>
+                                        <SelectItem value="testing">🔍 Testing</SelectItem>
+                                        <SelectItem value="other">🔧 Other</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Tool Name</label>
+                                    <Input
+                                      value={newTool.name}
+                                      onChange={(e) => setNewTool({ ...newTool, name: e.target.value })}
+                                      placeholder="Enter tool name"
+                                      className="mt-1 h-8"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Description (Optional)</label>
+                                  <Textarea
+                                    value={newTool.description}
+                                    onChange={(e) => setNewTool({ ...newTool, description: e.target.value })}
+                                    placeholder="Enter tool description"
+                                    rows={1}
+                                    className="mt-1 min-h-[32px]"
+                                  />
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={newTool.isRequired}
+                                    onChange={(e) => setNewTool({ ...newTool, isRequired: e.target.checked })}
+                                    className="w-3 h-3"
+                                  />
+                                  <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Required Tool</label>
+                                </div>
+                                <Button
+                                  type="button"
+                                  onClick={handleAddTool}
+                                  size="sm"
+                                  className="w-full bg-purple-600 hover:bg-purple-700 text-white h-8"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Add Tool to Work Order
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Tools List */}
+                          {tools.length > 0 && (
+                            <div className="mt-3 space-y-1">
+                              {['hardware', 'software', 'safety', 'testing', 'other'].map(category => {
+                                const categoryTools = tools.filter(tool => tool.category === category);
+                                if (categoryTools.length === 0) return null;
+                                
+                                return (
+                                  <div key={category}>
+                                    <h5 className="text-xs font-semibold text-purple-800 dark:text-purple-200 mb-1">
+                                      {getToolCategoryLabel(category)} ({categoryTools.length})
+                                    </h5>
+                                    <div className="space-y-1">
+                                      {categoryTools.map((tool, index) => {
+                                        const globalIndex = tools.findIndex(t => t === tool);
+                                        return (
+                                          <div
+                                            key={globalIndex}
+                                            className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                          >
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2">
+                                                <Badge className={getToolCategoryColor(tool.category)} variant="secondary">
+                                                  {getToolCategoryLabel(tool.category)}
+                                                </Badge>
+                                                <span className="font-medium text-sm">{tool.name}</span>
+                                                {tool.isRequired && (
+                                                  <Badge variant="destructive" className="text-xs">Required</Badge>
+                                                )}
+                                              </div>
+                                              {tool.description && (
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                                  {tool.description}
+                                                </p>
+                                              )}
+                                            </div>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleRemoveTool(globalIndex)}
+                                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex justify-end space-x-2">
