@@ -18,6 +18,7 @@ import WorkOrderTasks from "@/components/work-order-tasks";
 import PaymentStatusButton from "@/components/payment-status-button";
 import { FieldAgentRatingForm, DispatcherRatingForm, ClientRatingForm } from "@/components/rating-system";
 import DocumentUploadControl from "@/components/DocumentUploadControl";
+import { TaskDocumentUpload } from "@/components/TaskDocumentUpload";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 // Rating trigger hook removed for now
@@ -1752,6 +1753,11 @@ export default function WorkOrders() {
                                       <h5 className={`font-medium ${task.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                                         {task.title}
                                       </h5>
+                                      {task.documentsRequired > 0 && (
+                                        <Badge variant="outline" className="ml-2 text-xs bg-orange-100 text-orange-800 border-orange-300">
+                                          📄 {task.documentsRequired} doc{task.documentsRequired !== 1 ? 's' : ''} required
+                                        </Badge>
+                                      )}
                                     </div>
                                     {task.description && (
                                       <p className="text-sm text-muted-foreground mt-1 ml-7">
@@ -1762,6 +1768,19 @@ export default function WorkOrders() {
                                       <p className="text-xs text-muted-foreground mt-1 ml-7">
                                         Completed on {new Date(task.completedAt).toLocaleDateString()}
                                       </p>
+                                    )}
+                                    
+                                    {/* Task Document Upload for Service Company users */}
+                                    {task.documentsRequired > 0 && user?.companyId && (
+                                      <div className="ml-7 mt-3">
+                                        <TaskDocumentUpload
+                                          taskId={task.id}
+                                          taskTitle={task.title}
+                                          documentsRequired={task.documentsRequired}
+                                          canUpload={true}
+                                          disabled={task.isCompleted}
+                                        />
+                                      </div>
                                     )}
                                   </div>
                                   

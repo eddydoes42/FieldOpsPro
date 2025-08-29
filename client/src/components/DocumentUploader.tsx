@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ export function DocumentUploader({
 }: DocumentUploaderProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<UploadingFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -230,14 +231,29 @@ export function DocumentUploader({
       <CardContent className="space-y-4">
         {/* File Input */}
         <div>
-          <Input
+          <input
+            ref={fileInputRef}
             type="file"
             multiple={maxNumberOfFiles > 1}
             accept={allowedFileTypes.join(",")}
             onChange={handleFileSelect}
             disabled={isUploading || selectedFiles.length >= maxNumberOfFiles}
-            className="cursor-pointer"
+            className="hidden"
           />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading || selectedFiles.length >= maxNumberOfFiles}
+            variant="outline"
+            className="w-full h-20 border-2 border-dashed hover:border-solid flex flex-col items-center justify-center gap-2"
+          >
+            <Upload className="h-6 w-6" />
+            <span className="text-sm font-medium">
+              Browse Files
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Click to select {maxNumberOfFiles > 1 ? 'files' : 'a file'}
+            </span>
+          </Button>
           {allowedFileTypes.length > 0 && (
             <p className="text-xs text-muted-foreground mt-1">
               Allowed types: {allowedFileTypes.join(", ")}
