@@ -47,8 +47,14 @@ const requestJobSchema = z.object({
   proposedAgentId: z.string().optional(),
 });
 
-const createWorkOrderSchema = insertWorkOrderSchema.extend({
+const createWorkOrderSchema = insertWorkOrderSchema.omit({ 
+  dueDate: true,
+  budgetAmount: true,
+  estimatedHours: true 
+}).extend({
   budget: z.string().optional(),
+  dueDate: z.string().optional(),
+  estimatedHours: z.string().optional(),
   clientCompanyId: z.string().optional(), // For Operations Director posting on behalf of client
 });
 
