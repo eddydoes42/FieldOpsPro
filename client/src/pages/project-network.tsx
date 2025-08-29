@@ -696,8 +696,10 @@ export default function ProjectNetwork() {
                                 type="number" 
                                 min={0}
                                 step="0.01"
-                                {...field}
-                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
+                                onBlur={field.onBlur}
+                                name={field.name}
                               />
                             </FormControl>
                             <FormMessage />

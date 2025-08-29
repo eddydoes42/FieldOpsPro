@@ -490,7 +490,10 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                                   step="0.01"
                                   placeholder="Enter amount"
                                   className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-                                  {...field} 
+                                  value={field.value || ''}
+                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : e.target.value)}
+                                  onBlur={field.onBlur}
+                                  name={field.name}
                                 />
                               </FormControl>
                               <FormMessage />

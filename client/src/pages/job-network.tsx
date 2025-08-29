@@ -669,9 +669,15 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                   <Input 
                                     placeholder="Enter budget amount" 
                                     type="text"
-                                    value={field.value ? formatCurrency(field.value) : ''}
+                                    value={field.value || ''}
                                     onChange={(e) => {
-                                      const formattedValue = formatCurrency(e.target.value);
+                                      const rawValue = e.target.value;
+                                      // Allow complete clearing of the field
+                                      if (rawValue === '' || rawValue === '$' || rawValue === '$0') {
+                                        field.onChange('');
+                                        return;
+                                      }
+                                      const formattedValue = formatCurrency(rawValue);
                                       field.onChange(formattedValue);
                                     }}
                                     onBlur={field.onBlur}
