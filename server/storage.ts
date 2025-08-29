@@ -4902,6 +4902,496 @@ export class DatabaseStorage implements IStorage {
     return results;
   }
 
+  // M1 - Job Request System Operations
+  async getJobRequests(params: {
+    companyId?: string;
+    viewMode?: string;
+    search?: string;
+    status?: string;
+    priority?: string;
+    category?: string;
+    requesterId?: string;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        ...jobNetworkPosts,
+        company: {
+          name: sql<string>`company.name`,
+        },
+        postedBy: {
+          firstName: sql<string>`posted_by.first_name`,
+          lastName: sql<string>`posted_by.last_name`,
+        },
+      })
+      .from(jobNetworkPosts)
+      .leftJoin(sql`companies AS company`, sql`${jobNetworkPosts.clientCompanyId} = company.id`)
+      .leftJoin(sql`users AS posted_by`, sql`${jobNetworkPosts.postedById} = posted_by.id`);
+
+    const conditions = [];
+
+    // Filter by view mode
+    if (params.viewMode === 'client' && params.companyId) {
+      conditions.push(eq(jobNetworkPosts.clientCompanyId, params.companyId));
+    } else if (params.viewMode === 'service') {
+      // Show public jobs and jobs routed to this company
+      conditions.push(
+        or(
+          eq(jobNetworkPosts.isPublic, true),
+          eq(jobNetworkPosts.routedToCompanyId, params.companyId!)
+        )
+      );
+    } else if (params.viewMode === 'network') {
+      // Show only public jobs
+      conditions.push(eq(jobNetworkPosts.isPublic, true));
+    }
+
+    // Filter by search
+    if (params.search) {
+      conditions.push(
+        or(
+          ilike(jobNetworkPosts.title, `%${params.search}%`),
+          ilike(jobNetworkPosts.description, `%${params.search}%`),
+          ilike(jobNetworkPosts.location, `%${params.search}%`)
+        )
+      );
+    }
+
+    // Filter by status
+    if (params.status) {
+      conditions.push(eq(jobNetworkPosts.status, params.status));
+    }
+
+    // Filter by priority
+    if (params.priority) {
+      conditions.push(eq(jobNetworkPosts.priority, params.priority));
+    }
+
+    // Filter by category
+    if (params.category) {
+      conditions.push(eq(jobNetworkPosts.serviceCategory, params.category));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(jobNetworkPosts.createdAt));
+  }
+
+  async createJobRequest(requestData: any): Promise<any> {
+    const requestId = nanoid();
+    const [jobRequest] = await db
+      .insert(jobNetworkPosts)
+      .values({ ...requestData, id: requestId })
+      .returning();
+    return jobRequest;
+  }
+
+  async assignJobRequest(requestId: string, serviceCompanyId: string, assignedById: string): Promise<any> {
+    const [assignedRequest] = await db
+      .update(jobNetworkPosts)
+      .set({
+        status: 'assigned',
+        assignedToCompanyId: serviceCompanyId,
+        assignedById: assignedById,
+        assignedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(jobNetworkPosts.id, requestId))
+      .returning();
+
+    // Create notification for the assignment
+    const request = await db
+      .select()
+      .from(jobNetworkPosts)
+      .where(eq(jobNetworkPosts.id, requestId))
+      .limit(1);
+
+    if (request[0]) {
+      await db.insert(notifications).values({
+        id: nanoid(),
+        userId: request[0].postedById,
+        type: 'job_assigned',
+        title: 'Job Request Assigned',
+        message: `Your job request "${request[0].title}" has been assigned to a service company.`,
+      });
+    }
+
+    return assignedRequest;
+  }
+
+  // M2 - Contractor Onboarding Flow Operations
+  async getContractorOnboarding(params: {
+    companyId?: string;
+    userId?: string;
+    viewMode?: string;
+    requesterId?: string;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        ...contractorOnboarding,
+        user: {
+          firstName: sql<string>`users.first_name`,
+          lastName: sql<string>`users.last_name`,
+          email: sql<string>`users.email`,
+        },
+        company: {
+          name: sql<string>`companies.name`,
+        },
+      })
+      .from(contractorOnboarding)
+      .leftJoin(users, eq(contractorOnboarding.userId, users.id))
+      .leftJoin(companies, eq(contractorOnboarding.companyId, companies.id));
+
+    const conditions = [];
+
+    // Filter by company
+    if (params.companyId) {
+      conditions.push(eq(contractorOnboarding.companyId, params.companyId));
+    }
+
+    // Filter by user
+    if (params.userId) {
+      conditions.push(eq(contractorOnboarding.userId, params.userId));
+    }
+
+    // Filter by view mode
+    if (params.viewMode === 'applicant' && params.requesterId) {
+      conditions.push(eq(contractorOnboarding.userId, params.requesterId));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(contractorOnboarding.createdAt));
+  }
+
+  async getContractorOnboardingDetails(onboardingId: string, requesterId: string): Promise<any> {
+    const [record] = await db
+      .select({
+        ...contractorOnboarding,
+        user: {
+          firstName: sql<string>`users.first_name`,
+          lastName: sql<string>`users.last_name`,
+          email: sql<string>`users.email`,
+        },
+        company: {
+          name: sql<string>`companies.name`,
+        },
+      })
+      .from(contractorOnboarding)
+      .leftJoin(users, eq(contractorOnboarding.userId, users.id))
+      .leftJoin(companies, eq(contractorOnboarding.companyId, companies.id))
+      .where(eq(contractorOnboarding.id, onboardingId))
+      .limit(1);
+
+    return record;
+  }
+
+  async createContractorOnboarding(onboardingData: any): Promise<any> {
+    const onboardingId = nanoid();
+    const [record] = await db
+      .insert(contractorOnboarding)
+      .values({
+        ...onboardingData,
+        id: onboardingId,
+        onboardingStage: 'application',
+        applicationData: onboardingData.applicationData,
+      })
+      .returning();
+
+    // Create notification for admin review
+    await db.insert(notifications).values({
+      id: nanoid(),
+      userId: onboardingData.userId,
+      type: 'onboarding_submitted',
+      title: 'Onboarding Application Submitted',
+      message: 'Your contractor onboarding application has been submitted for review.',
+    });
+
+    return record;
+  }
+
+  async updateOnboardingStage(onboardingId: string, stage: string, data: any, updatedById: string): Promise<any> {
+    const updateData: any = {
+      onboardingStage: stage,
+      updatedAt: new Date(),
+    };
+
+    // Update specific fields based on stage
+    switch (stage) {
+      case 'documentation':
+        updateData.documentsSubmitted = data.documents;
+        break;
+      case 'skills_assessment':
+        updateData.skillsAssessmentScore = data.score;
+        break;
+      case 'background_check':
+        updateData.backgroundCheckStatus = data.status;
+        updateData.backgroundCheckData = data.checkData;
+        break;
+    }
+
+    const [updatedRecord] = await db
+      .update(contractorOnboarding)
+      .set(updateData)
+      .where(eq(contractorOnboarding.id, onboardingId))
+      .returning();
+
+    return updatedRecord;
+  }
+
+  async processOnboardingApproval(onboardingId: string, action: 'approve' | 'reject', notes: string, approvedById: string): Promise<any> {
+    const updateData: any = {
+      approvedById,
+      updatedAt: new Date(),
+    };
+
+    if (action === 'approve') {
+      updateData.onboardingStage = 'completed';
+      updateData.completedAt = new Date();
+      updateData.approvalNotes = notes;
+      updateData.isActive = true;
+    } else {
+      updateData.onboardingStage = 'approval';
+      updateData.rejectionReason = notes;
+      updateData.isActive = false;
+    }
+
+    const [updatedRecord] = await db
+      .update(contractorOnboarding)
+      .set(updateData)
+      .where(eq(contractorOnboarding.id, onboardingId))
+      .returning();
+
+    // Get the contractor's user record
+    const record = await db
+      .select()
+      .from(contractorOnboarding)
+      .where(eq(contractorOnboarding.id, onboardingId))
+      .limit(1);
+
+    if (record[0]) {
+      // Create notification for the contractor
+      await db.insert(notifications).values({
+        id: nanoid(),
+        userId: record[0].userId,
+        type: action === 'approve' ? 'onboarding_approved' : 'onboarding_rejected',
+        title: action === 'approve' ? 'Onboarding Approved' : 'Onboarding Rejected',
+        message: action === 'approve' 
+          ? 'Congratulations! Your contractor onboarding has been approved. You can now accept work assignments.'
+          : `Your contractor onboarding application has been rejected. Reason: ${notes}`,
+      });
+
+      // If approved, update user role to field_agent if not already set
+      if (action === 'approve') {
+        const user = await this.getUser(record[0].userId);
+        if (user && user.role === 'pending') {
+          await db
+            .update(users)
+            .set({ role: 'field_agent', updatedAt: new Date() })
+            .where(eq(users.id, record[0].userId));
+        }
+      }
+    }
+
+    return updatedRecord;
+  }
+
+  // M4 - Role-Aware Messaging Hub Operations
+  async getMessagingChannels(params: {
+    companyId?: string;
+    workOrderId?: string;
+    projectId?: string;
+    viewMode?: string;
+    userRole?: string;
+    userId?: string;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        ...messagingChannels,
+        creator: {
+          firstName: sql<string>`users.first_name`,
+          lastName: sql<string>`users.last_name`,
+        },
+        messageCount: sql<number>`COUNT(messages.id)`,
+      })
+      .from(messagingChannels)
+      .leftJoin(users, eq(messagingChannels.createdById, users.id))
+      .leftJoin(sql`channel_messages AS messages`, sql`${messagingChannels.id} = messages.channel_id`)
+      .groupBy(messagingChannels.id, sql`users.first_name`, sql`users.last_name`);
+
+    const conditions = [];
+
+    // Filter by company
+    if (params.companyId) {
+      conditions.push(eq(messagingChannels.companyId, params.companyId));
+    }
+
+    // Filter by work order
+    if (params.workOrderId) {
+      conditions.push(eq(messagingChannels.workOrderId, params.workOrderId));
+    }
+
+    // Filter by project
+    if (params.projectId) {
+      conditions.push(eq(messagingChannels.projectId, params.projectId));
+    }
+
+    // Role-based access control
+    if (params.userRole) {
+      conditions.push(
+        or(
+          eq(messagingChannels.channelType, 'company_wide'),
+          eq(messagingChannels.channelType, 'project_specific'),
+          and(
+            eq(messagingChannels.channelType, 'role_based'),
+            sql`${params.userRole} = ANY(${messagingChannels.allowedRoles})`
+          ),
+          eq(messagingChannels.createdById, params.userId!)
+        )
+      );
+    }
+
+    // Exclude archived channels unless admin
+    if (!['operations_director', 'administrator'].includes(params.userRole || '')) {
+      conditions.push(eq(messagingChannels.isArchived, false));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(messagingChannels.lastActivityAt), desc(messagingChannels.createdAt));
+  }
+
+  async createMessagingChannel(channelData: any): Promise<any> {
+    const channelId = nanoid();
+    const [channel] = await db
+      .insert(messagingChannels)
+      .values({ ...channelData, id: channelId })
+      .returning();
+
+    // Create system message for channel creation
+    await db.insert(channelMessages).values({
+      id: nanoid(),
+      channelId: channelId,
+      senderId: channelData.createdById,
+      message: `Channel "${channelData.name}" has been created.`,
+      messageType: 'system',
+      isSystemMessage: true,
+    });
+
+    return channel;
+  }
+
+  async getChannelMessages(channelId: string, userId: string): Promise<any[]> {
+    // First check if user has access to the channel
+    const hasAccess = await this.checkChannelAccess(channelId, userId);
+    if (!hasAccess) {
+      throw new Error('Access denied to this channel');
+    }
+
+    const messages = await db
+      .select({
+        ...channelMessages,
+        sender: {
+          firstName: sql<string>`sender.first_name`,
+          lastName: sql<string>`sender.last_name`,
+          role: sql<string>`sender.role`,
+        },
+        replyTo: {
+          id: sql<string>`reply_to.id`,
+          message: sql<string>`reply_to.message`,
+          sender: {
+            firstName: sql<string>`reply_sender.first_name`,
+            lastName: sql<string>`reply_sender.last_name`,
+          },
+        },
+      })
+      .from(channelMessages)
+      .leftJoin(sql`users AS sender`, sql`${channelMessages.senderId} = sender.id`)
+      .leftJoin(sql`channel_messages AS reply_to`, sql`${channelMessages.replyToId} = reply_to.id`)
+      .leftJoin(sql`users AS reply_sender`, sql`reply_to.sender_id = reply_sender.id`)
+      .where(eq(channelMessages.channelId, channelId))
+      .orderBy(asc(channelMessages.createdAt));
+
+    return messages;
+  }
+
+  async createChannelMessage(messageData: any): Promise<any> {
+    const messageId = nanoid();
+    const [message] = await db
+      .insert(channelMessages)
+      .values({ ...messageData, id: messageId })
+      .returning();
+
+    // Update channel's last activity
+    await db
+      .update(messagingChannels)
+      .set({ 
+        lastActivityAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(messagingChannels.id, messageData.channelId));
+
+    return message;
+  }
+
+  async checkChannelAccess(channelId: string, userId: string, userRole?: string): Promise<boolean> {
+    const [channel] = await db
+      .select()
+      .from(messagingChannels)
+      .where(eq(messagingChannels.id, channelId))
+      .limit(1);
+
+    if (!channel) {
+      return false;
+    }
+
+    // Channel creator always has access
+    if (channel.createdById === userId) {
+      return true;
+    }
+
+    // Operations director has access to all channels
+    if (userRole === 'operations_director') {
+      return true;
+    }
+
+    // Check role-based access
+    if (channel.channelType === 'role_based') {
+      return userRole ? channel.allowedRoles.includes(userRole) : false;
+    }
+
+    // Company-wide and project-specific channels are accessible by default
+    return ['company_wide', 'project_specific'].includes(channel.channelType);
+  }
+
+  async archiveMessagingChannel(channelId: string, archivedById: string): Promise<any> {
+    const [archivedChannel] = await db
+      .update(messagingChannels)
+      .set({
+        isArchived: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(messagingChannels.id, channelId))
+      .returning();
+
+    // Create system message for archival
+    await db.insert(channelMessages).values({
+      id: nanoid(),
+      channelId: channelId,
+      senderId: archivedById,
+      message: `Channel has been archived.`,
+      messageType: 'system',
+      isSystemMessage: true,
+    });
+
+    return archivedChannel;
+  }
+
   // Project Heartbeat CRUD operations for Phase 2 implementation
   async createProjectHeartbeat(heartbeatData: any): Promise<any> {
     const [heartbeat] = await db

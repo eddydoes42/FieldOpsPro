@@ -497,7 +497,7 @@ export const serviceClientRatings = pgTable("service_client_ratings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Job Network - Public work order postings visible to all Admin Teams
+// Job Network - Public work order postings visible to all Admin Teams (M1 - Job Request System)
 export const jobNetworkPosts = pgTable("job_network_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title").notNull(),
@@ -520,9 +520,127 @@ export const jobNetworkPosts = pgTable("job_network_posts", {
   // Direct routing option
   routedToCompanyId: varchar("routed_to_company_id").references(() => companies.id), // For direct routing to specific service company
   isPublic: boolean("is_public").default(true), // false for routed jobs
+  // Enhanced job request fields
+  urgencyLevel: varchar("urgency_level").default("normal"), // low, normal, high, critical
+  contractorRequirements: jsonb("contractor_requirements"), // Specific requirements for contractors
+  estimatedStartDate: timestamp("estimated_start_date"),
+  estimatedEndDate: timestamp("estimated_end_date"),
+  serviceCategory: varchar("service_category"), // network_install, maintenance, troubleshooting, etc.
+  equipmentProvided: boolean("equipment_provided").default(false),
+  accessInstructions: text("access_instructions"),
+  specialRequirements: text("special_requirements"),
+  approvalRequired: boolean("approval_required").default(false),
+  maxBudget: decimal("max_budget"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// M2 - Contractor Onboarding Flow
+export const contractorOnboarding = pgTable("contractor_onboarding", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  onboardingStage: varchar("onboarding_stage").notNull().default("application"), // application, documentation, skills_assessment, background_check, approval, completed
+  applicationData: jsonb("application_data"), // JSON with application form data
+  documentsSubmitted: jsonb("documents_submitted"), // Array of document references
+  skillsAssessmentScore: integer("skills_assessment_score"),
+  backgroundCheckStatus: varchar("background_check_status"), // pending, clear, issues, failed
+  backgroundCheckData: jsonb("background_check_data"),
+  approvedById: varchar("approved_by_id").references(() => users.id),
+  approvalNotes: text("approval_notes"),
+  rejectionReason: text("rejection_reason"),
+  completedAt: timestamp("completed_at"),
+  expiresAt: timestamp("expires_at"), // For time-limited approvals
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// M4 - Role-Aware Messaging Hub
+export const messagingChannels = pgTable("messaging_channels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  channelType: varchar("channel_type").notNull(), // company_wide, project_specific, role_based, direct
+  companyId: varchar("company_id").references(() => companies.id),
+  workOrderId: varchar("work_order_id").references(() => workOrders.id),
+  projectId: varchar("project_id").references(() => projects.id),
+  allowedRoles: text("allowed_roles").array(), // Array of roles that can access this channel
+  createdById: varchar("created_by_id").notNull().references(() => users.id),
+  isArchived: boolean("is_archived").default(false),
+  lastActivityAt: timestamp("last_activity_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const channelMessages = pgTable("channel_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").notNull().references(() => messagingChannels.id),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  message: text("message").notNull(),
+  messageType: varchar("message_type").default("text"), // text, file, system, alert
+  attachments: text("attachments").array().default(sql`ARRAY[]::text[]`),
+  mentions: text("mentions").array().default(sql`ARRAY[]::text[]`), // User IDs mentioned in message
+  isEdited: boolean("is_edited").default(false),
+  editedAt: timestamp("edited_at"),
+  replyToId: varchar("reply_to_id").references(() => channelMessages.id), // For threaded conversations
+  priority: varchar("priority").default("normal"), // low, normal, high, urgent
+  isSystemMessage: boolean("is_system_message").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+
+
+// M11 - Job Category Profitability Analysis
+export const jobCategoryMetrics = pgTable("job_category_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  category: varchar("category").notNull(), // network_installation, maintenance, troubleshooting, etc.
+  periodStart: date("period_start").notNull(),
+  periodEnd: date("period_end").notNull(),
+  totalJobs: integer("total_jobs").notNull().default(0),
+  completedJobs: integer("completed_jobs").notNull().default(0),
+  totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }).default("0.00"),
+  totalCosts: decimal("total_costs", { precision: 12, scale: 2 }).default("0.00"),
+  profitMargin: decimal("profit_margin", { precision: 5, scale: 2 }).default("0.00"),
+  averageJobValue: decimal("average_job_value", { precision: 10, scale: 2 }).default("0.00"),
+  averageCompletionTime: decimal("average_completion_time", { precision: 8, scale: 2 }).default("0.00"), // in hours
+  customerSatisfactionScore: decimal("customer_satisfaction_score", { precision: 3, scale: 2 }).default("0.00"),
+  repeatCustomerRate: decimal("repeat_customer_rate", { precision: 5, scale: 2 }).default("0.00"),
+  issueRate: decimal("issue_rate", { precision: 5, scale: 2 }).default("0.00"), // percentage of jobs with issues
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// M14 - Bid & Proposal System
+export const proposals = pgTable("proposals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobNetworkPostId: varchar("job_network_post_id").notNull().references(() => jobNetworkPosts.id),
+  serviceCompanyId: varchar("service_company_id").notNull().references(() => companies.id),
+  submittedById: varchar("submitted_by_id").notNull().references(() => users.id),
+  proposalTitle: varchar("proposal_title").notNull(),
+  proposalDescription: text("proposal_description").notNull(),
+  proposedBudget: decimal("proposed_budget", { precision: 12, scale: 2 }).notNull(),
+  estimatedStartDate: timestamp("estimated_start_date"),
+  estimatedEndDate: timestamp("estimated_end_date"),
+  proposedTeam: jsonb("proposed_team"), // Array of team member objects
+  methodology: text("methodology"), // How the work will be performed
+  timeline: jsonb("timeline"), // Detailed timeline with milestones
+  assumptions: text("assumptions"), // Any assumptions made in the proposal
+  riskMitigation: text("risk_mitigation"), // Risk assessment and mitigation strategies
+  qualifications: text("qualifications"), // Company and team qualifications
+  portfolioItems: jsonb("portfolio_items"), // Relevant past work examples
+  status: varchar("status").default("submitted"), // submitted, under_review, shortlisted, accepted, rejected, withdrawn
+  reviewedById: varchar("reviewed_by_id").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  isWinning: boolean("is_winning").default(false), // True if this proposal won the bid
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+
 
 // Exclusive Network - Private work order postings for Admin Teams only
 export const exclusiveNetworkPosts = pgTable("exclusive_network_posts", {

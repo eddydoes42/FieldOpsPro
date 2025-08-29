@@ -1437,6 +1437,282 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // M1 - Job Request System API
+  app.get("/api/job-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { companyId, viewMode, search, status, priority, category } = req.query;
+      
+      const jobRequests = await storage.getJobRequests({
+        companyId: companyId as string || currentUser.companyId,
+        viewMode: viewMode as string || 'network',
+        search: search as string,
+        status: status as string,
+        priority: priority as string,
+        category: category as string,
+        requesterId: currentUser.id,
+      });
+
+      res.json(jobRequests);
+    } catch (error) {
+      console.error("Error fetching job requests:", error);
+      res.status(500).json({ message: "Failed to fetch job requests" });
+    }
+  });
+
+  app.post("/api/job-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to create job requests" });
+      }
+
+      const jobRequest = await storage.createJobRequest({
+        ...req.body,
+        clientCompanyId: currentUser.companyId,
+        postedById: currentUser.id,
+      });
+
+      res.json(jobRequest);
+    } catch (error) {
+      console.error("Error creating job request:", error);
+      res.status(500).json({ message: "Failed to create job request" });
+    }
+  });
+
+  app.post("/api/job-requests/:id/assign", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to assign job requests" });
+      }
+
+      const { id } = req.params;
+      const { serviceCompanyId } = req.body;
+
+      const assignedRequest = await storage.assignJobRequest(id, serviceCompanyId, currentUser.id);
+      
+      res.json(assignedRequest);
+    } catch (error) {
+      console.error("Error assigning job request:", error);
+      res.status(500).json({ message: "Failed to assign job request" });
+    }
+  });
+
+  // M2 - Contractor Onboarding Flow API
+  app.get("/api/contractor-onboarding", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { companyId, userId, viewMode } = req.query;
+      
+      const onboardingRecords = await storage.getContractorOnboarding({
+        companyId: companyId as string || currentUser.companyId,
+        userId: userId as string,
+        viewMode: viewMode as string || 'overview',
+        requesterId: currentUser.id,
+      });
+
+      res.json(onboardingRecords);
+    } catch (error) {
+      console.error("Error fetching contractor onboarding:", error);
+      res.status(500).json({ message: "Failed to fetch contractor onboarding" });
+    }
+  });
+
+  app.get("/api/contractor-onboarding/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { id } = req.params;
+      const onboardingDetails = await storage.getContractorOnboardingDetails(id, currentUser.id);
+      
+      res.json(onboardingDetails);
+    } catch (error) {
+      console.error("Error fetching onboarding details:", error);
+      res.status(500).json({ message: "Failed to fetch onboarding details" });
+    }
+  });
+
+  app.post("/api/contractor-onboarding/application", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const onboardingRecord = await storage.createContractorOnboarding({
+        ...req.body,
+        userId: currentUser.id,
+        companyId: req.body.companyId || currentUser.companyId,
+      });
+
+      res.json(onboardingRecord);
+    } catch (error) {
+      console.error("Error creating contractor onboarding:", error);
+      res.status(500).json({ message: "Failed to create contractor onboarding" });
+    }
+  });
+
+  app.put("/api/contractor-onboarding/:id/stage", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to update onboarding stage" });
+      }
+
+      const { id } = req.params;
+      const { stage, data } = req.body;
+
+      const updatedRecord = await storage.updateOnboardingStage(id, stage, data, currentUser.id);
+      
+      res.json(updatedRecord);
+    } catch (error) {
+      console.error("Error updating onboarding stage:", error);
+      res.status(500).json({ message: "Failed to update onboarding stage" });
+    }
+  });
+
+  app.post("/api/contractor-onboarding/:id/:action", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to approve/reject onboarding" });
+      }
+
+      const { id, action } = req.params;
+      const { notes } = req.body;
+
+      if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ message: "Invalid action" });
+      }
+
+      const result = await storage.processOnboardingApproval(id, action as 'approve' | 'reject', notes, currentUser.id);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing onboarding approval:", error);
+      res.status(500).json({ message: "Failed to process onboarding approval" });
+    }
+  });
+
+  // M4 - Role-Aware Messaging Hub API
+  app.get("/api/messaging/channels", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { companyId, workOrderId, projectId, viewMode } = req.query;
+      
+      const channels = await storage.getMessagingChannels({
+        companyId: companyId as string || currentUser.companyId,
+        workOrderId: workOrderId as string,
+        projectId: projectId as string,
+        viewMode: viewMode as string || 'workspace',
+        userRole: currentUser.role,
+        userId: currentUser.id,
+      });
+
+      res.json(channels);
+    } catch (error) {
+      console.error("Error fetching messaging channels:", error);
+      res.status(500).json({ message: "Failed to fetch messaging channels" });
+    }
+  });
+
+  app.post("/api/messaging/channels", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to create channels" });
+      }
+
+      const channel = await storage.createMessagingChannel({
+        ...req.body,
+        createdById: currentUser.id,
+      });
+
+      res.json(channel);
+    } catch (error) {
+      console.error("Error creating messaging channel:", error);
+      res.status(500).json({ message: "Failed to create messaging channel" });
+    }
+  });
+
+  app.get("/api/messaging/channels/:channelId/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { channelId } = req.params;
+      const messages = await storage.getChannelMessages(channelId, currentUser.id);
+
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching channel messages:", error);
+      res.status(500).json({ message: "Failed to fetch channel messages" });
+    }
+  });
+
+  app.post("/api/messaging/channels/:channelId/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { channelId } = req.params;
+      
+      // Check if user has access to the channel
+      const hasAccess = await storage.checkChannelAccess(channelId, currentUser.id, currentUser.role);
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied to this channel" });
+      }
+
+      const message = await storage.createChannelMessage({
+        ...req.body,
+        channelId,
+        senderId: currentUser.id,
+      });
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error creating channel message:", error);
+      res.status(500).json({ message: "Failed to create channel message" });
+    }
+  });
+
+  app.put("/api/messaging/channels/:channelId/archive", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !hasAnyRole(currentUser, ['operations_director', 'administrator', 'manager'])) {
+        return res.status(403).json({ message: "Insufficient permissions to archive channels" });
+      }
+
+      const { channelId } = req.params;
+      const archivedChannel = await storage.archiveMessagingChannel(channelId, currentUser.id);
+
+      res.json(archivedChannel);
+    } catch (error) {
+      console.error("Error archiving messaging channel:", error);
+      res.status(500).json({ message: "Failed to archive messaging channel" });
+    }
+  });
+
   app.post("/api/work-orders/:workOrderId/tasks", isAuthenticated, async (req: any, res) => {
     try {
       const { workOrderId } = req.params;
