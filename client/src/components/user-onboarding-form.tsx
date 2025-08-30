@@ -6,6 +6,11 @@ import { insertUserSchema, isAdmin } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+
+// Helper function to check if user is operations director
+const isOperationsDirector = (user: any) => {
+  return user?.roles?.includes('operations_director') || false;
+};
 import {
   Form,
   FormControl,
