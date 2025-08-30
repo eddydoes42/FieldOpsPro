@@ -1052,15 +1052,15 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                   {/* Add Tool Form */}
                   <Card className="mb-3 border-dashed border-2 border-blue-300 dark:border-blue-700">
                     <CardContent className="pt-3 pb-3">
-                      <div className="space-y-2">
+                      <div className="form-minimal">
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Category</label>
+                            <label className="form-label-minimal">Category</label>
                             <Select 
                               value={newTool.category} 
                               onValueChange={(value) => setNewTool({ ...newTool, category: value as any })}
                             >
-                              <SelectTrigger className="mt-1 h-8">
+                              <SelectTrigger className="form-select-minimal">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1073,23 +1073,23 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                             </Select>
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Tool Name</label>
+                            <label className="form-label-minimal">Tool Name</label>
                             <Input
                               value={newTool.name}
                               onChange={(e) => setNewTool({ ...newTool, name: e.target.value })}
                               placeholder="Enter tool name"
-                              className="mt-1 h-8"
+                              className="form-input-minimal"
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
+                          <label className="form-label-minimal">Description (Optional)</label>
                           <Textarea
                             value={newTool.description}
                             onChange={(e) => setNewTool({ ...newTool, description: e.target.value })}
                             placeholder="Enter tool description"
                             rows={1}
-                            className="mt-1 min-h-[32px]"
+                            className="form-textarea-minimal"
                           />
                         </div>
                         <div className="flex items-center space-x-2">
@@ -1099,13 +1099,13 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                             onChange={(e) => setNewTool({ ...newTool, isRequired: e.target.checked })}
                             className="w-3 h-3"
                           />
-                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Required Tool</label>
+                          <label className="form-label-minimal">Required Tool</label>
                         </div>
                         <Button
                           type="button"
                           onClick={handleAddTool}
                           size="sm"
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8"
+                          className="form-button-primary-minimal w-full"
                         >
                           <Plus className="h-3 w-3 mr-1" />
                           Add Tool to Work Order
