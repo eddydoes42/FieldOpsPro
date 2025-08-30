@@ -290,9 +290,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
-      case 'pre_visit': return '🚗 Pre-Site';
-      case 'on_site': return '🔧 On-Site';
-      case 'post_site': return '📋 Post-Site';
+      case 'pre_visit': return 'Pre-Site';
+      case 'on_site': return 'On-Site';
+      case 'post_site': return 'Post-Site';
       default: return category;
     }
   };
@@ -308,11 +308,11 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
   const getToolCategoryLabel = (category: string) => {
     switch (category) {
-      case 'hardware': return '⚙️ Hardware';
-      case 'software': return '💻 Software';
-      case 'safety': return '🦺 Safety';
-      case 'testing': return '🔍 Testing';
-      case 'other': return '🔧 Other';
+      case 'hardware': return 'Hardware';
+      case 'software': return 'Software';
+      case 'safety': return 'Safety';
+      case 'testing': return 'Testing';
+      case 'other': return 'Other';
       default: return category;
     }
   };
@@ -331,7 +331,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
   const getDocumentCategoryLabel = (category: string) => {
     switch (category) {
       case 'reference': return '📖 Reference';
-      case 'procedure': return '📋 Procedure';
+      case 'procedure': return 'Procedure';
       case 'checklist': return '✅ Checklist';
       case 'form': return '📄 Form';
       case 'other': return '📎 Other';
@@ -610,7 +610,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
                   {/* Task Management for Client */}
                   <div className="form-section-minimal border-t border-gray-200 dark:border-gray-700 pt-3">
-                    <h4 className="form-label-minimal mb-2">📋 Add Tasks (Optional)</h4>
+                    <h4 className="form-label-minimal mb-2">Add Tasks (Optional)</h4>
                     <div className="form-minimal">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -623,9 +623,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="pre_visit">🚗 Pre-Site</SelectItem>
-                              <SelectItem value="on_site">🔧 On-Site</SelectItem>
-                              <SelectItem value="post_site">📋 Post-Site</SelectItem>
+                              <SelectItem value="pre_visit">Pre-Site</SelectItem>
+                              <SelectItem value="on_site">On-Site</SelectItem>
+                              <SelectItem value="post_site">Post-Site</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -925,7 +925,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
               {!isClient && (
                 <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
+                  <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">Pre-Define Tasks</h3>
                   <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 text-xs">
                     {tasks.length} tasks ready
                   </Badge>
@@ -946,9 +946,9 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="pre_visit">🚗 Pre-Site</SelectItem>
-                              <SelectItem value="on_site">🔧 On-Site</SelectItem>
-                              <SelectItem value="post_site">📋 Post-Site</SelectItem>
+                              <SelectItem value="pre_visit">Pre-Site</SelectItem>
+                              <SelectItem value="on_site">On-Site</SelectItem>
+                              <SelectItem value="post_site">Post-Site</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1041,21 +1041,21 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
               {/* Tools Management - Only visible to management */}
               {!isClient && (
-                <div className="bg-purple-50 dark:bg-purple-950 p-3 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-semibold text-purple-900 dark:text-purple-100">🔧 Required Tools</h3>
-                    <Badge variant="secondary" className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 text-xs">
+                    <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">Required Tools</h3>
+                    <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 text-xs">
                       {tools.length} tools specified
                     </Badge>
                   </div>
                   
                   {/* Add Tool Form */}
-                  <Card className="mb-3 border-dashed border-2 border-purple-300 dark:border-purple-700">
+                  <Card className="mb-3 border-dashed border-2 border-blue-300 dark:border-blue-700">
                     <CardContent className="pt-3 pb-3">
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Category</label>
+                            <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Category</label>
                             <Select 
                               value={newTool.category} 
                               onValueChange={(value) => setNewTool({ ...newTool, category: value as any })}
@@ -1064,16 +1064,16 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="hardware">⚙️ Hardware</SelectItem>
-                                <SelectItem value="software">💻 Software</SelectItem>
-                                <SelectItem value="safety">🦺 Safety</SelectItem>
-                                <SelectItem value="testing">🔍 Testing</SelectItem>
-                                <SelectItem value="other">🔧 Other</SelectItem>
+                                <SelectItem value="hardware">Hardware</SelectItem>
+                                <SelectItem value="software">Software</SelectItem>
+                                <SelectItem value="safety">Safety</SelectItem>
+                                <SelectItem value="testing">Testing</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Tool Name</label>
+                            <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Tool Name</label>
                             <Input
                               value={newTool.name}
                               onChange={(e) => setNewTool({ ...newTool, name: e.target.value })}
@@ -1083,7 +1083,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                           </div>
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Description (Optional)</label>
+                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
                           <Textarea
                             value={newTool.description}
                             onChange={(e) => setNewTool({ ...newTool, description: e.target.value })}
@@ -1099,13 +1099,13 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                             onChange={(e) => setNewTool({ ...newTool, isRequired: e.target.checked })}
                             className="w-3 h-3"
                           />
-                          <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Required Tool</label>
+                          <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Required Tool</label>
                         </div>
                         <Button
                           type="button"
                           onClick={handleAddTool}
                           size="sm"
-                          className="w-full bg-purple-600 hover:bg-purple-700 text-white h-8"
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8"
                         >
                           <Plus className="h-3 w-3 mr-1" />
                           Add Tool to Work Order
@@ -1123,7 +1123,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                         
                         return (
                           <div key={category}>
-                            <h5 className="text-xs font-semibold text-purple-800 dark:text-purple-200 mb-1">
+                            <h5 className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-1">
                               {getToolCategoryLabel(category)} ({categoryTools.length})
                             </h5>
                             <div className="space-y-1">
@@ -1197,7 +1197,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="reference">📖 Reference</SelectItem>
-                                <SelectItem value="procedure">📋 Procedure</SelectItem>
+                                <SelectItem value="procedure">Procedure</SelectItem>
                                 <SelectItem value="checklist">✅ Checklist</SelectItem>
                                 <SelectItem value="form">📄 Form</SelectItem>
                                 <SelectItem value="other">📎 Other</SelectItem>
