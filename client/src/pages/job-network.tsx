@@ -1059,7 +1059,12 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={() => setShowInitialFileUploader(true)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Upload Files button clicked, setting showInitialFileUploader to true');
+                                setShowInitialFileUploader(true);
+                              }}
                               className="flex items-center gap-2"
                             >
                               <Upload className="h-4 w-4" />
