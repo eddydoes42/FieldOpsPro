@@ -257,11 +257,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Protect TestAdmin users from deletion (even by Operations Director)
-      if (userToDelete.firstName === "TestAdmin") {
-        return res.status(403).json({ message: "TestAdmin users cannot be deleted" });
-      }
-
       // Only administrators can delete other administrators
       if (hasAnyRole(userToDelete, ['administrator']) && !isAdmin(currentUser!)) {
         return res.status(403).json({ message: "Only administrators can delete other administrators" });
