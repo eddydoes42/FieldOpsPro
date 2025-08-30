@@ -258,16 +258,19 @@ export const isAuthenticatedWithODBypass: RequestHandler = async (req, res, next
 
   // Check if this is an Operations Director not in role testing mode
   try {
-    const currentUser = await storage.getUser(user.sub);
-    if (currentUser) {
-      const isOD = currentUser.roles?.includes('operations_director') && !currentUser.companyId;
-      const testingRole = req.headers['x-testing-role'];
-      const testingCompanyType = req.headers['x-testing-company-type'];
-      const isRoleTesting = !!(testingRole && testingCompanyType);
-      
-      // Operations Director bypass - skip token expiry checks when not role testing
-      if (isOD && !isRoleTesting) {
-        return next();
+    const userId = user.sub || req.user?.claims?.sub;
+    if (userId) {
+      const currentUser = await storage.getUser(userId);
+      if (currentUser) {
+        const isOD = currentUser.roles?.includes('operations_director') && !currentUser.companyId;
+        const testingRole = req.headers['x-testing-role'];
+        const testingCompanyType = req.headers['x-testing-company-type'];
+        const isRoleTesting = !!(testingRole && testingCompanyType);
+        
+        // Operations Director bypass - skip token expiry checks when not role testing
+        if (isOD && !isRoleTesting) {
+          return next();
+        }
       }
     }
   } catch (error) {

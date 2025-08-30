@@ -191,7 +191,10 @@ function Router() {
     <div data-quick-actions="true" className="quick-action-zone">
       <Switch>
         {!isAuthenticated ? (
-          <Route path="/" component={Landing} />
+          <>
+            <Route path="/" component={Landing} />
+            <Route component={Landing} />
+          </>
         ) : (
           <>
             <Route path="/">
@@ -449,6 +452,16 @@ function Router() {
                 // Operations Director bypass - can access Job Network when not in role testing mode
                 const isRoleTesting = !!testingRole || !!permanentRole;
                 const isODBypass = isOperationsDirector(user as any) && !isRoleTesting;
+                
+                console.log('Job Network Access Check:', {
+                  isAuthenticated,
+                  effectiveRole,
+                  hasJobNetworkAccess,
+                  isODBypass,
+                  isOperationsDirector: isOperationsDirector(user as any),
+                  isRoleTesting,
+                  user: user ? { id: user.id, roles: user.roles } : null
+                });
                 
                 if (isAuthenticated && (hasJobNetworkAccess || isODBypass)) {
                   return (
