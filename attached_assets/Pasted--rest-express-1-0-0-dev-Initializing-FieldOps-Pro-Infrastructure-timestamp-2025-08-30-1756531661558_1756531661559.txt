@@ -1,0 +1,52 @@
+
+> rest-express@1.0.0 dev
+🚀 Initializing FieldOps Pro Infrastructure...
+{"timestamp":"2025-08-30T05:11:18.377Z","level":"INFO","message":"Logger initialized","meta":{"config":{"level":0,"enableConsole":true,"enableFile":false,"enableAuditTrail":true,"format":"json"}},"module":"index.ts:43:27)"}
+  ✓ Logger service initialized
+{"timestamp":"2025-08-30T05:11:18.380Z","level":"INFO","message":"EventBus initialized","meta":{"registeredEvents":[]},"module":"index.ts:43:3)"}
+  ✓ Event Bus initialized
+{"timestamp":"2025-08-30T05:11:18.381Z","level":"INFO","message":"Audit Logger initialized","meta":{"maxEntries":50000,"retentionPolicy":"memory-based"},"module":"index.ts:43:3)"}
+  ✓ Audit Logger initialized
+{"timestamp":"2025-08-30T05:11:18.383Z","level":"INFO","message":"Security Service initialized","meta":{"rateLimitConfigs":["default","api","auth"],"encryptionAlgorithm":"aes-256-gcm"},"module":"index.ts:43:3)"}
+  ✓ Security service initialized
+{"timestamp":"2025-08-30T05:11:18.384Z","level":"INFO","message":"RBAC Service initialized","meta":{"roleCount":7,"roles":["operations_director","administrator","manager","dispatcher","field_engineer","field_agent","client"]},"module":"index.ts:43:3)"}
+  ✓ RBAC service initialized
+  ✓ Error Handler initialized
+  ✓ Security Middleware initialized
+  ✓ Global error handlers registered
+{"timestamp":"2025-08-30T05:11:18.385Z","level":"DEBUG","message":"Event handler registered for: security.breachDetected","meta":{"totalHandlers":1},"module":"index.ts:43:3)"}
+{"timestamp":"2025-08-30T05:11:18.385Z","level":"DEBUG","message":"Event handler registered for: security.rateLimitExceeded","meta":{"totalHandlers":1},"module":"index.ts:43:3)"}
+{"timestamp":"2025-08-30T05:11:18.385Z","level":"DEBUG","message":"Event handler registered for: security.unauthorizedAccess","meta":{"totalHandlers":1},"module":"index.ts:43:3)"}
+{"timestamp":"2025-08-30T05:11:18.385Z","level":"DEBUG","message":"Event handler registered for: roleImpersonation.started","meta":{"totalHandlers":1},"module":"index.ts:43:3)"}
+{"timestamp":"2025-08-30T05:11:18.386Z","level":"DEBUG","message":"Event handler registered for: roleImpersonation.stopped","meta":{"totalHandlers":1},"module":"index.ts:43:3)"}
+{"timestamp":"2025-08-30T05:11:18.386Z","level":"DEBUG","message":"Event handler registered for: workOrder.created","meta":{"totalHandlers":1},"module":"index.ts:43:3)"}
+{"timestamp":"2025-08-30T05:11:18.386Z","level":"DEBUG","message":"Event handler registered for: workOrder.statusChanged","meta":{"totalHandlers":1},"module":"index.ts:43:3)"}
+  ✓ Event listeners registered
+{"timestamp":"2025-08-30T05:11:18.386Z","level":"INFO","message":"FieldOps Pro Infrastructure initialized successfully","meta":{"initializationTime":"151ms","services":["logger","eventBus","auditLogger","security","rbac","storage"],"environment":"development"},"module":"index.ts:43:3)"}
+✅ FieldOps Pro Infrastructure ready in 151ms
+{"timestamp":"2025-08-30T05:11:18.557Z","level":"INFO","message":"Infrastructure routes registered","module":"infrastructure"}
+{"timestamp":"2025-08-30T05:11:18.558Z","level":"INFO","message":"Integrated routes initialized successfully","module":"infrastructure"}
+5:11:18 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+5:11:28 AM [express] GET /api/auth/user 401 in 3ms :: {"message":"Unauthorized"}
+Auth user request - testing role: undefined company type: undefined
+5:11:34 AM [express] GET /api/auth/user 304 in 696ms :: {"id":"46082224","email":"eddydoescher42@gma…
+express deprecated req.host: Use req.hostname instead file:/home/runner/workspace/node_modules/openid-client/build/passport.js:224:49
+5:15:12 AM [express] GET /api/login 302 in 3434ms
+5:15:12 AM [express] GET /api/login 302 in 208ms
+5:15:32 AM [express] GET /api/callback 302 in 4036ms
+Auth user request - testing role: undefined company type: undefined
+5:15:47 AM [express] GET /api/auth/user 200 in 617ms :: {"id":"46082224","email":"eddydoescher42@gma…
+5:15:48 AM [express] GET /api/messages 304 in 420ms :: []
+5:15:48 AM [express] GET /api/companies 304 in 753ms :: [{"id":"1d5bd1e9-21ac-4f58-baf7-fd806765296c…
+5:15:48 AM [express] GET /api/access-requests 304 in 757ms :: []
+5:15:48 AM [express] GET /api/operations/budget-summary 304 in 760ms :: {"totalEarned":0,"todayEarni…
+5:15:48 AM [express] GET /api/approval-requests 304 in 758ms :: []
+5:15:48 AM [express] GET /api/operations/stats 304 in 959ms :: {"totalAdmins":1,"activeCompanies":2,…
+5:22:52 AM [express] GET /api/job-network 200 in 211ms
+5:22:52 AM [express] GET /api/companies/service 200 in 203ms
+5:22:53 AM [express] GET /api/companies/client 200 in 815ms
+5:22:54 AM [express] GET /api/users/field-agents 304 in 1824ms :: [{"id":"814dd9b2-d6c1-49d2-b138-db…
+{"timestamp":"2025-08-30T05:24:18.393Z","level":"DEBUG","message":"Rate limit store cleanup completed","meta":{"removedEntries":1,"remainingEntries":0},"module":"unknown"}
