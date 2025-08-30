@@ -591,8 +591,8 @@ export class DatabaseStorage implements IStorage {
 
     // Transform the data to include company information and additional agent details
     return fieldAgentsWithCompanies.map(agent => {
-      const completedJobs = completionsMap.get(agent.id) || 0;
-      const unresolvedIssues = issuesMap.get(agent.id) || 0;
+      const completedJobs = completionsMap.get(agent.id || '') || 0;
+      const unresolvedIssues = issuesMap.get(agent.id || '') || 0;
       
       // Calculate years of experience based on creation date
       const yearsExperience = agent.createdAt 

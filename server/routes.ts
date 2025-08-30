@@ -1698,7 +1698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         workOrderId: workOrderId as string,
         projectId: projectId as string,
         viewMode: viewMode as string || 'workspace',
-        userRole: currentUser.role,
+        userRole: currentUser.roles?.[0] || 'field_agent',
         userId: currentUser.id,
       });
 
@@ -1755,7 +1755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { channelId } = req.params;
       
       // Check if user has access to the channel
-      const hasAccess = await storage.checkChannelAccess(channelId, currentUser.id, currentUser.role);
+      const hasAccess = await storage.checkChannelAccess(channelId, currentUser.id, currentUser.roles?.[0] || 'field_agent');
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied to this channel" });
       }
