@@ -612,7 +612,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                       Create Work Order
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-minimal">
                     <DialogHeader>
                       <DialogTitle>Create New Work Order</DialogTitle>
                     </DialogHeader>

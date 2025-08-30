@@ -369,7 +369,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 p-3 overflow-y-auto">
+        <CardContent className="flex-1 p-3 overflow-y-auto scrollbar-minimal">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
               {isClient ? (
