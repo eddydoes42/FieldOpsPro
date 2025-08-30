@@ -593,16 +593,16 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       )}
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+        {/* Centered Header */}
         <div className="mb-12">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
-                <Network className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                <span>Job Network</span>
-              </h1>
-            </div>
-            
+          <div className="flex flex-col items-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-2 mb-6">
+              <Network className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <span>Job Network</span>
+            </h1>
+          </div>
+          
+          <div className="flex items-center justify-end">
             <div className="flex items-center space-x-3">
               {/* Create Work Order Button - for Administrators, Project Managers, Managers, and Operations Director (when not role testing) */}
               {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
