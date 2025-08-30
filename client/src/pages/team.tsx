@@ -351,6 +351,7 @@ export default function TeamPage() {
     if (role === 'dispatcher') return 'Dispatcher';
     if (role === 'manager') return 'Manager';
     if (role === 'administrator') return 'Administrator';
+    if (role === 'project_manager') return 'Project Manager';
     return role;
   };
 
