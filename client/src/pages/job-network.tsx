@@ -998,26 +998,25 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         </div>
 
                         {/* Tools Section */}
-                        <div className="bg-purple-50 dark:bg-purple-950 p-3 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                        <div className="form-section-minimal border-t border-gray-200 dark:border-gray-700 pt-3">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-base font-semibold text-purple-900 dark:text-purple-100">🔧 Required Tools</h3>
-                            <Badge variant="secondary" className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 text-xs">
+                            <h3 className="form-label-minimal text-base">🔧 Required Tools</h3>
+                            <Badge variant="secondary" className="text-xs">
                               {tools.length} tools specified
                             </Badge>
                           </div>
                           
                           {/* Add Tool Form */}
-                          <Card className="mb-3 border-dashed border-2 border-purple-300 dark:border-purple-700">
-                            <CardContent className="pt-3 pb-3">
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-2">
+                          <div className="mb-3 p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-md">
+                              <div className="form-minimal">
+                                <div className="grid grid-cols-2 gap-3">
                                   <div>
-                                    <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Category</label>
+                                    <label className="form-label-minimal">Category</label>
                                     <Select 
                                       value={newTool.category} 
                                       onValueChange={(value) => setNewTool({ ...newTool, category: value as any })}
                                     >
-                                      <SelectTrigger className="mt-1 h-8">
+                                      <SelectTrigger className="form-select-minimal">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1030,23 +1029,23 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                     </Select>
                                   </div>
                                   <div>
-                                    <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Tool Name</label>
+                                    <label className="form-label-minimal">Tool Name</label>
                                     <Input
                                       value={newTool.name}
                                       onChange={(e) => setNewTool({ ...newTool, name: e.target.value })}
                                       placeholder="Enter tool name"
-                                      className="mt-1 h-8"
+                                      className="form-input-minimal"
                                     />
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Description (Optional)</label>
+                                  <label className="form-label-minimal">Description (Optional)</label>
                                   <Textarea
                                     value={newTool.description}
                                     onChange={(e) => setNewTool({ ...newTool, description: e.target.value })}
                                     placeholder="Enter tool description"
                                     rows={1}
-                                    className="mt-1 min-h-[32px]"
+                                    className="form-textarea-minimal min-h-[32px]"
                                   />
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -1056,33 +1055,31 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                     onChange={(e) => setNewTool({ ...newTool, isRequired: e.target.checked })}
                                     className="w-3 h-3"
                                   />
-                                  <label className="text-xs font-medium text-purple-900 dark:text-purple-100">Required Tool</label>
+                                  <label className="form-label-minimal">Required Tool</label>
                                 </div>
                                 <Button
                                   type="button"
                                   onClick={handleAddTool}
-                                  size="sm"
-                                  className="w-full bg-purple-600 hover:bg-purple-700 text-white h-8"
+                                  className="form-button-primary-minimal w-full"
                                 >
-                                  <Plus className="h-3 w-3 mr-1" />
+                                  <Plus className="h-4 w-4 mr-2" />
                                   Add Tool to Work Order
                                 </Button>
                               </div>
-                            </CardContent>
-                          </Card>
+                          </div>
 
                           {/* Tools List */}
                           {tools.length > 0 && (
-                            <div className="mt-3 space-y-1">
+                            <div className="space-y-2">
                               {['hardware', 'software', 'safety', 'testing', 'other'].map(category => {
                                 const categoryTools = tools.filter(tool => tool.category === category);
                                 if (categoryTools.length === 0) return null;
                                 
                                 return (
                                   <div key={category}>
-                                    <h5 className="text-xs font-semibold text-purple-800 dark:text-purple-200 mb-1">
+                                    <h4 className="form-label-minimal text-xs mb-1">
                                       {getToolCategoryLabel(category)} ({categoryTools.length})
-                                    </h5>
+                                    </h4>
                                     <div className="space-y-1">
                                       {categoryTools.map((tool, index) => {
                                         const globalIndex = tools.findIndex(t => t === tool);
@@ -1096,7 +1093,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                                 <Badge className={getToolCategoryColor(tool.category)} variant="secondary">
                                                   {getToolCategoryLabel(tool.category)}
                                                 </Badge>
-                                                <span className="font-medium text-sm">{tool.name}</span>
+                                                <span className="font-medium text-sm text-gray-900 dark:text-gray-100">{tool.name}</span>
                                                 {tool.isRequired && (
                                                   <Badge variant="destructive" className="text-xs">Required</Badge>
                                                 )}
