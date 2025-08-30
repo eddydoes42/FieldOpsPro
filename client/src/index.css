@@ -87,6 +87,80 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Minimal Scrollbar Utility */
+  .scrollbar-minimal {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #90A4AE #ECEFF1;
+  }
+
+  .scrollbar-minimal::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-minimal::-webkit-scrollbar-track {
+    background: #ECEFF1;
+    border-radius: 6px;
+  }
+
+  .scrollbar-minimal::-webkit-scrollbar-thumb {
+    background: #90A4AE;
+    border-radius: 6px;
+  }
+
+  .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
+    background: #78909C;
+  }
+
+  /* Overlay Scrollbar Variant */
+  .scrollbar-minimal.scrollbar-overlay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-minimal.scrollbar-overlay::-webkit-scrollbar-thumb {
+    background: rgba(144, 164, 174, 0.55);
+    opacity: 0.65;
+  }
+
+  .scrollbar-minimal.scrollbar-overlay::-webkit-scrollbar-thumb:hover {
+    background: rgba(144, 164, 174, 0.9);
+    opacity: 1;
+  }
+
+  /* Dark Theme Variants */
+  .dark .scrollbar-minimal {
+    /* Firefox Dark */
+    scrollbar-color: #607D8B #2B3036;
+  }
+
+  .dark .scrollbar-minimal::-webkit-scrollbar-track {
+    background: #2B3036;
+  }
+
+  .dark .scrollbar-minimal::-webkit-scrollbar-thumb {
+    background: #607D8B;
+  }
+
+  .dark .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
+    background: #6F8A97;
+  }
+
+  /* Dark Theme Overlay Variant */
+  .dark .scrollbar-minimal.scrollbar-overlay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dark .scrollbar-minimal.scrollbar-overlay::-webkit-scrollbar-thumb {
+    background: rgba(96, 125, 139, 0.55);
+    opacity: 0.65;
+  }
+
+  .dark .scrollbar-minimal.scrollbar-overlay::-webkit-scrollbar-thumb:hover {
+    background: rgba(96, 125, 139, 0.9);
+    opacity: 1;
+  }
 }
 
 /* Custom styles for FieldOps Pro - Dark Theme */
