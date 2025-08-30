@@ -430,7 +430,7 @@ function Router() {
                 const effectiveRole = getEffectiveRole();
                 const hasJobRequestAccess = ['administrator', 'manager', 'dispatcher'].includes(effectiveRole);
                 // Only allow Operations Directors superuser access when NOT role testing
-                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isRoleTesting = !!testingRole;
                 const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
                 
                 if (isAuthenticated && (hasJobRequestAccess || isSuperUserAccess)) {
@@ -450,7 +450,8 @@ function Router() {
                 const effectiveRole = getEffectiveRole();
                 const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
                 // Operations Director bypass - can access Job Network when not in role testing mode
-                const isRoleTesting = !!testingRole || !!permanentRole;
+                // Only consider it role testing if there's an active testingRole, not just permanentRole
+                const isRoleTesting = !!testingRole;
                 const isODBypass = isOperationsDirector(user as any) && !isRoleTesting;
                 
                 console.log('Job Network Access Check:', {
@@ -486,7 +487,7 @@ function Router() {
                 const effectiveRole = getEffectiveRole();
                 const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
                 // Only allow Operations Directors superuser access when NOT role testing
-                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isRoleTesting = !!testingRole;
                 const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
                 
                 if (isAuthenticated && (hasTalentNetworkAccess || isSuperUserAccess)) {
@@ -506,7 +507,7 @@ function Router() {
                 const effectiveRole = getEffectiveRole();
                 const hasProjectNetworkAccess = ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer', 'client_company_admin'].includes(effectiveRole);
                 // Only allow Operations Directors superuser access when NOT role testing
-                const isRoleTesting = !!testingRole || !!permanentRole;
+                const isRoleTesting = !!testingRole;
                 const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
                 
                 if (isAuthenticated && (hasProjectNetworkAccess || isSuperUserAccess)) {
