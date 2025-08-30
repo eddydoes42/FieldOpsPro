@@ -1355,26 +1355,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
           </div>
         </div>
 
-        {/* Create Work Order Button */}
-        {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
-          (user as any)?.roles?.includes('project_manager')) && (
-          <div className="mb-6">
-            <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="bg-green-600 hover:bg-green-700 text-white border-green-600"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Work Order
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-minimal">
-                <DialogHeader>
-                  <DialogTitle>Create New Work Order</DialogTitle>
-                </DialogHeader>
-                <Form {...workOrderForm}>
-                  <form onSubmit={workOrderForm.handleSubmit(onWorkOrderSubmit)} className="form-minimal">
+        {/* Job List Content */}
         {isLoading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -1665,7 +1646,6 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
             </DialogContent>
           </Dialog>
         )}
-        </div>
       </div>
     </div>
   );
