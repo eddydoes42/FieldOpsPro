@@ -108,7 +108,7 @@ export const users = pgTable("users", {
 // Work Orders table
 export const workOrders = pgTable("work_orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  companyId: varchar("company_id").notNull().references(() => companies.id),
+  companyId: varchar("company_id").references(() => companies.id), // nullable for Operations Directors
   title: varchar("title").notNull(),
   description: text("description").notNull(),
   location: varchar("location").notNull(),

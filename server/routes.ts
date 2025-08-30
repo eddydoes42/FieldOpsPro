@@ -610,10 +610,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isClientUser = isClient(currentUser) || (isOperationsDirector(currentUser) && req.body.isClientCreated);
       
       // Handle Operations Director posting on behalf of client companies
-      let effectiveCompanyId = 'default-company-id'; // Default fallback
+      let effectiveCompanyId = null; // Default to null for Operations Directors
       if (isOperationsDirector(currentUser) && req.body.clientCompanyId) {
         if (req.body.clientCompanyId === 'operations_director') {
-          effectiveCompanyId = 'default-company-id'; // Operations Director uses default company
+          effectiveCompanyId = null; // Operations Director uses null company (god mode)
         } else {
           effectiveCompanyId = req.body.clientCompanyId; // Use selected client company
         }
