@@ -1764,6 +1764,20 @@ export function isFieldLevel(user: User | null): boolean {
   return hasAnyRole(user, ['field_agent', 'field_engineer']);
 }
 
+export function isDispatcher(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
+  return hasRole(user, 'dispatcher');
+}
+
+export function isService(user: User | null): boolean {
+  // Operations Director bypass - can perform any action when not in role testing mode
+  if (hasOperationsDirectorBypass(user)) return true;
+  
+  return hasAnyRole(user, ['administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent']);
+}
+
 export function isClient(user: User | null): boolean {
   // Operations Director bypass - can perform any action when not in role testing mode
   if (hasOperationsDirectorBypass(user)) return true;
