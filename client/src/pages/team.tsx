@@ -352,7 +352,10 @@ export default function TeamPage() {
     if (role === 'manager') return 'Manager';
     if (role === 'administrator') return 'Administrator';
     if (role === 'project_manager') return 'Project Manager';
-    return role;
+    if (role === 'client_company_admin') return 'Client Company Admin';
+    if (role === 'operations_director') return 'Operations Director';
+    // Remove underscores and capitalize words for any unhandled roles
+    return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const getRoleCount = (role: string) => {
@@ -515,79 +518,96 @@ export default function TeamPage() {
         {/* Team Members Section */}
         <Card>
           <CardContent className="p-6">
+            {/* Header with Add Button */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
               <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
-              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                {/* Add Team Member Button - Show for administrators and Operations Director */}
-                {((user as any).roles?.includes('administrator') || isOperationsDirectorSuperUser) && (
+              {((user as any).roles?.includes('administrator') || isOperationsDirectorSuperUser) && (
+                <Button
+                  onClick={() => {
+                    // Pass company context if filtering by a specific company
+                    const url = companyFilter !== "all" ? `/onboarding?company=${companyFilter}` : '/onboarding';
+                    setLocation(url);
+                  }}
+                  className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
+                  size="sm"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add Team Member
+                </Button>
+              )}
+            </div>
+
+            {/* Filters Section - Organized in a cleaner flow */}
+            <div className="mb-6 space-y-4">
+              {/* Role Filters */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Filter by Role</label>
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    onClick={() => {
-                      // Pass company context if filtering by a specific company
-                      const url = companyFilter !== "all" ? `/onboarding?company=${companyFilter}` : '/onboarding';
-                      setLocation(url);
-                    }}
-                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
+                    variant={roleFilter === "all" ? "default" : "outline"}
                     size="sm"
+                    onClick={() => setRoleFilter("all")}
+                    className="text-xs"
                   >
-                    <UserPlus className="h-4 w-4" />
-                    Add Team Member
+                    All ({getRoleCount("all")})
                   </Button>
-                )}
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  {/* Role Filters */}
+                  <Button
+                    variant={roleFilter === "administrator" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRoleFilter("administrator")}
+                    className={`text-xs ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
+                  >
+                    Admin ({getRoleCount("administrator")})
+                  </Button>
+                  <Button
+                    variant={roleFilter === "manager" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRoleFilter("manager")}
+                    className={`text-xs ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
+                  >
+                    Manager ({getRoleCount("manager")})
+                  </Button>
+                  <Button
+                    variant={roleFilter === "dispatcher" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRoleFilter("dispatcher")}
+                    className={`text-xs ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
+                  >
+                    Dispatcher ({getRoleCount("dispatcher")})
+                  </Button>
+                  <Button
+                    variant={roleFilter === "field_engineer" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRoleFilter("field_engineer")}
+                    className={`text-xs ${roleFilter === "field_engineer" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white"}`}
+                  >
+                    Field Engineer ({getRoleCount("field_engineer")})
+                  </Button>
+                  <Button
+                    variant={roleFilter === "field_agent" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRoleFilter("field_agent")}
+                    className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
+                  >
+                    Field Agent ({getRoleCount("field_agent")})
+                  </Button>
+                </div>
+              </div>
+
+              {/* Status and Company Filters Row */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Status Filters */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Filter by Status</label>
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      variant={roleFilter === "field_agent" ? "default" : "outline"}
+                      variant={statusFilter === "all" ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setRoleFilter("field_agent")}
-                      className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
-                    >
-                      FA ({getRoleCount("field_agent")})
-                    </Button>
-                    <Button
-                      variant={roleFilter === "field_engineer" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setRoleFilter("field_engineer")}
-                      className={`text-xs ${roleFilter === "field_engineer" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white"}`}
-                    >
-                      FE ({getRoleCount("field_engineer")})
-                    </Button>
-                    <Button
-                      variant={roleFilter === "administrator" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setRoleFilter("administrator")}
-                      className={`text-xs ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
-                    >
-                      <span className="hidden sm:inline">Admin</span><span className="sm:hidden">A</span> ({getRoleCount("administrator")})
-                    </Button>
-                    <Button
-                      variant={roleFilter === "manager" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setRoleFilter("manager")}
-                      className={`text-xs ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
-                    >
-                      <span className="hidden sm:inline">Manager</span><span className="sm:hidden">M</span> ({getRoleCount("manager")})
-                    </Button>
-                    <Button
-                      variant={roleFilter === "dispatcher" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setRoleFilter("dispatcher")}
-                      className={`text-xs ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
-                    >
-                      <span className="hidden sm:inline">Dispatcher</span><span className="sm:hidden">D</span> ({getRoleCount("dispatcher")})
-                    </Button>
-                    <Button
-                      variant={roleFilter === "all" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setRoleFilter("all")}
+                      onClick={() => setStatusFilter("all")}
                       className="text-xs"
                     >
-                      All ({getRoleCount("all")})
+                      All Status
                     </Button>
-                  </div>
-                  
-                  {/* Status Filters */}
-                  <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
                     <Button
                       variant={statusFilter === "active" ? "default" : "outline"}
                       size="sm"
@@ -604,25 +624,18 @@ export default function TeamPage() {
                     >
                       Inactive
                     </Button>
-                    <Button
-                      variant={statusFilter === "all" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setStatusFilter("all")}
-                      className="text-xs"
-                    >
-                      All Status
-                    </Button>
                   </div>
+                </div>
 
-                  {/* Company Filters - Only for Operations Director */}
-                  {isOperationsDirectorSuperUser && companies && (companies as any[]).length > 0 && (
-                    <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
-                      {/* All Companies Filter */}
+                {/* Company Filters - Only for Operations Director */}
+                {isOperationsDirectorSuperUser && companies && (companies as any[]).length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Filter by Company</label>
+                    <div className="flex flex-wrap gap-2">
                       <select
                         value={companyFilter}
                         onChange={(e) => {
                           setCompanyFilter(e.target.value);
-                          // Update URL to reflect company filter
                           const url = new URL(window.location.href);
                           if (e.target.value === "all") {
                             url.searchParams.delete('company');
@@ -631,7 +644,7 @@ export default function TeamPage() {
                           }
                           window.history.pushState({}, '', url.toString());
                         }}
-                        className="px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
                         <option value="all">All Companies</option>
                         {(companies as any[]).map((company: any) => (
@@ -641,60 +654,9 @@ export default function TeamPage() {
                         ))}
                       </select>
                       
-                      {/* Service Companies Filter */}
-                      <select
-                        value={companyFilter === "all" ? "all" : 
-                               (companies as any[]).find((c: any) => c.id === companyFilter && c.type === "service") ? companyFilter : "all"}
-                        onChange={(e) => {
-                          setCompanyFilter(e.target.value);
-                          // Update URL to reflect company filter
-                          const url = new URL(window.location.href);
-                          if (e.target.value === "all") {
-                            url.searchParams.delete('company');
-                          } else {
-                            url.searchParams.set('company', e.target.value);
-                          }
-                          window.history.pushState({}, '', url.toString());
-                        }}
-                        className="px-2 py-1 text-xs border border-blue-300 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="all">All Service Companies</option>
-                        {(companies as any[]).filter((c: any) => c.type === "service").map((company: any) => (
-                          <option key={company.id} value={company.id}>
-                            {company.name} ({getUsersForCompany(company.id).length})
-                          </option>
-                        ))}
-                      </select>
-                      
-                      {/* Client Companies Filter */}
-                      <select
-                        value={companyFilter === "all" ? "all" : 
-                               (companies as any[]).find((c: any) => c.id === companyFilter && c.type === "client") ? companyFilter : "all"}
-                        onChange={(e) => {
-                          setCompanyFilter(e.target.value);
-                          // Update URL to reflect company filter
-                          const url = new URL(window.location.href);
-                          if (e.target.value === "all") {
-                            url.searchParams.delete('company');
-                          } else {
-                            url.searchParams.set('company', e.target.value);
-                          }
-                          window.history.pushState({}, '', url.toString());
-                        }}
-                        className="px-2 py-1 text-xs border border-teal-300 rounded bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      >
-                        <option value="all">All Client Companies</option>
-                        {(companies as any[]).filter((c: any) => c.type === "client").map((company: any) => (
-                          <option key={company.id} value={company.id}>
-                            {company.name} ({getUsersForCompany(company.id).length})
-                          </option>
-                        ))}
-                      </select>
                     </div>
-                  )}
-
-
-                </div>
+                  </div>
+                )}
               </div>
             </div>
             {usersLoading ? (
@@ -789,67 +751,28 @@ export default function TeamPage() {
                             }
                           </h4>
                           
-                          {/* Action buttons below user name */}
-                          <div className="flex items-center space-x-2 mt-2">
-                            {userData.id !== (user as any)?.id && !userData.roles?.includes('administrator') && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2 py-1 text-xs"
-                                    disabled={deleteUserMutation.isPending}
-                                  >
-                                    <Trash2 className="h-3 w-3 mr-1" />
-                                    Delete
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete User Account</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete the account for{' '}
-                                      <strong>
-                                        {userData.firstName && userData.lastName 
-                                          ? `${userData.firstName} ${userData.lastName}`
-                                          : userData.email || 'this user'
-                                        }
-                                      </strong>
-                                      ? This action is <strong>irreversible</strong> and will permanently remove:
-                                      <br /><br />
-                                      • User account and profile information
-                                      <br />
-                                      • Work order assignments (reassigned to unassigned)
-                                      <br />
-                                      • Time tracking history
-                                      <br />
-                                      • Message history
-                                      <br /><br />
-                                      <strong>This cannot be undone.</strong>
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteUserMutation.mutate(userData.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Delete Account
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
-                            {userData.id === (user as any)?.id && (
-                              <Badge variant="outline" className="text-xs">
-                                Current User
-                              </Badge>
-                            )}
-                            {userData.roles?.includes('administrator') && !(user as any).roles?.includes('administrator') && (
-                              <Badge variant="outline" className="text-xs bg-purple-900/20 text-purple-300">
-                                Administrator (Cannot Delete)
-                              </Badge>
-                            )}
+                          {/* Basic Details */}
+                          <div className="space-y-1 mt-2">
+                            <p className="text-sm text-muted-foreground">
+                              {userData.email}
+                            </p>
+                            <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                              <span className="flex items-center space-x-1">
+                                <Briefcase className="h-3 w-3" />
+                                <span>0 completed orders</span>
+                              </span>
+                              <span className="flex items-center space-x-1">
+                                <span>★</span>
+                                <span>No rating</span>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2 mt-2">
+                              {userData.id === (user as any)?.id && (
+                                <Badge variant="outline" className="text-xs">
+                                  Current User
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1185,8 +1108,8 @@ export default function TeamPage() {
                 </AlertDialog>
               </div>
 
-              {/* Work Orders Button */}
-              <div className="pt-4">
+              {/* Action Buttons */}
+              <div className="pt-4 space-y-3">
                 <Button 
                   className="w-full" 
                   onClick={() => {
@@ -1197,6 +1120,62 @@ export default function TeamPage() {
                   <Briefcase className="h-4 w-4 mr-2" />
                   View Work Orders
                 </Button>
+                
+                {/* Delete Button - Only for non-TestAdmin users and proper permissions */}
+                {selectedUser.id !== (user as any)?.id && 
+                 selectedUser.firstName !== "TestAdmin" &&
+                 ((user as any).roles?.includes('administrator') || isOperationsDirector(user as any)) && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={deleteUserMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete User Account
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete User Account</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete the account for{' '}
+                          <strong>
+                            {selectedUser.firstName && selectedUser.lastName 
+                              ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                              : selectedUser.email || 'this user'
+                            }
+                          </strong>
+                          ? This action is <strong>irreversible</strong> and will permanently remove:
+                          <br /><br />
+                          • User account and profile information
+                          <br />
+                          • Work order assignments (reassigned to unassigned)
+                          <br />
+                          • Time tracking history
+                          <br />
+                          • Message history
+                          <br /><br />
+                          <strong>This cannot be undone.</strong>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            deleteUserMutation.mutate(selectedUser.id);
+                            setIsDialogOpen(false);
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete Account
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </div>
           )}

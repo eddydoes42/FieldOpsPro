@@ -101,7 +101,7 @@ async function seedTestData() {
         lastName: "Client",
         email: "testadmin.client@test.com",
         password: hashedPassword,
-        roles: ["client_company_admin"],
+        roles: ["administrator"],
         companyId: clientCompanyId,
         status: "active"
       },
