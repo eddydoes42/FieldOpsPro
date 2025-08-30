@@ -538,32 +538,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFieldAgents(): Promise<User[]> {
-    // Get all users with field_agent or field_engineer role, including their company information
-    const fieldAgentsWithCompanies = await db
-      .select({
-        id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-        phone: users.phone,
-        address: users.address,
-        city: users.city,
-        state: users.state,
-        zipCode: users.zipCode,
-        roles: users.roles,
-        isActive: users.isActive,
-        companyId: users.companyId,
-        companyName: companies.name,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
-      })
+    // Get all users with field_agent or field_engineer role
+    const fieldAgents = await db
+      .select()
       .from(users)
-      .leftJoin(companies, eq(users.companyId, companies.id))
       .where(or(
         sql`'field_agent' = ANY(${users.roles})`,
         sql`'field_engineer' = ANY(${users.roles})`
       ))
       .orderBy(users.firstName, users.lastName);
+
+    // Get company information separately to avoid join issues
+    const companiesData = await db.select().from(companies);
 
     // Get work order completion counts for each agent
     const workOrderCompletions = await db
@@ -589,10 +575,14 @@ export class DatabaseStorage implements IStorage {
     const completionsMap = new Map(workOrderCompletions.map(item => [item.assigneeId, item.completedCount]));
     const issuesMap = new Map(unresolvedIssuesCount.map(item => [item.reportedBy, item.issueCount]));
 
+    // Create company lookup map
+    const companiesMap = new Map(companiesData.map(company => [company.id, company]));
+
     // Transform the data to include company information and additional agent details
-    return fieldAgentsWithCompanies.map(agent => {
+    return fieldAgents.map(agent => {
       const completedJobs = completionsMap.get(agent.id || '') || 0;
       const unresolvedIssues = issuesMap.get(agent.id || '') || 0;
+      const company = agent.companyId ? companiesMap.get(agent.companyId) : null;
       
       // Calculate years of experience based on creation date
       const yearsExperience = agent.createdAt 
@@ -627,9 +617,9 @@ export class DatabaseStorage implements IStorage {
         companyId: agent.companyId,
         createdAt: agent.createdAt,
         updatedAt: agent.updatedAt,
-        company: agent.companyName ? {
-          id: agent.companyId,
-          name: agent.companyName
+        company: company ? {
+          id: company.id,
+          name: company.name
         } : undefined,
         // Enhanced agent-specific fields for talent network
         location: agent.city && agent.state ? `${agent.city}, ${agent.state}` : null,
