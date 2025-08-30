@@ -414,7 +414,7 @@ export default function OperationsCompanies() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.history.back()}
+              onClick={() => setLocation('/operations-dashboard')}
               className="flex items-center space-x-1"
             >
               <ArrowLeft className="h-4 w-4" />
