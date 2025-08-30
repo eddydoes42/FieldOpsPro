@@ -454,17 +454,7 @@ function Router() {
                 const isRoleTesting = !!testingRole;
                 const isODBypass = isOperationsDirector(user as any) && !isRoleTesting;
                 
-                console.log('Job Network Access Check:', {
-                  isAuthenticated,
-                  effectiveRole,
-                  hasJobNetworkAccess,
-                  isODBypass,
-                  isOperationsDirector: isOperationsDirector(user as any),
-                  isRoleTesting,
-                  testingRole,
-                  permanentRole,
-                  user: user ? { id: user.id, roles: user.roles } : null
-                });
+
                 
                 if (isAuthenticated && (hasJobNetworkAccess || isODBypass)) {
                   return (

@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Settings, Eye, ChevronDown, User } from "lucide-react";
 import { isOperationsDirector } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
 
 interface RoleSwitcherProps {
   currentRole: string;
@@ -48,10 +50,19 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
 
   const currentRoleInfo = availableRoles.find(role => role.value === currentRole);
 
+  const stopImpersonationMutation = useMutation({
+    mutationFn: () => apiRequest('/api/impersonation/stop', 'POST'),
+    onSuccess: () => {
+      // Clear testing role and navigate back to operations director dashboard
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      window.location.href = '/operations-dashboard';
+    }
+  });
+
   const handleStopTesting = () => {
-    // Clear testing role and navigate back to operations director dashboard
-    localStorage.removeItem('testingRole');
-    window.location.href = '/operations-dashboard';
+    stopImpersonationMutation.mutate();
   };
 
   const handleStartTesting = () => {

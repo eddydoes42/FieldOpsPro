@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAuthenticatedWithODBypass } from "./replitAuth";
+import { roleImpersonationService } from "./roleImpersonation";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, insertDocumentSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel, isDispatcher, isService, canViewJobNetwork } from "@shared/schema";
@@ -71,6 +72,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Role Impersonation routes
+  app.post('/api/impersonation/start', isAuthenticated, async (req: any, res) => {
+    try {
+      const originalUserId = req.user.claims.sub;
+      const { role, companyType } = req.body;
+
+      // Validate request
+      if (!role || !companyType) {
+        return res.status(400).json({ message: "Role and companyType are required" });
+      }
+
+      if (!['service', 'client'].includes(companyType)) {
+        return res.status(400).json({ message: "Invalid companyType. Must be 'service' or 'client'" });
+      }
+
+      // Start impersonation
+      const impersonationContext = await roleImpersonationService.startImpersonation(
+        originalUserId, 
+        role, 
+        companyType
+      );
+
+      res.json({
+        success: true,
+        context: {
+          impersonatedUser: impersonationContext.impersonatedUser,
+          role: impersonationContext.role,
+          companyType: impersonationContext.companyType
+        }
+      });
+    } catch (error) {
+      console.error("Error starting impersonation:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to start impersonation" });
+    }
+  });
+
+  app.post('/api/impersonation/stop', isAuthenticated, async (req: any, res) => {
+    try {
+      const originalUserId = req.user.claims.sub;
+      await roleImpersonationService.stopImpersonation(originalUserId);
+
+      res.json({ success: true, message: "Impersonation stopped" });
+    } catch (error) {
+      console.error("Error stopping impersonation:", error);
+      res.status(500).json({ message: "Failed to stop impersonation" });
+    }
+  });
+
+  app.get('/api/impersonation/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const originalUserId = req.user.claims.sub;
+      const impersonationContext = roleImpersonationService.getImpersonationContext(originalUserId);
+
+      res.json({
+        isImpersonating: !!impersonationContext,
+        context: impersonationContext ? {
+          impersonatedUser: impersonationContext.impersonatedUser,
+          role: impersonationContext.role,
+          companyType: impersonationContext.companyType,
+          startTime: impersonationContext.startTime
+        } : null
+      });
+    } catch (error) {
+      console.error("Error getting impersonation status:", error);
+      res.status(500).json({ message: "Failed to get impersonation status" });
     }
   });
 
