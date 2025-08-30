@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Building2, Users, Settings, UserCheck } from "lucide-react";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 interface RoleSelectionProps {
   user: any;
@@ -13,20 +14,28 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
   const hasOperationsDirectorRole = user?.roles?.includes('operations_director');
   const hasAdministratorRole = user?.roles?.includes('administrator');
 
-  // If user only has one relevant role, redirect automatically
-  if (hasOperationsDirectorRole && !hasAdministratorRole) {
-    setLocation('/operations-dashboard');
-    return null;
-  }
-  
-  if (hasAdministratorRole && !hasOperationsDirectorRole) {
-    setLocation('/admin-dashboard');
-    return null;
-  }
+  // Handle automatic redirects in useEffect to avoid state updates during render
+  useEffect(() => {
+    // If user only has one relevant role, redirect automatically
+    if (hasOperationsDirectorRole && !hasAdministratorRole) {
+      setLocation('/operations-dashboard');
+      return;
+    }
+    
+    if (hasAdministratorRole && !hasOperationsDirectorRole) {
+      setLocation('/admin-dashboard');
+      return;
+    }
 
-  // If user has no relevant roles, redirect to dashboard with their primary role
-  if (!hasOperationsDirectorRole && !hasAdministratorRole) {
-    setLocation('/dashboard');
+    // If user has no relevant roles, redirect to dashboard with their primary role
+    if (!hasOperationsDirectorRole && !hasAdministratorRole) {
+      setLocation('/dashboard');
+      return;
+    }
+  }, [hasOperationsDirectorRole, hasAdministratorRole, setLocation]);
+
+  // If user will be redirected, show loading state
+  if (!hasOperationsDirectorRole || !hasAdministratorRole) {
     return null;
   }
 

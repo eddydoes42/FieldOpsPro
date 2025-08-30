@@ -322,7 +322,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                         ].filter((role) => {
                           // Only show client role to operations directors
                           if (role.value === "client") {
-                            return isOperationsDirector(currentUser);
+                            return currentUser?.roles?.includes('operations_director') || false;
                           }
                           return true;
                         }).map((role) => (
