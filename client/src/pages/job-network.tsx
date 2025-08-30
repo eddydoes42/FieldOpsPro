@@ -561,6 +561,34 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <ServiceCompanyRoleTester />
           <ClientCompanyRoleTester />
+          
+          {/* Navigation Buttons */}
+          <div className="flex items-center space-x-2 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const selectedRole = localStorage.getItem('selectedRole');
+                const testingRole = localStorage.getItem('testingRole');
+                if (testingRole === 'operations_director' || selectedRole === 'operations_director') {
+                  window.location.href = '/operations-dashboard';
+                } else {
+                  window.location.href = '/dashboard';
+                }
+              }}
+              className="flex items-center space-x-1"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center space-x-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
       
@@ -568,37 +596,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const selectedRole = localStorage.getItem('selectedRole');
-                  const testingRole = localStorage.getItem('testingRole');
-                  if (testingRole === 'operations_director' || selectedRole === 'operations_director') {
-                    window.location.href = '/operations-dashboard';
-                  } else {
-                    window.location.href = '/dashboard';
-                  }
-                }}
-                className="flex items-center space-x-1"
-              >
-                <Home className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.history.back()}
-                className="flex items-center space-x-1"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
-                  <Network className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                  <span>Job Network</span>
-                </h1>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                <Network className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <span>Job Network</span>
+              </h1>
             </div>
             
             <div className="flex items-center space-x-3">
