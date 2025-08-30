@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -112,6 +112,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   // Initial File Upload State
   const [initialFiles, setInitialFiles] = useState<File[]>([]);
   const [showInitialFileUploader, setShowInitialFileUploader] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
 
 
@@ -337,6 +338,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   };
 
   // Initial File Upload Handlers
+  const handleUploadClick = () => {
+    // Trigger native file picker directly
+    fileInputRef.current?.click();
+  };
+
   const handleInitialFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length > 0) {
@@ -346,6 +352,8 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
         description: `${files.length} file(s) added for upload when work order is created`,
       });
     }
+    // Reset so selecting the same file again still triggers onChange
+    event.target.value = '';
   };
 
   const handleRemoveInitialFile = (index: number) => {
@@ -1059,17 +1067,22 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                console.log('Upload Files button clicked, setting showInitialFileUploader to true');
-                                setShowInitialFileUploader(true);
-                              }}
+                              onClick={handleUploadClick}
                               className="flex items-center gap-2"
                             >
                               <Upload className="h-4 w-4" />
                               Upload Files
                             </Button>
+
+                            {/* Hidden file input for native dialog */}
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              style={{ display: 'none' }}
+                              accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.txt"
+                              multiple
+                              onChange={handleInitialFileSelect}
+                            />
                           </div>
                           
                           {/* Show uploaded initial files */}
