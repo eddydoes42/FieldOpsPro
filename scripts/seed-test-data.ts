@@ -18,8 +18,8 @@ async function seedTestData() {
     if (existingServiceCompany.length === 0) {
       const [serviceCompany] = await db.insert(companies).values({
         name: "Test Service Company",
-        companyType: "service",
-        status: "active"
+        type: "service",
+        isActive: true
       }).returning();
       serviceCompanyId = serviceCompany.id;
       console.log(`Created Service Company with ID: ${serviceCompanyId}`);
@@ -32,8 +32,8 @@ async function seedTestData() {
     if (existingClientCompany.length === 0) {
       const [clientCompany] = await db.insert(companies).values({
         name: "Test Client Company",
-        companyType: "client",
-        status: "active"
+        type: "client",
+        isActive: true
       }).returning();
       clientCompanyId = clientCompany.id;
       console.log(`Created Client Company with ID: ${clientCompanyId}`);
