@@ -219,14 +219,14 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   // Create work order mutation
   const createWorkOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/work-orders', data);
+      const response = await apiRequest('/api/work-orders', 'POST', data);
       const createdWorkOrder = await response.json();
       
       // Create tasks for the work order
       if (tasks.length > 0) {
         for (let i = 0; i < tasks.length; i++) {
           const task = tasks[i];
-          await apiRequest('POST', `/api/work-orders/${createdWorkOrder.id}/tasks`, {
+          await apiRequest(`/api/work-orders/${createdWorkOrder.id}/tasks`, 'POST', {
             ...task,
             orderIndex: i
           });
