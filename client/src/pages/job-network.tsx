@@ -383,9 +383,9 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   // Category Label Functions
   const getCategoryLabel = (category: string) => {
     switch (category) {
-      case 'pre_visit': return '🚗 Pre-Site';
-      case 'on_site': return '🔧 On-Site';
-      case 'post_site': return '📋 Post-Site';
+      case 'pre_visit': return 'Pre-Site';
+      case 'on_site': return 'On-Site';
+      case 'post_site': return 'Post-Site';
       default: return category;
     }
   };
@@ -867,7 +867,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         {/* Tasks Section */}
                         <div className="form-section-minimal border-t border-gray-200 dark:border-gray-700 pt-3">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="form-label-minimal text-base">📋 Pre-Define Tasks</h3>
+                            <h3 className="form-label-minimal text-base">Pre-Define Tasks</h3>
                             <Badge variant="secondary" className="text-xs">
                               {tasks.length} tasks ready
                             </Badge>
@@ -887,9 +887,9 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="pre_visit">🚗 Pre-Site</SelectItem>
-                                        <SelectItem value="on_site">🔧 On-Site</SelectItem>
-                                        <SelectItem value="post_site">📋 Post-Site</SelectItem>
+                                        <SelectItem value="pre_visit">Pre-Site</SelectItem>
+                                        <SelectItem value="on_site">On-Site</SelectItem>
+                                        <SelectItem value="post_site">Post-Site</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -967,7 +967,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                                 <span className="font-medium text-sm text-gray-900 dark:text-gray-100">{task.title}</span>
                                                 {task.documentsRequired > 0 && (
                                                   <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
-                                                    📄 {task.documentsRequired} doc{task.documentsRequired !== 1 ? 's' : ''} required
+                                                    {task.documentsRequired} doc{task.documentsRequired !== 1 ? 's' : ''} required
                                                   </Badge>
                                                 )}
                                               </div>
@@ -1000,7 +1000,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         {/* Tools Section */}
                         <div className="form-section-minimal border-t border-gray-200 dark:border-gray-700 pt-3">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="form-label-minimal text-base">🔧 Required Tools</h3>
+                            <h3 className="form-label-minimal text-base">Required Tools</h3>
                             <Badge variant="secondary" className="text-xs">
                               {tools.length} tools specified
                             </Badge>
@@ -1020,11 +1020,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="hardware">⚙️ Hardware</SelectItem>
-                                        <SelectItem value="software">💻 Software</SelectItem>
-                                        <SelectItem value="safety">🦺 Safety</SelectItem>
-                                        <SelectItem value="testing">🔍 Testing</SelectItem>
-                                        <SelectItem value="other">🔧 Other</SelectItem>
+                                        <SelectItem value="hardware">Hardware</SelectItem>
+                                        <SelectItem value="software">Software</SelectItem>
+                                        <SelectItem value="safety">Safety</SelectItem>
+                                        <SelectItem value="testing">Testing</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
