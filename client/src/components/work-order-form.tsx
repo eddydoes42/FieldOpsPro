@@ -1041,7 +1041,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
               {/* Tools Management - Only visible to management */}
               {!isClient && (
-                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">Required Tools</h3>
                     <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 text-xs">
