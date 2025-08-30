@@ -122,14 +122,14 @@ export function FieldAgentRatingForm({ workOrderId, fieldAgentName, onClose, onS
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="communication-feedback" className="text-sm">Communication Feedback (Optional)</Label>
+          <Label htmlFor="communication-feedback" className="form-label-minimal">Communication Feedback (Optional)</Label>
           <Textarea
             id="communication-feedback"
             placeholder="Any specific feedback about communication..."
             value={feedback.communicationFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, communicationFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -140,14 +140,14 @@ export function FieldAgentRatingForm({ workOrderId, fieldAgentName, onClose, onS
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="timeliness-feedback" className="text-sm">Timeliness Feedback (Optional)</Label>
+          <Label htmlFor="timeliness-feedback" className="form-label-minimal">Timeliness Feedback (Optional)</Label>
           <Textarea
             id="timeliness-feedback"
             placeholder="Any specific feedback about timeliness..."
             value={feedback.timelinesFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, timelinesFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -158,14 +158,14 @@ export function FieldAgentRatingForm({ workOrderId, fieldAgentName, onClose, onS
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="work-satisfaction-feedback" className="text-sm">Work Satisfaction Feedback (Optional)</Label>
+          <Label htmlFor="work-satisfaction-feedback" className="form-label-minimal">Work Satisfaction Feedback (Optional)</Label>
           <Textarea
             id="work-satisfaction-feedback"
             placeholder="Any specific feedback about work quality..."
             value={feedback.workSatisfactionFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, workSatisfactionFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -264,14 +264,14 @@ export function DispatcherRatingForm({ workOrderId, dispatcherName, onClose, onS
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="communication-feedback" className="text-sm">Communication Feedback (Optional)</Label>
+          <Label htmlFor="communication-feedback" className="form-label-minimal">Communication Feedback (Optional)</Label>
           <Textarea
             id="communication-feedback"
             placeholder="Any specific feedback about communication..."
             value={feedback.communicationFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, communicationFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -282,14 +282,14 @@ export function DispatcherRatingForm({ workOrderId, dispatcherName, onClose, onS
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="management-feedback" className="text-sm">Management Feedback (Optional)</Label>
+          <Label htmlFor="management-feedback" className="form-label-minimal">Management Feedback (Optional)</Label>
           <Textarea
             id="management-feedback"
             placeholder="Any specific feedback about project management..."
             value={feedback.managementFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, managementFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -300,14 +300,14 @@ export function DispatcherRatingForm({ workOrderId, dispatcherName, onClose, onS
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="field-agent-feedback" className="text-sm">Field Agent Coordination Feedback (Optional)</Label>
+          <Label htmlFor="field-agent-feedback" className="form-label-minimal">Field Agent Coordination Feedback (Optional)</Label>
           <Textarea
             id="field-agent-feedback"
             placeholder="Any specific feedback about field agent coordination..."
             value={feedback.fieldAgentFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, fieldAgentFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -406,14 +406,14 @@ export function ClientRatingForm({ workOrderId, clientName, onClose, onSuccess }
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="communication-feedback" className="text-sm">Communication Feedback (Optional)</Label>
+          <Label htmlFor="communication-feedback" className="form-label-minimal">Communication Feedback (Optional)</Label>
           <Textarea
             id="communication-feedback"
             placeholder="Any specific feedback about communication..."
             value={feedback.communicationFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, communicationFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -424,14 +424,14 @@ export function ClientRatingForm({ workOrderId, clientName, onClose, onSuccess }
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="clear-scope-feedback" className="text-sm">Clear Scope Feedback (Optional)</Label>
+          <Label htmlFor="clear-scope-feedback" className="form-label-minimal">Clear Scope Feedback (Optional)</Label>
           <Textarea
             id="clear-scope-feedback"
             placeholder="Any specific feedback about project scope clarity..."
             value={feedback.clearScopeFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, clearScopeFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 
@@ -442,14 +442,14 @@ export function ClientRatingForm({ workOrderId, clientName, onClose, onSuccess }
           disabled={submitRatingMutation.isPending}
         />
         <div>
-          <Label htmlFor="overall-satisfaction-feedback" className="text-sm">Overall Satisfaction Feedback (Optional)</Label>
+          <Label htmlFor="overall-satisfaction-feedback" className="form-label-minimal">Overall Satisfaction Feedback (Optional)</Label>
           <Textarea
             id="overall-satisfaction-feedback"
             placeholder="Any specific feedback about overall satisfaction..."
             value={feedback.overallSatisfactionFeedback}
             onChange={(e) => setFeedback(prev => ({ ...prev, overallSatisfactionFeedback: e.target.value }))}
             disabled={submitRatingMutation.isPending}
-            className="mt-1"
+            className="form-textarea-minimal"
           />
         </div>
 

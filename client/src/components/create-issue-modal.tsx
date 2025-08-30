@@ -115,16 +115,16 @@ export default function CreateIssueModal({ workOrderId, isOpen, onClose }: Creat
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="form-minimal">
           {/* Issue Type */}
-          <div className="space-y-2">
-            <Label htmlFor="issue-type">Issue Type *</Label>
+          <div>
+            <Label htmlFor="issue-type" className="form-label-minimal">Issue Type *</Label>
             <Select 
               value={formData.type} 
               onValueChange={(value) => setFormData({ ...formData, type: value })}
               data-testid="select-issue-type"
             >
-              <SelectTrigger>
+              <SelectTrigger className="form-select-minimal">
                 <SelectValue placeholder="Select issue type" />
               </SelectTrigger>
               <SelectContent>
@@ -137,14 +137,14 @@ export default function CreateIssueModal({ workOrderId, isOpen, onClose }: Creat
           </div>
 
           {/* Severity Level */}
-          <div className="space-y-2">
-            <Label htmlFor="severity">Severity Level *</Label>
+          <div>
+            <Label htmlFor="severity" className="form-label-minimal">Severity Level *</Label>
             <Select 
               value={formData.severity} 
               onValueChange={(value) => setFormData({ ...formData, severity: value })}
               data-testid="select-severity"
             >
-              <SelectTrigger>
+              <SelectTrigger className="form-select-minimal">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -161,11 +161,12 @@ export default function CreateIssueModal({ workOrderId, isOpen, onClose }: Creat
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+          <div>
+            <Label htmlFor="description" className="form-label-minimal">Description *</Label>
             <Textarea
               id="description"
               placeholder="Describe the issue in detail..."
+              className="form-textarea-minimal"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
@@ -183,12 +184,13 @@ export default function CreateIssueModal({ workOrderId, isOpen, onClose }: Creat
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={createIssueMutation.isPending}
+              className="form-button-secondary-minimal"
               data-testid="button-cancel-issue"
             >
               Cancel
@@ -196,6 +198,7 @@ export default function CreateIssueModal({ workOrderId, isOpen, onClose }: Creat
             <Button
               type="submit"
               disabled={createIssueMutation.isPending}
+              className="form-button-primary-minimal"
               data-testid="button-submit-issue"
             >
               {createIssueMutation.isPending ? "Creating..." : "Create Issue"}

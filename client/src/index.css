@@ -88,6 +88,51 @@
     text-wrap: balance;
   }
 
+  /* Minimal Form Styles */
+  .form-minimal {
+    @apply space-y-2;
+  }
+
+  .form-label-minimal {
+    @apply text-sm font-medium text-gray-900 dark:text-gray-100;
+  }
+
+  .form-input-minimal {
+    @apply text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm;
+  }
+
+  .form-textarea-minimal {
+    @apply text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm resize-y;
+  }
+
+  .form-select-minimal {
+    @apply text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm;
+  }
+
+  .form-button-minimal {
+    @apply px-4 py-2 text-sm font-medium rounded-md border;
+  }
+
+  .form-button-primary-minimal {
+    @apply form-button-minimal bg-blue-600 hover:bg-blue-700 text-white border-blue-600;
+  }
+
+  .form-button-secondary-minimal {
+    @apply form-button-minimal bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100 dark:border-gray-600;
+  }
+
+  .form-section-minimal {
+    @apply space-y-3;
+  }
+
+  .form-grid-minimal {
+    @apply grid gap-3;
+  }
+
+  .form-message-minimal {
+    @apply text-sm text-red-600 dark:text-red-400 mt-1;
+  }
+
   /* Minimal Scrollbar Utility */
   .scrollbar-minimal {
     /* Firefox */

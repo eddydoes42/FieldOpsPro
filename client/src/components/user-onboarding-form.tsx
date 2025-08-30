@@ -157,19 +157,19 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
         
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="form-minimal">
               {/* Personal Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="form-label-minimal text-lg mb-2">Personal Information</h3>
+                <div className="form-grid-minimal grid-cols-1 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name *</FormLabel>
+                        <FormLabel className="form-label-minimal">First Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter first name" {...field} />
+                          <Input placeholder="Enter first name" className="form-input-minimal" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -180,9 +180,9 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name *</FormLabel>
+                        <FormLabel className="form-label-minimal">Last Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter last name" {...field} />
+                          <Input placeholder="Enter last name" className="form-input-minimal" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -193,16 +193,16 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
 
               {/* Contact Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-                <div className="space-y-4">
+                <h3 className="form-label-minimal text-lg mb-2">Contact Information</h3>
+                <div className="form-section-minimal">
                   <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address *</FormLabel>
+                        <FormLabel className="form-label-minimal">Email Address *</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Enter email address" {...field} />
+                          <Input type="email" placeholder="Enter email address" className="form-input-minimal" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -213,11 +213,12 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number *</FormLabel>
+                        <FormLabel className="form-label-minimal">Phone Number *</FormLabel>
                         <FormControl>
                           <Input 
                             type="tel" 
                             placeholder="Enter phone number" 
+                            className="form-input-minimal"
                             {...field}
                             onChange={(e) => {
                               const formattedValue = formatPhoneNumber(e.target.value);
@@ -234,30 +235,30 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
 
               {/* Address Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
-                <div className="space-y-4">
+                <h3 className="form-label-minimal text-lg mb-2">Address Information</h3>
+                <div className="form-section-minimal">
                   <FormField
                     control={form.control}
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Street Address *</FormLabel>
+                        <FormLabel className="form-label-minimal">Street Address *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter street address" {...field} />
+                          <Input placeholder="Enter street address" className="form-input-minimal" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-grid-minimal grid-cols-1 md:grid-cols-3">
                     <FormField
                       control={form.control}
                       name="city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>City *</FormLabel>
+                          <FormLabel className="form-label-minimal">City *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter city" {...field} />
+                            <Input placeholder="Enter city" className="form-input-minimal" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -268,10 +269,10 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       name="state"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>State *</FormLabel>
+                          <FormLabel className="form-label-minimal">State *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="form-select-minimal">
                                 <SelectValue placeholder="Select state" />
                               </SelectTrigger>
                             </FormControl>
@@ -292,9 +293,9 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       name="zipCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>ZIP Code *</FormLabel>
+                          <FormLabel className="form-label-minimal">ZIP Code *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter ZIP code" {...field} />
+                            <Input placeholder="Enter ZIP code" className="form-input-minimal" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -306,13 +307,13 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
 
               {/* Role Assignment */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Role Assignment</h3>
+                <h3 className="form-label-minimal text-lg mb-2">Role Assignment</h3>
                 <FormField
                   control={form.control}
                   name="roles"
                   render={() => (
                     <FormItem>
-                      <FormLabel>User Roles *</FormLabel>
+                      <FormLabel className="form-label-minimal">User Roles *</FormLabel>
                       <div className="space-y-2">
                         {[
                           { value: "field_agent", label: "Field Agent" },
@@ -366,9 +367,9 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       name="clientCompanyName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Company Name *</FormLabel>
+                          <FormLabel className="form-label-minimal">Company Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter company name" {...field} />
+                            <Input placeholder="Enter company name" className="form-input-minimal" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -379,9 +380,9 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       name="clientRole"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Role within Company *</FormLabel>
+                          <FormLabel className="form-label-minimal">Role within Company *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., IT Manager, CEO, Operations Director" {...field} />
+                            <Input placeholder="e.g., IT Manager, CEO, Operations Director" className="form-input-minimal" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -392,19 +393,19 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
               )}
 
               {/* Action Buttons */}
-              <div className="flex space-x-4 pt-6 border-t border-gray-200">
+              <div className="flex space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button" 
-                  variant="secondary" 
+                  variant="outline"
                   onClick={onClose}
-                  className="flex-1"
+                  className="form-button-secondary-minimal flex-1"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit"
                   disabled={createUserMutation.isPending}
-                  className="flex-1"
+                  className="form-button-primary-minimal flex-1"
                 >
                   {createUserMutation.isPending ? "Creating..." : "Create Account"}
                 </Button>

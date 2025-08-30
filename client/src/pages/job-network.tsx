@@ -617,17 +617,17 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                       <DialogTitle>Create New Work Order</DialogTitle>
                     </DialogHeader>
                     <Form {...workOrderForm}>
-                      <form onSubmit={workOrderForm.handleSubmit(onWorkOrderSubmit)} className="space-y-6">
+                      <form onSubmit={workOrderForm.handleSubmit(onWorkOrderSubmit)} className="form-minimal">
                         <FormField
                           control={workOrderForm.control}
                           name="title"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Work Order Title</FormLabel>
+                              <FormLabel className="form-label-minimal">Work Order Title</FormLabel>
                               <FormControl>
                                 <Input 
                                   placeholder="Enter work order title" 
-                                  className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                  className="form-input-minimal"
                                   {...field} 
                                 />
                               </FormControl>
@@ -641,11 +641,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                           name="description"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Description</FormLabel>
+                              <FormLabel className="form-label-minimal">Description</FormLabel>
                               <FormControl>
                                 <Textarea 
                                   placeholder="Enter work order description"
-                                  className="min-h-[100px] text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                  className="form-textarea-minimal min-h-[100px]"
                                   {...field} 
                                 />
                               </FormControl>
@@ -661,7 +661,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             name="clientCompanyId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Posting on Behalf of Client</FormLabel>
+                                <FormLabel className="form-label-minimal">Posting on Behalf of Client</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -689,24 +689,24 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                           name="address"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Address *</FormLabel>
+                              <FormLabel className="form-label-minimal">Address *</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter street address" {...field} />
+                                <Input placeholder="Enter street address" className="form-input-minimal" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="form-grid-minimal grid-cols-4">
                           <FormField
                             control={workOrderForm.control}
                             name="city"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>City *</FormLabel>
+                                <FormLabel className="form-label-minimal">City *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Enter city" {...field} />
+                                  <Input placeholder="Enter city" className="form-input-minimal" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -718,9 +718,9 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             name="state"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>State *</FormLabel>
+                                <FormLabel className="form-label-minimal">State *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Enter state" {...field} />
+                                  <Input placeholder="Enter state" className="form-input-minimal" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -732,9 +732,9 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             name="zipCode"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Zip Code *</FormLabel>
+                                <FormLabel className="form-label-minimal">Zip Code *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Enter zip code" {...field} />
+                                  <Input placeholder="Enter zip code" className="form-input-minimal" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -746,7 +746,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             name="priority"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Priority</FormLabel>
+                                <FormLabel className="form-label-minimal">Priority</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -766,17 +766,18 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="form-grid-minimal grid-cols-2">
                           <FormField
                             control={workOrderForm.control}
                             name="budget"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Budget</FormLabel>
+                                <FormLabel className="form-label-minimal">Budget</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="Enter budget amount" 
                                     type="text"
+                                    className="form-input-minimal"
                                     value={field.value || ''}
                                     onChange={(e) => {
                                       const rawValue = e.target.value;
@@ -802,7 +803,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             name="budgetType"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Budget Type</FormLabel>
+                                <FormLabel className="form-label-minimal">Budget Type</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -822,17 +823,18 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="form-grid-minimal grid-cols-2">
                           <FormField
                             control={workOrderForm.control}
                             name="estimatedHours"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Estimated Hours</FormLabel>
+                                <FormLabel className="form-label-minimal">Estimated Hours</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="Enter estimated hours" 
                                     type="number"
+                                    className="form-input-minimal"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -846,13 +848,13 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             name="dueDate"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Due Date</FormLabel>
+                                <FormLabel className="form-label-minimal">Due Date</FormLabel>
                                 <FormControl>
                                   <DatePicker
                                     date={field.value ? new Date(field.value) : undefined}
                                     onDateChange={(date) => field.onChange(date ? date.toISOString() : '')}
                                     placeholder="Select due date & time"
-                                    className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                    className="form-input-minimal"
                                     includeTime={true}
                                   />
                                 </FormControl>
@@ -863,26 +865,25 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         </div>
 
                         {/* Tasks Section */}
-                        <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                        <div className="form-section-minimal border-t border-gray-200 dark:border-gray-700 pt-3">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">📋 Pre-Define Tasks</h3>
-                            <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200 text-xs">
+                            <h3 className="form-label-minimal text-base">📋 Pre-Define Tasks</h3>
+                            <Badge variant="secondary" className="text-xs">
                               {tasks.length} tasks ready
                             </Badge>
                           </div>
                           
                           {/* Add Task Form */}
-                          <Card className="mb-3 border-dashed border-2 border-blue-300 dark:border-blue-700">
-                            <CardContent className="pt-3 pb-3">
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-2">
+                          <div className="mb-3 p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-md">
+                              <div className="form-minimal">
+                                <div className="grid grid-cols-2 gap-3">
                                   <div>
-                                    <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Category</label>
+                                    <label className="form-label-minimal">Category</label>
                                     <Select 
                                       value={newTask.category} 
                                       onValueChange={(value) => setNewTask({ ...newTask, category: value as any })}
                                     >
-                                      <SelectTrigger className="mt-1 h-8">
+                                      <SelectTrigger className="form-select-minimal">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -893,27 +894,27 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                     </Select>
                                   </div>
                                   <div>
-                                    <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Task Title</label>
+                                    <label className="form-label-minimal">Task Title</label>
                                     <Input
                                       value={newTask.title}
                                       onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                                       placeholder="Enter task title"
-                                      className="mt-1 h-8"
+                                      className="form-input-minimal"
                                     />
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Description (Optional)</label>
+                                  <label className="form-label-minimal">Description (Optional)</label>
                                   <Textarea
                                     value={newTask.description}
                                     onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                                     placeholder="Enter task description"
                                     rows={1}
-                                    className="mt-1 min-h-[32px]"
+                                    className="form-textarea-minimal min-h-[32px]"
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-xs font-medium text-blue-900 dark:text-blue-100">Documents Required</label>
+                                  <label className="form-label-minimal">Documents Required</label>
                                   <Input
                                     type="number"
                                     min="0"
@@ -921,7 +922,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                     value={newTask.documentsRequired}
                                     onChange={(e) => setNewTask({ ...newTask, documentsRequired: parseInt(e.target.value) || 0 })}
                                     placeholder="0"
-                                    className="mt-1 h-8"
+                                    className="form-input-minimal"
                                   />
                                   <p className="text-xs text-gray-500 mt-1">
                                     Number of documents Service Company users must upload for this task (0 = none required)
@@ -930,26 +931,24 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                 <Button
                                   type="button"
                                   onClick={handleAddTask}
-                                  size="sm"
-                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8"
+                                  className="form-button-primary-minimal w-full"
                                 >
-                                  <Plus className="h-3 w-3 mr-1" />
+                                  <Plus className="h-4 w-4 mr-2" />
                                   Add Task to Work Order
                                 </Button>
                               </div>
-                            </CardContent>
-                          </Card>
+                          </div>
 
                           {/* Tasks List */}
                           {tasks.length > 0 && (
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               {['pre_visit', 'on_site', 'post_site'].map(category => {
                                 const categoryTasks = tasks.filter(task => task.category === category);
                                 if (categoryTasks.length === 0) return null;
                                 
                                 return (
                                   <div key={category}>
-                                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                                    <h4 className="form-label-minimal text-xs mb-1">
                                       {getCategoryLabel(category)} ({categoryTasks.length})
                                     </h4>
                                     <div className="space-y-1">
@@ -958,14 +957,14 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                         return (
                                           <div
                                             key={globalIndex}
-                                            className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                            className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded-md"
                                           >
                                             <div className="flex-1">
                                               <div className="flex items-center gap-2">
                                                 <Badge className={getCategoryColor(task.category)} variant="secondary">
                                                   {getCategoryLabel(task.category)}
                                                 </Badge>
-                                                <span className="font-medium text-sm">{task.title}</span>
+                                                <span className="font-medium text-sm text-gray-900 dark:text-gray-100">{task.title}</span>
                                                 {task.documentsRequired > 0 && (
                                                   <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
                                                     📄 {task.documentsRequired} doc{task.documentsRequired !== 1 ? 's' : ''} required
@@ -983,7 +982,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                               variant="ghost"
                                               size="sm"
                                               onClick={() => handleRemoveTask(globalIndex)}
-                                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                                             >
                                               <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -1090,7 +1089,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                         return (
                                           <div
                                             key={globalIndex}
-                                            className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border shadow-sm"
+                                            className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded-md"
                                           >
                                             <div className="flex-1">
                                               <div className="flex items-center gap-2">
@@ -1113,7 +1112,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                                               variant="ghost"
                                               size="sm"
                                               onClick={() => handleRemoveTool(globalIndex)}
-                                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                                             >
                                               <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -1251,16 +1250,18 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                           </div>
                         )}
 
-                        <div className="flex justify-end space-x-2">
+                        <div className="flex justify-end space-x-3">
                           <Button 
                             type="button" 
                             variant="outline" 
+                            className="form-button-secondary-minimal"
                             onClick={() => setIsCreateWorkOrderOpen(false)}
                           >
                             Cancel
                           </Button>
                           <Button 
                             type="submit" 
+                            className="form-button-primary-minimal"
                             disabled={createWorkOrderMutation.isPending}
                           >
                             {createWorkOrderMutation.isPending ? 'Creating...' : 'Create Work Order'}

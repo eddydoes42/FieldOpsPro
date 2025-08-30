@@ -167,30 +167,32 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="form-minimal">
               {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="form-section-minimal">
+                <h3 className="form-label-minimal text-lg mb-2">
                   Administrator Information
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
+                <div className="form-grid-minimal grid-cols-1 md:grid-cols-2">
+                  <div>
+                    <Label htmlFor="firstName" className="form-label-minimal">First Name *</Label>
                     <Input
                       id="firstName"
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
                       placeholder="Enter first name"
+                      className="form-input-minimal"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
+                  <div>
+                    <Label htmlFor="lastName" className="form-label-minimal">Last Name *</Label>
                     <Input
                       id="lastName"
                       type="text"
+                      className="form-input-minimal"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
                       placeholder="Enter last name"
@@ -199,23 +201,25 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
+                <div className="form-grid-minimal grid-cols-1 md:grid-cols-2">
+                  <div>
+                    <Label htmlFor="email" className="form-label-minimal">Email Address *</Label>
                     <Input
                       id="email"
                       type="email"
+                      className="form-input-minimal"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       placeholder="admin@company.com"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                  <div>
+                    <Label htmlFor="phone" className="form-label-minimal">Phone Number</Label>
                     <Input
                       id="phone"
                       type="tel"
+                      className="form-input-minimal"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="(555) 123-4567"
@@ -223,10 +227,10 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="companyId">Company *</Label>
+                <div>
+                  <Label htmlFor="companyId" className="form-label-minimal">Company *</Label>
                   <Select onValueChange={(value) => handleInputChange('companyId', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="form-select-minimal">
                       <SelectValue placeholder="Select company" />
                     </SelectTrigger>
                     <SelectContent>
@@ -241,28 +245,30 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
               </div>
 
               {/* Login Credentials */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="form-section-minimal">
+                <h3 className="form-label-minimal text-lg mb-2">
                   Login Credentials
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username *</Label>
+                <div className="form-grid-minimal grid-cols-1 md:grid-cols-2">
+                  <div>
+                    <Label htmlFor="username" className="form-label-minimal">Username *</Label>
                     <Input
                       id="username"
                       type="text"
+                      className="form-input-minimal"
                       value={formData.username}
                       onChange={(e) => handleInputChange('username', e.target.value)}
                       placeholder="Enter unique username"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password *</Label>
+                  <div>
+                    <Label htmlFor="password" className="form-label-minimal">Password *</Label>
                     <Input
                       id="password"
                       type="password"
+                      className="form-input-minimal"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       placeholder="Enter password (min 8 characters)"
@@ -271,11 +277,12 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                <div>
+                  <Label htmlFor="confirmPassword" className="form-label-minimal">Confirm Password *</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
+                    className="form-input-minimal"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     placeholder="Confirm password"
@@ -285,19 +292,19 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button" 
                   variant="outline"
                   onClick={onClose}
-                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                  className="form-button-secondary-minimal"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={adminMutation.isPending}
-                  className="min-w-[120px] bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+                  className="form-button-primary-minimal min-w-[140px]"
                 >
                   {adminMutation.isPending ? (
                     <div className="flex items-center">
