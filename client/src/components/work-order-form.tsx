@@ -516,9 +516,10 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                         <FormControl>
                           <DatePicker
                             date={field.value ? new Date(field.value) : undefined}
-                            onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
-                            placeholder="Select due date"
+                            onDateChange={(date) => field.onChange(date ? date.toISOString() : '')}
+                            placeholder="Select due date & time"
                             className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            includeTime={true}
                           />
                         </FormControl>
                         <FormMessage />
@@ -863,9 +864,10 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                             <FormControl>
                               <DatePicker
                                 date={field.value ? new Date(field.value) : undefined}
-                                onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
-                                placeholder="Select due date"
+                                onDateChange={(date) => field.onChange(date ? date.toISOString() : '')}
+                                placeholder="Select due date & time"
                                 className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                includeTime={true}
                               />
                             </FormControl>
                             <FormMessage />
