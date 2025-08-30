@@ -596,8 +596,8 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
         {/* Centered Header */}
         <div className="mb-12">
           <div className="flex flex-col items-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-2 mb-6">
-              <Network className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <h1 className="text-5xl font-bold text-gray-900 dark:text-white flex items-center space-x-3 mb-6">
+              <Network className="h-12 w-12 text-blue-600 dark:text-blue-400" />
               <span>Job Network</span>
             </h1>
           </div>
