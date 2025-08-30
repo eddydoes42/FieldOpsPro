@@ -625,7 +625,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             <FormItem>
                               <FormLabel>Work Order Title</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter work order title" {...field} />
+                                <Input 
+                                  placeholder="Enter work order title" 
+                                  className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                                  {...field} 
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -641,7 +645,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               <FormControl>
                                 <Textarea 
                                   placeholder="Enter work order description"
-                                  className="min-h-[100px]"
+                                  className="min-h-[100px] text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                                   {...field} 
                                 />
                               </FormControl>
