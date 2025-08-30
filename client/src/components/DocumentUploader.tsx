@@ -54,7 +54,34 @@ export function DocumentUploader({
       formData.append("entityId", entityId);
       formData.append("category", uploadingFile.category);
 
-      const response = await apiRequest("POST", "/api/documents/upload", formData);
+      // Get testing headers for role impersonation
+      const testingHeaders: Record<string, string> = {};
+      if (typeof window !== 'undefined') {
+        const testingRole = localStorage.getItem('testingRole');
+        const testingCompanyType = localStorage.getItem('testingCompanyType');
+        
+        if (testingRole) {
+          testingHeaders['x-testing-role'] = testingRole;
+        }
+        
+        if (testingCompanyType) {
+          testingHeaders['x-testing-company-type'] = testingCompanyType;
+        }
+      }
+
+      // Use fetch directly for file uploads since FormData doesn't need JSON conversion
+      const response = await fetch("/api/documents/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+        headers: testingHeaders, // Don't set Content-Type for FormData - browser will set it automatically
+      });
+
+      if (!response.ok) {
+        const text = (await response.text()) || response.statusText;
+        throw new Error(`${response.status}: ${text}`);
+      }
+
       return response.json();
     },
     onSuccess: () => {
