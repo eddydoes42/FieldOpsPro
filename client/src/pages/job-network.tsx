@@ -38,6 +38,7 @@ import { Link } from 'wouter';
 import Navigation from '@/components/navigation';
 import RoleSwitcher from '@/components/role-switcher';
 import { DocumentUploader } from '@/components/DocumentUploader';
+import { DatePicker } from '@/components/ui/date-picker';
 
 
 
@@ -60,6 +61,11 @@ const createWorkOrderSchema = insertWorkOrderSchema.omit({
   dueDate: z.string().optional(),
   estimatedHours: z.string().optional(),
   clientCompanyId: z.string().optional(), // For Operations Director posting on behalf of client
+  // Address fields
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  zipCode: z.string().min(1, "Zip code is required"),
 });
 
 interface Task {
@@ -135,6 +141,10 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       title: '',
       description: '',
       location: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
       priority: 'normal',
       status: 'scheduled',
       budget: '',
@@ -281,8 +291,17 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   };
 
   const onWorkOrderSubmit = (data: any) => {
+    // Combine address fields into a single location for backwards compatibility
+    const fullLocation = [
+      data.address,
+      data.city,
+      data.state,
+      data.zipCode
+    ].filter(Boolean).join(', ');
+    
     createWorkOrderMutation.mutate({
       ...data,
+      location: fullLocation, // Combined location for backwards compatibility
       budgetAmount: data.budget ? parseFloat(parseCurrency(data.budget)) : null,
       estimatedHours: data.estimatedHours ? parseInt(data.estimatedHours) : null,
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
@@ -660,15 +679,58 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                           />
                         )}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        {/* Address Fields */}
+                        <FormField
+                          control={workOrderForm.control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Address *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter street address" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="grid grid-cols-4 gap-4">
                           <FormField
                             control={workOrderForm.control}
-                            name="location"
+                            name="city"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Location</FormLabel>
+                                <FormLabel>City *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Enter location" {...field} />
+                                  <Input placeholder="Enter city" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={workOrderForm.control}
+                            name="state"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>State *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter state" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={workOrderForm.control}
+                            name="zipCode"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Zip Code *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter zip code" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -782,10 +844,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               <FormItem>
                                 <FormLabel>Due Date</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="datetime-local"
-                                    className="text-white dark:text-white bg-gray-800 dark:bg-gray-800 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
-                                    {...field} 
+                                  <DatePicker
+                                    date={field.value ? new Date(field.value) : undefined}
+                                    onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                                    placeholder="Select due date"
+                                    className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                                   />
                                 </FormControl>
                                 <FormMessage />

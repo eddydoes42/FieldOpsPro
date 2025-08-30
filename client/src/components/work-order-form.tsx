@@ -22,11 +22,17 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { useState } from "react";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const workOrderFormSchema = insertWorkOrderSchema.extend({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  location: z.string().min(1, "Location is required"),
+  location: z.string().min(1, "Location is required"), // Keep for backwards compatibility
+  // Address fields
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  zipCode: z.string().min(1, "Zip code is required"),
   scopeOfWork: z.string().optional(),
   requiredTools: z.string().optional(),
   pointOfContact: z.string().optional(),
@@ -105,6 +111,10 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
       title: "",
       description: "",
       location: "",
+      address: "",
+      city: "",
+      state: "",
+      zipCode: "",
       scopeOfWork: "",
       requiredTools: "",
       pointOfContact: "",
@@ -120,8 +130,17 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
   const createWorkOrderMutation = useMutation({
     mutationFn: async (workOrderData: any) => {
+      // Combine address fields into a single location for backwards compatibility
+      const fullLocation = [
+        workOrderData.address,
+        workOrderData.city,
+        workOrderData.state,
+        workOrderData.zipCode
+      ].filter(Boolean).join(', ');
+      
       const data = {
         ...workOrderData,
+        location: fullLocation, // Combined location for backwards compatibility
         dueDate: workOrderData.dueDate ? new Date(workOrderData.dueDate).toISOString() : null,
         estimatedHours: workOrderData.estimatedHours ? parseFloat(workOrderData.estimatedHours) : null,
         isClientCreated: isClient,
@@ -391,15 +410,16 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       </FormItem>
                     )}
                   />
+                  {/* Address Fields */}
                   <FormField
                     control={form.control}
-                    name="location"
+                    name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Location *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Address *</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="Enter location details"
+                            placeholder="Enter street address"
                             className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                             {...field} 
                           />
@@ -408,6 +428,62 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       </FormItem>
                     )}
                   />
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">City *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Enter city"
+                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">State *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Enter state"
+                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Zip Code *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Enter zip code"
+                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
                     name="priority"
@@ -438,10 +514,11 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Due Date</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="datetime-local"
-                            className="text-white dark:text-white bg-gray-800 dark:bg-gray-800 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
-                            {...field} 
+                          <DatePicker
+                            date={field.value ? new Date(field.value) : undefined}
+                            onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                            placeholder="Select due date"
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                           />
                         </FormControl>
                         <FormMessage />
@@ -784,10 +861,11 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                           <FormItem>
                             <FormLabel>Due Date</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="datetime-local" 
-                                className="text-white dark:text-white bg-gray-800 dark:bg-gray-800 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
-                                {...field} 
+                              <DatePicker
+                                date={field.value ? new Date(field.value) : undefined}
+                                onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                                placeholder="Select due date"
+                                className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                               />
                             </FormControl>
                             <FormMessage />

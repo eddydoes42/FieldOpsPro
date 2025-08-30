@@ -111,7 +111,12 @@ export const workOrders = pgTable("work_orders", {
   companyId: varchar("company_id").references(() => companies.id), // nullable for Operations Directors
   title: varchar("title").notNull(),
   description: text("description").notNull(),
-  location: varchar("location").notNull(),
+  location: varchar("location").notNull(), // Keep for backwards compatibility
+  // Detailed address fields
+  address: varchar("address"),
+  city: varchar("city"),
+  state: varchar("state"),
+  zipCode: varchar("zip_code"),
   scopeOfWork: text("scope_of_work"),
   requiredTools: text("required_tools"),
   pointOfContact: varchar("point_of_contact"),
