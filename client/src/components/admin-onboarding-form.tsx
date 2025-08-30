@@ -52,7 +52,7 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
         roles: ['administrator'],
         temporaryPassword: false
       };
-      const response = await apiRequest('POST', '/api/users/onboard-admin', payload);
+      const response = await apiRequest('/api/users/onboard-admin', 'POST', payload);
       return await response.json();
     },
     onSuccess: () => {

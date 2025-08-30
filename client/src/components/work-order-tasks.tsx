@@ -39,14 +39,14 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['/api/work-orders', workOrderId, 'tasks'],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/work-orders/${workOrderId}/tasks`);
+      const response = await apiRequest(`/api/work-orders/${workOrderId}/tasks`, 'GET');
       return await response.json();
     },
   });
 
   const createTaskMutation = useMutation({
     mutationFn: (taskData: any) => 
-      apiRequest('POST', `/api/work-orders/${workOrderId}/tasks`, taskData),
+      apiRequest(`/api/work-orders/${workOrderId}/tasks`, 'POST', taskData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders', workOrderId, 'tasks'] });
       setNewTask({ title: '', description: '', category: 'pre_visit' });
@@ -67,7 +67,7 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
 
   const completeTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const response = await apiRequest('PATCH', `/api/tasks/${taskId}/complete`, {});
+      const response = await apiRequest(`/api/tasks/${taskId}/complete`, 'PATCH', {});
       return await response.json();
     },
     onSuccess: () => {
@@ -88,7 +88,7 @@ export default function WorkOrderTasks({ workOrderId, userRole }: WorkOrderTasks
 
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId: string) =>
-      apiRequest('DELETE', `/api/work-order-tasks/${taskId}`, {}),
+      apiRequest(`/api/work-order-tasks/${taskId}`, 'DELETE', {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders', workOrderId, 'tasks'] });
       toast({

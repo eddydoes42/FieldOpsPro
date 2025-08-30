@@ -49,7 +49,7 @@ export default function TimeTracker({ activeTimeEntry: propActiveTimeEntry }: Ti
 
   const startTimeMutation = useMutation({
     mutationFn: async (workOrderId: string) => {
-      await apiRequest("POST", "/api/time-entries", {
+      await apiRequest("/api/time-entries", "POST", {
         startTime: new Date().toISOString(),
         isActive: true,
         workOrderId: workOrderId,
@@ -88,7 +88,7 @@ export default function TimeTracker({ activeTimeEntry: propActiveTimeEntry }: Ti
 
   const endTimeMutation = useMutation({
     mutationFn: async (timeEntryId: string) => {
-      await apiRequest("PATCH", `/api/time-entries/${timeEntryId}/end`);
+      await apiRequest(`/api/time-entries/${timeEntryId}/end`, "PATCH");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });

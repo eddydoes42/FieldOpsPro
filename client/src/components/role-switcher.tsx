@@ -51,7 +51,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
   const currentRoleInfo = availableRoles.find(role => role.value === currentRole);
 
   const stopImpersonationMutation = useMutation({
-    mutationFn: () => apiRequest('/api/impersonation/stop', 'POST'),
+    mutationFn: () => apiRequest('/api/impersonation/stop', 'POST').then(res => res.json()),
     onSuccess: () => {
       // Clear testing role and navigate back to operations director dashboard
       localStorage.removeItem('testingRole');

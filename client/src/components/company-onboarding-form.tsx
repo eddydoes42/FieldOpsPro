@@ -64,7 +64,7 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
 
   const companyMutation = useMutation({
     mutationFn: async (data: CompanyFormData) => {
-      const response = await apiRequest('POST', '/api/companies', data);
+      const response = await apiRequest('/api/companies', 'POST', data);
       return await response.json();
     },
     onSuccess: () => {
@@ -92,7 +92,7 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
         roles: ['administrator'],
         isActive: true
       };
-      const response = await apiRequest('POST', '/api/users/onboard', adminData);
+      const response = await apiRequest('/api/users/onboard', 'POST', adminData);
       return await response.json();
     },
     onSuccess: (createdAdmin) => {

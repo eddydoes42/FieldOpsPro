@@ -100,7 +100,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
         clientCompanyName: selectedRoles.includes('client') ? userData.clientCompanyName : null,
         clientRole: selectedRoles.includes('client') ? userData.clientRole : null,
       };
-      await apiRequest("POST", "/api/users", submitData);
+      await apiRequest("/api/users", "POST", submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });

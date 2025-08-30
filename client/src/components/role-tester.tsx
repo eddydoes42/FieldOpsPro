@@ -45,7 +45,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
 
   const startImpersonationMutation = useMutation({
     mutationFn: ({ role, companyType }: { role: string; companyType: 'service' | 'client' }) =>
-      apiRequest('/api/impersonation/start', 'POST', { role, companyType }),
+      apiRequest('/api/impersonation/start', 'POST', { role, companyType }).then(res => res.json()),
     onSuccess: (data) => {
       // Store testing info in localStorage for header compatibility
       localStorage.setItem('testingRole', data.context.role);
@@ -72,7 +72,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
   });
 
   const stopImpersonationMutation = useMutation({
-    mutationFn: () => apiRequest('/api/impersonation/stop', 'POST'),
+    mutationFn: () => apiRequest('/api/impersonation/stop', 'POST').then(res => res.json()),
     onSuccess: () => {
       // Clear testing info
       localStorage.removeItem('testingRole');
