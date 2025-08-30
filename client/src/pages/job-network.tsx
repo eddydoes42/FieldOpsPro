@@ -598,9 +598,6 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                   <Network className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                   <span>Job Network</span>
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Public work order postings for all Admin Teams
-                </p>
               </div>
             </div>
             
