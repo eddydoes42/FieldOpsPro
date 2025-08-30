@@ -602,21 +602,50 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
             </h1>
           </div>
           
-          <div className="flex items-center justify-end">
-            <div className="flex items-center space-x-3">
-              {/* Create Work Order Button - for Administrators, Project Managers, Managers, and Operations Director (when not role testing) */}
-              {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
-                (user as any)?.roles?.includes('project_manager')) && (
-                <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="bg-green-600 hover:bg-green-700 text-white border-green-600"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Work Order
-                    </Button>
-                  </DialogTrigger>
+        {/* Search and Filters */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search jobs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="assigned">Assigned</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Create Work Order Button */}
+        {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
+          (user as any)?.roles?.includes('project_manager')) && (
+          <div className="mb-6">
+            <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Work Order
+                </Button>
+              </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-minimal">
                     <DialogHeader>
                       <DialogTitle>Create New Work Order</DialogTitle>
@@ -1292,9 +1321,8 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     </Form>
                   </DialogContent>
                 </Dialog>
-              )}
-
             </div>
+          )}
         </div>
 
         {/* Search and Filters */}
@@ -1327,7 +1355,26 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
           </div>
         </div>
 
-        {/* Job Posts Grid */}
+        {/* Create Work Order Button */}
+        {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
+          (user as any)?.roles?.includes('project_manager')) && (
+          <div className="mb-6">
+            <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Work Order
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-minimal">
+                <DialogHeader>
+                  <DialogTitle>Create New Work Order</DialogTitle>
+                </DialogHeader>
+                <Form {...workOrderForm}>
+                  <form onSubmit={workOrderForm.handleSubmit(onWorkOrderSubmit)} className="form-minimal">
         {isLoading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
