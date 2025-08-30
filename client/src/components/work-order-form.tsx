@@ -319,22 +319,22 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
 
   const getToolCategoryColor = (category: string) => {
     switch (category) {
-      case 'hardware': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      case 'hardware': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'software': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'safety': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'testing': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'other': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      case 'safety': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'testing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'other': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
     }
   };
 
   const getDocumentCategoryLabel = (category: string) => {
     switch (category) {
-      case 'reference': return '📖 Reference';
+      case 'reference': return 'Reference';
       case 'procedure': return 'Procedure';
-      case 'checklist': return '✅ Checklist';
-      case 'form': return '📄 Form';
-      case 'other': return '📎 Other';
+      case 'checklist': return 'Checklist';
+      case 'form': return 'Form';
+      case 'other': return 'Other';
       default: return category;
     }
   };
