@@ -286,6 +286,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       budgetAmount: data.budget ? parseFloat(parseCurrency(data.budget)) : null,
       estimatedHours: data.estimatedHours ? parseInt(data.estimatedHours) : null,
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+      clientCompanyId: data.clientCompanyId, // Include client company selection for Operations Director
       tasks,
       tools
     });
