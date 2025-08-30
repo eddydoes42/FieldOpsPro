@@ -1,0 +1,37 @@
+Objective:
+Ensure the "Post on Behalf of Company" feature works end-to-end for Operations Director (OD) users, including correct dropdown population, payload submission, backend handling, and database storage.
+
+Requirements:
+
+1. Frontend:
+   - In the Create Work Order form, confirm the <FormField name="clientCompanyId"> value from the dropdown is bound to form state and included in the payload sent to POST /api/work-orders.
+   - If the selected value is "operations_director", send null or a special flag to indicate OD self-post.
+   - Keep the "Post as Self" option fixed at the top of the dropdown.
+   - Ensure the dropdown supports search-as-you-type and displays both Client Companies and Service Companies for OD users.
+
+2. Company List API:
+   - For OD users, return all active Client Companies and Service Companies, regardless of association.
+   - Support case-insensitive name filtering for search.
+   - Ensure seeded Test Client Company and Test Service Company appear in results.
+
+3. Backend Route (POST /api/work-orders):
+   - Accept `clientCompanyId` from the request body (already in createWorkOrderSchema).
+   - If OD and `clientCompanyId` is provided:
+       • If value is null/flag → mark as OD-posted (effectiveCompanyId = null).
+       • If value matches a Client Company → set effectiveCompanyId to that client and mark work order as public.
+       • If value matches a Service Company → set effectiveCompanyId to that service company and mark work order as internal-only.
+   - If not OD → default to currentUser.companyId.
+   - Validate that only OD can post on behalf of other companies.
+
+4. Database Insert:
+   - Use `effectiveCompanyId` when creating the work order record.
+   - Ensure visibility rules (public vs. internal) are stored and respected in downstream workflows.
+
+5. Verification:
+   - Test in dev mode:
+       • Select "Post as Self" → work order is OD-posted.
+       • Select a Client Company → work order is public for that client.
+       • Select a Service Company → work order is internal to that service company.
+   - Confirm seeded Test Client Company appears in dropdown and can be selected.
+   - Inspect browser Network tab to verify `clientCompanyId` is in the payload.
+   - Check backend logs to confirm `req.body.clientCompanyId` and `effectiveCompanyId` values are correct.

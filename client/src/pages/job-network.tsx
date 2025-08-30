@@ -179,6 +179,12 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     enabled: isOperationsDirector(user) && !testingRole,
   });
 
+  // Query for service companies (for Operations Director)
+  const { data: serviceCompaniesForOD = [] } = useQuery<any[]>({
+    queryKey: ['/api/companies/service'],
+    enabled: isOperationsDirector(user) && !testingRole,
+  });
+
   // Request job mutation
   const requestJobMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -661,20 +667,39 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                             name="clientCompanyId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="form-label-minimal">Posting on Behalf of Client</FormLabel>
+                                <FormLabel className="form-label-minimal">Post on Behalf of Company</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select client company or post as Operations Director" />
+                                    <SelectTrigger className="form-select-minimal">
+                                      <SelectValue placeholder="Select company or post as self" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="operations_director">Operations Director (Self)</SelectItem>
-                                    {clientCompanies.map((company: any) => (
-                                      <SelectItem key={company.id} value={company.id}>
-                                        {company.name}
-                                      </SelectItem>
-                                    ))}
+                                    <SelectItem value="operations_director">Post as Self (Operations Director)</SelectItem>
+                                    {clientCompanies.length > 0 && (
+                                      <>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b">
+                                          Client Companies
+                                        </div>
+                                        {clientCompanies.map((company: any) => (
+                                          <SelectItem key={company.id} value={company.id}>
+                                            {company.name}
+                                          </SelectItem>
+                                        ))}
+                                      </>
+                                    )}
+                                    {serviceCompaniesForOD.length > 0 && (
+                                      <>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b">
+                                          Service Companies
+                                        </div>
+                                        {serviceCompaniesForOD.map((company: any) => (
+                                          <SelectItem key={company.id} value={company.id}>
+                                            {company.name}
+                                          </SelectItem>
+                                        ))}
+                                      </>
+                                    )}
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />

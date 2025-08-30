@@ -609,17 +609,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // (either user is actual client OR operations director testing client role via UI)
       const isClientUser = isClient(currentUser) || (isOperationsDirector(currentUser) && req.body.isClientCreated);
       
-      // Handle Operations Director posting on behalf of client companies
+      // Handle Operations Director posting on behalf of companies
       let effectiveCompanyId = null; // Default to null for Operations Directors
+      let visibilityScope = 'public'; // Default visibility
+      
       if (isOperationsDirector(currentUser) && req.body.clientCompanyId) {
         if (req.body.clientCompanyId === 'operations_director') {
           effectiveCompanyId = null; // Operations Director uses null company (god mode)
+          visibilityScope = 'public'; // OD posts are public
         } else {
-          effectiveCompanyId = req.body.clientCompanyId; // Use selected client company
+          effectiveCompanyId = req.body.clientCompanyId; // Use selected company
+          
+          // Determine visibility based on company type
+          const selectedCompany = await storage.getCompany(req.body.clientCompanyId);
+          if (selectedCompany?.type === 'service') {
+            visibilityScope = 'exclusive'; // Service company posts are internal-only
+          } else {
+            visibilityScope = 'public'; // Client company posts are public
+          }
         }
       } else if (currentUser.companyId) {
         effectiveCompanyId = currentUser.companyId; // Use user's company
+        visibilityScope = 'public'; // Default to public for regular users
       }
+      
+      console.log("Work order creation - effectiveCompanyId:", effectiveCompanyId, "visibilityScope:", visibilityScope);
       
       const workOrderData = {
         id: `wo-${Date.now()}`, // Generate unique ID
@@ -637,6 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requiredTools: req.body.requiredTools || null,
         pointOfContact: isClientUser ? null : (req.body.pointOfContact || null), // Clients can't set POC
         isClientCreated: isClientUser, // Mark client-created work orders
+        visibilityScope: visibilityScope, // Set visibility based on company type
         // Budget information - available to both management and clients
         budgetType: req.body.budgetType || null,
         budgetAmount: req.body.budgetAmount ? req.body.budgetAmount.toString() : null,
@@ -2201,6 +2216,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching companies:", error);
       res.status(500).json({ message: "Failed to fetch companies" });
+    }
+  });
+
+  // Get client companies for Operations Director
+  app.get('/api/companies/client', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const companies = await storage.getAllCompanies();
+      const clientCompanies = companies.filter(company => company.type === 'client');
+      res.json(clientCompanies);
+    } catch (error) {
+      console.error("Error fetching client companies:", error);
+      res.status(500).json({ message: "Failed to fetch client companies" });
+    }
+  });
+
+  // Get service companies for Operations Director
+  app.get('/api/companies/service', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const companies = await storage.getAllCompanies();
+      const serviceCompanies = companies.filter(company => company.type === 'service');
+      res.json(serviceCompanies);
+    } catch (error) {
+      console.error("Error fetching service companies:", error);
+      res.status(500).json({ message: "Failed to fetch service companies" });
     }
   });
 
