@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, insertDocumentSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel, isDispatcher, isService } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, insertDocumentSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel, isDispatcher, isService, canViewJobNetwork } from "@shared/schema";
 import { logWorkOrderAction, logIssueAction, logUserAction, logAssignmentAction, AUDIT_ACTIONS } from "./auditLogger";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -3989,7 +3989,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/job-network/work-orders', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+      const { testingRole, testingCompanyType } = getTestingRoleInfo(req);
+      
+      // Check if user can view job network using schema function (includes OD bypass)
+      if (!currentUser || !canViewJobNetwork(currentUser, testingRole, testingCompanyType)) {
         return res.status(403).json({ message: "Access denied. Management or client role required." });
       }
 
@@ -4005,7 +4008,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/job-network/request-assignment', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
+      const { testingRole, testingCompanyType } = getTestingRoleInfo(req);
+      
+      // Check if user can view job network using schema function (includes OD bypass)
+      if (!currentUser || !canViewJobNetwork(currentUser, testingRole, testingCompanyType)) {
         return res.status(403).json({ message: "Access denied. Management or client role required." });
       }
 
@@ -4026,8 +4032,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/work-orders/:workOrderId/assign', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !hasAnyRole(currentUser, ['administrator', 'manager', 'dispatcher', 'client'])) {
-        return res.status(403).json({ message: "Access denied. Management or client role required." });
+      const { testingRole, testingCompanyType } = getTestingRoleInfo(req);
+      
+      // Check if user can manage work orders using schema function (includes OD bypass)
+      if (!currentUser || !canManageWorkOrders(currentUser, testingRole, testingCompanyType)) {
+        return res.status(403).json({ message: "Access denied. Management role required." });
       }
 
       const { workOrderId } = req.params;

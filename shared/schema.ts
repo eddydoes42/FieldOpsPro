@@ -1785,9 +1785,9 @@ export function isClient(user: User | null): boolean {
   return hasRole(user, 'client');
 }
 
-export function canViewJobNetwork(user: User | null): boolean {
+export function canViewJobNetwork(user: User | null, testingRole?: string, testingCompanyType?: string): boolean {
   // Operations Director bypass - can perform any action when not in role testing mode
-  if (hasOperationsDirectorBypass(user)) return true;
+  if (hasOperationsDirectorBypass(user, testingRole, testingCompanyType)) return true;
   
   return hasAnyRole(user, ['operations_director', 'administrator', 'project_manager', 'manager', 'dispatcher', 'client']);
 }
@@ -1852,9 +1852,9 @@ export function canMessageOperationsDirector(user: User | null): boolean {
   return hasRole(user, 'administrator');
 }
 
-export function canManageWorkOrders(user: User | null): boolean {
+export function canManageWorkOrders(user: User | null, testingRole?: string, testingCompanyType?: string): boolean {
   // Operations Director bypass - can perform any action when not in role testing mode
-  if (hasOperationsDirectorBypass(user)) return true;
+  if (hasOperationsDirectorBypass(user, testingRole, testingCompanyType)) return true;
   
   return hasAnyRole(user, ['administrator', 'manager', 'dispatcher']);
 }
