@@ -247,3 +247,52 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+// Enhanced authentication middleware with Operations Director bypass
+export const isAuthenticatedWithODBypass: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+
+  if (!req.isAuthenticated() || !user.expires_at) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  // Check if this is an Operations Director not in role testing mode
+  try {
+    const currentUser = await storage.getUser(user.sub);
+    if (currentUser) {
+      const isOD = currentUser.roles?.includes('operations_director') && !currentUser.companyId;
+      const testingRole = req.headers['x-testing-role'];
+      const testingCompanyType = req.headers['x-testing-company-type'];
+      const isRoleTesting = !!(testingRole && testingCompanyType);
+      
+      // Operations Director bypass - skip token expiry checks when not role testing
+      if (isOD && !isRoleTesting) {
+        return next();
+      }
+    }
+  } catch (error) {
+    console.error("Error checking Operations Director bypass:", error);
+    // Continue with normal authentication flow
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (now <= user.expires_at) {
+    return next();
+  }
+
+  const refreshToken = user.refresh_token;
+  if (!refreshToken) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const config = await getOidcConfig();
+    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+    updateUserSession(user, tokenResponse);
+    return next();
+  } catch (error) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+};

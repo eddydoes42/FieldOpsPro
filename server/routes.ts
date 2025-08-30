@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAuthenticatedWithODBypass } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, insertDocumentSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel, isDispatcher, isService, canViewJobNetwork } from "@shared/schema";
@@ -230,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Field agents route - get all field agents for talent network (accessible to clients)
-  app.get('/api/users/field-agents', isAuthenticated, async (req: any, res) => {
+  app.get('/api/users/field-agents', isAuthenticatedWithODBypass, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (!currentUser) {
@@ -3986,7 +3986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Job network work orders (client-created orders for management assignment)
-  app.get('/api/job-network/work-orders', isAuthenticated, async (req: any, res) => {
+  app.get('/api/job-network/work-orders', isAuthenticatedWithODBypass, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       const { testingRole, testingCompanyType } = getTestingRoleInfo(req);
@@ -4005,7 +4005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Request assignment of work order to field agent
-  app.post('/api/job-network/request-assignment', isAuthenticated, async (req: any, res) => {
+  app.post('/api/job-network/request-assignment', isAuthenticatedWithODBypass, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       const { testingRole, testingCompanyType } = getTestingRoleInfo(req);
@@ -4029,7 +4029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Direct work order assignment endpoint - for immediate assignment
-  app.patch('/api/work-orders/:workOrderId/assign', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/work-orders/:workOrderId/assign', isAuthenticatedWithODBypass, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       const { testingRole, testingCompanyType } = getTestingRoleInfo(req);
