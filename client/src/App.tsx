@@ -460,6 +460,8 @@ function Router() {
                   isODBypass,
                   isOperationsDirector: isOperationsDirector(user as any),
                   isRoleTesting,
+                  testingRole,
+                  permanentRole,
                   user: user ? { id: user.id, roles: user.roles } : null
                 });
                 
