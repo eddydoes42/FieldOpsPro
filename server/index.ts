@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { FieldOpsBootstrap } from "./core/Bootstrap";
+import { IntegratedRoutes } from "./infrastructure/IntegratedRoutes";
 
 const app = express();
 app.use(express.json());
@@ -37,7 +39,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize FieldOps Pro infrastructure
+  await FieldOpsBootstrap.initialize();
+  
   const server = await registerRoutes(app);
+  
+  // Setup integrated routes (security, audit, RBAC) after main routes
+  await IntegratedRoutes.initialize(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

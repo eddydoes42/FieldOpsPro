@@ -564,16 +564,16 @@ export class DatabaseStorage implements IStorage {
     // Get unresolved issues count for each agent
     const unresolvedIssuesCount = await db
       .select({
-        reportedBy: issues.reportedBy,
+        reportedById: issues.reportedById,
         issueCount: count(issues.id)
       })
       .from(issues)
       .where(eq(issues.status, 'open'))
-      .groupBy(issues.reportedBy);
+      .groupBy(issues.reportedById);
 
     // Create lookup maps for performance
     const completionsMap = new Map(workOrderCompletions.map(item => [item.assigneeId, item.completedCount]));
-    const issuesMap = new Map(unresolvedIssuesCount.map(item => [item.reportedBy, item.issueCount]));
+    const issuesMap = new Map(unresolvedIssuesCount.map(item => [item.reportedById, item.issueCount]));
 
     // Create company lookup map
     const companiesMap = new Map(companiesData.map(company => [company.id, company]));
@@ -2002,10 +2002,10 @@ export class DatabaseStorage implements IStorage {
       const overallRating = (avgCommunication + avgTimeliness + avgWorkSatisfaction) / 3;
 
       await db.update(users).set({
-        communicationRating: Number(avgCommunication.toFixed(2)),
-        timelinessRating: Number(avgTimeliness.toFixed(2)),
-        workSatisfactionRating: Number(avgWorkSatisfaction.toFixed(2)),
-        overallRating: Number(overallRating.toFixed(2)),
+        communicationRating: avgCommunication.toFixed(2),
+        timelinessRating: avgTimeliness.toFixed(2),
+        workSatisfactionRating: avgWorkSatisfaction.toFixed(2),
+        overallRating: overallRating.toFixed(2),
         totalRatings: fieldAgentRatings.length,
         updatedAt: new Date()
       }).where(eq(users.id, userId));
@@ -2020,10 +2020,10 @@ export class DatabaseStorage implements IStorage {
       const overallRating = (avgCommunication + avgManagement + avgFieldAgent) / 3;
 
       await db.update(users).set({
-        communicationRating: Number(avgCommunication.toFixed(2)),
-        managementRating: Number(avgManagement.toFixed(2)),
-        fieldAgentRating: Number(avgFieldAgent.toFixed(2)),
-        overallRating: Number(overallRating.toFixed(2)),
+        communicationRating: avgCommunication.toFixed(2),
+        managementRating: avgManagement.toFixed(2),
+        fieldAgentRating: avgFieldAgent.toFixed(2),
+        overallRating: overallRating.toFixed(2),
         totalRatings: dispatcherRatings.length,
         updatedAt: new Date()
       }).where(eq(users.id, userId));
@@ -2038,10 +2038,10 @@ export class DatabaseStorage implements IStorage {
       const overallRating = (avgCommunication + avgClearScope + avgOverallSatisfaction) / 3;
 
       await db.update(users).set({
-        communicationRating: Number(avgCommunication.toFixed(2)),
-        clearScopeRating: Number(avgClearScope.toFixed(2)),
-        overallSatisfactionRating: Number(avgOverallSatisfaction.toFixed(2)),
-        overallRating: Number(overallRating.toFixed(2)),
+        communicationRating: avgCommunication.toFixed(2),
+        clearScopeRating: avgClearScope.toFixed(2),
+        overallSatisfactionRating: avgOverallSatisfaction.toFixed(2),
+        overallRating: overallRating.toFixed(2),
         totalRatings: clientRatings.length,
         updatedAt: new Date()
       }).where(eq(users.id, userId));
@@ -2059,7 +2059,7 @@ export class DatabaseStorage implements IStorage {
       const avgRating = totalRatingSum / usersWithRatings.length;
 
       await db.update(companies).set({
-        overallRating: Number(avgRating.toFixed(2)),
+        overallRating: avgRating.toFixed(2),
         totalRatings: totalRatingsCount,
         updatedAt: new Date()
       }).where(eq(companies.id, companyId));
@@ -2103,6 +2103,8 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
 
     if (filters.companyId) {
+      // Join with feedback to check company relationship
+      const feedbackJoin = leftJoin(feedback, eq(feedback.workOrderId, workOrders.id));
       conditions.push(eq(workOrders.companyId, filters.companyId));
     }
 
@@ -2126,7 +2128,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(feedback)
       .leftJoin(workOrders, eq(feedback.workOrderId, workOrders.id))
-      .leftJoin(companies, eq(workOrders.clientCompanyId, companies.id))
+      .leftJoin(companies, eq(workOrders.companyId, companies.id))
       .leftJoin(users, eq(feedback.givenTo, users.id));
 
     if (conditions.length > 0) {

@@ -1,0 +1,34 @@
+Implement or remediate all missing, incomplete, or inconsistent elements required to bring FieldOps Pro to full specification compliance as defined in the comprehensive replit.md.
+- Architectural Consistency:
+- Enforce strict separation of operational logic, UI rendering, and policy enforcement in all modules.
+- Apply dependency injection and explicit interface contracts universally across the codebase.
+- Standardize all event-driven communications using a central event bus/message broker accessible to mobile and web clients, backend, and integrations.
+- Dependency and Naming Wiring:
+- Audit and realign all module, endpoint, role, and field identifiers to adhere to documented naming and versioning conventions.
+- Refactor any direct instantiations to use the managed dependency injection/context mechanism.
+- Document all interfaces with precise contract definitions (including return/error models and payload schemas).
+- RBAC & Global Bypass Enforcement:
+- Apply the Operations Director global bypass universally in all modules (including project folder, compliance, reporting, and integration admin areas).
+- Insert middleware checks and logging wrappers to guarantee audit trails for every superuser action and bypass.
+- Automate periodic role/permission audits, orphaned-permission cleanup, and automate least-privilege enforcement workflows.
+- UI/UX and Accessibility:
+- Audit all UI and UX components (web and mobile) for full accessibility (WCAG 2+) and cross-platform responsiveness.
+- Standardize theme, notification, and navigation behaviors.
+- Document any custom component usage for future maintainers and accessibility reviewers.
+- Error Handling and Logging:
+- Refactor all API and operational flows to employ centralized error handling, logging, and user feedback as stipulated in replit.md examples.
+- Ensure every failure, retry, and bypass event is logged with actionable context for audit and incident response.
+- Integrate observability tooling hooks in all backend and critical client modules.
+- Security and Compliance:
+- Conduct a comprehensive security audit (including input validation, rate-limiting, credentials, and legacy endpoints) and close all gaps to meet CIS and data privacy requirements.
+- Generate compliance artifacts (role matrices, logs, policy docs) suitable for external audit.
+- Schedule automated regular security and compliance reviews.
+- Testing and Workflow Idempotency:
+- Implement or extend unit, integration, regression, and E2E test coverage to all modules, with priority on rare and edge-case flows (role elevation, abnormal transition, failed billing rollback).
+- Add idempotency and compensation logic to all multi-step workflows and enforce consistency at every state transition.
+- Documentation and Prompt Guidance:
+- Expand project/user/developer documentation to detail all advanced prompt patterns, extension points, and recommended update workflows.
+- Embed annotated replit.md examples demonstrating advanced configuration, prompt chaining, and collaborative project evolution.
+- Draw on Successful Patterns:
+- Reference implementation patterns from leading agent-based platforms and successful multi-module FSM products, adapting them to the standards and context described in replit.md and relevant industry compliance frameworks.
+This implementation sweep should be atomic and must produce a system where every architectural element, policy, module, and workflow is functioning as specified, every dependency and event is properly wired, naming is consistent, and the Operations Director bypass and RBAC are enforced and logged absolutely everywhere.
