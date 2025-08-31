@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { hasRole } from "../../../shared/schema";
 
 export default function ManagerDashboard() {
   const { toast } = useToast();
@@ -89,7 +90,7 @@ export default function ManagerDashboard() {
     );
   }
 
-  if ((user as any).role !== 'manager' && (user as any).role !== 'administrator') {
+  if (!hasRole(user as any, 'manager') && !hasRole(user as any, 'administrator')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">

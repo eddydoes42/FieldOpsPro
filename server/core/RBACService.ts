@@ -147,13 +147,13 @@ export class RBACService implements IRBACService, IService {
     });
   }
 
-  async hasPermission(userId: string, resource: string, action: string): Promise<boolean> {
-    const result = await this.checkPermission(userId, resource, action);
+  async hasPermission(userId: string, resource: string, action: string, context?: any): Promise<boolean> {
+    const result = await this.checkPermission(userId, resource, action, context);
     this.logPermissionCheck(userId, resource, action, result.granted);
     return result.granted;
   }
 
-  async checkPermission(userId: string, resource: string, action: string): Promise<PermissionCheckResult> {
+  async checkPermission(userId: string, resource: string, action: string, context?: any): Promise<PermissionCheckResult> {
     // Check cache first
     const cacheKey = `${userId}:${resource}:${action}`;
     const cached = this.permissionCache.get(cacheKey);
@@ -174,7 +174,7 @@ export class RBACService implements IRBACService, IService {
       }
 
       // Operations Director bypass (unless in role testing mode)
-      if (await this.isOperationsDirector(userId) && !await this.isInRoleTestingMode(userId)) {
+      if (await this.isOperationsDirector(userId) && !await this.isInRoleTestingMode(userId, context)) {
         const result: PermissionCheckResult = {
           granted: true,
           reason: 'Operations Director global bypass',
@@ -317,9 +317,13 @@ export class RBACService implements IRBACService, IService {
     return null;
   }
 
-  private async isInRoleTestingMode(userId: string): Promise<boolean> {
-    // Check if user is currently in role testing mode
-    // This would integrate with the role impersonation service
+  private async isInRoleTestingMode(userId: string, context?: any): Promise<boolean> {
+    // Check if user is currently in role testing mode by looking for testing headers
+    if (context?.req?.headers) {
+      const testingRole = context.req.headers['x-testing-role'];
+      const testingCompanyType = context.req.headers['x-testing-company-type'];
+      return !!(testingRole && testingCompanyType);
+    }
     return false;
   }
 
