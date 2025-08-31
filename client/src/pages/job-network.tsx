@@ -594,12 +594,26 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center">
-            <Network className="h-10 w-10 mr-4 text-blue-600 dark:text-blue-400" />
-            <h1 className="text-5xl font-bold text-gray-900 dark:text-white">Job Network</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex-1 flex justify-center items-center">
+            <div className="flex items-center">
+              <Network className="h-10 w-10 mr-4 text-blue-600 dark:text-blue-400" />
+              <h1 className="text-5xl font-bold text-gray-900 dark:text-white">Job Network</h1>
+            </div>
           </div>
-        </div>
+          {/* Create Work Order Button */}
+          {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
+            (user as any)?.roles?.includes('project_manager')) && (
+            <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Work Order
+                </Button>
+              </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-dialog">
                     <DialogHeader>
                       <DialogTitle>Create New Work Order</DialogTitle>
                     </DialogHeader>
@@ -1304,19 +1318,6 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* Create Work Order Button */}
-            {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
-              (user as any)?.roles?.includes('project_manager')) && (
-              <DialogTrigger asChild>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white w-40"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Work Order
-                </Button>
-              </DialogTrigger>
-            )}
           </div>
         </div>
 
@@ -1436,17 +1437,9 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
             ))}
           </div>
         ) : (
-          <div className="rounded-lg p-12 text-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-               onClick={() => {
-                 if ((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
-                     (user as any)?.roles?.includes('project_manager')) {
-                   setIsCreateWorkOrderOpen(true);
-                 }
-               }}>
+          <div className="text-center py-12">
             <Network className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No Jobs Available
-            </h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Jobs Available</h3>
             <p className="text-gray-600 dark:text-gray-400">
               {searchTerm || statusFilter !== 'all' 
                 ? 'No jobs match your search criteria.' 
