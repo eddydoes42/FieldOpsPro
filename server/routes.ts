@@ -4108,6 +4108,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Base job network endpoint - returns work orders for job network page
+  app.get('/api/job-network', isAuthenticatedWithODBypass, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      const { testingRole, testingCompanyType } = getTestingRoleInfo(req);
+      
+      // Check if user can view job network using schema function (includes OD bypass)
+      if (!currentUser || !canViewJobNetwork(currentUser, testingRole, testingCompanyType)) {
+        return res.status(403).json({ message: "Access denied. Management or client role required." });
+      }
+
+      const workOrders = await storage.getJobNetworkWorkOrders();
+      res.json(workOrders);
+    } catch (error) {
+      console.error("Error fetching job network work orders:", error);
+      res.status(500).json({ message: "Failed to fetch job network work orders" });
+    }
+  });
+
   // Job network work orders (client-created orders for management assignment)
   app.get('/api/job-network/work-orders', isAuthenticatedWithODBypass, async (req: any, res) => {
     try {
