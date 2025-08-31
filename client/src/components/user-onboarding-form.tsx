@@ -95,6 +95,9 @@ const onboardingSchema = insertUserSchema.extend({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   zipCode: z.string().min(1, "ZIP code is required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  temporaryPassword: z.boolean().optional(),
 });
 
 interface UserOnboardingFormProps {
@@ -179,6 +182,9 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
       state: "",
       zipCode: "",
       roles: preFilledData?.requestedRole ? [preFilledData.requestedRole] : ["field_agent"],
+      username: "",
+      password: "",
+      temporaryPassword: true,
     },
   });
 
@@ -190,8 +196,12 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         roles: selectedRoles, // Use the managed state
         // Assign company for service company roles
         companyId: companyAssignmentType === 'existing' && selectedCompanyId ? selectedCompanyId : undefined,
+        // Include login credentials
+        username: userData.username,
+        password: userData.password,
+        temporaryPassword: userData.temporaryPassword || true,
       };
-      const response = await apiRequest("/api/users", "POST", submitData);
+      const response = await apiRequest("/api/users/onboard", "POST", submitData);
       return await response.json();
     },
     onSuccess: (createdUser) => {
@@ -493,6 +503,75 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                       )}
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Login Credentials */}
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Login Credentials</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Username *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter username" 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field}
+                            data-testid="input-username"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Password *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password"
+                            placeholder="Enter password" 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field}
+                            data-testid="input-password"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="mt-4">
+                  <FormField
+                    control={form.control}
+                    name="temporaryPassword"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-temporary-password"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Temporary Password
+                          </FormLabel>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            User will be required to change password on first login
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
 
