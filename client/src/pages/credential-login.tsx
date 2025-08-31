@@ -39,8 +39,13 @@ export default function CredentialLogin() {
     },
     onSuccess: (data) => {
       if (data.success) {
-        // Redirect to appropriate dashboard
-        window.location.href = data.redirectUrl || "/dashboard";
+        if (data.redirectToOAuth) {
+          // Redirect to OAuth to establish session
+          window.location.href = data.redirectUrl;
+        } else {
+          // Direct redirect to dashboard
+          window.location.href = data.redirectUrl || "/dashboard";
+        }
       } else {
         setErrorMessage(data.message || "Login failed");
       }

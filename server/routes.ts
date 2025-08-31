@@ -61,18 +61,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create session (you may want to implement proper session management)
-      // For now, return success with user info
-      const { passwordHash, ...userWithoutPassword } = user;
+      // Create session by redirecting to Replit OAuth for session establishment
+      // Store the successful credential login in session for OAuth bypass
+      req.session = req.session || {};
+      req.session.credentialLoginUserId = user.id;
+      req.session.credentialLoginSuccess = true;
       
       // Update last login
       await storage.updateUser(user.id, { lastLoginAt: new Date() });
 
+      // Redirect to OAuth login to establish proper session
       res.json({ 
         success: true, 
-        user: userWithoutPassword,
-        redirectUrl: "/dashboard",
-        message: "Login successful" 
+        redirectToOAuth: true,
+        redirectUrl: "/api/login",
+        message: "Credentials verified. Completing authentication..." 
       });
     } catch (error) {
       console.error("Credential login error:", error);

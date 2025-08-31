@@ -202,6 +202,7 @@ function Router() {
             <Route path="/">
               <Landing />
             </Route>
+            <Route path="/credential-login" component={CredentialLogin} />
             <Route path="/choose-role">
               <RoleSelection user={user} />
             </Route>
