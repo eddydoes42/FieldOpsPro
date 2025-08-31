@@ -24,7 +24,7 @@ import { DocumentUploader } from '@/components/DocumentUploader';
 const projectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   projectCode: z.string().min(7, "Project code must be at least 7 characters"),
-  description: z.string().optional(),
+  description: z.string().min(20, "Description must be at least 20 characters"),
   overview: z.string().min(1, "Overview is required"),
   startDate: z.string().min(1, "Start date is required"),
   expectedDuration: z.number().min(1, "Duration must be at least 1 day"),
