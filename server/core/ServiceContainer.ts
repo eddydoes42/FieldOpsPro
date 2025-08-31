@@ -14,12 +14,16 @@ export interface ILogger {
   info(message: string, meta?: any): void;
   warn(message: string, meta?: any): void;
   error(message: string, error?: Error, meta?: any): void;
+  getRecentLogs(count: number): any[];
+  getSecurityLogs(): any[];
 }
 
 export interface IEventBus {
   emit(event: string, data: any): void;
   on(event: string, handler: (data: any) => void): void;
   off(event: string, handler: (data: any) => void): void;
+  getRegisteredEvents(): string[];
+  getHandlerCount(event: string): number;
 }
 
 export interface IAuditLogger {
@@ -41,6 +45,7 @@ export interface ISecurityService {
   checkRateLimit(userId: string, action: string): boolean;
   encryptSensitiveData(data: string): string;
   decryptSensitiveData(encryptedData: string): string;
+  generateSecurityReport(): any;
 }
 
 export interface IRBACService {
@@ -48,6 +53,7 @@ export interface IRBACService {
   isOperationsDirector(userId: string): Promise<boolean>;
   getEffectiveRole(userId: string, context?: any): Promise<string>;
   logPermissionCheck(userId: string, resource: string, action: string, granted: boolean): void;
+  generatePermissionAuditReport(): Promise<any>;
 }
 
 // Service registry types
@@ -69,16 +75,16 @@ class ServiceContainer {
     this.singletons.set(name, instance);
   }
 
-  // Get a service instance
-  get<T extends IService>(name: string): T {
+  // Get a service instance with proper typing
+  get<T>(name: string): T {
     // Check if it's a singleton first
     if (this.singletons.has(name)) {
-      return this.singletons.get(name);
+      return this.singletons.get(name) as T;
     }
 
     // Check if we have an instance cached
     if (this.services.has(name)) {
-      return this.services.get(name);
+      return this.services.get(name) as T;
     }
 
     // Create from factory
@@ -89,20 +95,20 @@ class ServiceContainer {
 
     const instance = factory();
     this.services.set(name, instance);
-    return instance;
+    return instance as T;
   }
 
   // Initialize all services
   async initialize(): Promise<void> {
     const initPromises: Promise<void>[] = [];
 
-    for (const [name, instance] of this.singletons) {
+    for (const [name, instance] of Array.from(this.singletons.entries())) {
       if (instance.initialize) {
         initPromises.push(instance.initialize());
       }
     }
 
-    for (const [name, factory] of this.factories) {
+    for (const [name, factory] of Array.from(this.factories.entries())) {
       const instance = factory();
       if (instance.initialize) {
         initPromises.push(instance.initialize());

@@ -77,7 +77,7 @@ export class EventBus implements IEventBus, IService {
       try {
         handler(enrichedData);
       } catch (error) {
-        this.logger?.error(`Error in event handler for ${event}`, error, { data });
+        this.logger?.error(`Error in event handler for ${event}`, error as Error, { data });
       }
     });
   }

@@ -179,7 +179,7 @@ export class SecurityService implements ISecurityService, IService {
       
       return `encrypted:${encrypted}`;
     } catch (error) {
-      this.logger?.error('Encryption failed', error);
+      this.logger?.error('Encryption failed', error as Error);
       throw new Error('Failed to encrypt sensitive data');
     }
   }
@@ -202,7 +202,7 @@ export class SecurityService implements ISecurityService, IService {
       
       return decrypted;
     } catch (error) {
-      this.logger?.error('Decryption failed', error);
+      this.logger?.error('Decryption failed', error as Error);
       throw new Error('Failed to decrypt sensitive data');
     }
   }
@@ -259,13 +259,13 @@ export class SecurityService implements ISecurityService, IService {
 
       // Basic content validation (check for malicious patterns)
       if (this.containsMaliciousContent(content)) {
-        this.logger?.error('Malicious content detected in file', { filename });
+        this.logger?.error('Malicious content detected in file', new Error('Malicious content detected'), { filename });
         return false;
       }
 
       return true;
     } catch (error) {
-      this.logger?.error('File validation error', error, { filename });
+      this.logger?.error('File validation error', error as Error);
       return false;
     }
   }
@@ -355,7 +355,7 @@ export class SecurityService implements ISecurityService, IService {
     const now = Date.now();
     let cleanedCount = 0;
 
-    for (const [key, entry] of this.rateLimitStore.entries()) {
+    for (const [key, entry] of Array.from(this.rateLimitStore.entries())) {
       if (now > entry.resetTime) {
         this.rateLimitStore.delete(key);
         cleanedCount++;

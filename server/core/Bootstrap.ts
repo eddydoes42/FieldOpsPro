@@ -3,7 +3,7 @@
  * Initializes all core services with dependency injection and proper error handling
  */
 
-import { container, SERVICE_NAMES } from './ServiceContainer';
+import { container, SERVICE_NAMES, ILogger, IEventBus, ISecurityService, IRBACService } from './ServiceContainer';
 import { Logger, LogLevel } from './Logger';
 import { EventBus, EVENTS } from './EventBus';
 import { RBACService } from './RBACService';
@@ -54,7 +54,7 @@ export class FieldOpsBootstrap {
       this.isInitialized = true;
       const initTime = Date.now() - this.startTime;
       
-      const logger = container.get(SERVICE_NAMES.LOGGER);
+      const logger = container.get<ILogger>(SERVICE_NAMES.LOGGER);
       logger.info('FieldOps Pro Infrastructure initialized successfully', {
         initializationTime: `${initTime}ms`,
         services: this.getRegisteredServices(),
@@ -84,7 +84,7 @@ export class FieldOpsBootstrap {
   }
 
   private static async initializeEventBus(): Promise<void> {
-    const logger = container.get(SERVICE_NAMES.LOGGER);
+    const logger = container.get<ILogger>(SERVICE_NAMES.LOGGER);
     const eventBus = new EventBus(logger);
     
     container.registerSingleton(SERVICE_NAMES.EVENT_BUS, eventBus);
@@ -153,8 +153,8 @@ export class FieldOpsBootstrap {
   }
 
   private static registerEventListeners(): void {
-    const eventBus = container.get(SERVICE_NAMES.EVENT_BUS);
-    const logger = container.get(SERVICE_NAMES.LOGGER);
+    const eventBus = container.get<IEventBus>(SERVICE_NAMES.EVENT_BUS);
+    const logger = container.get<ILogger>(SERVICE_NAMES.LOGGER);
 
     // Security event listeners
     eventBus.on(EVENTS.SECURITY_BREACH_DETECTED, (data) => {
@@ -194,7 +194,7 @@ export class FieldOpsBootstrap {
   }
 
   private static async gracefulShutdown(signal: string): Promise<void> {
-    const logger = container.get(SERVICE_NAMES.LOGGER);
+    const logger = container.get<ILogger>(SERVICE_NAMES.LOGGER);
     
     logger.info(`Received ${signal}, starting graceful shutdown...`);
     
@@ -207,7 +207,7 @@ export class FieldOpsBootstrap {
       logger.info('Graceful shutdown completed');
       process.exit(0);
     } catch (error) {
-      logger.error('Error during graceful shutdown', error);
+      logger.error('Error during graceful shutdown', error as Error);
       process.exit(1);
     }
   }
@@ -249,10 +249,10 @@ export class FieldOpsBootstrap {
       throw new Error('System not initialized');
     }
 
-    const logger = container.get(SERVICE_NAMES.LOGGER);
-    const eventBus = container.get(SERVICE_NAMES.EVENT_BUS);
-    const securityService = container.get(SERVICE_NAMES.SECURITY);
-    const rbacService = container.get(SERVICE_NAMES.RBAC);
+    const logger = container.get<ILogger>(SERVICE_NAMES.LOGGER);
+    const eventBus = container.get<IEventBus>(SERVICE_NAMES.EVENT_BUS);
+    const securityService = container.get<ISecurityService>(SERVICE_NAMES.SECURITY);
+    const rbacService = container.get<IRBACService>(SERVICE_NAMES.RBAC);
 
     return {
       timestamp: new Date().toISOString(),

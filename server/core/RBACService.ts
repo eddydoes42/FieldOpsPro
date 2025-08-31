@@ -210,7 +210,7 @@ export class RBACService implements IRBACService, IService {
       return result;
 
     } catch (error) {
-      this.logger?.error('Error checking permission', error, { userId, resource, action });
+      this.logger?.error('Error checking permission', error as Error, { userId, resource, action });
       const result: PermissionCheckResult = {
         granted: false,
         reason: 'Error during permission check'
@@ -264,7 +264,7 @@ export class RBACService implements IRBACService, IService {
       const user = await this.getUser(userId);
       return user?.roles?.includes('operations_director') || false;
     } catch (error) {
-      this.logger?.error('Error checking Operations Director status', error, { userId });
+      this.logger?.error('Error checking Operations Director status', error as Error, { userId });
       return false;
     }
   }
@@ -295,7 +295,7 @@ export class RBACService implements IRBACService, IService {
       return userRoles[0].name;
 
     } catch (error) {
-      this.logger?.error('Error getting effective role', error, { userId });
+      this.logger?.error('Error getting effective role', error as Error, { userId });
       return 'field_agent';
     }
   }
