@@ -206,6 +206,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
     },
     onSuccess: (createdUser) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/access-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/operations/stats"] });
       
       // If creating a new company, store the user ID and show company form
       if (companyAssignmentType === 'create' && !selectedRoles.includes('client')) {
