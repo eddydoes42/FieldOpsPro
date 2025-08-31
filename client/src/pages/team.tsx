@@ -201,7 +201,7 @@ export default function TeamPage() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await apiRequest('DELETE', `/api/users/${userId}`, {});
+      const response = await apiRequest(`/api/users/${userId}`, 'DELETE', {});
       return await response.json();
     },
     onSuccess: () => {
@@ -234,7 +234,7 @@ export default function TeamPage() {
 
   const updateUserStatusMutation = useMutation({
     mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
-      const response = await apiRequest('PATCH', `/api/users/${userId}`, { isActive });
+      const response = await apiRequest(`/api/users/${userId}`, 'PATCH', { isActive });
       return await response.json();
     },
     onSuccess: () => {
@@ -255,7 +255,7 @@ export default function TeamPage() {
 
   const suspendUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await apiRequest('PATCH', `/api/users/${userId}`, { isActive: false, isSuspended: true });
+      const response = await apiRequest(`/api/users/${userId}`, 'PATCH', { isActive: false, isSuspended: true });
       return await response.json();
     },
     onSuccess: () => {
@@ -276,7 +276,7 @@ export default function TeamPage() {
 
   const unsuspendUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await apiRequest('PATCH', `/api/users/${userId}`, { isActive: true, isSuspended: false });
+      const response = await apiRequest(`/api/users/${userId}`, 'PATCH', { isActive: true, isSuspended: false });
       return await response.json();
     },
     onSuccess: () => {
@@ -297,7 +297,7 @@ export default function TeamPage() {
 
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, roles }: { userId: string; roles: string[] }) => {
-      const response = await apiRequest('PATCH', `/api/users/${userId}`, { roles });
+      const response = await apiRequest(`/api/users/${userId}`, 'PATCH', { roles });
       return await response.json();
     },
     onSuccess: () => {
@@ -318,7 +318,7 @@ export default function TeamPage() {
 
   const updateUserContactMutation = useMutation({
     mutationFn: async ({ userId, userData }: { userId: string; userData: any }) => {
-      const response = await apiRequest('PATCH', `/api/users/${userId}`, userData);
+      const response = await apiRequest(`/api/users/${userId}`, 'PATCH', userData);
       return await response.json();
     },
     onSuccess: () => {

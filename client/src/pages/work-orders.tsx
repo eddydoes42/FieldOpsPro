@@ -559,7 +559,7 @@ export default function WorkOrders() {
     mutationFn: async (data: NewTaskData) => {
       if (!selectedWorkOrder) throw new Error("No work order selected");
       
-      const response = await apiRequest('POST', `/api/work-orders/${selectedWorkOrder.id}/tasks`, data);
+      const response = await apiRequest(`/api/work-orders/${selectedWorkOrder.id}/tasks`, 'POST', data);
       return await response.json();
     },
     onSuccess: () => {
@@ -597,7 +597,7 @@ export default function WorkOrders() {
 
   const completeTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const response = await apiRequest('PATCH', `/api/tasks/${taskId}/complete`, {});
+      const response = await apiRequest(`/api/tasks/${taskId}/complete`, 'PATCH', {});
       return await response.json();
     },
     onSuccess: () => {

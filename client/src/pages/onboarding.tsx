@@ -99,7 +99,7 @@ export default function Onboarding() {
         ? { ...data, companyId: preselectedCompanyId }
         : data;
       
-      const response = await apiRequest('POST', '/api/users/onboard', submitData);
+      const response = await apiRequest('/api/users/onboard', 'POST', submitData);
       return await response.json();
     },
     onSuccess: () => {

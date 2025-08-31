@@ -72,7 +72,7 @@ export default function FieldAgentSettings() {
   // Update contact information mutation
   const updateContactMutation = useMutation({
     mutationFn: async (contactData: any) => {
-      const response = await apiRequest('PATCH', `/api/users/${(user as any).id}`, contactData);
+      const response = await apiRequest(`/api/users/${(user as any).id}`, 'PATCH', contactData);
       return await response.json();
     },
     onSuccess: () => {
@@ -95,7 +95,7 @@ export default function FieldAgentSettings() {
   // Delete account mutation
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('DELETE', `/api/users/${(user as any).id}`, {});
+      const response = await apiRequest(`/api/users/${(user as any).id}`, 'DELETE', {});
       return await response.json();
     },
     onSuccess: () => {

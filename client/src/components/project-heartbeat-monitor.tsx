@@ -190,7 +190,7 @@ export default function ProjectHeartbeatMonitor({
   // Trigger heartbeat event mutation
   const triggerEventMutation = useMutation({
     mutationFn: async (eventData: { eventType: string; eventData: any }) => {
-      return apiRequest('POST', '/api/project-heartbeat/event', {
+      return apiRequest('/api/project-heartbeat/event', 'POST', {
         workOrderId,
         ...eventData
       });

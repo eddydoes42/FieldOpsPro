@@ -54,7 +54,7 @@ export default function AdminDashboard() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await apiRequest('DELETE', `/api/users/${userId}`, {});
+      const response = await apiRequest(`/api/users/${userId}`, 'DELETE', {});
       return await response.json();
     },
     onSuccess: () => {

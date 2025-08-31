@@ -61,7 +61,7 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
   // Mutation for updating assignment progress status
   const updateAssignmentProgressMutation = useMutation({
     mutationFn: async ({ workOrderId, status }: { workOrderId: string; status: string }) => {
-      return apiRequest('PATCH', `/api/work-orders/${workOrderId}/assignment-progress`, { status });
+      return apiRequest(`/api/work-orders/${workOrderId}/assignment-progress`, 'PATCH', { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });
@@ -71,7 +71,7 @@ export default function MyWork({ user: propsUser }: MyWorkProps) {
   // Mutation for scheduling work order
   const scheduleWorkOrderMutation = useMutation({
     mutationFn: async (workOrderId: string) => {
-      return apiRequest('PATCH', `/api/work-orders/${workOrderId}/schedule`, {});
+      return apiRequest(`/api/work-orders/${workOrderId}/schedule`, 'PATCH', {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-orders'] });

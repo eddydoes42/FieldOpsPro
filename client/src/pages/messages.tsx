@@ -110,7 +110,7 @@ export default function Messages() {
         messageType: data.recipientId ? 'direct' : 'broadcast',
       };
       
-      const response = await apiRequest('POST', '/api/messages', messageData);
+      const response = await apiRequest('/api/messages', 'POST', messageData);
       return await response.json();
     },
     onSuccess: () => {
@@ -150,7 +150,7 @@ export default function Messages() {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      const response = await apiRequest('PATCH', `/api/messages/${messageId}/read`, {});
+      const response = await apiRequest(`/api/messages/${messageId}/read`, 'PATCH', {});
       return await response.json();
     },
     onSuccess: () => {
