@@ -136,40 +136,43 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-2xl w-full max-h-screen overflow-y-auto">
-        <CardHeader className="pb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-1 overflow-y-auto">
+      <Card className="max-w-2xl w-full min-h-fit my-1 flex flex-col bg-white dark:bg-gray-900 max-h-[98vh] overflow-hidden">
+        <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Onboard New Team Member
+            <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
+              Add New User
             </CardTitle>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 h-6 w-6 p-0"
             >
-              <i className="fas fa-times text-xl"></i>
+              ✕
             </Button>
           </div>
-          <p className="text-gray-600">Create a new user account and assign appropriate roles and permissions</p>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="flex-1 p-3 overflow-y-auto scrollbar-minimal">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="form-minimal">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
               {/* Personal Information */}
               <div>
-                <h3 className="form-label-minimal text-lg mb-2">Personal Information</h3>
-                <div className="form-grid-minimal grid-cols-1 md:grid-cols-2">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <FormField
                     control={form.control}
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label-minimal">First Name *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">First Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter first name" className="form-input-minimal" {...field} />
+                          <Input 
+                            placeholder="Enter first name" 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -180,9 +183,13 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label-minimal">Last Name *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Last Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter last name" className="form-input-minimal" {...field} />
+                          <Input 
+                            placeholder="Enter last name" 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -193,16 +200,21 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
 
               {/* Contact Information */}
               <div>
-                <h3 className="form-label-minimal text-lg mb-2">Contact Information</h3>
-                <div className="form-section-minimal">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Contact Information</h3>
+                <div className="space-y-3">
                   <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label-minimal">Email Address *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Email Address *</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Enter email address" className="form-input-minimal" {...field} />
+                          <Input 
+                            type="email" 
+                            placeholder="Enter email address" 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -213,12 +225,12 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label-minimal">Phone Number *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Phone Number *</FormLabel>
                         <FormControl>
                           <Input 
                             type="tel" 
                             placeholder="Enter phone number" 
-                            className="form-input-minimal"
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                             {...field}
                             onChange={(e) => {
                               const formattedValue = formatPhoneNumber(e.target.value);
@@ -235,30 +247,38 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
 
               {/* Address Information */}
               <div>
-                <h3 className="form-label-minimal text-lg mb-2">Address Information</h3>
-                <div className="form-section-minimal">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Address Information</h3>
+                <div className="space-y-3">
                   <FormField
                     control={form.control}
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="form-label-minimal">Street Address *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Street Address *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter street address" className="form-input-minimal" {...field} />
+                          <Input 
+                            placeholder="Enter street address" 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <div className="form-grid-minimal grid-cols-1 md:grid-cols-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <FormField
                       control={form.control}
                       name="city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="form-label-minimal">City *</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">City *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter city" className="form-input-minimal" {...field} />
+                            <Input 
+                              placeholder="Enter city" 
+                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -269,10 +289,10 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       name="state"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="form-label-minimal">State *</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">State *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="form-select-minimal">
+                              <SelectTrigger className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
                                 <SelectValue placeholder="Select state" />
                               </SelectTrigger>
                             </FormControl>
@@ -293,9 +313,13 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       name="zipCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="form-label-minimal">ZIP Code *</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">ZIP Code *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter ZIP code" className="form-input-minimal" {...field} />
+                            <Input 
+                              placeholder="Enter ZIP code" 
+                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -307,13 +331,13 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
 
               {/* Role Assignment */}
               <div>
-                <h3 className="form-label-minimal text-lg mb-2">Role Assignment</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Role Assignment</h3>
                 <FormField
                   control={form.control}
                   name="roles"
                   render={() => (
                     <FormItem>
-                      <FormLabel className="form-label-minimal">User Roles *</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">User Roles *</FormLabel>
                       <div className="space-y-2">
                         {[
                           { value: "field_agent", label: "Field Agent" },
@@ -344,7 +368,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                             />
                             <label
                               htmlFor={role.value}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-900 dark:text-gray-100"
                             >
                               {role.label}
                             </label>
@@ -360,16 +384,20 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
               {/* Client-specific fields - only show if client role is selected */}
               {selectedRoles.includes('client') && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Client Information</h3>
-                  <div className="space-y-4">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Client Information</h3>
+                  <div className="space-y-3">
                     <FormField
                       control={form.control}
                       name="clientCompanyName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="form-label-minimal">Company Name *</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Company Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter company name" className="form-input-minimal" {...field} />
+                            <Input 
+                              placeholder="Enter company name" 
+                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -380,9 +408,13 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
                       name="clientRole"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="form-label-minimal">Role within Company *</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Role within Company *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., IT Manager, CEO, Operations Director" className="form-input-minimal" {...field} />
+                            <Input 
+                              placeholder="e.g., IT Manager, CEO, Operations Director" 
+                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -393,21 +425,21 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
               )}
 
               {/* Action Buttons */}
-              <div className="flex space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button" 
                   variant="outline"
                   onClick={onClose}
-                  className="form-button-secondary-minimal flex-1"
+                  className="flex-1 h-9"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit"
                   disabled={createUserMutation.isPending}
-                  className="form-button-primary-minimal flex-1"
+                  className="flex-1 h-9"
                 >
-                  {createUserMutation.isPending ? "Creating..." : "Create Account"}
+                  {createUserMutation.isPending ? "Creating..." : "Create User"}
                 </Button>
               </div>
             </form>
