@@ -1079,13 +1079,20 @@ export default function ProjectNetwork() {
           </div>
 
           {availableProjects.length === 0 && (
-            <div className="text-center py-12">
+            <div 
+              className="text-center py-12 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              onClick={() => setShowCreateForm(true)}
+              data-testid="empty-state-create-project"
+            >
               <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 No Available Projects
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-gray-400 mb-2">
                 There are currently no projects available for assignment.
+              </p>
+              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                Click here to create a new project
               </p>
             </div>
           )}
