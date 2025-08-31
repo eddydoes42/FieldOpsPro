@@ -591,7 +591,7 @@ export const channelMessages = pgTable("channel_messages", {
   mentions: text("mentions").array().default(sql`ARRAY[]::text[]`), // User IDs mentioned in message
   isEdited: boolean("is_edited").default(false),
   editedAt: timestamp("edited_at"),
-  replyToId: varchar("reply_to_id").references(() => channelMessages.id), // For threaded conversations
+  replyToId: varchar("reply_to_id"), // For threaded conversations - self-reference
   priority: varchar("priority").default("normal"), // low, normal, high, urgent
   isSystemMessage: boolean("is_system_message").default(false),
   createdAt: timestamp("created_at").defaultNow(),

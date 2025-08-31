@@ -125,6 +125,7 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
       budgetType: "",
       budgetAmount: "",
       devicesInstalled: "",
+      documentsRequired: "",
     },
   });
 
