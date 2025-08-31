@@ -128,18 +128,26 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
     enabled: isOperationsDirector(currentUser)
   });
 
-  // Update role selection when company assignment type changes
+  // Get selected company data to determine type
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+  
+  // Update role selection when company assignment type or selected company changes
   useEffect(() => {
     if (companyAssignmentType === 'create') {
       // For new companies, only administrator role is allowed
       setSelectedRoles(['administrator']);
       form.setValue("roles", ['administrator']);
-    } else if (selectedRoles.includes('administrator') && selectedRoles.length === 1) {
-      // Reset to default if coming from create mode
-      setSelectedRoles(['field_agent']);
-      form.setValue("roles", ['field_agent']);
+    } else if (companyAssignmentType === 'existing' && selectedCompany) {
+      // Reset roles based on company type
+      if (selectedCompany.type === 'client') {
+        setSelectedRoles(['client']);
+        form.setValue("roles", ['client']);
+      } else {
+        setSelectedRoles(['field_agent']);
+        form.setValue("roles", ['field_agent']);
+      }
     }
-  }, [companyAssignmentType]);
+  }, [companyAssignmentType, selectedCompanyId, selectedCompany]);
   
   // Debug logging
   console.log('UserOnboardingForm currentUser:', currentUser);
@@ -535,10 +543,27 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                           <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">User Roles *</FormLabel>
                           <div className="space-y-2">
                             {(() => {
-                              // Context-aware role options
+                              // Context-aware role options based on company type
                               if (companyAssignmentType === 'create') {
                                 return [{ value: "administrator", label: "Administrator" }];
+                              } else if (companyAssignmentType === 'existing' && selectedCompany) {
+                                if (selectedCompany.type === 'client') {
+                                  // Client company roles
+                                  return [
+                                    { value: "client", label: "Client" },
+                                  ];
+                                } else {
+                                  // Service company roles
+                                  return [
+                                    { value: "field_agent", label: "Field Agent" },
+                                    { value: "field_engineer", label: "Field Engineer" },
+                                    { value: "dispatcher", label: "Dispatcher" },
+                                    { value: "manager", label: "Manager" },
+                                    { value: "administrator", label: "Administrator" },
+                                  ];
+                                }
                               } else {
+                                // Default roles when no company is selected
                                 return [
                                   { value: "field_agent", label: "Field Agent" },
                                   { value: "field_engineer", label: "Field Engineer" },
@@ -552,7 +577,10 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                                 <Checkbox
                                   id={role.value}
                                   checked={selectedRoles.includes(role.value)}
-                                  disabled={companyAssignmentType === 'create' && role.value !== 'administrator'}
+                                  disabled={
+                                    (companyAssignmentType === 'create' && role.value !== 'administrator') ||
+                                    (companyAssignmentType === 'existing' && selectedCompany?.type === 'client' && role.value !== 'client')
+                                  }
                                   onCheckedChange={(checked) => {
                                     let newRoles = [...selectedRoles];
                                     if (checked) {
