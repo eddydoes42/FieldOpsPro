@@ -274,7 +274,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                 )}
                 <span className="text-foreground font-medium text-sm hidden md:block">
                   {typeof window !== 'undefined' && window.location.pathname.startsWith('/operations') 
-                    ? 'Operations Director' 
+                    ? '' 
                     : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
                 </span>
                 <Menu className="h-4 w-4 text-muted-foreground" />
