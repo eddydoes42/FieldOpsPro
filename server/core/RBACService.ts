@@ -79,6 +79,22 @@ export class RBACService implements IRBACService, IService {
       ]
     });
 
+    this.roleDefinitions.set('project_manager', {
+      name: 'project_manager',
+      level: 850,
+      permissions: [
+        { resource: 'users', action: 'read' },
+        { resource: 'users', action: 'update' },
+        { resource: 'workOrders', action: '*' },
+        { resource: 'companies', action: 'read' },
+        { resource: 'jobNetwork', action: '*' },
+        { resource: 'issues', action: '*' },
+        { resource: 'messaging', action: '*' },
+        { resource: 'reports', action: '*' },
+        { resource: 'analytics', action: 'read' }
+      ]
+    });
+
     this.roleDefinitions.set('manager', {
       name: 'manager',
       level: 800,

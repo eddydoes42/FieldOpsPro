@@ -347,8 +347,10 @@ export default function Onboarding() {
                   <div className="space-y-2 border rounded-md p-3">
                     {[
                       { value: 'field_agent', label: 'Field Agent' },
-                      { value: 'manager', label: 'Manager' },
+                      { value: 'field_engineer', label: 'Field Engineer' },
                       { value: 'dispatcher', label: 'Dispatcher' },
+                      { value: 'manager', label: 'Manager' },
+                      { value: 'project_manager', label: 'Project Manager' },
                       { value: 'administrator', label: 'Administrator' },
                       // Only show client company admin role to administrators
                       ...(isAdmin(user as any) ? [{ value: 'client_company_admin', label: 'Client Company Admin' }] : [])

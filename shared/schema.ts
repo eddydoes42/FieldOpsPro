@@ -1294,7 +1294,7 @@ export const agentLocationsRelations = relations(agentLocations, ({ one }) => ({
 }));
 
 // Role validation schema
-export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client_company_admin'])).min(1);
+export const rolesSchema = z.array(z.enum(['operations_director', 'administrator', 'project_manager', 'manager', 'dispatcher', 'field_engineer', 'field_agent', 'client_company_admin'])).min(1);
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users, {
