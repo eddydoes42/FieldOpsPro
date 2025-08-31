@@ -188,8 +188,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(userData);
       res.json(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating user:", error);
+      
+      // Handle duplicate email constraint violation
+      if (error.code === '23505' && error.constraint === 'users_email_unique') {
+        return res.status(400).json({ 
+          message: "A user with this email address already exists. Please use a different email.",
+          errorType: "duplicate_email"
+        });
+      }
+      
       res.status(500).json({ message: "Failed to create user" });
     }
   });

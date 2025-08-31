@@ -205,7 +205,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         onSuccess();
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -217,6 +217,27 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         }, 500);
         return;
       }
+      
+      // Check for duplicate email error from backend response
+      if (error.response?.status === 400 && error.response?.data?.errorType === 'duplicate_email') {
+        toast({
+          title: "Email Already Exists",
+          description: error.response.data.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Fallback check for duplicate email error in error message
+      if (error.message && error.message.includes('duplicate key value violates unique constraint')) {
+        toast({
+          title: "Email Already Exists",
+          description: "A user with this email address already exists. Please use a different email.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       toast({
         title: "Error",
         description: "Failed to create user account.",
