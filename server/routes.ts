@@ -6863,6 +6863,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint for sending welcome emails
+  app.post('/api/test-send-welcome-email', async (req: any, res) => {
+    try {
+      const { to, firstName, lastName, username, password, temporaryPassword, appUrl } = req.body;
+      
+      if (!to || !firstName || !lastName || !username || !password || !appUrl) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Missing required fields" 
+        });
+      }
+
+      const result = await sendWelcomeEmail({
+        to,
+        firstName,
+        lastName,
+        username,
+        password,
+        temporaryPassword: temporaryPassword || false,
+        appUrl
+      });
+
+      if (result) {
+        res.json({ 
+          success: true, 
+          message: `Welcome email sent successfully to ${to}` 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Failed to send welcome email" 
+        });
+      }
+    } catch (error) {
+      console.error("Test email error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Email service error",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
