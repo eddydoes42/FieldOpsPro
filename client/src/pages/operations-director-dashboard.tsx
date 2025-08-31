@@ -326,14 +326,10 @@ export default function OperationsDirectorDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Operations Director Dashboard
-              </h1>
-            </div>
-            
-
+          <div className="flex justify-center items-center mb-4">
+            <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
+              Dashboard
+            </h1>
           </div>
           
           {/* Budget Indicator */}
