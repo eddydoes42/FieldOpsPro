@@ -1432,7 +1432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { period = '30', companyId } = req.query;
       const analytics = await storage.getIssueAnalytics({
         period: parseInt(period as string),
-        companyId: companyId as string || currentUser.companyId,
+        companyId: companyId as string || currentUser.companyId || undefined,
       });
 
       res.json(analytics);

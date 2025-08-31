@@ -748,7 +748,7 @@ export default function TeamPage() {
                     if (companyFilter === "all") return true;
                     return userData.companyId === companyFilter;
                   })
-                  .map((userData: any): React.ReactElement => (
+                  .map((userData: any) => (
                   <div key={userData.id} className="p-4 rounded-lg border border-border bg-card/50 overflow-hidden">
                     <div 
                       className="cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"

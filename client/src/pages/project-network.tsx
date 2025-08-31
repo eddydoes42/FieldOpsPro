@@ -1275,9 +1275,8 @@ export default function ProjectNetwork() {
                       <DocumentUploader
                         entityType="project"
                         entityId={selectedProject.id}
-                        category="pre-visit"
-                        maxFiles={10}
-                        acceptedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+                        maxNumberOfFiles={10}
+                        allowedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
                       />
                     </div>
                     
@@ -1292,9 +1291,8 @@ export default function ProjectNetwork() {
                       <DocumentUploader
                         entityType="project"
                         entityId={selectedProject.id}
-                        category="during-visit"
-                        maxFiles={20}
-                        acceptedFileTypes={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
+                        maxNumberOfFiles={20}
+                        allowedFileTypes={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
                       />
                     </div>
                     
@@ -1309,9 +1307,8 @@ export default function ProjectNetwork() {
                       <DocumentUploader
                         entityType="project"
                         entityId={selectedProject.id}
-                        category="post-visit"
-                        maxFiles={15}
-                        acceptedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+                        maxNumberOfFiles={15}
+                        allowedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
                       />
                     </div>
                   </div>

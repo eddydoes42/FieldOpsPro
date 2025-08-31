@@ -1293,7 +1293,6 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     </Form>
                   </DialogContent>
                 </Dialog>
-            </div>
           )}
         </div>
 
