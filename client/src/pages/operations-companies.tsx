@@ -534,8 +534,8 @@ export default function OperationsCompanies() {
         {/* Companies Table */}
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-              Service Companies Directory
+            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white text-center">
+              Directory
             </CardTitle>
           </CardHeader>
           <CardContent>
