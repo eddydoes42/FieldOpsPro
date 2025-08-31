@@ -535,67 +535,74 @@ export default function ProjectNetwork() {
         <ServiceCompanyRoleTester />
         <ClientCompanyRoleTester />
       
+      {/* Navigation Buttons */}
+      <div className="flex items-center space-x-2 mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            // Navigate to appropriate dashboard based on user role
+            if (isOperationsDirector(user as any)) {
+              setLocation('/operations-dashboard');
+            } else if ((user as any)?.roles?.includes('administrator')) {
+              setLocation('/admin-dashboard');
+            } else if ((user as any)?.roles?.includes('manager')) {
+              setLocation('/admin-dashboard');
+            } else if ((user as any)?.roles?.includes('dispatcher')) {
+              setLocation('/admin-dashboard');
+            } else {
+              setLocation('/dashboard');
+            }
+          }}
+          className="flex items-center space-x-1"
+        >
+          <Home className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            // Try browser history first, fallback to appropriate dashboard
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              // Determine appropriate dashboard based on user role
+              if (isOperationsDirector(user as any)) {
+                setLocation('/operations-dashboard');
+              } else if ((user as any)?.roles?.includes('administrator')) {
+                setLocation('/admin-dashboard');
+              } else if ((user as any)?.roles?.includes('manager')) {
+                setLocation('/admin-dashboard');
+              } else if ((user as any)?.roles?.includes('dispatcher')) {
+                setLocation('/admin-dashboard');
+              } else {
+                setLocation('/dashboard');
+              }
+            }
+          }}
+          className="flex items-center space-x-1"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                // Navigate to appropriate dashboard based on user role
-                if (isOperationsDirector(user as any)) {
-                  setLocation('/operations-dashboard');
-                } else if ((user as any)?.roles?.includes('administrator')) {
-                  setLocation('/admin-dashboard');
-                } else if ((user as any)?.roles?.includes('manager')) {
-                  setLocation('/admin-dashboard');
-                } else if ((user as any)?.roles?.includes('dispatcher')) {
-                  setLocation('/admin-dashboard');
-                } else {
-                  setLocation('/dashboard');
-                }
-              }}
-              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            >
-              <Home className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                // Try browser history first, fallback to appropriate dashboard
-                if (window.history.length > 1) {
-                  window.history.back();
-                } else {
-                  // Determine appropriate dashboard based on user role
-                  if (isOperationsDirector(user as any)) {
-                    setLocation('/operations-dashboard');
-                  } else if ((user as any)?.roles?.includes('administrator')) {
-                    setLocation('/admin-dashboard');
-                  } else if ((user as any)?.roles?.includes('manager')) {
-                    setLocation('/admin-dashboard');
-                  } else if ((user as any)?.roles?.includes('dispatcher')) {
-                    setLocation('/admin-dashboard');
-                  } else {
-                    setLocation('/dashboard');
-                  }
-                }
-              }}
-              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Project Network</h1>
-          </div>
-          {canCreateProjects(user as any) && (
-            <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Project
-                </Button>
-              </DialogTrigger>
+      <div className="flex justify-center mb-8">
+        <div className="flex items-center">
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-white">Project Network</h1>
+        </div>
+      </div>
+
+      {/* Create Project Button */}
+      {canCreateProjects(user as any) && (
+        <div className="mb-6">
+          <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Project
+              </Button>
+            </DialogTrigger>
               <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Create New Project</DialogTitle>
@@ -858,9 +865,11 @@ export default function ProjectNetwork() {
                 </Form>
               </DialogContent>
             </Dialog>
-          )}
+          </div>
+        )}
 
-          {/* Project Requirements Dialog */}
+        {/* Project Requirements Dialog */}
+        {canCreateProjects(user as any) && (
           <Dialog open={showRequirementsDialog} onOpenChange={setShowRequirementsDialog}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
@@ -999,7 +1008,7 @@ export default function ProjectNetwork() {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -1394,7 +1403,6 @@ export default function ProjectNetwork() {
           )}
         </DialogContent>
       </Dialog>
-      </div>
     </div>
   );
 }
