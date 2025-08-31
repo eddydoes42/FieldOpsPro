@@ -140,8 +140,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
     } else if (companyAssignmentType === 'existing' && selectedCompany) {
       // Reset roles based on company type
       if (selectedCompany.type === 'client') {
-        setSelectedRoles(['client']);
-        form.setValue("roles", ['client']);
+        setSelectedRoles(['administrator']);
+        form.setValue("roles", ['administrator']);
       } else {
         setSelectedRoles(['field_agent']);
         form.setValue("roles", ['field_agent']);
@@ -548,12 +548,15 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                                 return [{ value: "administrator", label: "Administrator" }];
                               } else if (companyAssignmentType === 'existing' && selectedCompany) {
                                 if (selectedCompany.type === 'client') {
-                                  // Client company roles
+                                  // Client company roles - organizational roles for client companies
                                   return [
-                                    { value: "client", label: "Client" },
+                                    { value: "administrator", label: "Administrator" },
+                                    { value: "project_manager", label: "Project Manager" },
+                                    { value: "manager", label: "Manager" },
+                                    { value: "dispatcher", label: "Dispatcher" },
                                   ];
                                 } else {
-                                  // Service company roles
+                                  // Service company roles - field operation roles
                                   return [
                                     { value: "field_agent", label: "Field Agent" },
                                     { value: "field_engineer", label: "Field Engineer" },
@@ -577,10 +580,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                                 <Checkbox
                                   id={role.value}
                                   checked={selectedRoles.includes(role.value)}
-                                  disabled={
-                                    (companyAssignmentType === 'create' && role.value !== 'administrator') ||
-                                    (companyAssignmentType === 'existing' && selectedCompany?.type === 'client' && role.value !== 'client')
-                                  }
+                                  disabled={companyAssignmentType === 'create' && role.value !== 'administrator'}
                                   onCheckedChange={(checked) => {
                                     let newRoles = [...selectedRoles];
                                     if (checked) {
