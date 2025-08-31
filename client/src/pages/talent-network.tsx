@@ -425,20 +425,6 @@ export default function TalentNetwork() {
           </div>
         )}
 
-        {/* Create User Button for Operations Director */}
-        {isOperationsDirector && (
-          <div className="flex justify-between items-center mb-4">
-            <div></div>
-            <Button
-              onClick={() => setShowCreateUserDialog(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add New User
-            </Button>
-          </div>
-        )}
-
         {/* Search Controls */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="relative flex-1">
@@ -541,6 +527,19 @@ export default function TalentNetwork() {
                   Clear Filters
                 </Button>
               </div>
+            </div>
+          )}
+
+          {/* Create User Button for Operations Director - below search, left aligned */}
+          {isOperationsDirector && (
+            <div className="flex justify-start">
+              <Button
+                onClick={() => setShowCreateUserDialog(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add New User
+              </Button>
             </div>
           )}
         </div>
