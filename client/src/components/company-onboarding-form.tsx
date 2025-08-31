@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Building2, Home, UserPlus, User, X } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatPhoneNumber } from "@/lib/phone-formatter";
@@ -34,9 +34,10 @@ interface AdminFormData {
 
 interface CompanyOnboardingFormProps {
   onClose: () => void;
+  preFilledUserId?: string;
 }
 
-export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingFormProps) {
+export default function CompanyOnboardingForm({ onClose, preFilledUserId }: CompanyOnboardingFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -50,7 +51,7 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
     email: "",
     website: "",
     description: "",
-    adminId: undefined
+    adminId: preFilledUserId || undefined
   });
 
   const [assignedAdmin, setAssignedAdmin] = useState<{ id: string; firstName: string; lastName: string; email: string } | null>(null);
@@ -62,17 +63,63 @@ export default function CompanyOnboardingForm({ onClose }: CompanyOnboardingForm
   });
   const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
 
+  // Fetch user data if preFilledUserId is provided
+  const { data: preFilledUser } = useQuery<any>({
+    queryKey: ['/api/users'],
+    enabled: !!preFilledUserId,
+    select: (users: any[]) => users.find(user => user.id === preFilledUserId)
+  });
+
+  // Set assignedAdmin when preFilledUser is loaded
+  useEffect(() => {
+    if (preFilledUser && preFilledUserId) {
+      setAssignedAdmin({
+        id: preFilledUser.id,
+        firstName: preFilledUser.firstName,
+        lastName: preFilledUser.lastName,
+        email: preFilledUser.email
+      });
+    }
+  }, [preFilledUser, preFilledUserId]);
+
+  // Mutation to update user's company assignment
+  const updateUserCompanyMutation = useMutation({
+    mutationFn: async ({ userId, companyId }: { userId: string; companyId: string }) => {
+      const response = await apiRequest(`/api/users/${userId}`, 'PATCH', { 
+        companyId,
+        roles: ['administrator'] // Ensure the user is assigned as administrator
+      });
+      return await response.json();
+    },
+    onError: () => {
+      toast({
+        title: "Warning",
+        description: "Company created but user assignment failed. Please assign manually.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const companyMutation = useMutation({
     mutationFn: async (data: CompanyFormData) => {
       const response = await apiRequest('/api/companies', 'POST', data);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (createdCompany) => {
+      // If we have a preFilledUserId, assign them to the new company as administrator
+      if (preFilledUserId) {
+        await updateUserCompanyMutation.mutateAsync({ 
+          userId: preFilledUserId, 
+          companyId: createdCompany.id 
+        });
+      }
+      
       toast({
         title: "Success",
         description: "Company has been successfully onboarded!",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       queryClient.invalidateQueries({ queryKey: ['/api/operations/stats'] });
       onClose();
     },

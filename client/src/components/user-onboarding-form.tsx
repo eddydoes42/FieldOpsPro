@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { insertUserSchema, isAdmin } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import CompanyOnboardingForm from "@/components/company-onboarding-form";
 import { z } from "zod";
 
 const onboardingSchema = insertUserSchema.extend({
@@ -68,6 +71,16 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
   const [selectedRoles, setSelectedRoles] = useState<string[]>(
     preFilledData?.requestedRole ? [preFilledData.requestedRole] : ['field_agent']
   );
+  const [companyAssignmentType, setCompanyAssignmentType] = useState<'existing' | 'create'>('existing');
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+
+  // Fetch existing companies for selection
+  const { data: companies = [] } = useQuery<any[]>({
+    queryKey: ['/api/companies'],
+    enabled: isOperationsDirector(currentUser)
+  });
   
   // Debug logging
   console.log('UserOnboardingForm currentUser:', currentUser);
@@ -110,15 +123,25 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
       const submitData = {
         ...userData,
         roles: selectedRoles, // Use the managed state
+        // Assign company for service company roles
+        companyId: companyAssignmentType === 'existing' && selectedCompanyId ? selectedCompanyId : null,
         // Only include client fields if client role is selected
         clientCompanyName: selectedRoles.includes('client') ? userData.clientCompanyName : null,
         clientRole: selectedRoles.includes('client') ? userData.clientRole : null,
       };
-      await apiRequest("/api/users", "POST", submitData);
+      const response = await apiRequest("/api/users", "POST", submitData);
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (createdUser) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      onSuccess();
+      
+      // If creating a new company, store the user ID and show company form
+      if (companyAssignmentType === 'create' && !selectedRoles.includes('client')) {
+        setCreatedUserId(createdUser.id);
+        setShowCompanyForm(true);
+      } else {
+        onSuccess();
+      }
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -140,7 +163,25 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
     },
   });
 
+  const handleCompanyCreationComplete = () => {
+    // Refresh all relevant queries and close the form
+    queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+    onSuccess();
+  };
+
   const onSubmit = (data: any) => {
+    // Validate company assignment for service company roles
+    if (!selectedRoles.includes('client')) {
+      if (companyAssignmentType === 'existing' && !selectedCompanyId) {
+        toast({
+          title: "Company Required",
+          description: "Please select a company to assign this user to.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
     createUserMutation.mutate(data);
   };
 
@@ -390,6 +431,67 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                 />
               </div>
 
+              {/* Company Assignment - only show for service company roles */}
+              {!selectedRoles.includes('client') && (
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Company Assignment</h3>
+                  <div className="space-y-4">
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Assignment Type *</FormLabel>
+                      <RadioGroup
+                        value={companyAssignmentType}
+                        onValueChange={(value: 'existing' | 'create') => setCompanyAssignmentType(value)}
+                        className="flex flex-col space-y-2"
+                        data-testid="radio-company-assignment-type"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="existing" id="existing" data-testid="radio-existing-company" />
+                          <label htmlFor="existing" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Assign to Existing Company
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="create" id="create" data-testid="radio-create-company" />
+                          <label htmlFor="create" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Create New Company
+                          </label>
+                        </div>
+                      </RadioGroup>
+                    </FormItem>
+
+                    {companyAssignmentType === 'existing' && (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Select Company *</FormLabel>
+                        <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+                          <SelectTrigger 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            data-testid="select-existing-company"
+                          >
+                            <SelectValue placeholder="Choose a company" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companies.map((company: any) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+
+                    {companyAssignmentType === 'create' && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          After creating this user, you'll be prompted to set up the new company. 
+                          The user will automatically be assigned as an Administrator of the new company.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Client-specific fields - only show if client role is selected */}
               {selectedRoles.includes('client') && (
                 <div>
@@ -455,6 +557,23 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
           </Form>
         </CardContent>
       </Card>
+
+      {/* Company Onboarding Dialog */}
+      <Dialog open={showCompanyForm} onOpenChange={() => {}}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Company</DialogTitle>
+          </DialogHeader>
+          <CompanyOnboardingForm 
+            onClose={() => {
+              setShowCompanyForm(false);
+              // Auto-assign user as administrator to the new company
+              handleCompanyCreationComplete();
+            }}
+            preFilledUserId={createdUserId}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
