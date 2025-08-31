@@ -1437,7 +1437,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
             ))}
           </div>
         ) : (
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          <div className="rounded-lg p-12 text-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                onClick={() => {
                  if ((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
                      (user as any)?.roles?.includes('project_manager')) {
