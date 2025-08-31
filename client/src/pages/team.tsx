@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -483,14 +483,14 @@ export default function TeamPage() {
           </div>
           <div className="text-center">
             <h1 className="text-3xl font-bold text-foreground mb-4">Team Management</h1>
-            {companyFilter !== "all" && companies && (
+            {(companyFilter !== "all" && companies) ? (
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
                 <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                   Showing team members for {(companies as any[]).find(c => c.id === companyFilter)?.name || 'Selected Company'}
                 </span>
               </div>
-            )}
+            ) : null}
             {companyFilter === "all" && (
               <p className="text-muted-foreground">
                 Manage your team members and their accounts
@@ -618,7 +618,7 @@ export default function TeamPage() {
                   </div>
 
                   {/* Company Filters - Only for Operations Director */}
-                  {isOperationsDirectorSuperUser && companies && (companies as any[]).length > 0 && (
+                  {(isOperationsDirectorSuperUser && companies && (companies as any[]).length > 0) ? (
                     <div className="flex flex-wrap gap-2">
                       {/* All Companies Filter */}
                       <select
@@ -694,7 +694,7 @@ export default function TeamPage() {
                         ))}
                       </select>
                     </div>
-                  )}
+                  ) : null}
 
 
                 </div>
@@ -710,8 +710,8 @@ export default function TeamPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {allUsers && (allUsers as any[])
-                  .filter((userData: any) => {
+                {(allUsers as any[])
+                  ?.filter((userData: any) => {
                     const roles = userData.roles || [];
                     // Include if user has other roles besides operations_director
                     return roles.some((r: string) => r !== 'operations_director');
@@ -810,10 +810,8 @@ export default function TeamPage() {
                       </div>
                     </div>
                   </div>
-                ))}
-                {allUsers && (allUsers as any[])
-                  .filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))
-                  .length === 0 && (
+                )) || []}
+                {((allUsers as any[])?.filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))?.length === 0) && (
                   <div className="text-center py-8">
                     <i className="fas fa-users text-4xl text-muted-foreground mb-4"></i>
                     <p className="text-muted-foreground">
