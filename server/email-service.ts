@@ -114,7 +114,7 @@ Please do not reply to this email.
 
     await mailService.send({
       to: params.to,
-      from: 'noreply@fieldops-pro.com', // You may want to use a verified sender email
+      from: 'eddydoescher42@gmail.com', // Using verified sender email
       subject: 'Welcome to FieldOps Pro - Your Account is Ready',
       text: textContent,
       html: htmlContent,
