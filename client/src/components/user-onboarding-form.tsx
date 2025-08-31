@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -26,8 +26,65 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
 import { z } from "zod";
+
+// All 50 US states
+const US_STATES = [
+  { value: "AL", label: "Alabama" },
+  { value: "AK", label: "Alaska" },
+  { value: "AZ", label: "Arizona" },
+  { value: "AR", label: "Arkansas" },
+  { value: "CA", label: "California" },
+  { value: "CO", label: "Colorado" },
+  { value: "CT", label: "Connecticut" },
+  { value: "DE", label: "Delaware" },
+  { value: "FL", label: "Florida" },
+  { value: "GA", label: "Georgia" },
+  { value: "HI", label: "Hawaii" },
+  { value: "ID", label: "Idaho" },
+  { value: "IL", label: "Illinois" },
+  { value: "IN", label: "Indiana" },
+  { value: "IA", label: "Iowa" },
+  { value: "KS", label: "Kansas" },
+  { value: "KY", label: "Kentucky" },
+  { value: "LA", label: "Louisiana" },
+  { value: "ME", label: "Maine" },
+  { value: "MD", label: "Maryland" },
+  { value: "MA", label: "Massachusetts" },
+  { value: "MI", label: "Michigan" },
+  { value: "MN", label: "Minnesota" },
+  { value: "MS", label: "Mississippi" },
+  { value: "MO", label: "Missouri" },
+  { value: "MT", label: "Montana" },
+  { value: "NE", label: "Nebraska" },
+  { value: "NV", label: "Nevada" },
+  { value: "NH", label: "New Hampshire" },
+  { value: "NJ", label: "New Jersey" },
+  { value: "NM", label: "New Mexico" },
+  { value: "NY", label: "New York" },
+  { value: "NC", label: "North Carolina" },
+  { value: "ND", label: "North Dakota" },
+  { value: "OH", label: "Ohio" },
+  { value: "OK", label: "Oklahoma" },
+  { value: "OR", label: "Oregon" },
+  { value: "PA", label: "Pennsylvania" },
+  { value: "RI", label: "Rhode Island" },
+  { value: "SC", label: "South Carolina" },
+  { value: "SD", label: "South Dakota" },
+  { value: "TN", label: "Tennessee" },
+  { value: "TX", label: "Texas" },
+  { value: "UT", label: "Utah" },
+  { value: "VT", label: "Vermont" },
+  { value: "VA", label: "Virginia" },
+  { value: "WA", label: "Washington" },
+  { value: "WV", label: "West Virginia" },
+  { value: "WI", label: "Wisconsin" },
+  { value: "WY", label: "Wyoming" },
+];
 
 const onboardingSchema = insertUserSchema.extend({
   firstName: z.string().min(1, "First name is required"),
@@ -38,18 +95,6 @@ const onboardingSchema = insertUserSchema.extend({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   zipCode: z.string().min(1, "ZIP code is required"),
-  // Client-specific fields - conditional validation
-  clientCompanyName: z.string().optional(),
-  clientRole: z.string().optional(),
-}).refine((data) => {
-  // If client role is selected, company name and client role are required
-  if (data.roles?.includes('client')) {
-    return data.clientCompanyName && data.clientRole;
-  }
-  return true;
-}, {
-  message: "Company name and role within company are required for client accounts",
-  path: ["clientCompanyName"],
 });
 
 interface UserOnboardingFormProps {
@@ -75,12 +120,26 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+  const [stateOpen, setStateOpen] = useState(false);
 
   // Fetch existing companies for selection
   const { data: companies = [] } = useQuery<any[]>({
     queryKey: ['/api/companies'],
     enabled: isOperationsDirector(currentUser)
   });
+
+  // Update role selection when company assignment type changes
+  useEffect(() => {
+    if (companyAssignmentType === 'create') {
+      // For new companies, only administrator role is allowed
+      setSelectedRoles(['administrator']);
+      form.setValue("roles", ['administrator']);
+    } else if (selectedRoles.includes('administrator') && selectedRoles.length === 1) {
+      // Reset to default if coming from create mode
+      setSelectedRoles(['field_agent']);
+      form.setValue("roles", ['field_agent']);
+    }
+  }, [companyAssignmentType]);
   
   // Debug logging
   console.log('UserOnboardingForm currentUser:', currentUser);
@@ -112,8 +171,6 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
       state: "",
       zipCode: "",
       roles: preFilledData?.requestedRole ? [preFilledData.requestedRole] : ["field_agent"],
-      clientCompanyName: "",
-      clientRole: "",
     },
   });
 
@@ -124,10 +181,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         ...userData,
         roles: selectedRoles, // Use the managed state
         // Assign company for service company roles
-        companyId: companyAssignmentType === 'existing' && selectedCompanyId ? selectedCompanyId : null,
-        // Only include client fields if client role is selected
-        clientCompanyName: selectedRoles.includes('client') ? userData.clientCompanyName : null,
-        clientRole: selectedRoles.includes('client') ? userData.clientRole : null,
+        companyId: companyAssignmentType === 'existing' && selectedCompanyId ? selectedCompanyId : undefined,
       };
       const response = await apiRequest("/api/users", "POST", submitData);
       return await response.json();
@@ -171,16 +225,14 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
   };
 
   const onSubmit = (data: any) => {
-    // Validate company assignment for service company roles
-    if (!selectedRoles.includes('client')) {
-      if (companyAssignmentType === 'existing' && !selectedCompanyId) {
-        toast({
-          title: "Company Required",
-          description: "Please select a company to assign this user to.",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Validate company assignment 
+    if (companyAssignmentType === 'existing' && !selectedCompanyId) {
+      toast({
+        title: "Company Required",
+        description: "Please select a company to assign this user to.",
+        variant: "destructive",
+      });
+      return;
     }
     createUserMutation.mutate(data);
   };
@@ -340,20 +392,56 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">State *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800">
-                                <SelectValue placeholder="Select state" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="CA">California</SelectItem>
-                              <SelectItem value="NY">New York</SelectItem>
-                              <SelectItem value="TX">Texas</SelectItem>
-                              <SelectItem value="FL">Florida</SelectItem>
-                              <SelectItem value="IL">Illinois</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Popover open={stateOpen} onOpenChange={setStateOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={stateOpen}
+                                  className="w-full justify-between text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                  data-testid="select-state"
+                                >
+                                  {field.value
+                                    ? US_STATES.find((state) => state.value === field.value)?.label
+                                    : "Select state..."}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[400px] p-0">
+                              <Command>
+                                <CommandInput 
+                                  placeholder="Search states..." 
+                                  className="h-9"
+                                  data-testid="input-state-search"
+                                />
+                                <CommandList>
+                                  <CommandEmpty>No state found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {US_STATES.map((state) => (
+                                      <CommandItem
+                                        key={state.value}
+                                        value={state.label}
+                                        onSelect={() => {
+                                          field.onChange(state.value);
+                                          setStateOpen(false);
+                                        }}
+                                        data-testid={`option-state-${state.value}`}
+                                      >
+                                        <Check
+                                          className={`mr-2 h-4 w-4 ${
+                                            field.value === state.value ? "opacity-100" : "opacity-0"
+                                          }`}
+                                        />
+                                        {state.label}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -379,161 +467,121 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                 </div>
               </div>
 
-              {/* Role Assignment */}
+              {/* Company Assignment */}
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Role Assignment</h3>
-                <FormField
-                  control={form.control}
-                  name="roles"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">User Roles *</FormLabel>
-                      <div className="space-y-2">
-                        {[
-                          { value: "field_agent", label: "Field Agent" },
-                          { value: "manager", label: "Manager" },
-                          { value: "administrator", label: "Administrator" },
-                          { value: "client", label: "Client" },
-                        ].filter((role) => {
-                          // Only show client role to operations directors
-                          if (role.value === "client") {
-                            return currentUser?.roles?.includes('operations_director') || false;
-                          }
-                          return true;
-                        }).map((role) => (
-                          <div key={role.value} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={role.value}
-                              checked={selectedRoles.includes(role.value)}
-                              onCheckedChange={(checked) => {
-                                let newRoles = [...selectedRoles];
-                                if (checked) {
-                                  newRoles.push(role.value);
-                                } else {
-                                  newRoles = newRoles.filter(r => r !== role.value);
-                                }
-                                setSelectedRoles(newRoles);
-                                form.setValue("roles", newRoles);
-                              }}
-                            />
-                            <label
-                              htmlFor={role.value}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-900 dark:text-gray-100"
-                            >
-                              {role.label}
-                            </label>
-                          </div>
-                        ))}
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Company Assignment</h3>
+                <div className="space-y-4">
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Assignment Type *</FormLabel>
+                    <RadioGroup
+                      value={companyAssignmentType}
+                      onValueChange={(value: 'existing' | 'create') => setCompanyAssignmentType(value)}
+                      className="flex flex-col space-y-2"
+                      data-testid="radio-company-assignment-type"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="existing" id="existing" data-testid="radio-existing-company" />
+                        <label htmlFor="existing" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          Assign to Existing Company
+                        </label>
                       </div>
-                      <FormMessage />
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="create" id="create" data-testid="radio-create-company" />
+                        <label htmlFor="create" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          Create New Company
+                        </label>
+                      </div>
+                    </RadioGroup>
+                  </FormItem>
+
+                  {companyAssignmentType === 'existing' && (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Select Company *</FormLabel>
+                      <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+                        <SelectTrigger 
+                          className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                          data-testid="select-existing-company"
+                        >
+                          <SelectValue placeholder="Choose a company" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {companies.map((company: any) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormItem>
                   )}
-                />
+
+                  {companyAssignmentType === 'create' && (
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        After creating this user, you'll be prompted to set up the new company. 
+                        The user will automatically be assigned as an Administrator of the new company.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Role Assignment - context-aware based on company selection */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Role Assignment</h4>
+                    <FormField
+                      control={form.control}
+                      name="roles"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">User Roles *</FormLabel>
+                          <div className="space-y-2">
+                            {(() => {
+                              // Context-aware role options
+                              if (companyAssignmentType === 'create') {
+                                return [{ value: "administrator", label: "Administrator" }];
+                              } else {
+                                return [
+                                  { value: "field_agent", label: "Field Agent" },
+                                  { value: "field_engineer", label: "Field Engineer" },
+                                  { value: "dispatcher", label: "Dispatcher" },
+                                  { value: "manager", label: "Manager" },
+                                  { value: "administrator", label: "Administrator" },
+                                ];
+                              }
+                            })().map((role) => (
+                              <div key={role.value} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={role.value}
+                                  checked={selectedRoles.includes(role.value)}
+                                  disabled={companyAssignmentType === 'create' && role.value !== 'administrator'}
+                                  onCheckedChange={(checked) => {
+                                    let newRoles = [...selectedRoles];
+                                    if (checked) {
+                                      newRoles.push(role.value);
+                                    } else {
+                                      newRoles = newRoles.filter(r => r !== role.value);
+                                    }
+                                    setSelectedRoles(newRoles);
+                                    form.setValue("roles", newRoles);
+                                  }}
+                                  data-testid={`checkbox-role-${role.value}`}
+                                />
+                                <label
+                                  htmlFor={role.value}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-900 dark:text-gray-100"
+                                >
+                                  {role.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Company Assignment - only show for service company roles */}
-              {!selectedRoles.includes('client') && (
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Company Assignment</h3>
-                  <div className="space-y-4">
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Assignment Type *</FormLabel>
-                      <RadioGroup
-                        value={companyAssignmentType}
-                        onValueChange={(value: 'existing' | 'create') => setCompanyAssignmentType(value)}
-                        className="flex flex-col space-y-2"
-                        data-testid="radio-company-assignment-type"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="existing" id="existing" data-testid="radio-existing-company" />
-                          <label htmlFor="existing" className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            Assign to Existing Company
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="create" id="create" data-testid="radio-create-company" />
-                          <label htmlFor="create" className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            Create New Company
-                          </label>
-                        </div>
-                      </RadioGroup>
-                    </FormItem>
-
-                    {companyAssignmentType === 'existing' && (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Select Company *</FormLabel>
-                        <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
-                          <SelectTrigger 
-                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-                            data-testid="select-existing-company"
-                          >
-                            <SelectValue placeholder="Choose a company" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {companies.map((company: any) => (
-                              <SelectItem key={company.id} value={company.id}>
-                                {company.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-
-                    {companyAssignmentType === 'create' && (
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                          After creating this user, you'll be prompted to set up the new company. 
-                          The user will automatically be assigned as an Administrator of the new company.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Client-specific fields - only show if client role is selected */}
-              {selectedRoles.includes('client') && (
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Client Information</h3>
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="clientCompanyName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Company Name *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter company name" 
-                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="clientRole"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Role within Company *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="e.g., IT Manager, CEO, Operations Director" 
-                              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -570,7 +618,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
               // Auto-assign user as administrator to the new company
               handleCompanyCreationComplete();
             }}
-            preFilledUserId={createdUserId}
+            preFilledUserId={createdUserId || undefined}
           />
         </DialogContent>
       </Dialog>
