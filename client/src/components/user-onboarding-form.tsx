@@ -146,7 +146,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-1 overflow-y-auto">
-      <Card className="max-w-2xl w-full min-h-fit my-1 flex flex-col bg-white dark:bg-gray-900 max-h-[98vh] overflow-hidden">
+      <Card className="max-w-3xl w-full min-h-fit my-1 flex flex-col bg-white dark:bg-gray-900 max-h-[98vh] overflow-hidden">
         <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
@@ -163,13 +163,13 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 p-3 overflow-y-auto scrollbar-minimal">
+        <CardContent className="flex-1 p-4 overflow-y-auto scrollbar-minimal">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* Personal Information */}
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="firstName"
@@ -209,8 +209,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
 
               {/* Contact Information */}
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Contact Information</h3>
-                <div className="space-y-3">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Contact Information</h3>
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="email"
@@ -256,8 +256,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
 
               {/* Address Information */}
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Address Information</h3>
-                <div className="space-y-3">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Address Information</h3>
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="address"
@@ -275,7 +275,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="city"
@@ -340,7 +340,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
 
               {/* Role Assignment */}
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Role Assignment</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Role Assignment</h3>
                 <FormField
                   control={form.control}
                   name="roles"
@@ -393,8 +393,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
               {/* Client-specific fields - only show if client role is selected */}
               {selectedRoles.includes('client') && (
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Client Information</h3>
-                  <div className="space-y-3">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Client Information</h3>
+                  <div className="space-y-4">
                     <FormField
                       control={form.control}
                       name="clientCompanyName"

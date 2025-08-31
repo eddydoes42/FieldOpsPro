@@ -531,7 +531,7 @@ export default function ClientFeedbackModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       {triggerComponent && <DialogTrigger asChild>{triggerComponent}</DialogTrigger>}
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-minimal">
         <DialogHeader>
           <DialogTitle>Client Feedback - {workOrderTitle}</DialogTitle>
         </DialogHeader>

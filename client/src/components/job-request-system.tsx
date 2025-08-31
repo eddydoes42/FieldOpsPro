@@ -296,7 +296,7 @@ export default function JobRequestSystem({
                 Post Job Request
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-minimal">
               <DialogHeader>
                 <DialogTitle>Create New Job Request</DialogTitle>
               </DialogHeader>
