@@ -206,6 +206,52 @@
     background: rgba(96, 125, 139, 0.9);
     opacity: 1;
   }
+
+  /* Dialog scrollbar with rounded corners to match dialog border-radius */
+  .scrollbar-dialog {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #90A4AE #ECEFF1;
+    border-radius: 0.75rem; /* Match dialog border radius */
+  }
+
+  .scrollbar-dialog::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-dialog::-webkit-scrollbar-track {
+    background: #ECEFF1;
+    border-radius: 0 0.75rem 0.75rem 0; /* Round right side only */
+  }
+
+  .scrollbar-dialog::-webkit-scrollbar-thumb {
+    background: #90A4AE;
+    border-radius: 0 0.75rem 0.75rem 0; /* Round right side only */
+  }
+
+  .scrollbar-dialog::-webkit-scrollbar-thumb:hover {
+    background: #78909C;
+  }
+
+  /* Dark theme for dialog scrollbar */
+  .dark .scrollbar-dialog {
+    scrollbar-color: #607D8B #2B3036;
+  }
+
+  .dark .scrollbar-dialog::-webkit-scrollbar-track {
+    background: #2B3036;
+    border-radius: 0 0.75rem 0.75rem 0; /* Round right side only */
+  }
+
+  .dark .scrollbar-dialog::-webkit-scrollbar-thumb {
+    background: #607D8B;
+    border-radius: 0 0.75rem 0.75rem 0; /* Round right side only */
+  }
+
+  .dark .scrollbar-dialog::-webkit-scrollbar-thumb:hover {
+    background: #6F8A97;
+  }
 }
 
 /* Custom styles for FieldOps Pro - Dark Theme */
