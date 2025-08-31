@@ -767,20 +767,26 @@ export default function TeamPage() {
                             className={`${
                               userData.roles?.includes('administrator') 
                                 ? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
+                                : userData.roles?.includes('project_manager')
+                                ? 'bg-cyan-900/30 text-cyan-300 border-cyan-800/50'
                                 : userData.roles?.includes('manager')
                                 ? 'bg-blue-900/30 text-blue-300 border-blue-800/50'
                                 : userData.roles?.includes('dispatcher')
                                 ? 'bg-orange-900/30 text-orange-300 border-orange-800/50'
                                 : userData.roles?.includes('field_engineer')
                                 ? 'bg-emerald-900/30 text-emerald-300 border-emerald-800/50'
+                                : userData.roles?.includes('client_company_admin')
+                                ? 'bg-teal-900/30 text-teal-300 border-teal-800/50'
                                 : 'bg-green-900/30 text-green-300 border-green-800/50'
                             } text-xs flex-shrink-0`}
                           >
                             {userData.roles?.includes('field_agent') ? 'FA' : 
                              userData.roles?.includes('field_engineer') ? 'FE' :
                              userData.roles?.includes('administrator') ? 'A' :
+                             userData.roles?.includes('project_manager') ? 'P' :
                              userData.roles?.includes('manager') ? 'M' :
-                             userData.roles?.includes('dispatcher') ? 'D' : 
+                             userData.roles?.includes('dispatcher') ? 'D' :
+                             userData.roles?.includes('client_company_admin') ? 'A' :
                              userData.roles?.[0]?.charAt(0).toUpperCase() || 'U'}
                           </Badge>
                         </div>
