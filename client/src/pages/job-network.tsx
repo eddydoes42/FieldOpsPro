@@ -596,14 +596,6 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <Button
-              variant="ghost"
-              onClick={() => setLocation('/dashboard')}
-              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Job Network</h1>
           </div>
           {/* Create Work Order Button */}
