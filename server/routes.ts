@@ -9,6 +9,7 @@ import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTim
 import { logWorkOrderAction, logIssueAction, logUserAction, logAssignmentAction, AUDIT_ACTIONS } from "./auditLogger";
 import { z } from "zod";
 import bcrypt from "bcrypt";
+import { sendWelcomeEmail } from "./email-service.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -238,6 +239,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.createUser(userData);
+      
+      // Send welcome email with login credentials if email and credentials are provided
+      if (user.email && onboardingData.username && onboardingData.password) {
+        const appUrl = process.env.REPLIT_DEV_DOMAIN 
+          ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+          : 'http://localhost:5000';
+        
+        try {
+          await sendWelcomeEmail({
+            to: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: onboardingData.username,
+            password: onboardingData.password,
+            temporaryPassword: onboardingData.temporaryPassword || false,
+            appUrl: appUrl
+          });
+          console.log(`Welcome email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Don't fail the user creation if email fails
+        }
+      }
+      
       res.json(user);
     } catch (error) {
       console.error("Error onboarding user:", error);
