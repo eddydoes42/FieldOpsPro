@@ -352,7 +352,10 @@ export default function TeamPage() {
     if (role === 'manager') return 'Manager';
     if (role === 'administrator') return 'Administrator';
     if (role === 'project_manager') return 'Project Manager';
-    return role;
+    if (role === 'client_company_admin') return 'Client Admin';
+    if (role === 'operations_director') return 'Operations Director';
+    // For any other role with underscores, replace them with spaces and capitalize
+    return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const getRoleCount = (role: string) => {
@@ -789,65 +792,17 @@ export default function TeamPage() {
                             }
                           </h4>
                           
-                          {/* Action buttons below user name */}
+                          {/* User statistics */}
+                          <div className="flex items-center space-x-3 mt-1 text-xs text-muted-foreground">
+                            <span>Work Orders: 0</span>
+                            <span>Rating: N/A</span>
+                          </div>
+                          
+                          {/* User status badges */}
                           <div className="flex items-center space-x-2 mt-2">
-                            {userData.id !== (user as any)?.id && !userData.roles?.includes('administrator') && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2 py-1 text-xs"
-                                    disabled={deleteUserMutation.isPending}
-                                  >
-                                    <Trash2 className="h-3 w-3 mr-1" />
-                                    Delete
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete User Account</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete the account for{' '}
-                                      <strong>
-                                        {userData.firstName && userData.lastName 
-                                          ? `${userData.firstName} ${userData.lastName}`
-                                          : userData.email || 'this user'
-                                        }
-                                      </strong>
-                                      ? This action is <strong>irreversible</strong> and will permanently remove:
-                                      <br /><br />
-                                      • User account and profile information
-                                      <br />
-                                      • Work order assignments (reassigned to unassigned)
-                                      <br />
-                                      • Time tracking history
-                                      <br />
-                                      • Message history
-                                      <br /><br />
-                                      <strong>This cannot be undone.</strong>
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteUserMutation.mutate(userData.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Delete Account
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
                             {userData.id === (user as any)?.id && (
                               <Badge variant="outline" className="text-xs">
                                 Current User
-                              </Badge>
-                            )}
-                            {userData.roles?.includes('administrator') && !(user as any).roles?.includes('administrator') && (
-                              <Badge variant="outline" className="text-xs bg-purple-900/20 text-purple-300">
-                                Administrator (Cannot Delete)
                               </Badge>
                             )}
                           </div>
@@ -1149,7 +1104,7 @@ export default function TeamPage() {
                           ? 'bg-emerald-900/30 text-emerald-300 border-emerald-800/50'
                           : 'bg-green-900/30 text-green-300 border-green-800/50'
                       } ${
-                        !selectedUser.roles?.includes('manager') && !selectedUser.roles?.includes('administrator') 
+                        !selectedUser.roles?.includes('administrator') 
                           ? 'cursor-pointer hover:opacity-80 transition-opacity'
                           : 'cursor-default'
                       }`}
@@ -1157,7 +1112,7 @@ export default function TeamPage() {
                       {getRoleDisplayName(selectedUser.roles?.[0])}
                     </Badge>
                   </AlertDialogTrigger>
-                  {!selectedUser.roles?.includes('manager') && !selectedUser.roles?.includes('administrator') && (
+                  {!selectedUser.roles?.includes('administrator') && (
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Update User Role</AlertDialogTitle>
@@ -1184,6 +1139,60 @@ export default function TeamPage() {
                   )}
                 </AlertDialog>
               </div>
+
+              {/* Delete User */}
+              {selectedUser.id !== (user as any)?.id && isOperationsDirectorSuperUser && (
+                <div className="pt-4 border-t border-border">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete User Account
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete User Account</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete the account for{' '}
+                          <strong>
+                            {selectedUser.firstName && selectedUser.lastName 
+                              ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                              : selectedUser.email || 'this user'
+                            }
+                          </strong>
+                          ? This action is <strong>irreversible</strong> and will permanently remove:
+                          <br /><br />
+                          • User account and profile information
+                          <br />
+                          • Work order assignments (reassigned to unassigned)
+                          <br />
+                          • Time tracking history
+                          <br />
+                          • Message history
+                          <br /><br />
+                          <strong>This cannot be undone.</strong>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            deleteUserMutation.mutate(selectedUser.id);
+                            setIsDialogOpen(false);
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete Account
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
 
               {/* Work Orders Button */}
               <div className="pt-4">

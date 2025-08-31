@@ -97,11 +97,11 @@ async function seedTestData() {
     // Client Company Users
     const clientUsers = [
       {
-        firstName: "TestAdmin",
+        firstName: "Test Admin",
         lastName: "Client",
         email: "testadmin.client@test.com",
         password: hashedPassword,
-        roles: ["client_company_admin"],
+        roles: ["administrator"],
         companyId: clientCompanyId,
         status: "active"
       },

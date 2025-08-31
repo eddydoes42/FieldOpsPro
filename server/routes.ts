@@ -257,6 +257,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Special protection for TestAdmin Service user
+      if (userToDelete.email === 'testadmin.service@test.com') {
+        return res.status(403).json({ message: "TestAdmin Service user is protected and cannot be deleted" });
+      }
+
       // Only administrators can delete other administrators
       if (hasAnyRole(userToDelete, ['administrator']) && !isAdmin(currentUser!)) {
         return res.status(403).json({ message: "Only administrators can delete other administrators" });

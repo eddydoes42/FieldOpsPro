@@ -299,7 +299,7 @@ export default function TeamManagement() {
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
                         <Badge className={getStatusColor(order.status)}>
-                          {order.status.replace('_', ' ').toUpperCase()}
+                          {order.status.replace(/_/g, ' ').toUpperCase()}
                         </Badge>
                       </div>
                       <div>
