@@ -1459,19 +1459,6 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                 : 'No jobs have been posted to the network yet.'
               }
             </p>
-            {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
-              (user as any)?.roles?.includes('project_manager')) && (
-              <Button 
-                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsCreateWorkOrderOpen(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Work Order
-              </Button>
-            )}
           </div>
         )}
 
