@@ -50,6 +50,7 @@ export default function OperationsDirectorDashboard() {
   const [showApprovalsDialog, setShowApprovalsDialog] = useState(false);
   const [selectedApprovalRequest, setSelectedApprovalRequest] = useState<any>(null);
   const [showApprovalDetailsDialog, setShowApprovalDetailsDialog] = useState(false);
+  const [showRecentSetupsDialog, setShowRecentSetupsDialog] = useState(false);
   const [, setLocation] = useLocation();
   // Operations Director has a single active role (operations_director)
   const [testingRole, setTestingRole] = useState<string>('');
@@ -108,6 +109,12 @@ export default function OperationsDirectorDashboard() {
   // Query for all approval requests
   const { data: approvalRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/approval-requests'],
+  });
+
+  // Query for recent users
+  const { data: recentUsers = [] } = useQuery<any[]>({
+    queryKey: ['/api/operations/recent-users'],
+    retry: false,
   });
 
   // Calculate total pending approvals
@@ -417,7 +424,7 @@ export default function OperationsDirectorDashboard() {
 
           <Card 
             className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
-            onClick={() => setLocation('/operations/recent-setups')}
+            onClick={() => setShowRecentSetupsDialog(true)}
           >
             <CardContent className="p-4 h-32 flex flex-col justify-between overflow-hidden">
               <div className="flex flex-col items-center justify-center flex-1 min-h-0">
@@ -695,6 +702,65 @@ export default function OperationsDirectorDashboard() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Recent Setups Dialog */}
+        <Dialog open={showRecentSetupsDialog} onOpenChange={setShowRecentSetupsDialog}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <UserPlus className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
+                Recent User Setups
+              </DialogTitle>
+              <DialogDescription>
+                Displaying the 5 most recently created users
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {recentUsers.slice(0, 5).map((user: any, index: number) => (
+                <Card key={user.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                            {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                            {user.firstName} {user.lastName}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {user.roles?.map((role: string) => (
+                              <Badge key={role} variant="secondary" className="text-xs">
+                                {role.replace('_', ' ')}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {user.companyName || 'No Company'}
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {recentUsers.length === 0 && (
+                <div className="text-center py-8">
+                  <UserPlus className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No recent user setups found</p>
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
 
