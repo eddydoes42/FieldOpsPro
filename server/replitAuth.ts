@@ -252,6 +252,29 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 export const isAuthenticatedWithODBypass: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
+  // Check for Operations Director role testing bypass first
+  const testingRole = req.headers['x-testing-role'];
+  const testingCompanyType = req.headers['x-testing-company-type'];
+  
+  if (testingRole && testingCompanyType) {
+    // If role testing headers are present, check if the session has an OD user
+    if (req.isAuthenticated() && user) {
+      try {
+        const userId = user.sub || user.claims?.sub;
+        if (userId) {
+          const currentUser = await storage.getUser(userId);
+          if (currentUser && currentUser.roles?.includes('operations_director') && !currentUser.companyId) {
+            // Operations Director is role testing - bypass all authentication checks
+            console.log(`Operations Director ${currentUser.email} bypassing auth for role testing: ${testingRole} in ${testingCompanyType} company`);
+            return next();
+          }
+        }
+      } catch (error) {
+        console.error("Error checking Operations Director role testing bypass:", error);
+      }
+    }
+  }
+
   if (!req.isAuthenticated() || !user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -263,8 +286,6 @@ export const isAuthenticatedWithODBypass: RequestHandler = async (req, res, next
       const currentUser = await storage.getUser(userId);
       if (currentUser) {
         const isOD = currentUser.roles?.includes('operations_director') && !currentUser.companyId;
-        const testingRole = req.headers['x-testing-role'];
-        const testingCompanyType = req.headers['x-testing-company-type'];
         const isRoleTesting = !!(testingRole && testingCompanyType);
         
         // Operations Director bypass - skip token expiry checks when not role testing
