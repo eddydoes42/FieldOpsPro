@@ -2466,11 +2466,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const workOrders = await storage.getAllWorkOrders();
       let totalEarned = 0;
       let todayEarning = 0;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       for (const workOrder of workOrders) {
         if (!workOrder.budgetType || !workOrder.budgetAmount) continue;
+
+        // Only count earnings for work orders that are completed AND approved for payment
+        const isCompleted = workOrder.status === 'completed';
+        const isApprovedForPayment = workOrder.paymentStatus === 'payment_approved' || 
+                                     workOrder.paymentStatus === 'payment_received' || 
+                                     workOrder.paymentStatus === 'paid';
+
+        if (!isCompleted || !isApprovedForPayment) continue;
 
         let calculatedBudget = parseFloat(workOrder.budgetAmount);
 
@@ -2490,18 +2498,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           calculatedBudget = parseFloat(workOrder.budgetAmount) * devices;
         }
 
-        // Add to total if work order is completed
-        if (workOrder.status === 'completed') {
-          totalEarned += calculatedBudget;
-        }
+        // Add to total earned (all completed and approved work orders)
+        totalEarned += calculatedBudget;
 
-        // Add to today's earning if work order is due today
-        if (workOrder.dueDate) {
-          const dueDate = new Date(workOrder.dueDate);
-          dueDate.setHours(0, 0, 0, 0);
-          if (dueDate.getTime() === today.getTime()) {
-            todayEarning += calculatedBudget;
-          }
+        // Add to today's earning if work order was completed or payment approved within last 24 hours
+        const completedAt = workOrder.completedAt ? new Date(workOrder.completedAt) : null;
+        const paymentUpdatedAt = workOrder.paymentUpdatedAt ? new Date(workOrder.paymentUpdatedAt) : null;
+        
+        const isCompletedToday = completedAt && completedAt >= twentyFourHoursAgo;
+        const isPaymentApprovedToday = paymentUpdatedAt && paymentUpdatedAt >= twentyFourHoursAgo;
+        
+        if (isCompletedToday || isPaymentApprovedToday) {
+          todayEarning += calculatedBudget;
         }
       }
 
