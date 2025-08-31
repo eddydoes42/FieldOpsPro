@@ -53,12 +53,21 @@ interface UserOnboardingFormProps {
   onClose: () => void;
   onSuccess: () => void;
   currentUser?: any; // Current user to check permissions
+  preFilledData?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    requestedRole?: string;
+  };
 }
 
-export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: UserOnboardingFormProps) {
+export default function UserOnboardingForm({ onClose, onSuccess, currentUser, preFilledData }: UserOnboardingFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(['field_agent']);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(
+    preFilledData?.requestedRole ? [preFilledData.requestedRole] : ['field_agent']
+  );
   
   // Debug logging
   console.log('UserOnboardingForm currentUser:', currentUser);
@@ -81,15 +90,15 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser }: 
   const form = useForm({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
+      firstName: preFilledData?.firstName || "",
+      lastName: preFilledData?.lastName || "",
+      email: preFilledData?.email || "",
+      phone: preFilledData?.phone || "",
       address: "",
       city: "",
       state: "",
       zipCode: "",
-      roles: ["field_agent"],
+      roles: preFilledData?.requestedRole ? [preFilledData.requestedRole] : ["field_agent"],
       clientCompanyName: "",
       clientRole: "",
     },

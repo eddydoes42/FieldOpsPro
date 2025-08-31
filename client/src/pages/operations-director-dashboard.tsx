@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import CompanyOnboardingForm from "@/components/company-onboarding-form";
 import AdminOnboardingForm from "@/components/admin-onboarding-form";
+import UserOnboardingForm from "@/components/user-onboarding-form";
 import { Company, AccessRequest, insertUserSchema } from "../../../shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -94,6 +95,11 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/operations/budget-summary'],
   });
 
+  // Current user query for UserOnboardingForm permissions
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/auth/user'],
+  });
+
   // Access requests query
   const { data: accessRequests = [] } = useQuery<AccessRequest[]>({
     queryKey: ['/api/access-requests'],
@@ -106,23 +112,6 @@ export default function OperationsDirectorDashboard() {
 
   // Calculate total pending approvals
   const totalPendingApprovals = accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length;
-
-  // User creation form
-  const userForm = useForm({
-    resolver: zodResolver(insertUserSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      roles: [],
-      companyId: "",
-    },
-  });
 
   if (showCompanyForm) {
     return <CompanyOnboardingForm onClose={() => setShowCompanyForm(false)} />;
@@ -153,12 +142,6 @@ export default function OperationsDirectorDashboard() {
       if (variables.status === 'approved' && variables.accessRequest) {
         const request = variables.accessRequest;
         setSelectedAccessRequest(request);
-        // Pre-populate form with access request data
-        userForm.setValue('firstName', request.firstName);
-        userForm.setValue('lastName', request.lastName);
-        userForm.setValue('email', request.email);
-        userForm.setValue('phone', request.phone || '');
-        userForm.setValue('roles', [request.requestedRole] as any);
         setShowUserCreationDialog(true);
         setShowApprovalsDialog(false);
       }
@@ -172,37 +155,8 @@ export default function OperationsDirectorDashboard() {
     },
   });
 
-  const createUserMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      return apiRequest('/api/users', 'POST', userData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setShowUserCreationDialog(false);
-      userForm.reset();
-      setSelectedAccessRequest(null);
-      toast({
-        title: "User Created",
-        description: "User account has been successfully created.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create user",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleAccessRequestClick = (request: AccessRequest) => {
     setSelectedAccessRequest(request);
-    // Pre-populate form with access request data
-    userForm.setValue('firstName', request.firstName);
-    userForm.setValue('lastName', request.lastName);
-    userForm.setValue('email', request.email);
-    userForm.setValue('phone', request.phone || '');
-    userForm.setValue('roles', [request.requestedRole] as any);
     setShowUserCreationDialog(true);
   };
 
@@ -216,10 +170,6 @@ export default function OperationsDirectorDashboard() {
 
   const handleRejectRequest = (requestId: string) => {
     reviewAccessRequestMutation.mutate({ requestId, status: 'rejected', notes: 'Request denied' });
-  };
-
-  const onSubmitUserCreation = (data: any) => {
-    createUserMutation.mutate(data);
   };
 
   const availableRoles = [
@@ -748,104 +698,32 @@ export default function OperationsDirectorDashboard() {
           </DialogContent>
         </Dialog>
 
-        {/* User Creation Dialog */}
-        <Dialog open={showUserCreationDialog} onOpenChange={setShowUserCreationDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create User Account</DialogTitle>
-              <DialogDescription>
-                Create a new user account from this approved access request.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...userForm}>
-              <form onSubmit={userForm.handleSubmit(onSubmitUserCreation)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={userForm.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={userForm.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={userForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={userForm.control}
-                  name="companyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a company" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {companies.map((company) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end space-x-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowUserCreationDialog(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={createUserMutation.isPending}
-                  >
-                    {createUserMutation.isPending ? "Creating..." : "Create User"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        {/* User Creation Dialog - Using centralized UserOnboardingForm */}
+        {showUserCreationDialog && selectedAccessRequest && (
+          <UserOnboardingForm
+            onClose={() => {
+              setShowUserCreationDialog(false);
+              setSelectedAccessRequest(null);
+            }}
+            onSuccess={() => {
+              setShowUserCreationDialog(false);
+              setSelectedAccessRequest(null);
+              queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
+              toast({
+                title: "User Created",
+                description: "User account has been successfully created from the access request.",
+              });
+            }}
+            currentUser={currentUser}
+            preFilledData={{
+              firstName: selectedAccessRequest.firstName,
+              lastName: selectedAccessRequest.lastName,
+              email: selectedAccessRequest.email,
+              phone: selectedAccessRequest.phone || "",
+              requestedRole: selectedAccessRequest.requestedRole,
+            }}
+          />
+        )}
       </div>
     </div>
   );
