@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, formatDistanceToNow } from "date-fns";
 import { Link, useLocation } from "wouter";
 import { Home, Filter, RefreshCw, Eye, User, Calendar, FileText } from "lucide-react";
+import Navigation from "@/components/navigation";
 
 interface AuditLog {
   id: string;
@@ -131,7 +132,10 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navigation />
+      
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -394,6 +398,7 @@ export default function AuditLogsPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );

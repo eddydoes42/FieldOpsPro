@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import Navigation from "@/components/navigation";
 import { 
   User, 
   MapPin, 
@@ -329,10 +330,13 @@ export default function TalentNetwork() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Role Testers - Always present for Operations Director */}
-      <ServiceCompanyRoleTester />
-      <ClientCompanyRoleTester />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navigation />
+      
+      <div className="p-6 space-y-6">
+        {/* Role Testers - Always present for Operations Director */}
+        <ServiceCompanyRoleTester />
+        <ClientCompanyRoleTester />
 
       {/* Navigation Header */}
       <div className="flex items-center gap-4 mb-6">
@@ -1107,6 +1111,7 @@ export default function TalentNetwork() {
           </DialogContent>
         </Dialog>
       )}
+      </div>
     </div>
   );
 }

@@ -263,21 +263,10 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+                className="flex items-center justify-center p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                data-testid="button-navigation-menu"
               >
-                {(user as any)?.profileImageUrl && (
-                  <img 
-                    className="h-8 w-8 rounded-full object-cover" 
-                    src={(user as any).profileImageUrl} 
-                    alt="Profile"
-                  />
-                )}
-                <span className="text-foreground font-medium text-sm hidden md:block">
-                  {typeof window !== 'undefined' && window.location.pathname.startsWith('/operations') 
-                    ? '' 
-                    : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
-                </span>
-                <Menu className="h-4 w-4 text-muted-foreground" />
+                <Menu className="h-5 w-5 text-muted-foreground" />
               </button>
               
               {/* Dropdown Menu */}

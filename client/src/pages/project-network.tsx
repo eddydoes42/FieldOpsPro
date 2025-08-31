@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquare, AlertCircle, Home, ArrowLeft, Check } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { canCreateProjects, canViewProjectNetwork, isOperationsDirector } from '@shared/schema';
+import Navigation from '@/components/navigation';
 import type { Project, InsertProject } from '@shared/schema';
 import { DocumentUploader } from '@/components/DocumentUploader';
 
@@ -526,10 +527,13 @@ export default function ProjectNetwork() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      {/* Role Testers - Always present for Operations Director */}
-      <ServiceCompanyRoleTester />
-      <ClientCompanyRoleTester />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navigation />
+      
+      <div className="p-6">
+        {/* Role Testers - Always present for Operations Director */}
+        <ServiceCompanyRoleTester />
+        <ClientCompanyRoleTester />
       
       {/* Header */}
       <div className="mb-6">
@@ -1363,6 +1367,7 @@ export default function ProjectNetwork() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
