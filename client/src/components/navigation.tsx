@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import QuickActionMenu from "@/components/quick-action-menu";
 import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
-import { Zap } from "lucide-react";
+import { Zap, Menu } from "lucide-react";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
 
 interface NavigationProps {
@@ -277,7 +277,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                     ? 'Operations Director' 
                     : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
                 </span>
-                <i className="fas fa-bars text-muted-foreground"></i>
+                <Menu className="h-4 w-4 text-muted-foreground" />
               </button>
               
               {/* Dropdown Menu */}
