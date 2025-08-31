@@ -134,15 +134,34 @@ export default function OperationsDirectorDashboard() {
 
   // Mutations for access request actions
   const reviewAccessRequestMutation = useMutation({
-    mutationFn: async ({ requestId, status, notes }: { requestId: string; status: 'approved' | 'rejected'; notes?: string }) => {
+    mutationFn: async ({ requestId, status, notes, accessRequest }: { 
+      requestId: string; 
+      status: 'approved' | 'rejected'; 
+      notes?: string; 
+      accessRequest?: AccessRequest;
+    }) => {
       return apiRequest(`/api/access-requests/${requestId}/review`, 'PATCH', { status, notes });
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
       toast({
         title: "Request Reviewed",
         description: "Access request has been updated.",
       });
+      
+      // If approved and we have the access request data, trigger user creation form
+      if (variables.status === 'approved' && variables.accessRequest) {
+        const request = variables.accessRequest;
+        setSelectedAccessRequest(request);
+        // Pre-populate form with access request data
+        userForm.setValue('firstName', request.firstName);
+        userForm.setValue('lastName', request.lastName);
+        userForm.setValue('email', request.email);
+        userForm.setValue('phone', request.phone || '');
+        userForm.setValue('roles', [request.requestedRole] as any);
+        setShowUserCreationDialog(true);
+        setShowApprovalsDialog(false);
+      }
     },
     onError: (error: any) => {
       toast({
@@ -187,8 +206,12 @@ export default function OperationsDirectorDashboard() {
     setShowUserCreationDialog(true);
   };
 
-  const handleApproveRequest = (requestId: string) => {
-    reviewAccessRequestMutation.mutate({ requestId, status: 'approved' });
+  const handleApproveRequest = (request: AccessRequest) => {
+    reviewAccessRequestMutation.mutate({ 
+      requestId: request.id, 
+      status: 'approved',
+      accessRequest: request 
+    });
   };
 
   const handleRejectRequest = (requestId: string) => {
@@ -544,7 +567,7 @@ export default function OperationsDirectorDashboard() {
                                   className="h-7 px-2 text-green-600 border-green-200 hover:bg-green-50"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleApproveRequest(request.id);
+                                    handleApproveRequest(request);
                                   }}
                                   data-testid={`button-approve-${request.id}`}
                                 >
