@@ -96,6 +96,13 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/operations/budget-summary'],
   });
 
+  const { data: serviceFeeData = { totalServiceFees: 0, todayServiceFees: 0 } } = useQuery<{
+    totalServiceFees: number;
+    todayServiceFees: number;
+  }>({
+    queryKey: ['/api/operations/service-fee-summary'],
+  });
+
   // Current user query for UserOnboardingForm permissions
   const { data: currentUser } = useQuery({
     queryKey: ['/api/auth/user'],
@@ -312,19 +319,18 @@ export default function OperationsDirectorDashboard() {
             </h1>
           </div>
           
-          {/* Budget Indicator */}
-          <div className="flex justify-end">
+          {/* Budget & Service Fee Indicators */}
+          <div className="flex justify-end space-x-4">
+            {/* Earnings Display */}
             <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
-                <div className="text-right">
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Total Earned
-                  </p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">
-                    ${(budgetData.totalEarned || 0).toLocaleString()}
-                  </p>
-                </div>
+              <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className="text-right">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Total Earned
+                </p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  ${(budgetData.totalEarned || 0).toLocaleString()}
+                </p>
               </div>
               <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
               <div className="text-right">
@@ -333,6 +339,30 @@ export default function OperationsDirectorDashboard() {
                 </p>
                 <p className="text-sm font-bold text-green-600 dark:text-green-400">
                   ${(budgetData.todayEarning || 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            
+            {/* Service Fees Display */}
+            <div className="flex items-center space-x-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+              <div className="bg-orange-100 dark:bg-orange-800 p-1 rounded">
+                <span className="text-xs font-bold text-orange-600 dark:text-orange-400">FEE</span>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Total Fees
+                </p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  ${(serviceFeeData.totalServiceFees || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="h-6 w-px bg-orange-200 dark:border-orange-700"></div>
+              <div className="text-right">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Today's Fees
+                </p>
+                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                  ${(serviceFeeData.todayServiceFees || 0).toLocaleString()}
                 </p>
               </div>
             </div>

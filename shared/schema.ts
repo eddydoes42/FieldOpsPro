@@ -136,6 +136,11 @@ export const workOrders = pgTable("work_orders", {
   devicesInstalled: integer("devices_installed"), // number of devices for per_device budget type
   budgetCreatedById: varchar("budget_created_by_id").references(() => users.id),
   budgetCreatedAt: timestamp("budget_created_at"),
+  // Service fee fields - 5% for work orders
+  serviceFeePercentage: decimal("service_fee_percentage", { precision: 5, scale: 2 }).default("5.00"), // 5% for work orders
+  serviceFeeAmount: decimal("service_fee_amount", { precision: 10, scale: 2 }), // calculated service fee
+  serviceFeeCollected: boolean("service_fee_collected").default(false), // true when fee is deducted upon approval
+  serviceFeeCollectedAt: timestamp("service_fee_collected_at"),
   // Payment workflow fields
   paymentStatus: varchar("payment_status"), // null, pending_payment, payment_approved, payment_received, paid
   paymentUpdatedById: varchar("payment_updated_by_id").references(() => users.id),
@@ -778,6 +783,11 @@ export const projects = pgTable("projects", {
   budgetApprovedAt: timestamp("budget_approved_at"),
   budgetDeductedAt: timestamp("budget_deducted_at"),
   actualCost: decimal("actual_cost", { precision: 10, scale: 2 }), // final cost after completion
+  // Service fee fields - 10% for projects
+  serviceFeePercentage: decimal("service_fee_percentage", { precision: 5, scale: 2 }).default("10.00"), // 10% for projects
+  serviceFeeAmount: decimal("service_fee_amount", { precision: 10, scale: 2 }), // calculated service fee
+  serviceFeeCollected: boolean("service_fee_collected").default(false), // true when fee is deducted upon approval
+  serviceFeeCollectedAt: timestamp("service_fee_collected_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

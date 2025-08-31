@@ -110,6 +110,12 @@ export default function WorkOrderCardPopup({
         return budgetAmount;
     }
   };
+
+  // Calculate service fee (5% for work orders)
+  const calculateServiceFee = () => {
+    const totalBudget = calculateTotalBudget();
+    return totalBudget * 0.05; // 5% service fee for work orders
+  };
   const [editForm, setEditForm] = useState({
     title: workOrder.title || '',
     description: workOrder.description || '',
@@ -582,24 +588,37 @@ export default function WorkOrderCardPopup({
                   </div>
                 )}
 
-                {/* Total Available Budget Display */}
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">Total Available Budget:</span>
-                    <span className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                      ${calculateTotalBudget().toFixed(2)}
-                    </span>
+                {/* Budget Summary with Service Fee */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/30 dark:to-green-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">Budget Summary</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-700 dark:text-gray-300">Work Order Budget:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">${calculateTotalBudget().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-orange-600 dark:text-orange-400">
+                      <span>Service Fee (5%):</span>
+                      <span className="font-medium">${calculateServiceFee().toFixed(2)}</span>
+                    </div>
+                    <hr className="border-blue-200 dark:border-blue-700" />
+                    <div className="flex justify-between font-semibold text-blue-900 dark:text-blue-100">
+                      <span>Total Amount:</span>
+                      <span>${(calculateTotalBudget() + calculateServiceFee()).toFixed(2)}</span>
+                    </div>
                   </div>
                   {(editForm.budgetType === 'hourly' || workOrder.budgetType === 'hourly') && (
-                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
                       ${editForm.budgetAmount || workOrder.budgetAmount || '0'}/hour × {editForm.estimatedHours || workOrder.estimatedHours || '0'} hours
                     </p>
                   )}
                   {(editForm.budgetType === 'per_device' || workOrder.budgetType === 'per_device') && (
-                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
                       ${editForm.budgetAmount || workOrder.budgetAmount || '0'}/device × {editForm.devicesInstalled || workOrder.devicesInstalled || '0'} devices
                     </p>
                   )}
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    * Service fee will be automatically deducted when work order is approved for payment
+                  </p>
                 </div>
               </div>
             </CardContent>

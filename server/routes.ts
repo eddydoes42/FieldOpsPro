@@ -885,11 +885,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Payment status can only be updated for completed work orders" });
       }
 
-      const updates = {
+      const updates: any = {
         paymentStatus,
         paymentUpdatedById: currentUser.id,
         paymentUpdatedAt: new Date(),
       };
+
+      // Automatically collect service fee when payment is approved
+      if (paymentStatus === 'payment_approved') {
+        // Calculate service fee (5% for work orders)
+        let totalBudget = 0;
+        const budgetAmount = parseFloat(workOrder.budgetAmount || '0');
+        
+        switch (workOrder.budgetType) {
+          case 'fixed':
+            totalBudget = budgetAmount;
+            break;
+          case 'hourly':
+            const timeEntries = await storage.getTimeEntriesByWorkOrder(id);
+            const totalHours = timeEntries.reduce((total: number, entry: any) => {
+              if (entry.endTime) {
+                const hours = (new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / (1000 * 60 * 60);
+                return total + hours;
+              }
+              return total;
+            }, 0);
+            totalBudget = budgetAmount * totalHours;
+            break;
+          case 'per_device':
+            const devices = workOrder.devicesInstalled || 0;
+            totalBudget = budgetAmount * devices;
+            break;
+          default:
+            totalBudget = budgetAmount;
+        }
+
+        const serviceFeeAmount = totalBudget * 0.05; // 5% service fee
+        
+        updates.serviceFeeAmount = serviceFeeAmount.toFixed(2);
+        updates.serviceFeeCollected = true;
+        updates.serviceFeeCollectedAt = new Date();
+      }
 
       const updatedWorkOrder = await storage.updateWorkOrder(id, updates);
       res.json(updatedWorkOrder);
@@ -2520,6 +2556,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching budget summary:", error);
       res.status(500).json({ message: "Failed to fetch budget summary" });
+    }
+  });
+
+  // Get service fee summary for operations dashboard
+  app.get('/api/operations/service-fee-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Operations Director access required" });
+      }
+
+      const workOrders = await storage.getAllWorkOrders();
+      const projects = await storage.getAllProjects();
+      let totalServiceFees = 0;
+      let todayServiceFees = 0;
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      // Calculate service fees from work orders (5%)
+      for (const workOrder of workOrders) {
+        if (!workOrder.serviceFeeCollected || !workOrder.serviceFeeAmount) continue;
+
+        const serviceFeeAmount = parseFloat(workOrder.serviceFeeAmount);
+        totalServiceFees += serviceFeeAmount;
+
+        // Check if service fee was collected within last 24 hours
+        const collectedAt = workOrder.serviceFeeCollectedAt ? new Date(workOrder.serviceFeeCollectedAt) : null;
+        if (collectedAt && collectedAt >= twentyFourHoursAgo) {
+          todayServiceFees += serviceFeeAmount;
+        }
+      }
+
+      // Calculate service fees from projects (10%)
+      for (const project of projects) {
+        if (!project.serviceFeeCollected || !project.serviceFeeAmount) continue;
+
+        const serviceFeeAmount = parseFloat(project.serviceFeeAmount);
+        totalServiceFees += serviceFeeAmount;
+
+        // Check if service fee was collected within last 24 hours
+        const collectedAt = project.serviceFeeCollectedAt ? new Date(project.serviceFeeCollectedAt) : null;
+        if (collectedAt && collectedAt >= twentyFourHoursAgo) {
+          todayServiceFees += serviceFeeAmount;
+        }
+      }
+
+      res.json({
+        totalServiceFees: Math.round(totalServiceFees * 100) / 100,
+        todayServiceFees: Math.round(todayServiceFees * 100) / 100
+      });
+    } catch (error) {
+      console.error("Error fetching service fee summary:", error);
+      res.status(500).json({ message: "Failed to fetch service fee summary" });
     }
   });
 

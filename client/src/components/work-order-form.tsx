@@ -211,13 +211,43 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
     },
   });
 
+  // Calculate total budget based on budget type
+  const calculateTotalBudget = () => {
+    const budgetType = form.watch("budgetType");
+    const budgetAmount = parseFloat(form.watch("budgetAmount")) || 0;
+    const estimatedHours = parseFloat(form.watch("estimatedHours")) || 0;
+    const devicesInstalled = parseInt(form.watch("devicesInstalled")) || 0;
+
+    switch (budgetType) {
+      case 'fixed':
+        return budgetAmount;
+      case 'hourly':
+        return budgetAmount * estimatedHours;
+      case 'per_device':
+        return budgetAmount * devicesInstalled;
+      default:
+        return budgetAmount;
+    }
+  };
+
+  // Calculate service fee (5% for work orders)
+  const calculateServiceFee = () => {
+    const totalBudget = calculateTotalBudget();
+    return totalBudget * 0.05; // 5% service fee for work orders
+  };
+
   const onSubmit = (data: any) => {
+    const totalBudget = calculateTotalBudget();
+    const serviceFeeAmount = calculateServiceFee();
+    
     const submissionData = {
       ...data,
       isClient,
       tasks,
       tools,
-      documents
+      documents,
+      // Add service fee calculation
+      serviceFeeAmount: serviceFeeAmount.toFixed(2)
     };
     console.log("Submitting work order data:", submissionData);
     createWorkOrderMutation.mutate(submissionData);
@@ -605,6 +635,31 @@ export default function WorkOrderForm({ onClose, onSuccess, isClient = false }: 
                             </FormItem>
                           )}
                         />
+                      )}
+                      
+                      {/* Budget Summary Display */}
+                      {form.watch("budgetType") && form.watch("budgetAmount") && (
+                        <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/30 dark:to-blue-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                          <h4 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-3">Budget Summary</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">Work Order Budget:</span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">${calculateTotalBudget().toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-orange-600 dark:text-orange-400">
+                              <span>Service Fee (5%):</span>
+                              <span className="font-medium">${calculateServiceFee().toFixed(2)}</span>
+                            </div>
+                            <hr className="border-green-200 dark:border-green-700" />
+                            <div className="flex justify-between font-semibold text-green-900 dark:text-green-100">
+                              <span>Total Amount:</span>
+                              <span>${(calculateTotalBudget() + calculateServiceFee()).toFixed(2)}</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                            * Service fee will be automatically deducted when work order is approved for payment
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
