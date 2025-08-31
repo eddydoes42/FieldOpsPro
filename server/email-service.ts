@@ -122,10 +122,17 @@ Please do not reply to this email.
 
     console.log(`Welcome email sent successfully to ${params.to}`);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('SendGrid email error:', error);
-    if (error && typeof error === 'object' && 'response' in error) {
-      console.error('SendGrid error details:', JSON.stringify((error as any).response.body, null, 2));
+    if (error && typeof error === 'object' && 'response' in error && error.response?.body) {
+      console.error('SendGrid error details:', JSON.stringify(error.response.body, null, 2));
+      
+      // Check for specific error messages
+      if (error.response.body.errors) {
+        error.response.body.errors.forEach((err: any) => {
+          console.error('SendGrid specific error:', err.message);
+        });
+      }
     }
     return false;
   }
