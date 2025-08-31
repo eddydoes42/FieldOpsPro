@@ -231,9 +231,12 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
                   <Label htmlFor="companyId" className="form-label-minimal">Company *</Label>
                   <Select onValueChange={(value) => handleInputChange('companyId', value)}>
                     <SelectTrigger className="form-select-minimal">
-                      <SelectValue placeholder="Select company" />
+                      <SelectValue placeholder="Select Company" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="create-new">
+                        + Create New Company
+                      </SelectItem>
                       {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name}

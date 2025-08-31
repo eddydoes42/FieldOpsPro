@@ -547,34 +547,34 @@ export default function TalentNetwork() {
         {/* Main Content Area */}
         {!selectedCompany ? (
           // Company Grid View
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredCompanies.map((company: any) => (
               <Card 
                 key={company.id} 
-                className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500"
+                className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500 compact"
                 onClick={() => handleCompanyClick(company.name)}
               >
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Building className="h-6 w-6 text-blue-600" />
-                      <span className="text-lg">{company.name}</span>
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold">{company.name}</span>
                     </div>
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                      {company.agentCount} agents
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                      {company.agentCount} Users
                     </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Available Field Agents:</span>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 dark:text-gray-400 capitalize">Available Field Agents:</span>
                       <span className="font-semibold">{company.agentCount}</span>
                     </div>
                     
                     {/* Top Skills Preview */}
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Top Skills:</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 capitalize">Top Skills:</p>
                       <div className="flex flex-wrap gap-1">
                         {company.agents
                           .flatMap((agent: FieldAgent) => agent.specializations || [])
@@ -584,7 +584,7 @@ export default function TalentNetwork() {
                           }, [])
                           .slice(0, 3)
                           .map((skill: string) => (
-                            <Badge key={skill} variant="outline" className="text-xs">
+                            <Badge key={skill} variant="outline" className="text-xs capitalize">
                               {skill}
                             </Badge>
                           ))}

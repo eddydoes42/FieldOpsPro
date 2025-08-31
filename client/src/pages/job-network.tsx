@@ -1336,7 +1336,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
               <Card key={job.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <CardTitle className="text-sm font-semibold text-gray-900 dark:text-white">
                       {job.title}
                     </CardTitle>
                     <Badge 
@@ -1347,16 +1347,24 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         ''
                       }
                     >
-                      {job.status}
+                      <span className="capitalize">{job.status}</span>
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
                     {job.description}
                   </p>
                   
-                  <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+                  {/* Company Name */}
+                  <div className="flex items-center mb-2">
+                    <Building2 className="h-3 w-3 mr-1 text-blue-600" />
+                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                      {job.company?.name || 'Unknown Company'}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 mr-2" />
                       {job.location}
@@ -1408,8 +1416,8 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     )}
 
                     <div className="flex items-center">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Public
+                      <Eye className="h-3 w-3 mr-1" />
+                      <span className="capitalize">Public</span>
                     </div>
                   </div>
 
@@ -1568,11 +1576,22 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                       ''
                     }
                   >
-                    {selectedJob.status}
+                    <span className="capitalize">{selectedJob.status}</span>
                   </Badge>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     Priority: <span className="capitalize">{selectedJob.priority}</span>
                   </span>
+                </div>
+
+                {/* Company Name */}
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Posted By</h4>
+                  <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                    <Building2 className="h-4 w-4 mr-2 text-blue-600" />
+                    <span className="font-medium text-blue-600 dark:text-blue-400">
+                      {selectedJob.company?.name || 'Unknown Company'}
+                    </span>
+                  </p>
                 </div>
 
                 <div>
@@ -1643,11 +1662,11 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               <p className="text-sm text-blue-700 dark:text-blue-300">{tool.description}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
-                                  {tool.category}
+                                  <span className="capitalize">{tool.category}</span>
                                 </Badge>
                                 {tool.isRequired && (
                                   <Badge variant="destructive" className="text-xs">
-                                    Required
+                                    <span className="capitalize">Required</span>
                                   </Badge>
                                 )}
                               </div>
@@ -1672,7 +1691,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               <p className="text-sm text-green-700 dark:text-green-300">{task.description}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
-                                  {task.category}
+                                  <span className="capitalize">{task.category}</span>
                                 </Badge>
                                 {task.documentsRequired > 0 && (
                                   <Badge variant="secondary" className="text-xs">
