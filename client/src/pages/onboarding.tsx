@@ -350,8 +350,8 @@ export default function Onboarding() {
                       { value: 'manager', label: 'Manager' },
                       { value: 'dispatcher', label: 'Dispatcher' },
                       { value: 'administrator', label: 'Administrator' },
-                      // Only show client role to administrators
-                      ...(isAdmin(user as any) ? [{ value: 'client', label: 'Client' }] : [])
+                      // Only show client company admin role to administrators
+                      ...(isAdmin(user as any) ? [{ value: 'client_company_admin', label: 'Client Company Admin' }] : [])
                     ].map((role) => (
                       <div key={role.value} className="flex items-center space-x-2">
                         <input
@@ -385,8 +385,8 @@ export default function Onboarding() {
                 </div>
               </div>
 
-              {/* Client-specific fields - only show if client role is selected */}
-              {formData.roles.includes('client') && (
+              {/* Client-specific fields - only show if client company admin role is selected */}
+              {formData.roles.includes('client_company_admin') && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                     <i className="fas fa-building mr-2 text-blue-600 dark:text-blue-400"></i>
