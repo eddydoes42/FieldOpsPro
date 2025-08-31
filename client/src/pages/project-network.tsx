@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquare, AlertCircle, Home, ArrowLeft, Check } from 'lucide-react';
+import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquare, AlertCircle, Home, ArrowLeft, Check, Building2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { canCreateProjects, canViewProjectNetwork, isOperationsDirector } from '@shared/schema';
 import Navigation from '@/components/navigation';
@@ -563,8 +563,8 @@ export default function ProjectNetwork() {
               }}
               className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              <Building2 className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Project Network</h1>
           </div>
