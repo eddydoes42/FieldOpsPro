@@ -457,7 +457,7 @@ export default function OperationsCompanies() {
                 variant={statusFilter === "active" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("active")}
-                className="text-xs"
+                className="text-xs h-8"
               >
                 Active ({companies.filter(c => c.isActive).length})
               </Button>
@@ -465,7 +465,7 @@ export default function OperationsCompanies() {
                 variant={statusFilter === "inactive" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("inactive")}
-                className="text-xs"
+                className="text-xs h-8"
               >
                 Inactive ({companies.filter(c => !c.isActive).length})
               </Button>
@@ -473,7 +473,7 @@ export default function OperationsCompanies() {
                 variant={statusFilter === "all" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("all")}
-                className="text-xs"
+                className="text-xs h-8"
               >
                 All Status ({companies.length})
               </Button>
@@ -485,7 +485,7 @@ export default function OperationsCompanies() {
                 variant={companyTypeFilter === "service" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCompanyTypeFilter("service")}
-                className="text-xs bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                className="text-xs bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 h-8"
               >
                 Service Companies ({companies.filter(c => c.type === "service").length})
               </Button>
@@ -493,7 +493,7 @@ export default function OperationsCompanies() {
                 variant={companyTypeFilter === "client" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCompanyTypeFilter("client")}
-                className="text-xs bg-teal-600 hover:bg-teal-700 text-white border-teal-600 hover:border-teal-700"
+                className="text-xs bg-teal-600 hover:bg-teal-700 text-white border-teal-600 hover:border-teal-700 h-8"
               >
                 Client Companies ({companies.filter(c => c.type === "client").length})
               </Button>
@@ -501,16 +501,16 @@ export default function OperationsCompanies() {
                 variant={companyTypeFilter === "all" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCompanyTypeFilter("all")}
-                className="text-xs"
+                className="text-xs h-8"
               >
                 All Types ({companies.length})
               </Button>
             </div>
 
             {/* Time Filter */}
-            <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={timeFilter} onValueChange={setTimeFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] h-8">
                   <SelectValue placeholder="Filter by onboard time" />
                 </SelectTrigger>
                 <SelectContent>
