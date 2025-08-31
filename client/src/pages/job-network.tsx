@@ -57,6 +57,7 @@ const createWorkOrderSchema = insertWorkOrderSchema.omit({
   budgetAmount: true,
   estimatedHours: true 
 }).extend({
+  description: z.string().min(20, "Description must be at least 20 characters"),
   budget: z.string().optional(),
   dueDate: z.string().optional(),
   estimatedHours: z.string().optional(),
