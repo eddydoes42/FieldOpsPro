@@ -421,9 +421,11 @@ export default function OperationsCompanies() {
             </Button>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-            Service Companies
-          </h1>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+              Companies
+            </h1>
+          </div>
           <Button 
             onClick={() => {
               setEditingCompany({});
@@ -432,7 +434,7 @@ export default function OperationsCompanies() {
             className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add New Service Company
+            Add New Company
           </Button>
         </div>
 
@@ -1027,12 +1029,28 @@ export default function OperationsCompanies() {
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader className="pb-3">
-              <DialogTitle>Add New Service Company</DialogTitle>
+              <DialogTitle>Add New Company</DialogTitle>
             </DialogHeader>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="new-company-name" className="text-sm">Service Company Name *</Label>
+                <Label htmlFor="new-company-type" className="text-sm">Company Type *</Label>
+                <Select
+                  value={editingCompany.type || 'service'}
+                  onValueChange={(value) => setEditingCompany(prev => ({ ...prev, type: value as 'service' | 'client' }))}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select company type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="service">Service Company</SelectItem>
+                    <SelectItem value="client">Client Company</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="new-company-name" className="text-sm">Company Name *</Label>
                 <Input
                   id="new-company-name"
                   value={editingCompany.name || ''}
@@ -1288,11 +1306,14 @@ export default function OperationsCompanies() {
               </Button>
               <Button 
                 onClick={() => {
-                  if (editingCompany.name) {
-                    createCompanyMutation.mutate(editingCompany);
+                  if (editingCompany.name && editingCompany.type) {
+                    createCompanyMutation.mutate({
+                      ...editingCompany,
+                      type: editingCompany.type || 'service'
+                    });
                   }
                 }}
-                disabled={createCompanyMutation.isPending || !editingCompany.name}
+                disabled={createCompanyMutation.isPending || !editingCompany.name || !editingCompany.type}
                 className="h-9"
               >
                 {createCompanyMutation.isPending ? 'Creating...' : 'Create Company'}
