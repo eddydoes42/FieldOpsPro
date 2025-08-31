@@ -594,20 +594,52 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex-1 flex justify-center items-center">
-            <div className="flex items-center">
-              <Network className="h-10 w-10 mr-4 text-blue-600 dark:text-blue-400" />
-              <h1 className="text-5xl font-bold text-gray-900 dark:text-white">Job Network</h1>
-            </div>
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center">
+            <Network className="h-10 w-10 mr-4 text-blue-600 dark:text-blue-400" />
+            <h1 className="text-5xl font-bold text-gray-900 dark:text-white">Job Network</h1>
           </div>
-          {/* Create Work Order Button */}
-          {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
-            (user as any)?.roles?.includes('project_manager')) && (
+        </div>
+
+        {/* Search and Filters */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search jobs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="assigned">Assigned</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Create Work Order Button */}
+        {((canManageWorkOrders(user) || (isOperationsDirector(user) && !testingRole)) || 
+          (user as any)?.roles?.includes('project_manager')) && (
+          <div className="mb-6">
             <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
               <DialogTrigger asChild>
                 <Button
                   className="bg-blue-600 hover:bg-blue-700 text-white"
+                  data-testid="button-create-work-order"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Work Order
@@ -1288,38 +1320,8 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     </Form>
                   </DialogContent>
                 </Dialog>
-          )}
-        </div>
-
-        {/* Search and Filters */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search jobs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
             </div>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="assigned">Assigned</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          )}
 
         {/* Job List Content */}
         {isLoading ? (
