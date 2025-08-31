@@ -114,12 +114,12 @@ Please do not reply to this email.
 
     // Log the API key and sender info for debugging
     console.log('SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
-    console.log('Sending from:', 'eddydoescher42@gmail.com');
+    console.log('Sending from:', 'onboarding@immeditechs.com');
     console.log('Sending to:', params.to);
     
     await mailService.send({
       to: params.to,
-      from: 'eddydoescher42@gmail.com', // Use simple string format first
+      from: 'onboarding@immeditechs.com', // Updated to verified sender
       subject: 'Welcome to FieldOps Pro - Your Account is Ready',
       text: textContent,
       html: htmlContent,
