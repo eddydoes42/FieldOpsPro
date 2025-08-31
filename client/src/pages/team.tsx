@@ -543,7 +543,7 @@ export default function TeamPage() {
                       variant={roleFilter === "field_agent" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setRoleFilter("field_agent")}
-                      className={`text-xs ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
+                      className={`text-xs min-w-[60px] ${roleFilter === "field_agent" ? "bg-green-600 hover:bg-green-700 text-white" : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"}`}
                     >
                       FA ({getRoleCount("field_agent")})
                     </Button>
@@ -551,7 +551,7 @@ export default function TeamPage() {
                       variant={roleFilter === "field_engineer" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setRoleFilter("field_engineer")}
-                      className={`text-xs ${roleFilter === "field_engineer" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white"}`}
+                      className={`text-xs min-w-[60px] ${roleFilter === "field_engineer" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white"}`}
                     >
                       FE ({getRoleCount("field_engineer")})
                     </Button>
@@ -559,7 +559,7 @@ export default function TeamPage() {
                       variant={roleFilter === "administrator" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setRoleFilter("administrator")}
-                      className={`text-xs ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
+                      className={`text-xs min-w-[60px] ${roleFilter === "administrator" ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"}`}
                     >
                       <span className="hidden sm:inline">Admin</span><span className="sm:hidden">A</span> ({getRoleCount("administrator")})
                     </Button>
@@ -567,7 +567,7 @@ export default function TeamPage() {
                       variant={roleFilter === "manager" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setRoleFilter("manager")}
-                      className={`text-xs ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
+                      className={`text-xs min-w-[60px] ${roleFilter === "manager" ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
                     >
                       <span className="hidden sm:inline">Manager</span><span className="sm:hidden">M</span> ({getRoleCount("manager")})
                     </Button>
@@ -575,7 +575,7 @@ export default function TeamPage() {
                       variant={roleFilter === "dispatcher" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setRoleFilter("dispatcher")}
-                      className={`text-xs ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
+                      className={`text-xs min-w-[60px] ${roleFilter === "dispatcher" ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"}`}
                     >
                       <span className="hidden sm:inline">Dispatcher</span><span className="sm:hidden">D</span> ({getRoleCount("dispatcher")})
                     </Button>
@@ -583,14 +583,14 @@ export default function TeamPage() {
                       variant={roleFilter === "all" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setRoleFilter("all")}
-                      className="text-xs"
+                      className="text-xs min-w-[60px]"
                     >
                       All ({getRoleCount("all")})
                     </Button>
                   </div>
                   
                   {/* Status Filters */}
-                  <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant={statusFilter === "active" ? "default" : "outline"}
                       size="sm"
@@ -619,7 +619,7 @@ export default function TeamPage() {
 
                   {/* Company Filters - Only for Operations Director */}
                   {isOperationsDirectorSuperUser && companies && (companies as any[]).length > 0 && (
-                    <div className="flex flex-wrap gap-2 border-l border-border pl-2 ml-2">
+                    <div className="flex flex-wrap gap-2">
                       {/* All Companies Filter */}
                       <select
                         value={companyFilter}
