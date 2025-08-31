@@ -1381,6 +1381,30 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         {job.estimatedDuration}
                       </div>
                     )}
+                    
+                    <div className="flex items-center">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        Priority: <span className="capitalize">{job.priority}</span>
+                      </span>
+                    </div>
+                    
+                    {(job.tools && job.tools.length > 0) && (
+                      <div className="flex items-start">
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mr-2 mt-0.5">Tools:</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {job.tools.length} required
+                        </span>
+                      </div>
+                    )}
+                    
+                    {(job.tasks && job.tasks.length > 0) && (
+                      <div className="flex items-start">
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mr-2 mt-0.5">Tasks:</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {job.tasks.reduce((total: number, task: any) => total + (task.documentsRequired || 0), 0)} documents required
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex items-center">
                       <Eye className="h-4 w-4 mr-2" />
@@ -1546,7 +1570,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     {selectedJob.status}
                   </Badge>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Priority: {selectedJob.priority}
+                    Priority: <span className="capitalize">{selectedJob.priority}</span>
                   </span>
                 </div>
 
@@ -1593,7 +1617,75 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                       </p>
                     </div>
                   )}
+                  
+                  {selectedJob.startTime && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Start Time</h4>
+                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        {selectedJob.startTime}
+                      </p>
+                    </div>
+                  )}
                 </div>
+
+                {/* Tool Requirements */}
+                {selectedJob.tools && selectedJob.tools.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Tool Requirements</h4>
+                    <div className="space-y-2">
+                      {selectedJob.tools.map((tool: any, index: number) => (
+                        <div key={index} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-blue-900 dark:text-blue-100">{tool.name}</p>
+                              <p className="text-sm text-blue-700 dark:text-blue-300">{tool.description}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                                  {tool.category}
+                                </Badge>
+                                {tool.isRequired && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    Required
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Document Requirements */}
+                {selectedJob.tasks && selectedJob.tasks.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Document Requirements</h4>
+                    <div className="space-y-2">
+                      {selectedJob.tasks.map((task: any, index: number) => (
+                        <div key={index} className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-green-900 dark:text-green-100">{task.title}</p>
+                              <p className="text-sm text-green-700 dark:text-green-300">{task.description}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
+                                  {task.category}
+                                </Badge>
+                                {task.documentsRequired > 0 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {task.documentsRequired} documents required
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {selectedJob.assignedToCompanyId && (
                   <div>
