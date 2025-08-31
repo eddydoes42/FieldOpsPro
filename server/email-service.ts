@@ -124,6 +124,9 @@ Please do not reply to this email.
     return true;
   } catch (error) {
     console.error('SendGrid email error:', error);
+    if (error && typeof error === 'object' && 'response' in error) {
+      console.error('SendGrid error details:', JSON.stringify((error as any).response.body, null, 2));
+    }
     return false;
   }
 }
