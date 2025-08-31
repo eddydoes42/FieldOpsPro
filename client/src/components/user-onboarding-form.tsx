@@ -738,7 +738,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
 
       {/* Company Onboarding Dialog */}
       <Dialog open={showCompanyForm} onOpenChange={() => {}}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-minimal">
           <DialogHeader>
             <DialogTitle>Create New Company</DialogTitle>
           </DialogHeader>

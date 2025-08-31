@@ -99,7 +99,7 @@ export default function JobRequestDialog({ workOrder, isOpen, onClose }: JobRequ
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-minimal">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5 text-blue-500" />

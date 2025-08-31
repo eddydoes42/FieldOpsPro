@@ -407,7 +407,7 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId }: Comp
                               <span>Assign Admin</span>
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
+                          <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto scrollbar-minimal">
                             <DialogHeader>
                               <DialogTitle>Create New Administrator</DialogTitle>
                             </DialogHeader>

@@ -242,7 +242,7 @@ export default function TimeTracker({ activeTimeEntry: propActiveTimeEntry }: Ti
 
       {/* Work Order Selection Dialog */}
       <Dialog open={showWorkOrderDialog} onOpenChange={setShowWorkOrderDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto scrollbar-minimal">
           <DialogHeader>
             <DialogTitle>Select Work Order</DialogTitle>
           </DialogHeader>

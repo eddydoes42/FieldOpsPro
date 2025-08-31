@@ -260,7 +260,7 @@ export default function WorkOrderCardPopup({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-minimal">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">
@@ -434,7 +434,7 @@ export default function WorkOrderCardPopup({
                 <div>
                   <Label htmlFor="priority">Priority</Label>
                   {isEditing ? (
-                    <Select value={editForm.priority} onValueChange={(value) => setEditForm({...editForm, priority: value})}>
+                    <Select value={editForm.priority} onValueChange={(value: "low" | "medium" | "high" | "urgent") => setEditForm({...editForm, priority: value})}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -776,7 +776,7 @@ export default function WorkOrderCardPopup({
                 )}
 
                 {/* Existing Tasks */}
-                {tasks && tasks.length > 0 ? (
+                {tasks && Array.isArray(tasks) && tasks.length > 0 ? (
                   tasks.map((task: any) => (
                     <div key={task.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                       <div className="flex items-center gap-2 mt-1">

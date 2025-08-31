@@ -513,7 +513,7 @@ export default function ClientFeedbackModal({
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         {triggerComponent && <DialogTrigger asChild>{triggerComponent}</DialogTrigger>}
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-minimal">
           <DialogHeader>
             <DialogTitle>Feedback Already Submitted</DialogTitle>
           </DialogHeader>

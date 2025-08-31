@@ -308,7 +308,7 @@ export default function IssuesTab({ workOrderId, canReview = false }: IssuesTabP
       {/* Resolution Modal */}
       {selectedIssue && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
+          <Card className="w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto scrollbar-minimal">
             <CardHeader>
               <CardTitle>Resolve Issue</CardTitle>
             </CardHeader>

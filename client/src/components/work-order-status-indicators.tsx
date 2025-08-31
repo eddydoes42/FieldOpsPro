@@ -55,7 +55,7 @@ export function AssignmentStatusIndicator({ workOrder, assignedAgent, assignedBy
           <User className="h-5 w-5" />
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-minimal">
         <DialogHeader>
           <DialogTitle>Assignment Information</DialogTitle>
         </DialogHeader>

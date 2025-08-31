@@ -272,7 +272,7 @@ export default function OperationsActiveAdmins() {
         
         {/* Admin Creation Dialog */}
         <Dialog open={showAdminForm} onOpenChange={setShowAdminForm}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-minimal">
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center gap-2">
                 <User className="h-5 w-5 text-green-600" />
