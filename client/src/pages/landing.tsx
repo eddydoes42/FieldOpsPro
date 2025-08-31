@@ -14,6 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { Link } from "wouter";
 
 const accessRequestFormSchema = insertAccessRequestSchema.extend({
   confirmEmail: z.string().email("Please enter a valid email")
@@ -83,7 +84,11 @@ export default function Landing() {
     }
   }, []);
 
-  const handleLogin = () => {
+  const handleCredentialLogin = () => {
+    setErrorMessage(""); // Clear any previous errors
+  };
+
+  const handleReilitLogin = () => {
     setErrorMessage(""); // Clear any previous errors
     window.location.href = "/api/login";
   };
@@ -124,12 +129,15 @@ export default function Landing() {
                 </p>
               </div>
 
-              <Button 
-                onClick={handleLogin}
-                className="w-full bg-primary hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-sm"
-              >
-                Sign In to Continue
-              </Button>
+              <Link href="/credential-login">
+                <Button 
+                  onClick={handleCredentialLogin}
+                  className="w-full bg-primary hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-sm"
+                  data-testid="button-sign-in-continue"
+                >
+                  Sign In to Continue
+                </Button>
+              </Link>
 
               <div className="text-center space-y-3">
                 <div className="relative">

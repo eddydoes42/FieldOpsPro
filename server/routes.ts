@@ -23,6 +23,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
+  // Credential-based login endpoint
+  app.post('/api/auth/login-credentials', async (req: any, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Username and password are required" 
+        });
+      }
+
+      // Find user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Invalid username or password" 
+        });
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isPasswordValid) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Invalid username or password" 
+        });
+      }
+
+      // Check if user is active
+      if (!user.isActive || user.isSuspended) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Account is not active. Please contact your administrator." 
+        });
+      }
+
+      // Create session (you may want to implement proper session management)
+      // For now, return success with user info
+      const { passwordHash, ...userWithoutPassword } = user;
+      
+      // Update last login
+      await storage.updateUser(user.id, { lastLoginAt: new Date() });
+
+      res.json({ 
+        success: true, 
+        user: userWithoutPassword,
+        redirectUrl: "/dashboard",
+        message: "Login successful" 
+      });
+    } catch (error) {
+      console.error("Credential login error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Internal server error" 
+      });
+    }
+  });
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticatedWithODBypass, async (req: any, res) => {
     try {

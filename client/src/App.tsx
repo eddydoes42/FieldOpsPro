@@ -10,6 +10,7 @@ import RoleSwitcher from "@/components/role-switcher";
 import Navigation from "@/components/navigation";
 
 import Landing from "@/pages/landing";
+import CredentialLogin from "@/pages/credential-login";
 import OperationsDirectorDashboard from "@/pages/operations-director-dashboard";
 import OperationsCompanies from "@/pages/operations-companies";
 import OperationsActiveAdmins from "@/pages/operations-active-admins";
@@ -193,6 +194,7 @@ function Router() {
         {!isAuthenticated ? (
           <>
             <Route path="/" component={Landing} />
+            <Route path="/credential-login" component={CredentialLogin} />
             <Route component={Landing} />
           </>
         ) : (
