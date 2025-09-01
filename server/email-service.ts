@@ -112,10 +112,6 @@ This email was sent automatically by FieldOps Pro.
 Please do not reply to this email.
     `;
 
-    // Log the API key and sender info for debugging
-    console.log('SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
-    console.log('Sending from:', 'onboarding@immeditechs.com');
-    console.log('Sending to:', params.to);
     
     await mailService.send({
       to: params.to,

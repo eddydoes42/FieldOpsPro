@@ -81,6 +81,50 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  
+  /* Apply minimal scrollbar styling globally */
+  * {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #90A4AE #ECEFF1;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #ECEFF1;
+    border-radius: 6px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #90A4AE;
+    border-radius: 6px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #78909C;
+  }
+
+  /* Dark theme global scrollbar */
+  .dark * {
+    /* Firefox Dark */
+    scrollbar-color: #607D8B #2B3036;
+  }
+
+  .dark *::-webkit-scrollbar-track {
+    background: #2B3036;
+  }
+
+  .dark *::-webkit-scrollbar-thumb {
+    background: #607D8B;
+  }
+
+  .dark *::-webkit-scrollbar-thumb:hover {
+    background: #6F8A97;
+  }
 }
 
 @layer utilities {
