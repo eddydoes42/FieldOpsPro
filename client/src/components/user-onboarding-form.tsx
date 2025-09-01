@@ -201,7 +201,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         username: userData.username,
         password: userData.password,
         temporaryPassword: userData.temporaryPassword || true,
-        // Skip email if creating new company (send it after company is created)
+        // Only skip email if creating new company (send immediately for existing company assignment)
         skipWelcomeEmail: companyAssignmentType === 'create',
       };
       const response = await apiRequest("/api/users/onboard", "POST", submitData);
@@ -217,6 +217,11 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         setCreatedUserId(createdUser.id);
         setShowCompanyForm(true);
       } else {
+        // For existing company assignment, email was already sent - close form
+        toast({
+          title: "Success",
+          description: "User account created and welcome email sent successfully!",
+        });
         onSuccess();
       }
     },
@@ -693,6 +698,9 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                         <p className="text-sm text-blue-700 dark:text-blue-300">
                           After creating this user, you'll be prompted to set up the new {selectedCompanyType === 'service' ? 'service' : 'client'} company. 
                           The user will automatically be assigned as an Administrator of the new company.
+                        </p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
+                          Note: Welcome email will be sent after the company setup is completed.
                         </p>
                       </div>
                     </div>
