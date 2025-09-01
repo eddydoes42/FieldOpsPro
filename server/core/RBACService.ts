@@ -28,6 +28,7 @@ export interface PermissionCheckResult {
 
 export class RBACService implements IRBACService, IService {
   private logger?: ILogger;
+  private storage?: any;
   private roleDefinitions = new Map<string, RoleDefinition>();
   private permissionCache = new Map<string, PermissionCheckResult>();
   private readonly cacheExpiry = 5 * 60 * 1000; // 5 minutes
@@ -46,6 +47,7 @@ export class RBACService implements IRBACService, IService {
 
   async initialize(): Promise<void> {
     this.logger = container.get<ILogger>(SERVICE_NAMES.LOGGER);
+    this.storage = container.get<any>(SERVICE_NAMES.STORAGE);
     this.logger?.info('RBAC Service initialized', {
       roleCount: this.roleDefinitions.size,
       roles: Array.from(this.roleDefinitions.keys())
@@ -189,11 +191,12 @@ export class RBACService implements IRBACService, IService {
         return result;
       }
 
-      // Operations Director bypass (unless in role testing mode)
-      if (await this.isOperationsDirector(userId) && !await this.isInRoleTestingMode(userId, context)) {
+      // Operations Director bypass (including during role testing mode)
+      if (await this.isOperationsDirector(userId)) {
+        const isRoleTesting = await this.isInRoleTestingMode(userId, context);
         const result: PermissionCheckResult = {
           granted: true,
-          reason: 'Operations Director global bypass',
+          reason: isRoleTesting ? 'Operations Director global bypass (role testing)' : 'Operations Director global bypass',
           bypassUsed: true,
           appliedRole: 'operations_director'
         };
@@ -300,7 +303,7 @@ export class RBACService implements IRBACService, IService {
       }
 
       // Return highest privilege role
-      const userRoles = user.roles.map(role => this.roleDefinitions.get(role))
+      const userRoles = user.roles.map((role: string) => this.roleDefinitions.get(role))
         .filter(Boolean) as RoleDefinition[];
       
       if (userRoles.length === 0) {
@@ -326,11 +329,18 @@ export class RBACService implements IRBACService, IService {
     });
   }
 
-  // Helper methods (these would integrate with actual storage)
-  private async getUser(userId: string): Promise<User | null> {
-    // This would integrate with the actual storage service
-    // For now, return a mock structure
-    return null;
+  // Helper methods (integrated with actual storage)
+  private async getUser(userId: string): Promise<any | null> {
+    try {
+      if (!this.storage) {
+        this.logger?.warn('Storage service not available for user lookup', { userId });
+        return null;
+      }
+      return await this.storage.getUser(userId);
+    } catch (error) {
+      this.logger?.error('Error fetching user from storage', error as Error, { userId });
+      return null;
+    }
   }
 
   private async isInRoleTestingMode(userId: string, context?: any): Promise<boolean> {
@@ -340,6 +350,20 @@ export class RBACService implements IRBACService, IService {
       const testingCompanyType = context.req.headers['x-testing-company-type'];
       return !!(testingRole && testingCompanyType);
     }
+    
+    // Also check if user is Operations Director and has testing context globally
+    // This is a fallback for when context might not have request headers
+    try {
+      const user = await this.getUser(userId);
+      if (user?.roles?.includes('operations_director') && !user.companyId) {
+        // For Operations Directors, we need to check if they're actively testing
+        // Since they have global bypass, we should allow access by default
+        return false; // Operations Directors should not be restricted by role testing mode
+      }
+    } catch (error) {
+      this.logger?.error('Error checking user for role testing mode', error as Error, { userId });
+    }
+    
     return false;
   }
 

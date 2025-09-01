@@ -11,6 +11,7 @@ import { SecurityService } from './SecurityService';
 import { AuditLogger } from './AuditLogger';
 import { ErrorHandler } from '../middleware/ErrorHandler';
 import { SecurityMiddleware } from '../middleware/SecurityMiddleware';
+import { storage } from '../storage';
 
 export class FieldOpsBootstrap {
   private static isInitialized = false;
@@ -36,19 +37,22 @@ export class FieldOpsBootstrap {
       // 4. Initialize Security Service
       await this.initializeSecurityService();
       
-      // 5. Initialize RBAC Service
+      // 5. Initialize Storage Service
+      await this.initializeStorageService();
+      
+      // 6. Initialize RBAC Service
       await this.initializeRBACService();
       
-      // 6. Initialize Error Handler
+      // 7. Initialize Error Handler
       await this.initializeErrorHandler();
       
-      // 7. Initialize Security Middleware
+      // 8. Initialize Security Middleware
       await this.initializeSecurityMiddleware();
       
-      // 8. Set up global error handlers
+      // 9. Set up global error handlers
       this.setupGlobalErrorHandlers();
       
-      // 9. Register event listeners
+      // 10. Register event listeners
       this.registerEventListeners();
 
       this.isInitialized = true;
@@ -118,6 +122,12 @@ export class FieldOpsBootstrap {
     container.registerSingleton(SERVICE_NAMES.SECURITY, securityService);
     await securityService.initialize();
     console.log('  ✓ Security service initialized');
+  }
+
+  private static async initializeStorageService(): Promise<void> {
+    // Register the existing storage instance
+    container.registerSingleton(SERVICE_NAMES.STORAGE, storage);
+    console.log('  ✓ Storage service registered');
   }
 
   private static async initializeRBACService(): Promise<void> {
