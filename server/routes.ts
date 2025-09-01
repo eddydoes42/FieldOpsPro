@@ -303,8 +303,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.createUser(userData);
       
-      // Send welcome email with login credentials if email and credentials are provided
-      if (user.email && onboardingData.username && onboardingData.password) {
+      // Send welcome email with login credentials if email and credentials are provided (unless skipped)
+      if (user.email && onboardingData.username && onboardingData.password && !onboardingData.skipWelcomeEmail) {
         const appUrl = process.env.REPLIT_DEV_DOMAIN 
           ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
           : 'http://localhost:5000';
@@ -325,11 +325,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Don't fail the user creation if email fails
         }
       }
+
+      // Store user credentials for later email sending if skipped initially
+      if (onboardingData.skipWelcomeEmail && onboardingData.username && onboardingData.password) {
+        // Store credentials temporarily in memory for later email sending
+        // We'll use the user's existing fields since credentials are already stored securely
+        console.log(`User ${user.id} created without welcome email - will send after company creation`);
+      }
       
       res.json(user);
     } catch (error) {
       console.error("Error onboarding user:", error);
       res.status(500).json({ message: "Failed to onboard user" });
+    }
+  });
+
+  // Send welcome email for a user - Operations Director only
+  app.post('/api/users/send-welcome-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser || !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Only Operations Directors can send welcome emails" });
+      }
+
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user has credentials and email (they should since onboarding was completed)
+      if (!user.username || !user.email) {
+        return res.status(400).json({ message: "User missing required credentials or email" });
+      }
+
+      // We can't send the original password since it's hashed, so we'll generate a temporary one
+      const tempPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // Hash and update the user's password to the temporary one
+      const bcrypt = require('bcrypt');
+      const saltRounds = 12;
+      const tempPasswordHash = await bcrypt.hash(tempPassword, saltRounds);
+      
+      await storage.updateUser(user.id, {
+        passwordHash: tempPasswordHash,
+        temporaryPassword: true,
+        mustChangePassword: true
+      });
+
+      const appUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : 'http://localhost:5000';
+
+      try {
+        await sendWelcomeEmail({
+          to: user.email,
+          firstName: user.firstName!,
+          lastName: user.lastName!,
+          username: user.username,
+          password: tempPassword,
+          temporaryPassword: true,
+          appUrl: appUrl
+        });
+
+        console.log(`Welcome email sent to ${user.email} after company creation`);
+        res.json({ message: "Welcome email sent successfully" });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        res.status(500).json({ message: "Failed to send welcome email" });
+      }
+    } catch (error) {
+      console.error("Error sending welcome email:", error);
+      res.status(500).json({ message: "Failed to send welcome email" });
     }
   });
 

@@ -201,6 +201,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         username: userData.username,
         password: userData.password,
         temporaryPassword: userData.temporaryPassword || true,
+        // Skip email if creating new company (send it after company is created)
+        skipWelcomeEmail: companyAssignmentType === 'create',
       };
       const response = await apiRequest("/api/users/onboard", "POST", submitData);
       return await response.json();
@@ -259,7 +261,25 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
     },
   });
 
-  const handleCompanyCreationComplete = () => {
+  const handleCompanyCreationComplete = async () => {
+    // Send the welcome email now that company creation is complete
+    if (createdUserId) {
+      try {
+        await apiRequest('/api/users/send-welcome-email', 'POST', { userId: createdUserId });
+        toast({
+          title: "Success",
+          description: "User account created and welcome email sent successfully!",
+        });
+      } catch (error) {
+        console.error('Failed to send welcome email:', error);
+        toast({
+          title: "Warning",
+          description: "User account created but welcome email failed to send.",
+          variant: "destructive",
+        });
+      }
+    }
+    
     // Refresh all relevant queries and close the form
     queryClient.invalidateQueries({ queryKey: ["/api/users"] });
     queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
