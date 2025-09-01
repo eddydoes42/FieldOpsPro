@@ -87,6 +87,9 @@ export default function OperationsDirectorDashboard() {
     recentSetups: number;
   }>({
     queryKey: ['/api/operations/stats'],
+    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchOnWindowFocus: true,
+    staleTime: 5000, // Consider data stale after 5 seconds
   });
 
   const { data: budgetData = { totalEarned: 0, todayEarning: 0 } } = useQuery<{
@@ -94,6 +97,9 @@ export default function OperationsDirectorDashboard() {
     todayEarning: number;
   }>({
     queryKey: ['/api/operations/budget-summary'],
+    refetchInterval: 15000, // Refetch every 15 seconds for budget data
+    refetchOnWindowFocus: true,
+    staleTime: 8000, // Consider data stale after 8 seconds
   });
 
   const { data: serviceFeeData = { totalServiceFees: 0, todayServiceFees: 0 } } = useQuery<{
@@ -101,6 +107,9 @@ export default function OperationsDirectorDashboard() {
     todayServiceFees: number;
   }>({
     queryKey: ['/api/operations/service-fee-summary'],
+    refetchInterval: 15000, // Refetch every 15 seconds for service fee data
+    refetchOnWindowFocus: true,
+    staleTime: 8000, // Consider data stale after 8 seconds
   });
 
   // Current user query for UserOnboardingForm permissions
@@ -108,19 +117,28 @@ export default function OperationsDirectorDashboard() {
     queryKey: ['/api/auth/user'],
   });
 
-  // Access requests query
+  // Access requests query - most critical for real-time updates
   const { data: accessRequests = [] } = useQuery<AccessRequest[]>({
     queryKey: ['/api/access-requests'],
+    refetchInterval: 5000, // Refetch every 5 seconds - most important for approval workflows
+    refetchOnWindowFocus: true,
+    staleTime: 2000, // Consider data stale after 2 seconds
   });
 
-  // Query for all approval requests
+  // Query for all approval requests - critical for Things to Approve section
   const { data: approvalRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/approval-requests'],
+    refetchInterval: 7000, // Refetch every 7 seconds
+    refetchOnWindowFocus: true,
+    staleTime: 3000, // Consider data stale after 3 seconds
   });
 
-  // Query for recent users
+  // Query for recent users - important for Recent Activity section
   const { data: recentUsers = [] } = useQuery<any[]>({
     queryKey: ['/api/operations/recent-users'],
+    refetchInterval: 12000, // Refetch every 12 seconds
+    refetchOnWindowFocus: true,
+    staleTime: 6000, // Consider data stale after 6 seconds
     retry: false,
   });
 
