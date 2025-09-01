@@ -367,6 +367,11 @@ export default function TeamPage() {
       return roles.some((r: string) => r !== 'operations_director');
     });
 
+    // For service companies: restrict to showing only users from the same company (unless Operations Director)
+    if (!isOperationsDirectorSuperUser && isServiceCompany && userCompanyId) {
+      filteredUsers = filteredUsers.filter((user: any) => user.companyId === userCompanyId);
+    }
+
     // Apply company filter if set
     if (companyFilter !== "all") {
       filteredUsers = filteredUsers.filter((user: any) => user.companyId === companyFilter);
@@ -407,6 +412,39 @@ export default function TeamPage() {
 
   // Check Operations Director superuser access (when not role testing)
   const isOperationsDirectorSuperUser = isOperationsDirector(user as any);
+  
+  // Check if user is client company admin - they should use Talent Network instead
+  const isClientCompanyAdmin = (user as any)?.roles?.includes('client_company_admin');
+  
+  // Get user's company to check company type
+  const userCompany = companies ? (companies as any[]).find((c: any) => c.id === userCompanyId) : null;
+  const isServiceCompany = userCompany?.type === 'service';
+  
+  // Redirect client company admins to Talent Network
+  if (isClientCompanyAdmin && !isOperationsDirectorSuperUser) {
+    setLocation('/talent-network');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // Only allow service company users to access team page (plus Operations Director)
+  if (!isOperationsDirectorSuperUser && !isServiceCompany && userCompanyId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+              <p className="text-muted-foreground">Team page is only available for Service Company users. Please use the Talent Network to view field agents.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   // Allow field agents to view team, but with restricted access
   // Also allow Operations Director superuser access

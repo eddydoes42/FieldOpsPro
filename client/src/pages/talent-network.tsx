@@ -80,7 +80,7 @@ export default function TalentNetwork() {
   const queryClient = useQueryClient();
 
   // Get current user to check if Operations Director
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/auth/user'],
   });
 
@@ -89,6 +89,28 @@ export default function TalentNetwork() {
     typeof window !== 'undefined' && 
     !window.location.search.includes('testing_role') &&
     !window.location.search.includes('company_type');
+
+  // Get companies to check user's company type
+  const { data: companies } = useQuery({
+    queryKey: ['/api/companies'],
+    enabled: !!user,
+  });
+
+  // Check if user is from a service company - they should be redirected to team page
+  const userCompanyId = (user as any)?.companyId;
+  const userCompany = companies ? (companies as any[]).find((c: any) => c.id === userCompanyId) : null;
+  const isServiceCompanyUser = userCompany?.type === 'service';
+  const isClientCompanyAdmin = (user as any)?.roles?.includes('client_company_admin');
+
+  // Redirect service company users to team page (unless Operations Director)
+  if (!userLoading && user && !isOperationsDirector && isServiceCompanyUser && !isClientCompanyAdmin) {
+    navigate('/team');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Import role testing components
   const ServiceCompanyRoleTester = () => {
