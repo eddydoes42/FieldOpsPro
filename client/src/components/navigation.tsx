@@ -237,7 +237,77 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
 
   const config = getRoleConfig();
 
+  // Check if user is Operations Director for Role Testers
+  const isOperationsDirectorUser = (user as any)?.roles?.includes('operations_director');
+
   return (
+    <>
+      {/* Omnipresent Role Testers for Operations Directors */}
+      {isOperationsDirectorUser && (
+        <div className="bg-gradient-to-r from-purple-600 to-teal-600 text-white px-4 py-2 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              {/* Service Company Role Tester */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Service Company:</span>
+                <select
+                  value={localStorage.getItem('testingCompanyType') === 'service' ? localStorage.getItem('testingRole') || '' : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      localStorage.setItem('testingRole', e.target.value);
+                      localStorage.setItem('testingCompanyType', 'service');
+                      window.location.reload();
+                    }
+                  }}
+                  className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Select Role</option>
+                  <option value="administrator">Administrator</option>
+                  <option value="project_manager">Project Manager</option>
+                  <option value="manager">Manager</option>
+                  <option value="dispatcher">Dispatcher</option>
+                  <option value="field_engineer">Field Engineer</option>
+                  <option value="field_agent">Field Agent</option>
+                </select>
+              </div>
+              
+              {/* Client Company Role Tester */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Client Company:</span>
+                <select
+                  value={localStorage.getItem('testingCompanyType') === 'client' ? localStorage.getItem('testingRole') || '' : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      localStorage.setItem('testingRole', e.target.value);
+                      localStorage.setItem('testingCompanyType', 'client');
+                      window.location.reload();
+                    }
+                  }}
+                  className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Select Role</option>
+                  <option value="client_company_admin">Client Admin</option>
+                </select>
+              </div>
+            </div>
+            
+            {/* Stop Testing Button */}
+            {(localStorage.getItem('testingRole') || localStorage.getItem('testingCompanyType')) && (
+              <button
+                onClick={() => {
+                  localStorage.removeItem('testingRole');
+                  localStorage.removeItem('testingCompanyType');
+                  window.location.reload();
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
+              >
+                Stop Testing
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    
     <nav className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -283,9 +353,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                       )}
                       <div>
                         <p className="font-medium text-foreground">
-                          {typeof window !== 'undefined' && window.location.pathname.startsWith('/operations') 
-                            ? 'Operations Director' 
-                            : `${(user as any)?.firstName} ${(user as any)?.lastName}`}
+                          {`${(user as any)?.firstName} ${(user as any)?.lastName}`}
                         </p>
                         {/* Role Badge */}
                         <span className={`${config.badge.color} text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap inline-flex mt-1`}>
@@ -343,5 +411,6 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
         position={quickMenuPosition}
       />
     </nav>
+    </>
   );
 }

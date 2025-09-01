@@ -114,23 +114,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation 
-        testingRole={testingRole}
-        currentActiveRole={localStorage.getItem('permanentRole') || 'administrator'} 
-        onPermanentRoleSwitch={(role) => {
-          localStorage.setItem('permanentRole', role);
-          localStorage.setItem('selectedRole', role);
-          // Navigate to appropriate dashboard based on role
-          if (role === 'operations_director') {
-            window.location.href = '/operations-dashboard';
-          } else if (role === 'administrator') {
-            window.location.href = '/admin-dashboard';
-          } else {
-            window.location.href = '/dashboard';
-          }
-        }}
-      />
-
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Dashboard Header */}
         <div className="mb-8 text-center">
