@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -268,9 +269,8 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
                   </div>
                   <div>
                     <Label htmlFor="password" className="form-label-minimal">Password *</Label>
-                    <Input
+                    <PasswordInput
                       id="password"
-                      type="password"
                       className="form-input-minimal"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
@@ -282,9 +282,8 @@ export default function AdminOnboardingForm({ onClose }: AdminOnboardingFormProp
 
                 <div>
                   <Label htmlFor="confirmPassword" className="form-label-minimal">Confirm Password *</Label>
-                  <Input
+                  <PasswordInput
                     id="confirmPassword"
-                    type="password"
                     className="form-input-minimal"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}

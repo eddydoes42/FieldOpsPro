@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -407,9 +408,8 @@ export default function OperationsActiveAdmins() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="password">Password *</Label>
-                    <Input
+                    <PasswordInput
                       id="password"
-                      type="password"
                       {...form.register('password')}
                       placeholder="Enter secure password"
                       className={form.formState.errors.password ? 'border-red-500' : ''}

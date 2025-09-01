@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -573,8 +574,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Password *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="password"
+                          <PasswordInput 
                             placeholder="Enter password" 
                             className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                             {...field}
