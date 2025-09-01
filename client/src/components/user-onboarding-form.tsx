@@ -121,6 +121,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
   );
   const [companyAssignmentType, setCompanyAssignmentType] = useState<'existing' | 'create'>('existing');
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [selectedCompanyType, setSelectedCompanyType] = useState<'service' | 'client'>('service');
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
   const [stateOpen, setStateOpen] = useState(false);
@@ -210,7 +211,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
       queryClient.invalidateQueries({ queryKey: ["/api/operations/stats"] });
       
       // If creating a new company, store the user ID and show company form
-      if (companyAssignmentType === 'create' && !selectedRoles.includes('client')) {
+      if (companyAssignmentType === 'create') {
         setCreatedUserId(createdUser.id);
         setShowCompanyForm(true);
       } else {
@@ -271,6 +272,16 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
       toast({
         title: "Company Required",
         description: "Please select a company to assign this user to.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate company type when creating new company
+    if (companyAssignmentType === 'create' && !selectedCompanyType) {
+      toast({
+        title: "Company Type Required",
+        description: "Please select a company type for the new company.",
         variant: "destructive",
       });
       return;
@@ -626,11 +637,44 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
                   )}
 
                   {companyAssignmentType === 'create' && (
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        After creating this user, you'll be prompted to set up the new company. 
-                        The user will automatically be assigned as an Administrator of the new company.
-                      </p>
+                    <div className="space-y-4">
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-900 dark:text-gray-100">Company Type *</FormLabel>
+                        <Select value={selectedCompanyType} onValueChange={(value: 'service' | 'client') => setSelectedCompanyType(value)}>
+                          <SelectTrigger 
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                            data-testid="select-company-type"
+                          >
+                            <SelectValue placeholder="Select company type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="service" data-testid="option-service-company">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                <div>
+                                  <div className="font-medium">Service Company</div>
+                                  <div className="text-xs text-gray-500">IT service provider</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="client" data-testid="option-client-company">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                <div>
+                                  <div className="font-medium">Client Company</div>
+                                  <div className="text-xs text-gray-500">IT service requester</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          After creating this user, you'll be prompted to set up the new {selectedCompanyType === 'service' ? 'service' : 'client'} company. 
+                          The user will automatically be assigned as an Administrator of the new company.
+                        </p>
+                      </div>
                     </div>
                   )}
 
@@ -749,6 +793,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
               handleCompanyCreationComplete();
             }}
             preFilledUserId={createdUserId || undefined}
+            companyType={selectedCompanyType}
           />
         </DialogContent>
       </Dialog>

@@ -35,9 +35,10 @@ interface AdminFormData {
 interface CompanyOnboardingFormProps {
   onClose: () => void;
   preFilledUserId?: string;
+  companyType?: 'service' | 'client';
 }
 
-export default function CompanyOnboardingForm({ onClose, preFilledUserId }: CompanyOnboardingFormProps) {
+export default function CompanyOnboardingForm({ onClose, preFilledUserId, companyType = 'service' }: CompanyOnboardingFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -102,7 +103,11 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId }: Comp
 
   const companyMutation = useMutation({
     mutationFn: async (data: CompanyFormData) => {
-      const response = await apiRequest('/api/companies', 'POST', data);
+      const submitData = {
+        ...data,
+        type: companyType // Add company type to the request
+      };
+      const response = await apiRequest('/api/companies', 'POST', submitData);
       return await response.json();
     },
     onSuccess: async (createdCompany) => {
@@ -244,7 +249,7 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId }: Comp
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
               <Building2 className="h-6 w-6 mr-3 text-blue-600 dark:text-blue-400" />
-              Onboard New IT Service Company
+              Onboard New {companyType === 'service' ? 'IT Service Company' : 'Client Company'}
             </CardTitle>
           </CardHeader>
           <CardContent>
