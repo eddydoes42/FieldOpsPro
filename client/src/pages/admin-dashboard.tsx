@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { hasRole } from "../../../shared/schema";
+import { hasRole, isOperationsDirector } from "../../../shared/schema";
 import Navigation from "@/components/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,7 +93,11 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!hasRole(user as any, 'administrator')) {
+  // Check if user has administrator role OR is Operations Director testing this role
+  const isOpsDirectorTesting = isOperationsDirector(user as any) && localStorage.getItem('testingRole') === 'administrator';
+  const hasAdminAccess = hasRole(user as any, 'administrator') || isOpsDirectorTesting;
+  
+  if (!hasAdminAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">

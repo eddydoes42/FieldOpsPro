@@ -2639,7 +2639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const workOrders = await storage.getAllWorkOrders();
-      const projects = await storage.getAllProjects();
+      const projects = await storage.getProjects();
       let totalServiceFees = 0;
       let todayServiceFees = 0;
       const now = new Date();

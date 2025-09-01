@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { hasRole } from "../../../shared/schema";
+import { hasRole, isOperationsDirector } from "../../../shared/schema";
 
 export default function ManagerDashboard() {
   const { toast } = useToast();
@@ -90,7 +90,12 @@ export default function ManagerDashboard() {
     );
   }
 
-  if (!hasRole(user as any, 'manager') && !hasRole(user as any, 'administrator')) {
+  // Check if user has manager/admin role OR is Operations Director testing these roles
+  const isOpsDirectorTesting = isOperationsDirector(user as any) && 
+    (localStorage.getItem('testingRole') === 'manager' || localStorage.getItem('testingRole') === 'administrator');
+  const hasManagerAccess = hasRole(user as any, 'manager') || hasRole(user as any, 'administrator') || isOpsDirectorTesting;
+  
+  if (!hasManagerAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
