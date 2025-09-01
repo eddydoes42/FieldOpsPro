@@ -106,8 +106,6 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
           window.location.reload();
         }}
       />
-      {/* Role switcher for operations directors */}
-      <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || getPrimaryRole(user as any)} />
       <DashboardContent />
     </div>
   );
