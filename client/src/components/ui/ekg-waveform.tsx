@@ -55,25 +55,27 @@ export function EKGWaveform({
     const points: WaveformPoint[] = [];
     const time = Date.now();
     
-    // For normal status, generate regular heartbeat spikes with more dramatic peaks
+    // For normal status, generate regular heartbeat spikes with dramatic peaks like reference
     if (status === 'normal' && severity === 'none') {
-      // Create a more dramatic heartbeat spike for normal 50 BPM
-      points.push({ x: centerX - 20, y: baselineY, time });
-      points.push({ x: centerX - 8, y: baselineY - 15, time });
-      points.push({ x: centerX, y: baselineY - 25, time }); // Main spike - more dramatic
-      points.push({ x: centerX + 8, y: baselineY - 15, time });
-      points.push({ x: centerX + 20, y: baselineY, time });
+      // Create a much more dramatic heartbeat spike matching reference image
+      points.push({ x: centerX - 25, y: baselineY, time });
+      points.push({ x: centerX - 12, y: baselineY + 15, time }); // Valley first
+      points.push({ x: centerX - 8, y: baselineY - 35, time }); // Sharp rise
+      points.push({ x: centerX, y: baselineY - 45, time }); // Peak - very dramatic
+      points.push({ x: centerX + 8, y: baselineY - 35, time }); // Sharp fall
+      points.push({ x: centerX + 12, y: baselineY + 10, time }); // Valley after
+      points.push({ x: centerX + 25, y: baselineY, time });
       return points;
     }
     
-    // For cardiac events, create a more dramatic spike based on severity
+    // For cardiac events, create very dramatic spikes matching reference image
     let spikeHeight = 0;
     if (severity === 'mild') {
-      spikeHeight = amplitude * 25;
+      spikeHeight = amplitude * 40;
     } else if (severity === 'moderate') {
-      spikeHeight = amplitude * 35;
+      spikeHeight = amplitude * 55;
     } else if (severity === 'severe') {
-      spikeHeight = amplitude * 45;
+      spikeHeight = amplitude * 70;
     }
     
     // Simple cardiac event spike
