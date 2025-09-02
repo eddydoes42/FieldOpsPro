@@ -119,8 +119,8 @@ export function HeartbeatBar({
                   status={percentage >= 80 ? 'normal' : percentage >= 60 ? 'at_risk' : 'delayed'}
                   severity={percentage >= 80 ? 'none' : percentage >= 60 ? 'mild' : percentage >= 40 ? 'moderate' : 'severe'}
                   frequency={percentage >= 60 ? 'occasional' : 'frequent'}
-                  width={160}
-                  height={40}
+                  width={220}
+                  height={60}
                   className="w-full"
                 />
               </div>

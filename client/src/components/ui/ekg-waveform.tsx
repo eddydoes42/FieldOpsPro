@@ -50,15 +50,19 @@ export function EKGWaveform({
   // Get background grid color (subtle)
   const getGridColor = () => '#E5E7EB20'; // gray-200 with low opacity
 
-  // Generate simple baseline with occasional cardiac events
+  // Generate heartbeat pattern - always show beats for 50 BPM
   const generateBeatPattern = useCallback((centerX: number, baselineY: number, amplitude: number = 1) => {
     const points: WaveformPoint[] = [];
     const time = Date.now();
     
-    // For normal status, just return baseline points
+    // For normal status, generate regular heartbeat spikes
     if (status === 'normal' && severity === 'none') {
-      points.push({ x: centerX - 30, y: baselineY, time });
-      points.push({ x: centerX + 30, y: baselineY, time });
+      // Create a small heartbeat spike for normal 50 BPM
+      points.push({ x: centerX - 15, y: baselineY, time });
+      points.push({ x: centerX - 5, y: baselineY - 8, time });
+      points.push({ x: centerX, y: baselineY - 12, time }); // Main spike
+      points.push({ x: centerX + 5, y: baselineY - 8, time });
+      points.push({ x: centerX + 15, y: baselineY, time });
       return points;
     }
     
@@ -82,17 +86,16 @@ export function EKGWaveform({
     return points;
   }, [severity, status]);
 
-  // Check if it's time for a cardiac event based on severity and frequency
+  // Check if it's time for a heartbeat based on BPM and events
   const shouldGenerateBeat = useCallback((currentTime: number) => {
     const timeSinceLastBeat = currentTime - lastBeatTimeRef.current;
     
-    // For normal status with no severity, only generate occasional baseline events
+    // For normal status, always maintain regular heartbeat at specified BPM
     if (status === 'normal' && severity === 'none') {
-      // Very rare events for normal status (every 10-15 seconds)
-      return timeSinceLastBeat >= 10000 + (Math.random() * 5000);
+      return timeSinceLastBeat >= beatInterval;
     }
     
-    // For cardiac events, generate based on severity and frequency
+    // For cardiac events, generate based on severity and frequency (additional to normal beats)
     let eventInterval = beatInterval;
     
     if (severity === 'mild') {
