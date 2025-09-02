@@ -642,9 +642,6 @@ function Router() {
                 return <Landing />;
               })()}
             </Route>
-            <Route path="/settings">
-              {isAuthenticated ? <Settings /> : <Landing />}
-            </Route>
         </>
       )}
       <Route component={NotFound} />
