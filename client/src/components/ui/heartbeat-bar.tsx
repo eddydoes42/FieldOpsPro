@@ -1,5 +1,6 @@
 import { Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface HeartbeatBarProps {
   label: string;
@@ -9,6 +10,7 @@ interface HeartbeatBarProps {
   variant?: "company" | "global";
   trend?: "up" | "down" | "stable";
   showTrend?: boolean;
+  onClick?: () => void;
 }
 
 export function HeartbeatBar({
@@ -19,6 +21,7 @@ export function HeartbeatBar({
   variant = "company",
   trend = "stable",
   showTrend = true,
+  onClick,
 }: HeartbeatBarProps) {
   const getPercentageColor = (percent: number) => {
     if (percent >= 90) return "text-green-600 dark:text-green-400";
@@ -45,16 +48,8 @@ export function HeartbeatBar({
     }
   };
 
-  return (
-    <div
-      className={cn(
-        "w-full bg-white dark:bg-gray-800",
-        "border-b border-gray-200 dark:border-gray-700",
-        "px-4 py-3",
-        className
-      )}
-      data-testid="heartbeat-bar"
-    >
+  const content = (
+    <div className="w-full px-4 py-3">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-2">
           {/* Left side: Label and activity icon */}
@@ -106,6 +101,38 @@ export function HeartbeatBar({
           }
         </div>
       </div>
+    </div>
+  );
+
+  if (onClick) {
+    return (
+      <Button
+        variant="ghost"
+        className={cn(
+          "w-full bg-white dark:bg-gray-800 h-auto p-0",
+          "border-b border-gray-200 dark:border-gray-700",
+          "rounded-none hover:bg-gray-50 dark:hover:bg-gray-700/50",
+          "transition-colors duration-200 cursor-pointer",
+          className
+        )}
+        onClick={onClick}
+        data-testid="heartbeat-bar"
+      >
+        {content}
+      </Button>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "w-full bg-white dark:bg-gray-800",
+        "border-b border-gray-200 dark:border-gray-700",
+        className
+      )}
+      data-testid="heartbeat-bar"
+    >
+      {content}
     </div>
   );
 }

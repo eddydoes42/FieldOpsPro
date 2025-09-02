@@ -1,10 +1,11 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useRoleNavigation } from "@/hooks/useRoleNavigation";
 import { SearchBar } from "@/components/ui/search-bar";
 import { BottomNav } from "@/components/ui/bottom-nav";
 import { HeartbeatBar } from "@/components/ui/heartbeat-bar";
+import { ProjectHeartbeatDialog } from "@/components/project-heartbeat-dialog";
 import { cn } from "@/lib/utils";
 
 interface StashLayoutProps {
@@ -35,6 +36,7 @@ export function StashLayout({
   heartbeatData,
 }: StashLayoutProps) {
   const { user } = useAuth();
+  const [showHeartbeatDialog, setShowHeartbeatDialog] = useState(false);
   
   // Get unread messages count for bottom navigation badge
   const { data: messages = [] } = useQuery<any[]>({
@@ -76,6 +78,7 @@ export function StashLayout({
           percentage={heartbeatData.percentage}
           projectCount={heartbeatData.projectCount}
           variant={heartbeatData.variant}
+          onClick={() => setShowHeartbeatDialog(true)}
         />
       )}
 
@@ -89,6 +92,15 @@ export function StashLayout({
 
       {/* Bottom Navigation - Mobile/Tablet Only */}
       <BottomNav items={navigationItems} />
+
+      {/* Project Heartbeat Dialog */}
+      {showHeartbeat && heartbeatData && (
+        <ProjectHeartbeatDialog
+          open={showHeartbeatDialog}
+          onOpenChange={setShowHeartbeatDialog}
+          variant={heartbeatData.variant}
+        />
+      )}
     </div>
   );
 }
