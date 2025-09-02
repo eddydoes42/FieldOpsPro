@@ -1,7 +1,7 @@
 import { storage } from "./storage";
 import { eq, and } from "drizzle-orm";
 import { db } from "./db";
-import { users, companies, isValidTestRoleForCompanyType } from "../shared/schema";
+import { users, companies } from "../shared/schema";
 
 // Maps role names to test user roles for impersonation
 const ROLE_IMPERSONATION_MAP = {
@@ -9,15 +9,13 @@ const ROLE_IMPERSONATION_MAP = {
     administrator: { firstName: "TestAdmin", lastName: "Service" },
     project_manager: { firstName: "TestProj", lastName: "Service" },
     manager: { firstName: "TestMan", lastName: "Service" },
-    dispatcher: { firstName: "TestDisp", lastName: "Service" },
     field_engineer: { firstName: "TestEng", lastName: "Service" },
     field_agent: { firstName: "TestAge", lastName: "Service" }
   },
   client: {
     client_company_admin: { firstName: "TestAdmin", lastName: "Client" },
     project_manager: { firstName: "TestProj", lastName: "Client" },
-    manager: { firstName: "TestMan", lastName: "Client" },
-    dispatcher: { firstName: "TestDisp", lastName: "Client" }
+    manager: { firstName: "TestMan", lastName: "Client" }
   }
 };
 
@@ -50,16 +48,11 @@ export class RoleImpersonationService {
       throw new Error('Only Operations Directors can use role impersonation');
     }
 
-    // Validate role/company type combination
-    if (!isValidTestRoleForCompanyType(role, companyType)) {
-      throw new Error(`Role "${role}" is not valid for ${companyType} companies`);
-    }
-
     // Get the test company of the specified type
     const [testCompany] = await db.select()
       .from(companies)
       .where(and(
-        eq(companies.type, companyType),
+        eq(companies.companyType, companyType),
         eq(companies.name, companyType === 'service' ? 'Test Service Company' : 'Test Client Company')
       ));
 
@@ -68,8 +61,7 @@ export class RoleImpersonationService {
     }
 
     // Find the impersonation target based on role and company type
-    const companyRoleMap = ROLE_IMPERSONATION_MAP[companyType];
-    const impersonationTarget = companyRoleMap[role as keyof typeof companyRoleMap];
+    const impersonationTarget = ROLE_IMPERSONATION_MAP[companyType][role as keyof typeof ROLE_IMPERSONATION_MAP['service']];
     if (!impersonationTarget) {
       throw new Error(`No impersonation target found for role: ${role} in ${companyType} company`);
     }

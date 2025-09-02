@@ -293,15 +293,6 @@ export class RBACService implements IRBACService, IService {
       // Check if in role testing mode
       const testingContext = await this.getRoleTestingContext(userId);
       if (testingContext) {
-        // Validate role/company type combination for testing
-        if (!this.isValidRoleForCompanyType(testingContext.role, testingContext.companyType)) {
-          this.logger?.warn('Invalid role/company type combination in testing context', {
-            userId,
-            role: testingContext.role,
-            companyType: testingContext.companyType
-          });
-          return 'field_agent'; // Fallback to safe default
-        }
         return testingContext.role;
       }
 
@@ -311,37 +302,16 @@ export class RBACService implements IRBACService, IService {
         return 'field_agent'; // Default role
       }
 
-      // Get user's company type if available
-      const userCompany = user.companyId ? await this.storage?.getCompany(user.companyId) : null;
-      const companyType = userCompany?.type as 'service' | 'client' | undefined;
-
-      // Filter roles that are valid for the user's company type
-      let validRoles = user.roles;
-      if (companyType) {
-        validRoles = user.roles.filter((role: string) => 
-          this.isValidRoleForCompanyType(role, companyType)
-        );
-      }
-
-      if (validRoles.length === 0) {
-        this.logger?.warn('User has no valid roles for their company type', {
-          userId,
-          userRoles: user.roles,
-          companyType
-        });
-        return 'field_agent';
-      }
-
-      // Return highest privilege valid role
-      const userRoleDefinitions = validRoles.map((role: string) => this.roleDefinitions.get(role))
+      // Return highest privilege role
+      const userRoles = user.roles.map((role: string) => this.roleDefinitions.get(role))
         .filter(Boolean) as RoleDefinition[];
       
-      if (userRoleDefinitions.length === 0) {
+      if (userRoles.length === 0) {
         return 'field_agent';
       }
 
-      userRoleDefinitions.sort((a, b) => b.level - a.level);
-      return userRoleDefinitions[0].name;
+      userRoles.sort((a, b) => b.level - a.level);
+      return userRoles[0].name;
 
     } catch (error) {
       this.logger?.error('Error getting effective role', error as Error, { userId });
@@ -357,46 +327,6 @@ export class RBACService implements IRBACService, IService {
       granted,
       timestamp: new Date().toISOString()
     });
-  }
-
-  // Company-type-aware role validation methods
-  isValidRoleForCompanyType(role: string, companyType: 'service' | 'client'): boolean {
-    const { isValidTestRoleForCompanyType } = require('@shared/schema');
-    return isValidTestRoleForCompanyType(role, companyType);
-  }
-
-  async hasRoleForCompany(userId: string, role: string, companyId: string): Promise<boolean> {
-    try {
-      const { hasRoleForCompany } = require('@shared/schema');
-      const user = await this.getUser(userId);
-      const company = await this.storage?.getCompany(companyId);
-      
-      if (!user || !company) {
-        return false;
-      }
-
-      return hasRoleForCompany(user, role, company);
-    } catch (error) {
-      this.logger?.error('Error checking role for company', error as Error, { userId, role, companyId });
-      return false;
-    }
-  }
-
-  async hasAnyRoleForCompany(userId: string, companyId: string): Promise<boolean> {
-    try {
-      const { hasAnyRoleForCompany } = require('@shared/schema');
-      const user = await this.getUser(userId);
-      const company = await this.storage?.getCompany(companyId);
-      
-      if (!user || !company) {
-        return false;
-      }
-
-      return hasAnyRoleForCompany(user, company);
-    } catch (error) {
-      this.logger?.error('Error checking any role for company', error as Error, { userId, companyId });
-      return false;
-    }
   }
 
   // Helper methods (integrated with actual storage)

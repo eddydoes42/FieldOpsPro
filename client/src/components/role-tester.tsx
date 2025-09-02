@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Settings, Eye, ChevronDown, User, Building2, Users, AlertCircle } from "lucide-react";
-import { isOperationsDirector, isValidTestRoleForCompanyType } from "@shared/schema";
+import { isOperationsDirector } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,6 @@ const serviceCompanyRoles = [
   { value: 'administrator', label: 'Administrator', description: 'Full company management access' },
   { value: 'project_manager', label: 'Project Manager', description: 'Project oversight and coordination' },
   { value: 'manager', label: 'Manager', description: 'Team and operations management' },
-  { value: 'dispatcher', label: 'Dispatcher', description: 'Work order coordination and dispatch' },
   { value: 'field_engineer', label: 'Field Engineer', description: 'Advanced technical field work' },
   { value: 'field_agent', label: 'Field Agent', description: 'Basic field service tasks' }
 ];
@@ -29,8 +28,7 @@ const serviceCompanyRoles = [
 const clientCompanyRoles = [
   { value: 'client_company_admin', label: 'Client Admin', description: 'Client company administration' },
   { value: 'project_manager', label: 'Project Manager', description: 'Project oversight and coordination' },
-  { value: 'manager', label: 'Manager', description: 'Team and operations management' },
-  { value: 'dispatcher', label: 'Dispatcher', description: 'Work order coordination and dispatch' }
+  { value: 'manager', label: 'Manager', description: 'Team and operations management' }
 ];
 
 export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProps) {
@@ -115,16 +113,6 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
       return;
     }
 
-    // Validate role/company type combination
-    if (!isValidTestRoleForCompanyType(selectedRole, selectedCompanyType)) {
-      toast({
-        title: "Invalid Combination",
-        description: `Role "${selectedRole}" is not valid for ${selectedCompanyType} companies`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     startImpersonationMutation.mutate({
       role: selectedRole,
       companyType: selectedCompanyType
@@ -135,7 +123,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
     stopImpersonationMutation.mutate();
   };
 
-  const isCurrentlyTesting = (impersonationStatus as any)?.isImpersonating;
+  const isCurrentlyTesting = impersonationStatus?.isImpersonating;
   const currentlySelectedRoles = selectedCompanyType === 'service' ? serviceCompanyRoles : clientCompanyRoles;
 
   return (
@@ -156,8 +144,8 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
           <Alert className="mb-3">
             <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
             <AlertDescription className="text-xs sm:text-sm">
-              Testing as <strong>{(impersonationStatus as any)?.context?.role}</strong> in{' '}
-              <strong>{(impersonationStatus as any)?.context?.companyType}</strong> company.
+              Testing as <strong>{impersonationStatus.context.role}</strong> in{' '}
+              <strong>{impersonationStatus.context.companyType}</strong> company.
             </AlertDescription>
           </Alert>
         ) : (
@@ -241,13 +229,13 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-purple-900 dark:text-purple-100 text-sm truncate">
-                    Testing: {(impersonationStatus as any)?.context?.role}
+                    Testing: {impersonationStatus.context.role}
                   </p>
                   <p className="text-xs text-purple-700 dark:text-purple-300 truncate">
-                    {(impersonationStatus as any)?.context?.companyType} company
+                    {impersonationStatus.context.companyType} company
                   </p>
                   <p className="text-xs text-purple-600 dark:text-purple-400 truncate">
-                    {(impersonationStatus as any)?.context?.startTime ? new Date((impersonationStatus as any).context.startTime).toLocaleTimeString() : ''}
+                    {new Date(impersonationStatus.context.startTime).toLocaleTimeString()}
                   </p>
                 </div>
                 <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100 text-xs shrink-0">
