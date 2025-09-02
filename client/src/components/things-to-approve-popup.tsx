@@ -104,7 +104,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] p-0">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] sm:max-h-[85vh] p-0 m-2 sm:m-6">
         <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <DialogTitle className="text-xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Things to Approve
@@ -149,7 +149,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
           </button>
         </div>
 
-        <ScrollArea className="flex-1 max-h-96">
+        <ScrollArea className="flex-1 max-h-[60vh] sm:max-h-96">
           <div className="p-6">
             {activeTab === 'access-requests' && (
               <div className="space-y-4">
