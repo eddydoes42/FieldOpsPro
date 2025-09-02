@@ -138,6 +138,7 @@ import { db } from "./db";
 import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
+import { IService } from "./core/ServiceContainer";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -499,7 +500,7 @@ export interface IStorage {
   }): Promise<WorkOrder[]>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class DatabaseStorage implements IStorage, IService {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -1403,13 +1404,6 @@ export class DatabaseStorage implements IStorage {
     return issue || null;
   }
 
-  async getStructuredIssue(id: string): Promise<StructuredIssue | undefined> {
-    const [issue] = await db
-      .select()
-      .from(structuredIssues)
-      .where(eq(structuredIssues.id, id));
-    return issue;
-  }
 
   // Audit Log operations
   async createAuditLog(auditLogData: InsertAuditLog): Promise<AuditLog> {
@@ -4569,7 +4563,7 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(issues.createdAt));
   }
 
-  async createStructuredIssue(issueData: InsertIssue): Promise<Issue> {
+  async createIssue(issueData: InsertIssue): Promise<Issue> {
     const issueId = nanoid();
     const [issue] = await db
       .insert(issues)
@@ -4578,7 +4572,7 @@ export class DatabaseStorage implements IStorage {
     return issue;
   }
 
-  async updateStructuredIssue(issueId: string, updates: Partial<InsertIssue>): Promise<Issue> {
+  async updateIssue(issueId: string, updates: Partial<InsertIssue>): Promise<Issue> {
     const [issue] = await db
       .update(issues)
       .set({ ...updates, updatedAt: new Date() })
@@ -4587,7 +4581,7 @@ export class DatabaseStorage implements IStorage {
     return issue;
   }
 
-  async getStructuredIssue(issueId: string): Promise<Issue | undefined> {
+  async getIssue(issueId: string): Promise<Issue | undefined> {
     const [issue] = await db
       .select({
         ...issues,
@@ -4628,7 +4622,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const issue = await this.getStructuredIssue(issueId);
+    const issue = await this.getIssue(issueId);
     if (!issue) return;
 
     // Create notifications for each manager
@@ -5490,6 +5484,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDocument(id: string): Promise<void> {
     await db.delete(documents).where(eq(documents.id, id));
+  }
+
+  // IService implementation
+  getName(): string {
+    return 'DatabaseStorage';
+  }
+
+  getVersion(): string {
+    return '1.0.0';
   }
 }
 
