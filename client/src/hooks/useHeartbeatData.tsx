@@ -32,10 +32,15 @@ export function useHeartbeatData(): HeartbeatData | null {
   );
 
   // Check user preferences for heartbeat toggle
-  const heartbeatEnabled = (user as any)?.preferences?.heartbeatEnabled ?? true;
-
+  const heartbeatEnabled = (user as any)?.preferences?.heartbeatEnabled;
+  
+  // If preference is explicitly set to false, don't show heartbeat
+  if (heartbeatEnabled === false) {
+    return null;
+  }
+  
   // Don't show heartbeat for field agents, client users, or when disabled in settings
-  const shouldShowHeartbeat = (isOperationsDirector || isAdminTeam) && heartbeatEnabled;
+  const shouldShowHeartbeat = (isOperationsDirector || isAdminTeam);
 
   // Fetch project health summary - this gives us aggregated heartbeat data
   const { data: healthSummary } = useQuery<any>({
