@@ -1,45 +1,200 @@
-ty === 'urgent' ? 'bg-red-50 text-red-700 border-red-200' :
-                                request.priority === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                                'bg-blue-50 text-blue-700 border-blue-200'
-                              }
-                            >
-                              {request.priority?.toUpperCase() || 'NORMAL'}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="space-y-2">
-                            {request.budgetAmount && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                <strong>Budget:</strong> ${parseFloat(request.budgetAmount).toLocaleString()}
-                              </p>
-                            )}
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { isOperationsDirector } from "../../../shared/schema";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, FileText, UserPlus, Users, Building, Bell, Calendar, Eye } from "lucide-react";
+import UserOnboardingForm from "@/components/user-onboarding-form";
+
+export default function OperationsDirectorDashboard() {
+  const { toast } = useToast();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  // State for dialogs
+  const [showPendingApprovalsDialog, setShowPendingApprovalsDialog] = useState(false);
+  const [showApprovalDetailsDialog, setShowApprovalDetailsDialog] = useState(false);
+  const [showRecentSetupsDialog, setShowRecentSetupsDialog] = useState(false);
+  const [showUserCreationDialog, setShowUserCreationDialog] = useState(false);
+  const [selectedApprovalRequest, setSelectedApprovalRequest] = useState<any>(null);
+  const [selectedAccessRequest, setSelectedAccessRequest] = useState<any>(null);
+
+  // Mock data for demonstration - in real app this would come from APIs
+  const approvalRequests: any[] = [];
+  const totalPendingApprovals = 0;
+  const recentUsers: any[] = [];
+  const currentUser = user;
+
+  // Redirect to home if not authenticated or not operations director
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || !isOperationsDirector(user as any))) {
+      toast({
+        title: "Unauthorized",
+        description: "Access denied. Redirecting...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Operations Director Dashboard</h1>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            System Overview
+          </Badge>
+        </div>
+
+        {/* Main Dashboard Content */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardContent className="text-sm font-medium">Total Users</CardContent>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardContent className="text-sm font-medium">Service Companies</CardContent>
+              <Building className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardContent className="text-sm font-medium">Pending Approvals</CardContent>
+              <Bell className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalPendingApprovals}</div>
+              <Button 
+                variant="link" 
+                className="p-0 h-auto text-xs" 
+                onClick={() => setShowPendingApprovalsDialog(true)}
+              >
+                View Details
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardContent className="text-sm font-medium">Recent Setups</CardContent>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{recentUsers.length}</div>
+              <Button 
+                variant="link" 
+                className="p-0 h-auto text-xs" 
+                onClick={() => setShowRecentSetupsDialog(true)}
+              >
+                View Recent
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Pending Approvals Dialog */}
+      <Dialog open={showPendingApprovalsDialog} onOpenChange={setShowPendingApprovalsDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Bell className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
+              Pending Approvals ({totalPendingApprovals})
+            </DialogTitle>
+            <DialogDescription>
+              Review and manage approval requests requiring your attention
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {approvalRequests.length > 0 && (
+              <div className="space-y-3">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {approvalRequests.map((request: any) => (
+                    <Card key={request.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => {
+                      setSelectedApprovalRequest(request);
+                      setShowApprovalDetailsDialog(true);
+                    }}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-sm">
+                            {request.type === 'user_deletion' && 'User Deletion Request'}
+                            {request.type === 'high_budget_work_order' && 'High Budget Work Order'}
+                            {request.type === 'high_budget_project' && 'High Budget Project'}
+                            {request.type === 'issue_escalation' && 'Issue Escalation'}
+                          </h3>
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              request.priority === 'urgent' ? 'bg-red-50 text-red-700 border-red-200' :
+                              request.priority === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                              'bg-blue-50 text-blue-700 border-blue-200'
+                            }
+                          >
+                            {request.priority?.toUpperCase() || 'NORMAL'}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="space-y-2">
+                          {request.budgetAmount && (
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              <strong>Requested:</strong> {new Date(request.createdAt).toLocaleDateString()}
+                              <strong>Budget:</strong> ${parseFloat(request.budgetAmount).toLocaleString()}
                             </p>
-                            <div className="flex items-center justify-between pt-2">
-                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                Needs Review
-                              </div>
+                          )}
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <strong>Requested:</strong> {new Date(request.createdAt).toLocaleDateString()}
+                          </p>
+                          <div className="flex items-center justify-between pt-2">
+                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Needs Review
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {totalPendingApprovals === 0 && (
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">No pending approvals at this time.</p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+            {totalPendingApprovals === 0 && (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No pending approvals at this time.</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
         {/* Approval Details Dialog */}
         <Dialog open={showApprovalDetailsDialog} onOpenChange={setShowApprovalDetailsDialog}>
@@ -208,8 +363,6 @@ ty === 'urgent' ? 'bg-red-50 text-red-700 border-red-200' :
             }}
           />
         )}
-        </div>
-      </StashLayout>
     </>
   );
 }
