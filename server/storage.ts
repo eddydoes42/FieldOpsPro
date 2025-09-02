@@ -44,6 +44,12 @@ import {
   projectHeartbeats,
   projectHeartbeatEvents,
   projectHealthLog,
+  paymentInformation,
+  paymentTransactions,
+  approvedPayments,
+  expenseOrders,
+  deviceTokens,
+  biometricAuth,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -73,6 +79,18 @@ import {
   type InsertServiceClientRating,
   type Issue,
   type InsertIssue,
+  type PaymentInformation,
+  type InsertPaymentInformation,
+  type PaymentTransaction,
+  type InsertPaymentTransaction,
+  type ApprovedPayment,
+  type InsertApprovedPayment,
+  type ExpenseOrder,
+  type InsertExpenseOrder,
+  type DeviceToken,
+  type InsertDeviceToken,
+  type BiometricAuth,
+  type InsertBiometricAuth,
   type JobNetworkPost,
   type InsertJobNetworkPost,
   type ExclusiveNetworkPost,
@@ -135,7 +153,7 @@ import {
   type InsertHeartbeatEvent,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql } from "drizzle-orm";
+import { eq, desc, and, or, isNull, isNotNull, count, avg, sum, sql, lt, lte, gte, like, not, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 import { IService } from "./core/ServiceContainer";
@@ -514,6 +532,59 @@ export interface IStorage {
     equipmentProvided?: boolean;
     agentLocation?: { lat: number; lng: number };
   }): Promise<WorkOrder[]>;
+
+  // Payment Information operations
+  createPaymentInformation(paymentInfo: InsertPaymentInformation): Promise<PaymentInformation>;
+  getPaymentInformation(id: string): Promise<PaymentInformation | undefined>;
+  getUserPaymentMethods(userId: string): Promise<PaymentInformation[]>;
+  getCompanyPaymentMethods(companyId: string): Promise<PaymentInformation[]>;
+  updatePaymentInformation(id: string, updates: Partial<InsertPaymentInformation>): Promise<PaymentInformation>;
+  setDefaultPaymentMethod(userId: string, paymentMethodId: string): Promise<void>;
+  deactivatePaymentMethod(id: string): Promise<void>;
+
+  // Payment Transaction operations
+  createPaymentTransaction(transaction: InsertPaymentTransaction): Promise<PaymentTransaction>;
+  getPaymentTransaction(id: string): Promise<PaymentTransaction | undefined>;
+  getUserTransactions(userId: string): Promise<PaymentTransaction[]>;
+  getWorkOrderTransactions(workOrderId: string): Promise<PaymentTransaction[]>;
+  updateTransactionStatus(id: string, status: string, processedAt?: Date, failureReason?: string): Promise<PaymentTransaction>;
+  getTransactionHistory(filters: { userId?: string; companyId?: string; status?: string; startDate?: Date; endDate?: Date }): Promise<PaymentTransaction[]>;
+
+  // Approved Payment operations
+  createApprovedPayment(approvedPayment: InsertApprovedPayment): Promise<ApprovedPayment>;
+  getUserApprovedPayments(userId: string): Promise<ApprovedPayment[]>;
+  getAvailableApprovedPayments(userId: string): Promise<ApprovedPayment[]>;
+  withdrawApprovedPayment(id: string, transactionId: string): Promise<ApprovedPayment>;
+  getApprovedPaymentById(id: string): Promise<ApprovedPayment | undefined>;
+
+  // Expense Order operations
+  createExpenseOrder(expenseOrder: InsertExpenseOrder): Promise<ExpenseOrder>;
+  getExpenseOrder(id: string): Promise<ExpenseOrder | undefined>;
+  getWorkOrderExpenses(workOrderId: string): Promise<ExpenseOrder[]>;
+  getCompanyExpenses(companyId: string): Promise<ExpenseOrder[]>;
+  getUserExpenses(userId: string): Promise<ExpenseOrder[]>;
+  approveExpenseOrder(id: string, approvedById: string): Promise<ExpenseOrder>;
+  rejectExpenseOrder(id: string, rejectionReason: string): Promise<ExpenseOrder>;
+  withdrawExpenseEarly(id: string, withdrawalTransactionId: string): Promise<ExpenseOrder>;
+  getExpenseOrdersByStatus(status: string): Promise<ExpenseOrder[]>;
+
+  // Device Token operations (Remember Me functionality)
+  createDeviceToken(deviceToken: InsertDeviceToken): Promise<DeviceToken>;
+  getDeviceToken(tokenHash: string): Promise<DeviceToken | undefined>;
+  getUserDeviceTokens(userId: string): Promise<DeviceToken[]>;
+  updateDeviceTokenLastUsed(id: string): Promise<DeviceToken>;
+  deactivateDeviceToken(id: string): Promise<void>;
+  cleanupExpiredTokens(): Promise<void>;
+
+  // Biometric Authentication operations
+  createBiometricAuth(biometricAuth: InsertBiometricAuth): Promise<BiometricAuth>;
+  getBiometricAuth(userId: string, deviceId: string): Promise<BiometricAuth | undefined>;
+  getUserBiometricMethods(userId: string): Promise<BiometricAuth[]>;
+  updateBiometricAuthLastUsed(id: string): Promise<BiometricAuth>;
+  incrementBiometricFailedAttempts(id: string): Promise<BiometricAuth>;
+  resetBiometricFailedAttempts(id: string): Promise<BiometricAuth>;
+  lockBiometricAuth(id: string, lockedUntil: Date): Promise<BiometricAuth>;
+  deactivateBiometricAuth(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage, IService {
@@ -5580,6 +5651,398 @@ export class DatabaseStorage implements IStorage, IService {
 
   async deleteDocument(id: string): Promise<void> {
     await db.delete(documents).where(eq(documents.id, id));
+  }
+
+  // Payment Information operations
+  async createPaymentInformation(paymentInfo: InsertPaymentInformation): Promise<PaymentInformation> {
+    const [payment] = await db.insert(paymentInformation).values(paymentInfo).returning();
+    return payment;
+  }
+
+  async getPaymentInformation(id: string): Promise<PaymentInformation | undefined> {
+    const [payment] = await db.select().from(paymentInformation).where(eq(paymentInformation.id, id));
+    return payment;
+  }
+
+  async getUserPaymentMethods(userId: string): Promise<PaymentInformation[]> {
+    return await db
+      .select()
+      .from(paymentInformation)
+      .where(and(eq(paymentInformation.userId, userId), eq(paymentInformation.isActive, true)))
+      .orderBy(desc(paymentInformation.isDefault), desc(paymentInformation.createdAt));
+  }
+
+  async getCompanyPaymentMethods(companyId: string): Promise<PaymentInformation[]> {
+    return await db
+      .select()
+      .from(paymentInformation)
+      .where(and(eq(paymentInformation.companyId, companyId), eq(paymentInformation.isActive, true)))
+      .orderBy(desc(paymentInformation.isDefault), desc(paymentInformation.createdAt));
+  }
+
+  async updatePaymentInformation(id: string, updates: Partial<InsertPaymentInformation>): Promise<PaymentInformation> {
+    const [payment] = await db
+      .update(paymentInformation)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(paymentInformation.id, id))
+      .returning();
+    return payment;
+  }
+
+  async setDefaultPaymentMethod(userId: string, paymentMethodId: string): Promise<void> {
+    // First, remove default status from all user's payment methods
+    await db
+      .update(paymentInformation)
+      .set({ isDefault: false })
+      .where(eq(paymentInformation.userId, userId));
+
+    // Then set the specified method as default
+    await db
+      .update(paymentInformation)
+      .set({ isDefault: true })
+      .where(eq(paymentInformation.id, paymentMethodId));
+  }
+
+  async deactivatePaymentMethod(id: string): Promise<void> {
+    await db
+      .update(paymentInformation)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(paymentInformation.id, id));
+  }
+
+  // Payment Transaction operations
+  async createPaymentTransaction(transaction: InsertPaymentTransaction): Promise<PaymentTransaction> {
+    const [payment] = await db.insert(paymentTransactions).values(transaction).returning();
+    return payment;
+  }
+
+  async getPaymentTransaction(id: string): Promise<PaymentTransaction | undefined> {
+    const [transaction] = await db.select().from(paymentTransactions).where(eq(paymentTransactions.id, id));
+    return transaction;
+  }
+
+  async getUserTransactions(userId: string): Promise<PaymentTransaction[]> {
+    return await db
+      .select()
+      .from(paymentTransactions)
+      .where(or(eq(paymentTransactions.fromUserId, userId), eq(paymentTransactions.toUserId, userId)))
+      .orderBy(desc(paymentTransactions.createdAt));
+  }
+
+  async getWorkOrderTransactions(workOrderId: string): Promise<PaymentTransaction[]> {
+    return await db
+      .select()
+      .from(paymentTransactions)
+      .where(eq(paymentTransactions.workOrderId, workOrderId))
+      .orderBy(desc(paymentTransactions.createdAt));
+  }
+
+  async updateTransactionStatus(id: string, status: string, processedAt?: Date, failureReason?: string): Promise<PaymentTransaction> {
+    const [transaction] = await db
+      .update(paymentTransactions)
+      .set({ 
+        status, 
+        processedAt, 
+        failureReason, 
+        updatedAt: new Date() 
+      })
+      .where(eq(paymentTransactions.id, id))
+      .returning();
+    return transaction;
+  }
+
+  async getTransactionHistory(filters: { userId?: string; companyId?: string; status?: string; startDate?: Date; endDate?: Date }): Promise<PaymentTransaction[]> {
+    let conditions = [];
+    
+    if (filters.userId) {
+      conditions.push(or(eq(paymentTransactions.fromUserId, filters.userId), eq(paymentTransactions.toUserId, filters.userId)));
+    }
+    if (filters.companyId) {
+      conditions.push(or(eq(paymentTransactions.fromCompanyId, filters.companyId), eq(paymentTransactions.toCompanyId, filters.companyId)));
+    }
+    if (filters.status) {
+      conditions.push(eq(paymentTransactions.status, filters.status));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(paymentTransactions.createdAt, filters.startDate));
+    }
+    if (filters.endDate) {
+      conditions.push(lte(paymentTransactions.createdAt, filters.endDate));
+    }
+
+    return await db
+      .select()
+      .from(paymentTransactions)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(paymentTransactions.createdAt));
+  }
+
+  // Approved Payment operations
+  async createApprovedPayment(approvedPayment: InsertApprovedPayment): Promise<ApprovedPayment> {
+    const [payment] = await db.insert(approvedPayments).values(approvedPayment).returning();
+    return payment;
+  }
+
+  async getUserApprovedPayments(userId: string): Promise<ApprovedPayment[]> {
+    return await db
+      .select()
+      .from(approvedPayments)
+      .where(eq(approvedPayments.userId, userId))
+      .orderBy(desc(approvedPayments.createdAt));
+  }
+
+  async getAvailableApprovedPayments(userId: string): Promise<ApprovedPayment[]> {
+    return await db
+      .select()
+      .from(approvedPayments)
+      .where(and(
+        eq(approvedPayments.userId, userId),
+        eq(approvedPayments.status, 'available'),
+        or(
+          isNull(approvedPayments.availableUntil),
+          gte(approvedPayments.availableUntil, new Date())
+        )
+      ))
+      .orderBy(desc(approvedPayments.createdAt));
+  }
+
+  async withdrawApprovedPayment(id: string, transactionId: string): Promise<ApprovedPayment> {
+    const [payment] = await db
+      .update(approvedPayments)
+      .set({
+        status: 'withdrawn',
+        withdrawnAt: new Date(),
+        transactionId,
+        updatedAt: new Date()
+      })
+      .where(eq(approvedPayments.id, id))
+      .returning();
+    return payment;
+  }
+
+  async getApprovedPaymentById(id: string): Promise<ApprovedPayment | undefined> {
+    const [payment] = await db.select().from(approvedPayments).where(eq(approvedPayments.id, id));
+    return payment;
+  }
+
+  // Expense Order operations
+  async createExpenseOrder(expenseOrder: InsertExpenseOrder): Promise<ExpenseOrder> {
+    const [expense] = await db.insert(expenseOrders).values(expenseOrder).returning();
+    return expense;
+  }
+
+  async getExpenseOrder(id: string): Promise<ExpenseOrder | undefined> {
+    const [expense] = await db.select().from(expenseOrders).where(eq(expenseOrders.id, id));
+    return expense;
+  }
+
+  async getWorkOrderExpenses(workOrderId: string): Promise<ExpenseOrder[]> {
+    return await db
+      .select()
+      .from(expenseOrders)
+      .where(eq(expenseOrders.workOrderId, workOrderId))
+      .orderBy(desc(expenseOrders.createdAt));
+  }
+
+  async getCompanyExpenses(companyId: string): Promise<ExpenseOrder[]> {
+    return await db
+      .select()
+      .from(expenseOrders)
+      .where(eq(expenseOrders.companyId, companyId))
+      .orderBy(desc(expenseOrders.createdAt));
+  }
+
+  async getUserExpenses(userId: string): Promise<ExpenseOrder[]> {
+    return await db
+      .select()
+      .from(expenseOrders)
+      .where(or(eq(expenseOrders.createdById, userId), eq(expenseOrders.assignedUserId, userId)))
+      .orderBy(desc(expenseOrders.createdAt));
+  }
+
+  async approveExpenseOrder(id: string, approvedById: string): Promise<ExpenseOrder> {
+    const [expense] = await db
+      .update(expenseOrders)
+      .set({
+        status: 'approved',
+        approvedById,
+        approvedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(expenseOrders.id, id))
+      .returning();
+    return expense;
+  }
+
+  async rejectExpenseOrder(id: string, rejectionReason: string): Promise<ExpenseOrder> {
+    const [expense] = await db
+      .update(expenseOrders)
+      .set({
+        status: 'rejected',
+        rejectionReason,
+        updatedAt: new Date()
+      })
+      .where(eq(expenseOrders.id, id))
+      .returning();
+    return expense;
+  }
+
+  async withdrawExpenseEarly(id: string, withdrawalTransactionId: string): Promise<ExpenseOrder> {
+    const [expense] = await db
+      .update(expenseOrders)
+      .set({
+        withdrawnEarly: true,
+        withdrawnAt: new Date(),
+        withdrawalTransactionId,
+        updatedAt: new Date()
+      })
+      .where(eq(expenseOrders.id, id))
+      .returning();
+    return expense;
+  }
+
+  async getExpenseOrdersByStatus(status: string): Promise<ExpenseOrder[]> {
+    return await db
+      .select()
+      .from(expenseOrders)
+      .where(eq(expenseOrders.status, status))
+      .orderBy(desc(expenseOrders.createdAt));
+  }
+
+  // Device Token operations (Remember Me functionality)
+  async createDeviceToken(deviceToken: InsertDeviceToken): Promise<DeviceToken> {
+    const [token] = await db.insert(deviceTokens).values(deviceToken).returning();
+    return token;
+  }
+
+  async getDeviceToken(tokenHash: string): Promise<DeviceToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(deviceTokens)
+      .where(and(
+        eq(deviceTokens.tokenHash, tokenHash),
+        eq(deviceTokens.isActive, true),
+        gte(deviceTokens.expiresAt, new Date())
+      ));
+    return token;
+  }
+
+  async getUserDeviceTokens(userId: string): Promise<DeviceToken[]> {
+    return await db
+      .select()
+      .from(deviceTokens)
+      .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.isActive, true)))
+      .orderBy(desc(deviceTokens.lastUsedAt));
+  }
+
+  async updateDeviceTokenLastUsed(id: string): Promise<DeviceToken> {
+    const [token] = await db
+      .update(deviceTokens)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(deviceTokens.id, id))
+      .returning();
+    return token;
+  }
+
+  async deactivateDeviceToken(id: string): Promise<void> {
+    await db
+      .update(deviceTokens)
+      .set({ isActive: false })
+      .where(eq(deviceTokens.id, id));
+  }
+
+  async cleanupExpiredTokens(): Promise<void> {
+    await db
+      .update(deviceTokens)
+      .set({ isActive: false })
+      .where(lt(deviceTokens.expiresAt, new Date()));
+  }
+
+  // Biometric Authentication operations
+  async createBiometricAuth(biometricAuthData: InsertBiometricAuth): Promise<BiometricAuth> {
+    const [auth] = await db.insert(biometricAuth).values(biometricAuthData).returning();
+    return auth;
+  }
+
+  async getBiometricAuth(userId: string, deviceId: string): Promise<BiometricAuth | undefined> {
+    const [auth] = await db
+      .select()
+      .from(biometricAuth)
+      .where(and(
+        eq(biometricAuth.userId, userId),
+        eq(biometricAuth.deviceId, deviceId),
+        eq(biometricAuth.isActive, true),
+        or(
+          isNull(biometricAuth.lockedUntil),
+          lt(biometricAuth.lockedUntil, new Date())
+        )
+      ));
+    return auth;
+  }
+
+  async getUserBiometricMethods(userId: string): Promise<BiometricAuth[]> {
+    return await db
+      .select()
+      .from(biometricAuth)
+      .where(and(eq(biometricAuth.userId, userId), eq(biometricAuth.isActive, true)))
+      .orderBy(desc(biometricAuth.lastUsedAt));
+  }
+
+  async updateBiometricAuthLastUsed(id: string): Promise<BiometricAuth> {
+    const [auth] = await db
+      .update(biometricAuth)
+      .set({ 
+        lastUsedAt: new Date(),
+        failedAttempts: 0, // Reset failed attempts on successful use
+        updatedAt: new Date()
+      })
+      .where(eq(biometricAuth.id, id))
+      .returning();
+    return auth;
+  }
+
+  async incrementBiometricFailedAttempts(id: string): Promise<BiometricAuth> {
+    const [auth] = await db
+      .update(biometricAuth)
+      .set({
+        failedAttempts: sql`${biometricAuth.failedAttempts} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(biometricAuth.id, id))
+      .returning();
+    return auth;
+  }
+
+  async resetBiometricFailedAttempts(id: string): Promise<BiometricAuth> {
+    const [auth] = await db
+      .update(biometricAuth)
+      .set({
+        failedAttempts: 0,
+        lockedUntil: null,
+        updatedAt: new Date()
+      })
+      .where(eq(biometricAuth.id, id))
+      .returning();
+    return auth;
+  }
+
+  async lockBiometricAuth(id: string, lockedUntil: Date): Promise<BiometricAuth> {
+    const [auth] = await db
+      .update(biometricAuth)
+      .set({
+        lockedUntil,
+        updatedAt: new Date()
+      })
+      .where(eq(biometricAuth.id, id))
+      .returning();
+    return auth;
+  }
+
+  async deactivateBiometricAuth(id: string): Promise<void> {
+    await db
+      .update(biometricAuth)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(biometricAuth.id, id));
   }
 
   // IService implementation

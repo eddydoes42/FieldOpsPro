@@ -88,7 +88,6 @@ export default function OperationsDirectorDashboard() {
   const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery<Company[]>({
     queryKey: queryKeys.companies(),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   const { data: stats = { totalAdmins: 0, activeCompanies: 0, recentSetups: 0 }, isLoading: statsLoading } = useQuery<{
@@ -100,7 +99,6 @@ export default function OperationsDirectorDashboard() {
     refetchInterval: 30000, // Refetch every 30 seconds - reduced frequency
     refetchOnWindowFocus: true,
     staleTime: 15000, // Consider data stale after 15 seconds
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   const { data: budgetData = { totalEarned: 0, todayEarning: 0 }, isLoading: budgetLoading } = useQuery<{
@@ -111,7 +109,6 @@ export default function OperationsDirectorDashboard() {
     refetchInterval: 60000, // Refetch every minute - reduced frequency
     refetchOnWindowFocus: true,
     staleTime: 30000, // Consider data stale after 30 seconds
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   const { data: serviceFeeData = { totalServiceFees: 0, todayServiceFees: 0 }, isLoading: serviceFeesLoading } = useQuery<{
@@ -122,14 +119,12 @@ export default function OperationsDirectorDashboard() {
     refetchInterval: 60000, // Refetch every minute - reduced frequency
     refetchOnWindowFocus: true,
     staleTime: 30000, // Consider data stale after 30 seconds
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Current user query for UserOnboardingForm permissions
   const { data: currentUser, isLoading: userLoading } = useQuery({
     queryKey: queryKeys.auth(),
     staleTime: 10 * 60 * 1000, // 10 minutes - user data doesn't change often
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Access requests query - most critical for real-time updates
@@ -138,7 +133,6 @@ export default function OperationsDirectorDashboard() {
     refetchInterval: 10000, // Refetch every 10 seconds - still frequent but reduced
     refetchOnWindowFocus: true,
     staleTime: 5000, // Consider data stale after 5 seconds
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Query for all approval requests - critical for Things to Approve section
@@ -147,7 +141,6 @@ export default function OperationsDirectorDashboard() {
     refetchInterval: 15000, // Refetch every 15 seconds - reduced frequency
     refetchOnWindowFocus: true,
     staleTime: 8000, // Consider data stale after 8 seconds
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Query for recent users - important for Recent Activity section
@@ -157,7 +150,6 @@ export default function OperationsDirectorDashboard() {
     refetchOnWindowFocus: true,
     staleTime: 15000, // Consider data stale after 15 seconds
     retry: 2,
-    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Calculate total pending approvals

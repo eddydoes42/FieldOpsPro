@@ -2103,3 +2103,289 @@ export const projectHealthLogRelations = relations(projectHealthLog, ({ one }) =
     references: [projectHeartbeatEvents.id],
   }),
 }));
+
+// Payment Information table - for secure payment data handling
+export const paymentInformation = pgTable("payment_information", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id), // null for company payment info
+  companyId: varchar("company_id").references(() => companies.id), // null for user payment info
+  paymentMethodType: varchar("payment_method_type").notNull(), // stripe_account, paypal, bank_transfer, crypto_wallet
+  encryptedPaymentData: text("encrypted_payment_data").notNull(), // encrypted payment details
+  lastFourDigits: varchar("last_four_digits"), // for cards/accounts, for display purposes
+  paymentMethodName: varchar("payment_method_name"), // user-friendly name
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Payment Transactions table - for tracking all payments
+export const paymentTransactions = pgTable("payment_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").references(() => workOrders.id),
+  fromUserId: varchar("from_user_id").references(() => users.id), // who sent the payment
+  toUserId: varchar("to_user_id").references(() => users.id), // who received the payment
+  fromCompanyId: varchar("from_company_id").references(() => companies.id),
+  toCompanyId: varchar("to_company_id").references(() => companies.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  serviceFeeAmount: decimal("service_fee_amount", { precision: 10, scale: 2 }),
+  transactionType: varchar("transaction_type").notNull(), // work_order_payment, expense_reimbursement, withdrawal, transfer
+  status: varchar("status").notNull().default("pending"), // pending, processing, completed, failed, cancelled
+  paymentMethodId: varchar("payment_method_id").references(() => paymentInformation.id),
+  externalTransactionId: varchar("external_transaction_id"), // stripe/paypal transaction ID
+  notes: text("notes"),
+  processedAt: timestamp("processed_at"),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Approved Payments table - for tracking funds ready for withdrawal
+export const approvedPayments = pgTable("approved_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  sourceType: varchar("source_type").notNull(), // work_order_completion, expense_early_withdrawal, administrator_allocation
+  sourceId: varchar("source_id"), // work order ID, expense order ID, etc.
+  description: text("description"),
+  status: varchar("status").notNull().default("available"), // available, withdrawn, expired
+  availableUntil: timestamp("available_until"), // optional expiration
+  withdrawnAt: timestamp("withdrawn_at"),
+  transactionId: varchar("transaction_id").references(() => paymentTransactions.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Expense Orders table - for expense tracking and reimbursement
+export const expenseOrders = pgTable("expense_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workOrderId: varchar("work_order_id").references(() => workOrders.id),
+  companyId: varchar("company_id").notNull().references(() => companies.id),
+  createdById: varchar("created_by_id").notNull().references(() => users.id),
+  assignedUserId: varchar("assigned_user_id").references(() => users.id), // who will receive early withdrawal if applicable
+  expenseType: varchar("expense_type").notNull(), // materials, tools, travel, scope_change, other
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  whoCoversCost: varchar("who_covers_cost").notNull(), // client, service
+  status: varchar("status").notNull().default("pending"), // pending, approved, rejected, withdrawn
+  approvedById: varchar("approved_by_id").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
+  withdrawnEarly: boolean("withdrawn_early").default(false),
+  withdrawnAt: timestamp("withdrawn_at"),
+  withdrawalTransactionId: varchar("withdrawal_transaction_id").references(() => paymentTransactions.id),
+  receiptUrls: text("receipt_urls").array().default(sql`ARRAY[]::TEXT[]`), // file upload URLs
+  date: timestamp("date").notNull().defaultNow(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Device Tokens table - for "Remember Me" functionality
+export const deviceTokens = pgTable("device_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  tokenHash: varchar("token_hash").notNull().unique(), // hashed secure token
+  deviceFingerprint: varchar("device_fingerprint").notNull(), // browser/device identifier
+  deviceName: varchar("device_name"), // user-friendly device name
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isActive: boolean("is_active").default(true),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Biometric Authentication table - for biometric login data
+export const biometricAuth = pgTable("biometric_auth", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  biometricType: varchar("biometric_type").notNull(), // fingerprint, face_id, touch_id, windows_hello
+  encryptedBiometricData: text("encrypted_biometric_data").notNull(), // encrypted biometric template
+  deviceId: varchar("device_id").notNull(), // device-specific identifier
+  isActive: boolean("is_active").default(true),
+  lastUsedAt: timestamp("last_used_at"),
+  failedAttempts: integer("failed_attempts").default(0),
+  lockedUntil: timestamp("locked_until"), // temporary lockout for failed attempts
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Relations for new payment and auth tables
+export const paymentInformationRelations = relations(paymentInformation, ({ one, many }) => ({
+  user: one(users, {
+    fields: [paymentInformation.userId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [paymentInformation.companyId],
+    references: [companies.id],
+  }),
+  transactions: many(paymentTransactions),
+}));
+
+export const paymentTransactionsRelations = relations(paymentTransactions, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [paymentTransactions.workOrderId],
+    references: [workOrders.id],
+  }),
+  fromUser: one(users, {
+    fields: [paymentTransactions.fromUserId],
+    references: [users.id],
+  }),
+  toUser: one(users, {
+    fields: [paymentTransactions.toUserId],
+    references: [users.id],
+  }),
+  fromCompany: one(companies, {
+    fields: [paymentTransactions.fromCompanyId],
+    references: [companies.id],
+  }),
+  toCompany: one(companies, {
+    fields: [paymentTransactions.toCompanyId],
+    references: [companies.id],
+  }),
+  paymentMethod: one(paymentInformation, {
+    fields: [paymentTransactions.paymentMethodId],
+    references: [paymentInformation.id],
+  }),
+}));
+
+export const approvedPaymentsRelations = relations(approvedPayments, ({ one }) => ({
+  user: one(users, {
+    fields: [approvedPayments.userId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [approvedPayments.companyId],
+    references: [companies.id],
+  }),
+  transaction: one(paymentTransactions, {
+    fields: [approvedPayments.transactionId],
+    references: [paymentTransactions.id],
+  }),
+}));
+
+export const expenseOrdersRelations = relations(expenseOrders, ({ one }) => ({
+  workOrder: one(workOrders, {
+    fields: [expenseOrders.workOrderId],
+    references: [workOrders.id],
+  }),
+  company: one(companies, {
+    fields: [expenseOrders.companyId],
+    references: [companies.id],
+  }),
+  createdBy: one(users, {
+    fields: [expenseOrders.createdById],
+    references: [users.id],
+  }),
+  assignedUser: one(users, {
+    fields: [expenseOrders.assignedUserId],
+    references: [users.id],
+  }),
+  approvedBy: one(users, {
+    fields: [expenseOrders.approvedById],
+    references: [users.id],
+  }),
+  withdrawalTransaction: one(paymentTransactions, {
+    fields: [expenseOrders.withdrawalTransactionId],
+    references: [paymentTransactions.id],
+  }),
+}));
+
+export const deviceTokensRelations = relations(deviceTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [deviceTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export const biometricAuthRelations = relations(biometricAuth, ({ one }) => ({
+  user: one(users, {
+    fields: [biometricAuth.userId],
+    references: [users.id],
+  }),
+}));
+
+// Update users relations to include new tables
+export const usersRelationsUpdated = relations(users, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [users.companyId],
+    references: [companies.id],
+  }),
+  // ... existing relations would remain ...
+  paymentInformation: many(paymentInformation),
+  sentTransactions: many(paymentTransactions, { relationName: "sentTransactions" }),
+  receivedTransactions: many(paymentTransactions, { relationName: "receivedTransactions" }),
+  approvedPayments: many(approvedPayments),
+  expenseOrders: many(expenseOrders),
+  deviceTokens: many(deviceTokens),
+  biometricAuth: many(biometricAuth),
+}));
+
+// Type definitions for new tables
+export type PaymentInformation = typeof paymentInformation.$inferSelect;
+export type InsertPaymentInformation = typeof paymentInformation.$inferInsert;
+
+export const insertPaymentInformationSchema = createInsertSchema(paymentInformation).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPaymentInformationType = z.infer<typeof insertPaymentInformationSchema>;
+
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+export type InsertPaymentTransaction = typeof paymentTransactions.$inferInsert;
+
+export const insertPaymentTransactionSchema = createInsertSchema(paymentTransactions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPaymentTransactionType = z.infer<typeof insertPaymentTransactionSchema>;
+
+export type ApprovedPayment = typeof approvedPayments.$inferSelect;
+export type InsertApprovedPayment = typeof approvedPayments.$inferInsert;
+
+export const insertApprovedPaymentSchema = createInsertSchema(approvedPayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertApprovedPaymentType = z.infer<typeof insertApprovedPaymentSchema>;
+
+export type ExpenseOrder = typeof expenseOrders.$inferSelect;
+export type InsertExpenseOrder = typeof expenseOrders.$inferInsert;
+
+export const insertExpenseOrderSchema = createInsertSchema(expenseOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertExpenseOrderType = z.infer<typeof insertExpenseOrderSchema>;
+
+export type DeviceToken = typeof deviceTokens.$inferSelect;
+export type InsertDeviceToken = typeof deviceTokens.$inferInsert;
+
+export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDeviceTokenType = z.infer<typeof insertDeviceTokenSchema>;
+
+export type BiometricAuth = typeof biometricAuth.$inferSelect;
+export type InsertBiometricAuth = typeof biometricAuth.$inferInsert;
+
+export const insertBiometricAuthSchema = createInsertSchema(biometricAuth).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertBiometricAuthType = z.infer<typeof insertBiometricAuthSchema>;
