@@ -33,7 +33,7 @@ export function BottomNav({ items, className, onItemClick }: BottomNavProps) {
       )}
       data-testid="bottom-navigation"
     >
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+      <div className="flex items-center justify-between h-16 w-full px-1">
         {items.map((item, index) => {
           const isActive = location === item.route || location.startsWith(item.route + '/');
           const IconComponent = typeof item.icon === 'string' ? null : item.icon;
@@ -51,7 +51,7 @@ export function BottomNav({ items, className, onItemClick }: BottomNavProps) {
               }}
               className={cn(
                 "relative flex flex-col items-center justify-center",
-                "min-w-0 flex-1 px-2 py-2 rounded-lg",
+                "min-w-0 flex-1 px-1 py-2 rounded-lg max-w-20",
                 "transition-all duration-200 ease-in-out",
                 "touch-manipulation", // Better touch responsiveness
                 {
@@ -64,30 +64,30 @@ export function BottomNav({ items, className, onItemClick }: BottomNavProps) {
               data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
             >
               {/* Icon with optional badge */}
-              <div className="relative mb-1">
+              <div className="relative mb-0.5">
                 {IconComponent ? (
-                  <IconComponent className="h-5 w-5" />
+                  <IconComponent className="h-4 w-4" />
                 ) : (
-                  <i className={`${item.icon} text-lg`} />
+                  <i className={`${item.icon} text-base`} />
                 )}
                 
                 {/* Badge for notifications */}
                 {item.badge && item.badge > 0 && (
                   <div className={cn(
-                    "absolute -top-2 -right-2",
+                    "absolute -top-1 -right-1",
                     "bg-red-500 text-white text-xs font-bold",
-                    "rounded-full h-5 w-5 flex items-center justify-center",
-                    "border-2 border-white dark:border-gray-900"
+                    "rounded-full h-4 w-4 flex items-center justify-center",
+                    "border border-white dark:border-gray-900"
                   )}>
-                    {item.badge > 99 ? '99+' : item.badge}
+                    {item.badge > 9 ? '9+' : item.badge}
                   </div>
                 )}
               </div>
               
               {/* Label */}
               <span className={cn(
-                "text-xs font-medium leading-none",
-                "truncate max-w-full"
+                "text-xs font-medium leading-tight",
+                "truncate w-full text-center"
               )}>
                 {item.label}
               </span>
