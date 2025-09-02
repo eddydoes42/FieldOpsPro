@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { StashCard } from "@/components/ui/stash-card";
+import { ProjectEKGMonitor } from "@/components/ui/project-ekg-monitor";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -161,82 +161,12 @@ export function ProjectHeartbeatDialog({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {sortedProjects.map((project) => (
-                <StashCard
+                <ProjectEKGMonitor
                   key={project.id}
-                  title={project.workOrderTitle}
-                  subtitle={`${project.companyName} • ${project.healthScore}% Health`}
-                  className={cn(
-                    "border-2",
-                    project.projectFailed && "border-red-500 dark:border-red-400"
-                  )}
-                  testId={`project-heartbeat-${project.workOrderId}`}
-                >
-                  <div className="space-y-3">
-                    {/* Status and BPM */}
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant="outline"
-                        className={cn("flex items-center gap-1", getStatusColor(project.projectStatus))}
-                      >
-                        {getStatusIcon(project.projectStatus)}
-                        {project.projectStatus.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                      </Badge>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Current BPM</p>
-                        <p className={cn("text-lg font-bold", getBpmColor(project.currentBpm))}>
-                          {project.currentBpm}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Health Score Progress */}
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-gray-600 dark:text-gray-400">Health Score</span>
-                        <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                          {project.healthScore}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-300",
-                            project.healthScore >= 80 ? "bg-green-500" :
-                            project.healthScore >= 60 ? "bg-yellow-500" :
-                            project.healthScore >= 40 ? "bg-orange-500" : "bg-red-500"
-                          )}
-                          style={{ width: `${Math.max(5, project.healthScore)}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Additional Details */}
-                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        {variant === "global" && (
-                          <>
-                            <Building2 className="h-3 w-3" />
-                            <span className="truncate max-w-20">{project.companyName}</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          {new Date(project.lastActivity).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Escalation Warning */}
-                    {project.escalationCount > 0 && (
-                      <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-md px-2 py-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        <span>{project.escalationCount} escalation{project.escalationCount > 1 ? "s" : ""}</span>
-                      </div>
-                    )}
-                  </div>
-                </StashCard>
+                  project={project}
+                  showDetails={true}
+                  className="w-full"
+                />
               ))}
             </div>
           )}

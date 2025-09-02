@@ -1,6 +1,7 @@
 import { Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { EKGWaveform } from "@/components/ui/ekg-waveform";
 
 interface HeartbeatBarProps {
   label: string;
@@ -83,7 +84,7 @@ export function HeartbeatBar({
         </div>
 
         {/* Progress bar */}
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-3">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-300 ease-out",
@@ -93,8 +94,21 @@ export function HeartbeatBar({
           />
         </div>
 
+        {/* Mini EKG Display */}
+        <div className="bg-black rounded-md overflow-hidden mb-2">
+          <EKGWaveform
+            bpm={75 + (percentage < 60 ? Math.random() * 40 : Math.random() * 20)}
+            status={percentage >= 80 ? 'normal' : percentage >= 60 ? 'at_risk' : 'delayed'}
+            severity={percentage >= 80 ? 'none' : percentage >= 60 ? 'mild' : percentage >= 40 ? 'moderate' : 'severe'}
+            frequency={percentage >= 60 ? 'occasional' : 'frequent'}
+            width={200}
+            height={40}
+            className="w-full max-w-xs mx-auto"
+          />
+        </div>
+
         {/* Additional context text */}
-        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           {variant === "global" 
             ? "Average health across all companies and projects"
             : "Average health across company projects"

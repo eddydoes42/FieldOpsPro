@@ -1,0 +1,77 @@
+Objective:
+Enhance the existing Project Heartbeat Monitor so that it visually pulses like a real EKG waveform in real time, using defined BPM thresholds, and dynamically alters the heartbeat pattern to reflect simulated event severity and frequency.
+
+Implementation Requirements:
+
+1. Baseline BPM & Rhythm:
+   - Use the configured baseline BPM value from system thresholds.
+   - Convert BPM to beat interval in milliseconds (e.g., 75 BPM ≈ 800 ms between beats).
+   - Implement a smooth, continuous waveform animation that mimics an EKG trace (P wave, QRS complex, T wave) rather than a simple blink.
+   - Ensure the waveform scrolls horizontally in real time, with each beat aligned to the calculated interval.
+
+2. Real‑Time Animation:
+   - Use requestAnimationFrame or equivalent for smooth rendering.
+   - The waveform should “pulse” with each beat — amplitude spike for QRS complex, smaller deflections for P and T waves.
+   - Sync the visual pulse to the BPM timing so the spike occurs exactly at each beat interval.
+
+3. Event Simulation:
+   - Introduce parameters for event severity (e.g., none, mild, moderate, severe).
+   - Introduce parameters for event frequency (e.g., occasional, frequent).
+   - Adjust waveform characteristics based on severity/frequency:
+       • Mild: occasional premature beats (shorter interval), slight amplitude variation.
+       • Moderate: irregular spacing, occasional double beats, variable amplitude.
+       • Severe: frequent irregular beats, dropped beats (longer flatline segments), higher/lower amplitude spikes.
+   - Ensure these variations are still visually recognizable as heart activity.
+
+4. Role Awareness:
+   - Maintain existing role‑based filtering for which projects/work orders are shown.
+   - The EKG animation should be per‑project/work order row, not a single global waveform.
+
+5. Performance:
+   - Optimize so multiple EKG animations can run simultaneously without frame drops.
+   - Use lightweight canvas or SVG rendering; avoid heavy DOM manipulation.
+
+6. Styling:
+   - Match FieldOps Pro minimal UI (Poppins font for labels, consistent spacing, subdued colors).
+   - Use a subtle gridline or baseline for the waveform track.
+   - Status colors:
+       • Green waveform for normal rhythm.
+       • Yellow waveform for “at risk” status.
+       • Red waveform for “delayed” or severe event simulation.
+
+---
+
+Short Animation QA Checklist (Run after coding):
+
+1. **Baseline Pulse Timing**
+   - Measure time between beats; confirm matches configured BPM threshold.
+
+2. **Waveform Shape**
+   - Verify each beat shows correct EKG‑like pattern (P wave → QRS spike → T wave).
+   - Spike aligns exactly with beat timing.
+
+3. **Smoothness**
+   - Watch animation for at least 10 seconds; confirm no stutter, frame drop, or jump.
+
+4. **Event Variations**
+   - Trigger each severity/frequency mode:
+       • Mild → occasional slight variations in beat spacing/amplitude.
+       • Moderate → irregular spacing, occasional double beats.
+       • Severe → frequent irregularity, dropped beats, or flatline segments.
+
+5. **Color Coding**
+   - Confirm waveform color changes correctly with status:
+       • Green = normal
+       • Yellow = at risk
+       • Red = delayed/severe
+
+6. **Multi‑Instance Performance**
+   - With multiple heartbeat monitors visible, confirm all animate smoothly and independently.
+
+7. **Responsiveness**
+   - Resize window or view on mobile; confirm waveform scales/reflows without distortion.
+
+---
+
+Deliverable:
+An updated Project Heartbeat Monitor component that renders a real‑time, EKG‑style waveform per tracked project/work order, with realistic BPM timing, smooth pulsing, and visual differentiation for simulated event severity and frequency, while preserving all existing role‑based data filtering and minimal UI styling, and passing all items in the QA checklist.
