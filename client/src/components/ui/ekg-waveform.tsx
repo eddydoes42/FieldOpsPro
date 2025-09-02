@@ -33,8 +33,8 @@ export function EKGWaveform({
   const [currentTime, setCurrentTime] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
-  // Calculate beat interval from BPM
-  const beatInterval = 60000 / bpm; // milliseconds between beats
+  // Calculate beat interval from BPM - much longer to show single beat
+  const beatInterval = (60000 / bpm) * 6; // 6x longer intervals for single beat display
   
   // Get waveform color based on status
   const getWaveformColor = useCallback(() => {
@@ -57,14 +57,18 @@ export function EKGWaveform({
     
     // For normal status, generate regular heartbeat spikes with sharp dramatic peaks
     if (status === 'normal' && severity === 'none') {
-      // Create sharp mountain-like peaks with minimal intermediate points
-      points.push({ x: centerX - 25, y: baselineY, time });
-      points.push({ x: centerX - 15, y: baselineY + 12, time }); // Sharp valley
-      points.push({ x: centerX - 3, y: baselineY - 42, time }); // Sharp rise to peak
-      points.push({ x: centerX, y: baselineY - 45, time }); // Sharp peak point
-      points.push({ x: centerX + 3, y: baselineY - 42, time }); // Sharp fall from peak
-      points.push({ x: centerX + 15, y: baselineY + 8, time }); // Sharp valley
-      points.push({ x: centerX + 25, y: baselineY, time });
+      // Create wider spaced pattern with dramatic valleys below baseline
+      points.push({ x: centerX - 120, y: baselineY, time });
+      points.push({ x: centerX - 80, y: baselineY, time }); // Baseline approach
+      points.push({ x: centerX - 40, y: baselineY + 25, time }); // Deep valley below baseline
+      points.push({ x: centerX - 25, y: baselineY + 30, time }); // Deeper valley
+      points.push({ x: centerX - 8, y: baselineY - 42, time }); // Sharp rise to peak
+      points.push({ x: centerX, y: baselineY - 50, time }); // Sharp peak point
+      points.push({ x: centerX + 8, y: baselineY - 42, time }); // Sharp fall from peak
+      points.push({ x: centerX + 25, y: baselineY + 20, time }); // Valley below baseline
+      points.push({ x: centerX + 40, y: baselineY + 15, time }); // Shallow valley
+      points.push({ x: centerX + 80, y: baselineY, time }); // Return to baseline
+      points.push({ x: centerX + 120, y: baselineY, time });
       return points;
     }
     
