@@ -378,12 +378,86 @@ export default function OperationsDirectorDashboard() {
             title={totalPendingApprovals.toString()}
             subtitle={<><span className="hidden sm:inline">Things to Approve</span><span className="sm:hidden">To Approve</span></>}
             icon={
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 w-16 h-12">
-                <div className="text-xs text-amber-700 dark:text-amber-300 font-medium mb-1">Pending</div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-amber-600 dark:text-amber-400">{accessRequests.length} <span className="hidden sm:inline">Access</span><span className="sm:hidden">Acc</span></span>
-                  <span className="text-amber-600 dark:text-amber-400">{approvalRequests.filter(req => req.status === 'pending').length} <span className="hidden sm:inline">Other</span><span className="sm:hidden">Oth</span></span>
-                </div>
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 w-16 h-12 space-y-1">
+                {/* Access Requests Mini-Card */}
+                {accessRequests.length > 0 && (
+                  <div className="bg-orange-100 dark:bg-orange-900/40 border border-orange-300 dark:border-orange-700 rounded px-2 py-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-orange-700 dark:text-orange-300">Access</span>
+                      <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{accessRequests.length}</span>
+                    </div>
+                    <div className="text-xs text-orange-600 dark:text-orange-400 truncate">
+                      {accessRequests[0]?.requestedRole || 'New Users'}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Approval Requests Mini-Cards */}
+                {approvalRequests.filter(req => req.status === 'pending').slice(0, accessRequests.length > 0 ? 1 : 2).map((request, index) => {
+                  const getTypeStyle = (type: string) => {
+                    switch (type) {
+                      case 'user_deletion':
+                        return { 
+                          label: 'Deletion', 
+                          className: 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700',
+                          icon: '🗑️' 
+                        };
+                      case 'high_budget_work_order':
+                        return { 
+                          label: 'Budget WO', 
+                          className: 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700',
+                          icon: '💰' 
+                        };
+                      case 'high_budget_project':
+                        return { 
+                          label: 'Budget Proj', 
+                          className: 'bg-purple-100 dark:bg-purple-900/40 border-purple-300 dark:border-purple-700',
+                          icon: '📊' 
+                        };
+                      case 'issue_escalation':
+                        return { 
+                          label: 'Escalation', 
+                          className: 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700',
+                          icon: '⚠️' 
+                        };
+                      default:
+                        return { 
+                          label: 'General', 
+                          className: 'bg-gray-100 dark:bg-gray-900/40 border-gray-300 dark:border-gray-700',
+                          icon: '📝' 
+                        };
+                    }
+                  };
+                  
+                  const typeStyle = getTypeStyle(request.type);
+                  const priorityDotClass = request.priority === 'urgent' ? 'bg-red-500' : 
+                                          request.priority === 'high' ? 'bg-orange-500' : 'bg-gray-500';
+                  
+                  return (
+                    <div key={request.id} className={`${typeStyle.className} border rounded px-2 py-1`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{typeStyle.label}</span>
+                        <div className="flex items-center gap-1">
+                          {request.priority !== 'normal' && (
+                            <div className={`w-2 h-2 rounded-full ${priorityDotClass}`} title={request.priority}></div>
+                          )}
+                          <span className="text-xs">{typeStyle.icon}</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                        {request.budgetAmount ? `$${request.budgetAmount}` : 
+                         request.priority !== 'normal' ? request.priority : 'Pending'}
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Summary if more items */}
+                {(accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length) > 2 && (
+                  <div className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                    +{(accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length) - 2} more
+                  </div>
+                )}
               </div>
             }
             onClick={() => setShowApprovalsDialog(true)}
