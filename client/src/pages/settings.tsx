@@ -128,6 +128,8 @@ export default function Settings() {
         description: "Your preferences have been successfully saved.",
       });
       setOriginalHeartbeatEnabled(heartbeatEnabled);
+      // Invalidate user query to refresh user data including preferences
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
     },
     onError: (error: any) => {
       toast({

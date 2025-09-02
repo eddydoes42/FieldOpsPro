@@ -24,6 +24,11 @@ interface ProjectHeartbeat {
 export function useHeartbeatData(): HeartbeatData | null {
   const { user } = useAuth();
   
+  // Early return if no user
+  if (!user) {
+    return null;
+  }
+  
   // Get user roles to determine heartbeat scope
   const userRoles = (user as any)?.roles || [];
   const isOperationsDirector = userRoles.includes("operations_director");
@@ -33,6 +38,13 @@ export function useHeartbeatData(): HeartbeatData | null {
 
   // Check user preferences for heartbeat toggle
   const heartbeatEnabled = (user as any)?.preferences?.heartbeatEnabled;
+  
+  // Debug logging to help troubleshoot
+  console.log('Heartbeat preference check:', {
+    heartbeatEnabled,
+    userPreferences: (user as any)?.preferences,
+    shouldShow: heartbeatEnabled !== false
+  });
   
   // If preference is explicitly set to false, don't show heartbeat
   if (heartbeatEnabled === false) {
