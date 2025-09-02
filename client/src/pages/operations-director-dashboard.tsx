@@ -13,9 +13,11 @@ import AdminOnboardingForm from "@/components/admin-onboarding-form";
 import UserOnboardingForm from "@/components/user-onboarding-form";
 import { Company, AccessRequest, insertUserSchema } from "../../../shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryKeys, handleMutationError, invalidateRelatedQueries } from "@/lib/queryClient";
 import { formatCurrency, formatBudget } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
+import { Skeleton } from "@/components/ui/skeleton";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -62,6 +64,9 @@ export default function OperationsDirectorDashboard() {
   );
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Performance monitoring
+  const { getComponentMetrics } = usePerformanceMonitoring('OperationsDirectorDashboard');
 
   // Listen for custom events from quick action menu
   useEffect(() => {
@@ -77,69 +82,79 @@ export default function OperationsDirectorDashboard() {
     };
   }, []);
 
-  const { data: companies = [] } = useQuery<Company[]>({
-    queryKey: ['/api/companies'],
+  const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery<Company[]>({
+    queryKey: queryKeys.companies(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
-  const { data: stats = { totalAdmins: 0, activeCompanies: 0, recentSetups: 0 } } = useQuery<{
+  const { data: stats = { totalAdmins: 0, activeCompanies: 0, recentSetups: 0 }, isLoading: statsLoading } = useQuery<{
     totalAdmins: number;
     activeCompanies: number;
     recentSetups: number;
   }>({
-    queryKey: ['/api/operations/stats'],
-    refetchInterval: 10000, // Refetch every 10 seconds
+    queryKey: queryKeys.operationsStats(),
+    refetchInterval: 30000, // Refetch every 30 seconds - reduced frequency
     refetchOnWindowFocus: true,
-    staleTime: 5000, // Consider data stale after 5 seconds
+    staleTime: 15000, // Consider data stale after 15 seconds
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
-  const { data: budgetData = { totalEarned: 0, todayEarning: 0 } } = useQuery<{
+  const { data: budgetData = { totalEarned: 0, todayEarning: 0 }, isLoading: budgetLoading } = useQuery<{
     totalEarned: number;
     todayEarning: number;
   }>({
-    queryKey: ['/api/operations/budget-summary'],
-    refetchInterval: 15000, // Refetch every 15 seconds for budget data
+    queryKey: queryKeys.budgetSummary(),
+    refetchInterval: 60000, // Refetch every minute - reduced frequency
     refetchOnWindowFocus: true,
-    staleTime: 8000, // Consider data stale after 8 seconds
+    staleTime: 30000, // Consider data stale after 30 seconds
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
-  const { data: serviceFeeData = { totalServiceFees: 0, todayServiceFees: 0 } } = useQuery<{
+  const { data: serviceFeeData = { totalServiceFees: 0, todayServiceFees: 0 }, isLoading: serviceFeesLoading } = useQuery<{
     totalServiceFees: number;
     todayServiceFees: number;
   }>({
-    queryKey: ['/api/operations/service-fee-summary'],
-    refetchInterval: 15000, // Refetch every 15 seconds for service fee data
+    queryKey: queryKeys.serviceFeesSummary(),
+    refetchInterval: 60000, // Refetch every minute - reduced frequency
     refetchOnWindowFocus: true,
-    staleTime: 8000, // Consider data stale after 8 seconds
+    staleTime: 30000, // Consider data stale after 30 seconds
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Current user query for UserOnboardingForm permissions
-  const { data: currentUser } = useQuery({
-    queryKey: ['/api/auth/user'],
+  const { data: currentUser, isLoading: userLoading } = useQuery({
+    queryKey: queryKeys.auth(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - user data doesn't change often
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Access requests query - most critical for real-time updates
-  const { data: accessRequests = [] } = useQuery<AccessRequest[]>({
-    queryKey: ['/api/access-requests'],
-    refetchInterval: 5000, // Refetch every 5 seconds - most important for approval workflows
+  const { data: accessRequests = [], isLoading: accessRequestsLoading } = useQuery<AccessRequest[]>({
+    queryKey: queryKeys.accessRequests(),
+    refetchInterval: 10000, // Refetch every 10 seconds - still frequent but reduced
     refetchOnWindowFocus: true,
-    staleTime: 2000, // Consider data stale after 2 seconds
+    staleTime: 5000, // Consider data stale after 5 seconds
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Query for all approval requests - critical for Things to Approve section
-  const { data: approvalRequests = [] } = useQuery<any[]>({
-    queryKey: ['/api/approval-requests'],
-    refetchInterval: 7000, // Refetch every 7 seconds
+  const { data: approvalRequests = [], isLoading: approvalRequestsLoading } = useQuery<any[]>({
+    queryKey: queryKeys.approvalRequests(),
+    refetchInterval: 15000, // Refetch every 15 seconds - reduced frequency
     refetchOnWindowFocus: true,
-    staleTime: 3000, // Consider data stale after 3 seconds
+    staleTime: 8000, // Consider data stale after 8 seconds
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Query for recent users - important for Recent Activity section
-  const { data: recentUsers = [] } = useQuery<any[]>({
-    queryKey: ['/api/operations/recent-users'],
-    refetchInterval: 12000, // Refetch every 12 seconds
+  const { data: recentUsers = [], isLoading: recentUsersLoading } = useQuery<any[]>({
+    queryKey: queryKeys.recentUsers(),
+    refetchInterval: 30000, // Refetch every 30 seconds - reduced frequency
     refetchOnWindowFocus: true,
-    staleTime: 6000, // Consider data stale after 6 seconds
-    retry: false,
+    staleTime: 15000, // Consider data stale after 15 seconds
+    retry: 2,
+    onError: (error: Error) => handleMutationError(error, toast),
   });
 
   // Calculate total pending approvals
@@ -163,11 +178,14 @@ export default function OperationsDirectorDashboard() {
     }) => {
       return apiRequest(`/api/access-requests/${requestId}/review`, 'PATCH', { status, notes });
     },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
+    onSuccess: async (data, variables) => {
+      // Use enhanced cache invalidation
+      await invalidateRelatedQueries(queryClient, 'accessRequests');
+      await queryClient.invalidateQueries({ queryKey: queryKeys.operationsStats() });
+      
       toast({
         title: "Request Reviewed",
-        description: "Access request has been updated.",
+        description: `Access request has been ${variables.status}.`,
       });
       
       // If approved and we have the access request data, trigger user creation form
@@ -178,12 +196,8 @@ export default function OperationsDirectorDashboard() {
         setShowApprovalsDialog(false);
       }
     },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to review access request",
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      handleMutationError(error, toast);
     },
   });
 
@@ -276,18 +290,26 @@ export default function OperationsDirectorDashboard() {
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Total Earned
                 </p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  ${(budgetData.totalEarned || 0).toLocaleString()}
-                </p>
+                {budgetLoading ? (
+                  <Skeleton className="h-4 w-20" />
+                ) : (
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                    ${(budgetData.totalEarned || 0).toLocaleString()}
+                  </p>
+                )}
               </div>
               <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
               <div className="text-right">
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Today's Earning
                 </p>
-                <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                  ${(budgetData.todayEarning || 0).toLocaleString()}
-                </p>
+                {budgetLoading ? (
+                  <Skeleton className="h-4 w-16" />
+                ) : (
+                  <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                    ${(budgetData.todayEarning || 0).toLocaleString()}
+                  </p>
+                )}
               </div>
             </div>
             
@@ -300,18 +322,26 @@ export default function OperationsDirectorDashboard() {
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Total Fees
                 </p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  ${(serviceFeeData.totalServiceFees || 0).toLocaleString()}
-                </p>
+                {serviceFeesLoading ? (
+                  <Skeleton className="h-4 w-20" />
+                ) : (
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                    ${(serviceFeeData.totalServiceFees || 0).toLocaleString()}
+                  </p>
+                )}
               </div>
               <div className="h-6 w-px bg-orange-200 dark:border-orange-700"></div>
               <div className="text-right">
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Today's Fees
                 </p>
-                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                  ${(serviceFeeData.todayServiceFees || 0).toLocaleString()}
-                </p>
+                {serviceFeesLoading ? (
+                  <Skeleton className="h-4 w-16" />
+                ) : (
+                  <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                    ${(serviceFeeData.todayServiceFees || 0).toLocaleString()}
+                  </p>
+                )}
               </div>
             </div>
           </div>

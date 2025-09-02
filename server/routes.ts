@@ -450,20 +450,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Allow all authenticated users to see basic user info for messaging
-      const users = await storage.getAllUsers();
+      // Parse pagination parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100); // Max 100 items per page
+      const search = req.query.search as string;
+      const role = req.query.role as string;
+      const companyId = req.query.companyId as string;
+      const isActive = req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined;
+
+      // Get paginated users with filters
+      const result = await storage.getUsersPaginated({
+        page,
+        limit,
+        search,
+        role,
+        companyId,
+        isActive
+      });
+
       // Filter out sensitive info for non-admins
       if (!isAdmin(currentUser!)) {
-        const filteredUsers = users.map(u => ({
+        const filteredUsers = result.users.map(u => ({
           id: u.id,
           firstName: u.firstName,
           lastName: u.lastName,
           roles: u.roles,
-          email: u.email
+          email: u.email,
+          companyId: u.companyId,
+          isActive: u.isActive
         }));
-        res.json(filteredUsers);
+        
+        res.json({
+          users: filteredUsers,
+          pagination: {
+            page: result.page,
+            limit: result.limit,
+            total: result.total,
+            totalPages: result.totalPages,
+            hasNext: result.hasNext,
+            hasPrev: result.hasPrev
+          }
+        });
       } else {
-        res.json(users);
+        res.json({
+          users: result.users,
+          pagination: {
+            page: result.page,
+            limit: result.limit,
+            total: result.total,
+            totalPages: result.totalPages,
+            hasNext: result.hasNext,
+            hasPrev: result.hasPrev
+          }
+        });
       }
     } catch (error) {
       console.error("Error fetching users:", error);

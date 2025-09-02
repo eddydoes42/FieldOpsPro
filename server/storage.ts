@@ -149,6 +149,22 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUsersByRole(role: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
+  getUsersPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    role?: string;
+    companyId?: string;
+    isActive?: boolean;
+  }): Promise<{
+    users: User[];
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  }>;
   getFieldAgents(): Promise<User[]>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
 
@@ -543,6 +559,86 @@ export class DatabaseStorage implements IStorage, IService {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUsersPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    role?: string;
+    companyId?: string;
+    isActive?: boolean;
+  }): Promise<{
+    users: User[];
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  }> {
+    const offset = (params.page - 1) * params.limit;
+    const { limit, search, role, companyId, isActive } = params;
+
+    // Build base query
+    let baseQuery = db.select().from(users);
+    let countQuery = db.select({ count: count() }).from(users);
+
+    const conditions = [];
+
+    // Add search filter
+    if (search) {
+      conditions.push(
+        or(
+          sql`${users.firstName} ILIKE ${`%${search}%`}`,
+          sql`${users.lastName} ILIKE ${`%${search}%`}`,
+          sql`${users.email} ILIKE ${`%${search}%`}`
+        )
+      );
+    }
+
+    // Add role filter
+    if (role) {
+      conditions.push(sql`${role} = ANY(${users.roles})`);
+    }
+
+    // Add company filter
+    if (companyId) {
+      conditions.push(eq(users.companyId, companyId));
+    }
+
+    // Add active status filter
+    if (isActive !== undefined) {
+      conditions.push(eq(users.isActive, isActive));
+    }
+
+    // Apply conditions if any
+    if (conditions.length > 0) {
+      const whereClause = and(...conditions);
+      baseQuery = baseQuery.where(whereClause);
+      countQuery = countQuery.where(whereClause);
+    }
+
+    // Get total count
+    const totalResult = await countQuery;
+    const total = Number(totalResult[0]?.count || 0);
+    const totalPages = Math.ceil(total / limit);
+
+    // Apply pagination and ordering
+    const userResults = await baseQuery
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(users.createdAt));
+
+    return {
+      users: userResults,
+      page: params.page,
+      limit: params.limit,
+      total,
+      totalPages,
+      hasNext: params.page < totalPages,
+      hasPrev: params.page > 1
+    };
   }
 
   async getFieldAgents(): Promise<User[]> {

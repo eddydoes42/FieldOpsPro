@@ -1,0 +1,28 @@
+Developer Handoff — Read Before Implementation
+Purpose:
+This document contains the full, authoritative specification for updating the FieldOps Pro frontend to a Stash‑style layout with the Poppins font, while preserving all existing features, navigation, and data displays exactly as they are now.
+It includes:
+- Structural and styling requirements
+- Wireframe for visual reference
+- Role‑based navigation mapping
+- Explicit preservation rules for dashboards, cards, and role‑specific features
+Non‑Negotiable Priorities:
+- Feature Parity — Every existing feature, card, widget, and data display must remain present and functional after the update. This includes role‑specific sections such as “The Things to Approve” for Dispatcher and above, heartbeat monitors, KPI summaries, and any other current dashboard elements.
+- Navigation Integrity — All routes, deep links, and role‑based access rules must remain exactly as they are now. The bottom navigation must pull from the same role‑specific menu configuration currently in use.
+- Data Fidelity — All dashboards must display the same data they do now, sourced from the same endpoints, with the same filters, sorting, and pagination.
+- Core DNA Preservation — Brand colors, iconography, and functional flows must remain unchanged. Only the layout structure and typography (Poppins) are being updated.
+Implementation Notes:
+- Treat the wireframe as a structural guide, not a feature list. If a feature exists in the current build but is not explicitly shown in the wireframe, it must still be carried over.
+- The role‑based navigation mapping table is the source of truth for bottom nav items per role.
+- The heartbeat monitor is role‑aware and must follow the scoping rules defined in the prompt.
+- All new components must be reusable and styled using the existing theme variables.
+Testing Expectations:
+- Verify feature parity for every role.
+- Confirm navigation matches current role‑based menus.
+- Ensure no console errors or warnings.
+- Test across Chrome, Firefox, Safari, and Edge.
+- Test at mobile, tablet, and desktop breakpoints.
+Final Note:
+This is not a redesign from scratch — it is a structural and stylistic modernization. The success criteria are:
+- The app looks and feels like the wireframe
+- The app functions exactly as it does today for every role

@@ -1,0 +1,156 @@
+IMPLEMENTATION PROMPT — “Stash‑Style Layout, FieldOps DNA, Poppins Font, Full Feature Preservation”
+
+OBJECTIVE:
+Refactor the frontend UI to adopt the structural layout patterns of Stash (search bar prominence, card grid layout, bottom navigation bar, consistent spacing/alignment) while retaining all FieldOps Pro core design DNA — including color palette, typography hierarchy (updated to Poppins), iconography, and all existing business logic. 
+All current navigation menus, dashboard cards, and data displays must be carried over exactly as they are now — no loss of features, routes, or role‑specific content.
+
+---
+
+1. PRESERVE CORE DNA
+- Keep all existing color variables, brand imagery, and typography hierarchy (only change font family to Poppins).
+- Maintain all current functionality — no changes to:
+  - Issue creation workflows
+  - Heartbeat monitor logic
+  - Authentication and RBAC
+  - API calls and data handling
+- Do not rename or remove existing component props, state variables, or event handlers.
+
+2. FONT UPDATE
+- Apply Poppins globally via theme or global CSS.
+- Maintain existing font sizes, weights, and hierarchy.
+- Ensure efficient loading (Google Fonts or local hosting).
+
+3. STASH‑LIKE STRUCTURE
+- Search Bar:
+  - Prominent placement at top of relevant screens.
+  - Rounded container, left‑aligned search icon, placeholder text, clear (“X”) button.
+  - Keep existing search logic intact.
+- Card Layout:
+  - Uniform card sizes, consistent padding, subtle shadows.
+  - Image/icon at top, title/subtitle below, actions at bottom.
+  - Responsive grid/flex layout.
+  - All existing cards and their data sources must be preserved exactly as they are now.
+- Spacing & Alignment:
+  - Consistent margins/padding between sections.
+  - Use grid/flexbox for alignment.
+
+4. ROLE‑AWARE BOTTOM NAVIGATION
+- Bottom navigation bar must reflect the current role’s existing navigation menu.
+- Pull menu items from the same source/config used for the current top/side navigation for that role.
+- Maintain all existing routes and permissions.
+- On mobile/tablet: fixed to bottom, touch‑friendly hit areas.
+- On desktop: hidden (retain current desktop navigation pattern).
+
+5. ROLE‑AWARE HEARTBEAT MONITOR
+- Admin Team Dashboards: Show “Company Heartbeat” — average heartbeat across all active projects in that company.
+- Operations Director Dashboard: Show “Global Heartbeat” — average heartbeat across all active projects for all companies.
+- Appear only on these dashboards; hidden elsewhere.
+- Keep heartbeat calculation logic intact; only scope and display rules change.
+- Thin horizontal bar below search bar, Poppins font, brand accent background.
+
+6. DASHBOARD & DATA DISPLAY PRESERVATION
+- All dashboards must display the same data, cards, and KPIs they do now.
+- Card layouts may be restyled to match the new card component, but data sources, queries, and logic must remain unchanged.
+- Preserve all role‑specific sections, including but not limited to:
+  - “The Things to Approve” for Dispatcher and above
+  - Any KPI summaries, alerts, or widgets currently visible per role
+- No loss of existing filters, sorting, or pagination.
+
+7. NAVIGATION INTEGRITY
+- All existing page navigations must remain intact.
+- All routes, deep links, and role‑based access rules must function exactly as before.
+- No changes to route names, parameters, or guards.
+
+8. COMPONENTIZATION
+- Create reusable components:
+  - <SearchBar> — accepts value, onChange, onClear.
+  - <Card> — accepts image, title, subtitle, actions.
+  - <BottomNav> — accepts array of { icon, label, route } from role‑specific menu config.
+  - <HeartbeatBar> — accepts label, percentage, projectCount.
+- Replace existing inline UI with these components where applicable.
+
+9. STYLING APPROACH
+- Use existing CSS variables/theme tokens for colors.
+- Apply new layout styles via CSS Modules, Tailwind, or styled‑components (consistent with current stack).
+- Avoid global overrides that could affect unrelated components.
+
+10. RESPONSIVENESS
+- Bottom nav: mobile/tablet only.
+- Search bar and cards: fluid scaling with viewport width.
+- Test breakpoints: mobile portrait, mobile landscape, tablet, desktop.
+
+11. TESTING & VERIFICATION
+- Verify:
+  - All features still function.
+  - Dashboards show correct data/cards.
+  - Navigation menus match role permissions.
+  - No console errors/warnings.
+  - Layout matches Stash’s structure but retains FieldOps Pro’s look.
+  - Poppins font applied consistently.
+- Cross‑browser test: Chrome, Firefox, Safari, Edge.
+
+---
+
+WIRE FRAME — STASH‑STYLE LAYOUT, FIELDOPS PRO DNA
+
+┌──────────────────────────────────────────────┐
+│ [Top App Bar / Search Area]                   │
+│ ┌──────────────────────────────────────────┐ │
+│ │ 🔍  Search...                      Ⓧ     │ │
+│ └──────────────────────────────────────────┘ │
+│ (Rounded corners, Poppins font, brand colors) │
+└──────────────────────────────────────────────┘
+
+[Heartbeat Monitor Bar — CONDITIONAL]
+───────────────────────────────────────────────
+ROLE: Admin Team Dashboard
+→ "Company Heartbeat: 92% | Avg from X active projects"
+ROLE: Operations Director Dashboard
+→ "Global Heartbeat: 88% | Avg from X active projects"
+───────────────────────────────────────────────
+
+[Main Content Area — Card Grid]
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ [Image/Icon]  │  │ [Image/Icon]  │  │ [Image/Icon]  │
+│ Title         │  │ Title         │  │ Title         │
+│ Subtitle/info │  │ Subtitle/info │  │ Subtitle/info │
+│ [Action Btns] │  │ [Action Btns] │  │ [Action Btns] │
+└───────────────┘  └───────────────┘  └───────────────┘
+(All existing cards/data preserved — only styling changes)
+
+[Bottom Navigation Bar — Mobile/Tablet Only]
+───────────────────────────────────────────────
+🏠 Home     📋 Tasks     ➕ Create     🔍 Search     ⚙ Settings
+(Role‑specific items pulled from existing nav config)
+───────────────────────────────────────────────
+
+---
+
+ROLE‑BASED NAVIGATION MAPPING TABLE
+
+| Role | Bottom Nav Items | Route / Path | Icon | Access Rule |
+|------|------------------|--------------|------|-------------|
+| Admin Team | Home | /dashboard | home | Role = Admin Team |
+|  | Projects | /projects | folder | Role = Admin Team |
+|  | Create Issue | /issues/create | plus-circle | Role = Admin Team |
+|  | Search | /search | search | Role = Admin Team |
+|  | Settings | /settings | settings | Role = Admin Team |
+| Operations Director | Home | /dashboard | home | Role = Operations Director |
+|  | Companies | /companies | building | Role = Operations Director |
+|  | Reports | /reports | bar-chart | Role = Operations Director |
+|  | Search | /search | search | Role = Operations Director |
+|  | Settings | /settings | settings | Role = Operations Director |
+| Field Technician | Home | /dashboard | home | Role = Field Technician |
+|  | My Jobs | /jobs | briefcase | Role = Field Technician |
+|  | Create Report | /reports/create | plus-circle | Role = Field Technician |
+|  | Search | /search | search | Role = Field Technician |
+|  | Profile | /profile | user | Role = Field Technician |
+| Client Company Manager | Home | /dashboard | home | Role = Client Company Manager |
+|  | Work Orders | /work-orders | clipboard-list | Role = Client Company Manager |
+|  | Create Work Order | /work-orders/create | plus-circle | Role = Client Company Manager |
+|  | Search | /search | search | Role = Client Company Manager |
+|  | Settings | /settings | settings | Role = Client Company Manager |
+
+---
+
+END OF PROMPT
