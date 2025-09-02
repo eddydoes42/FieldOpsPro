@@ -94,8 +94,8 @@ export function HeartbeatBar({
           />
         </div>
 
-        {/* Enhanced Mini EKG Display */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 p-2">
+        {/* Clean EKG Display */}
+        <div className="bg-black rounded-lg overflow-hidden mb-2 p-2 border border-green-500/30">
           <EKGWaveform
             bpm={75 + (percentage < 60 ? Math.random() * 40 : Math.random() * 20)}
             status={percentage >= 80 ? 'normal' : percentage >= 60 ? 'at_risk' : 'delayed'}
