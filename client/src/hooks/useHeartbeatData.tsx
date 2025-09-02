@@ -31,8 +31,11 @@ export function useHeartbeatData(): HeartbeatData | null {
     ["administrator", "manager", "project_manager", "dispatcher"].includes(role)
   );
 
-  // Don't show heartbeat for field agents or client users
-  const shouldShowHeartbeat = isOperationsDirector || isAdminTeam;
+  // Check user preferences for heartbeat toggle
+  const heartbeatEnabled = (user as any)?.preferences?.heartbeatEnabled ?? true;
+
+  // Don't show heartbeat for field agents, client users, or when disabled in settings
+  const shouldShowHeartbeat = (isOperationsDirector || isAdminTeam) && heartbeatEnabled;
 
   // Fetch project health summary - this gives us aggregated heartbeat data
   const { data: healthSummary } = useQuery<any>({

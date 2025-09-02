@@ -286,14 +286,15 @@ export function EKGWaveform({
   }, [bpm, severity, frequency]);
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative overflow-hidden ${className}`}>
       <canvas
         ref={canvasRef}
-        className="block rounded-md"
+        className="block rounded-md max-w-full"
         style={{ 
           width: `${width}px`, 
           height: `${height}px`,
-          backgroundColor: '#000000'
+          backgroundColor: '#000000',
+          maxWidth: '100%'
         }}
       />
     </div>
