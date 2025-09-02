@@ -376,13 +376,13 @@ export default function OperationsDirectorDashboard() {
           {/* Things to Approve */}
           <StashCard
             title={totalPendingApprovals.toString()}
-            subtitle="Things to Approve"
+            subtitle={<><span className="hidden sm:inline">Things to Approve</span><span className="sm:hidden">To Approve</span></>}
             icon={
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 w-16 h-12">
                 <div className="text-xs text-amber-700 dark:text-amber-300 font-medium mb-1">Pending</div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-amber-600 dark:text-amber-400">{accessRequests.length} Access</span>
-                  <span className="text-amber-600 dark:text-amber-400">{approvalRequests.filter(req => req.status === 'pending').length} Other</span>
+                  <span className="text-amber-600 dark:text-amber-400">{accessRequests.length} <span className="hidden sm:inline">Access</span><span className="sm:hidden">Acc</span></span>
+                  <span className="text-amber-600 dark:text-amber-400">{approvalRequests.filter(req => req.status === 'pending').length} <span className="hidden sm:inline">Other</span><span className="sm:hidden">Oth</span></span>
                 </div>
               </div>
             }
@@ -392,13 +392,13 @@ export default function OperationsDirectorDashboard() {
           />
           <StashCard
             title={(companies.length || 0).toString()}
-            subtitle="Total Companies"
+            subtitle={<><span className="hidden sm:inline">Total Companies</span><span className="sm:hidden">Companies</span></>}
             icon={
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 w-16 h-12">
                 <div className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">Types</div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-blue-600 dark:text-blue-400">{companies.filter(c => c.companyType === 'service_company').length} Service</span>
-                  <span className="text-blue-600 dark:text-blue-400">{companies.filter(c => c.companyType === 'client_company').length} Client</span>
+                  <span className="text-blue-600 dark:text-blue-400">{companies.filter(c => c.companyType === 'service_company').length} <span className="hidden sm:inline">Service</span><span className="sm:hidden">Svc</span></span>
+                  <span className="text-blue-600 dark:text-blue-400">{companies.filter(c => c.companyType === 'client_company').length} <span className="hidden sm:inline">Client</span><span className="sm:hidden">Cli</span></span>
                 </div>
               </div>
             }
@@ -409,13 +409,13 @@ export default function OperationsDirectorDashboard() {
 
           <StashCard
             title={(stats.totalAdmins || 0).toString()}
-            subtitle="Active Admins"
+            subtitle={<><span className="hidden sm:inline">Active Admins</span><span className="sm:hidden">Admins</span></>}
             icon={
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2 w-16 h-12">
                 <div className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">Roles</div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-green-600 dark:text-green-400">{recentUsers.filter(u => u.role === 'administrator').length} Admin</span>
-                  <span className="text-green-600 dark:text-green-400">{recentUsers.filter(u => u.role === 'manager').length} Mgr</span>
+                  <span className="text-green-600 dark:text-green-400">{recentUsers.filter(u => u.role === 'administrator').length} <span className="hidden sm:inline">Admin</span><span className="sm:hidden">Adm</span></span>
+                  <span className="text-green-600 dark:text-green-400">{recentUsers.filter(u => u.role === 'manager').length} <span className="hidden sm:inline">Mgr</span><span className="sm:hidden">Mgr</span></span>
                 </div>
               </div>
             }
@@ -425,13 +425,13 @@ export default function OperationsDirectorDashboard() {
           />
           <StashCard
             title={(stats.activeCompanies || 0).toString()}
-            subtitle="Active Companies"
+            subtitle={<><span className="hidden sm:inline">Active Companies</span><span className="sm:hidden">Active Co.</span></>}
             icon={
               <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-2 w-16 h-12">
                 <div className="text-xs text-purple-700 dark:text-purple-300 font-medium mb-1">Status</div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-purple-600 dark:text-purple-400">{companies.filter(c => c.isActive).length} Active</span>
-                  <span className="text-purple-600 dark:text-purple-400">{companies.filter(c => !c.isActive).length} Inactive</span>
+                  <span className="text-purple-600 dark:text-purple-400">{companies.filter(c => c.isActive).length} <span className="hidden sm:inline">Active</span><span className="sm:hidden">Act</span></span>
+                  <span className="text-purple-600 dark:text-purple-400">{companies.filter(c => !c.isActive).length} <span className="hidden sm:inline">Inactive</span><span className="sm:hidden">Inact</span></span>
                 </div>
               </div>
             }
@@ -442,7 +442,7 @@ export default function OperationsDirectorDashboard() {
 
           <StashCard
             title={(stats.recentSetups || 0).toString()}
-            subtitle="Recent Setups"
+            subtitle={<><span className="hidden sm:inline">Recent Setups</span><span className="sm:hidden">Setups</span></>}
             icon={
               <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-2 w-16 h-12">
                 <div className="text-xs text-orange-700 dark:text-orange-300 font-medium mb-1">Period</div>
@@ -467,7 +467,7 @@ export default function OperationsDirectorDashboard() {
 
           <StashCard
             title="Audit"
-            subtitle="System Trail"
+            subtitle={<><span className="hidden sm:inline">System Trail</span><span className="sm:hidden">Trail</span></>}
             icon={
               <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-2 w-16 h-12">
                 <div className="text-xs text-indigo-700 dark:text-indigo-300 font-medium mb-1">Events</div>
