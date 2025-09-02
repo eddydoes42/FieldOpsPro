@@ -61,7 +61,7 @@ export function SearchPopup({ open, onOpenChange }: SearchPopupProps) {
 
   // Filter and search logic
   const searchResults: SearchResult[] = React.useMemo(() => {
-    if (!workOrders || !debouncedQuery.trim()) {
+    if (!workOrders || !debouncedQuery.trim() || debouncedQuery.trim().length < 3) {
       return [];
     }
 
@@ -190,7 +190,13 @@ export function SearchPopup({ open, onOpenChange }: SearchPopupProps) {
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>Start typing to search work orders and projects</p>
-                <p className="text-sm">Search by name, description, location, or client company</p>
+                <p className="text-sm">Type at least 3 characters to begin searching</p>
+              </div>
+            ) : debouncedQuery.trim().length < 3 ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Type at least 3 characters to search</p>
+                <p className="text-sm">{3 - debouncedQuery.trim().length} more character{3 - debouncedQuery.trim().length === 1 ? '' : 's'} needed</p>
               </div>
             ) : isLoadingWorkOrders ? (
               <div className="space-y-3">
@@ -217,68 +223,65 @@ export function SearchPopup({ open, onOpenChange }: SearchPopupProps) {
                 </div>
                 
                 {searchResults.map((result) => (
-                  <Button
+                  <div
                     key={result.id}
-                    variant="ghost"
-                    className="w-full h-auto p-4 text-left justify-start hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
                     onClick={() => handleResultClick(result)}
                     data-testid={`search-result-${result.id}`}
                   >
-                    <div className="w-full space-y-2">
-                      {/* Header with title and type */}
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                    {/* Mini-card header */}
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
                           {highlightText(result.title, debouncedQuery)}
                         </h4>
-                        <div className="flex items-center gap-2">
-                          {result.priority && (
-                            <Badge variant="outline" className={cn("text-xs", getPriorityColor(result.priority))}>
-                              {result.priority}
-                            </Badge>
-                          )}
-                          <Badge variant="outline" className={cn("text-xs", getStatusColor(result.status))}>
-                            {result.status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      {result.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                          {highlightText(result.description, debouncedQuery)}
-                        </p>
-                      )}
-
-                      {/* Metadata */}
-                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                         {result.clientCompanyName && (
-                          <div className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
-                            <span>{highlightText(result.clientCompanyName, debouncedQuery)}</span>
-                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {highlightText(result.clientCompanyName, debouncedQuery)}
+                          </p>
                         )}
-                        
+                      </div>
+                      <div className="flex items-center gap-1 ml-2">
+                        {result.priority && (
+                          <Badge variant="outline" className={cn("text-xs px-1 py-0", getPriorityColor(result.priority))}>
+                            {result.priority.charAt(0).toUpperCase()}
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className={cn("text-xs px-1 py-0", getStatusColor(result.status))}>
+                          {result.status.replace(/_/g, " ").split(" ")[0]}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Description - limited */}
+                    {result.description && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 mb-2">
+                        {highlightText(result.description.substring(0, 60) + (result.description.length > 60 ? "..." : ""), debouncedQuery)}
+                      </p>
+                    )}
+
+                    {/* Compact metadata */}
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-3">
                         {result.location && (
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
-                            <span>{highlightText(result.location, debouncedQuery)}</span>
+                            <span className="truncate max-w-20">{highlightText(result.location, debouncedQuery)}</span>
                           </div>
                         )}
-                        
                         {result.assignedTo && (
                           <div className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            <span>{result.assignedTo}</span>
+                            <span className="truncate max-w-16">{result.assignedTo}</span>
                           </div>
                         )}
-                        
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{new Date(result.createdAt).toLocaleDateString()}</span>
-                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(result.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                       </div>
                     </div>
-                  </Button>
+                  </div>
                 ))}
               </div>
             )}
