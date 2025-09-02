@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useRoleNavigation } from "@/hooks/useRoleNavigation";
@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/ui/bottom-nav";
 import { HeartbeatBar } from "@/components/ui/heartbeat-bar";
 import { ProjectHeartbeatDialog } from "@/components/project-heartbeat-dialog";
 import { SearchPopup } from "@/components/search-popup";
+import { ThingsToApprovePopup } from "@/components/things-to-approve-popup";
 import { cn } from "@/lib/utils";
 
 interface StashLayoutProps {
@@ -39,6 +40,7 @@ export function StashLayout({
   const { user } = useAuth();
   const [showHeartbeatDialog, setShowHeartbeatDialog] = useState(false);
   const [showSearchPopup, setShowSearchPopup] = useState(false);
+  const [showThingsToApprove, setShowThingsToApprove] = useState(false);
   
   // Get unread messages count for bottom navigation badge
   const { data: messages = [] } = useQuery<any[]>({
@@ -62,6 +64,18 @@ export function StashLayout({
   const handleSearchClick = () => {
     setShowSearchPopup(true);
   };
+
+  // Listen for Things to Approve popup trigger
+  useEffect(() => {
+    const handleOpenThingsToApprove = () => {
+      setShowThingsToApprove(true);
+    };
+
+    window.addEventListener('openThingsToApprove', handleOpenThingsToApprove);
+    return () => {
+      window.removeEventListener('openThingsToApprove', handleOpenThingsToApprove);
+    };
+  }, []);
 
   // Transform navigation items to handle search popup
   const transformedNavigationItems = navigationItems.map(item => {
@@ -129,6 +143,12 @@ export function StashLayout({
       <SearchPopup
         open={showSearchPopup}
         onOpenChange={setShowSearchPopup}
+      />
+
+      {/* Things to Approve Popup */}
+      <ThingsToApprovePopup
+        open={showThingsToApprove}
+        onClose={() => setShowThingsToApprove(false)}
       />
     </div>
   );

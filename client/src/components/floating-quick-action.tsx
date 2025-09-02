@@ -31,7 +31,7 @@ export default function FloatingQuickAction() {
   return (
     <>
       {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-24 lg:bottom-6 right-6 z-50">
         <Button
           onClick={handleOpenMenu}
           className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary/90 p-0"

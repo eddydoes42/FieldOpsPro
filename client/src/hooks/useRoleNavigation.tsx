@@ -16,7 +16,8 @@ import {
   MessageSquare,
   Calendar,
   Wrench,
-  MapPin
+  MapPin,
+  CheckSquare
 } from "lucide-react";
 
 export interface NavItem {
@@ -25,6 +26,7 @@ export interface NavItem {
   route: string;
   badge?: number;
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 interface UseRoleNavigationProps {
@@ -42,7 +44,11 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
         return [
           { icon: Home, label: "Dashboard", route: "/operations-dashboard" },
           { icon: Building2, label: "Companies", route: "/operations/companies" },
-          { icon: BarChart3, label: "Reports", route: "/operations/reports" },
+          { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
+            // Will be handled by the component using this hook
+            const event = new CustomEvent('openThingsToApprove');
+            window.dispatchEvent(event);
+          }},
           { icon: Search, label: "Search", route: "/search" },
           { icon: Settings, label: "Settings", route: "/operations/settings" }
         ];
