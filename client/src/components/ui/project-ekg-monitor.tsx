@@ -122,99 +122,77 @@ export function ProjectEKGMonitor({
   const severity = getSeverity();
   const frequency = getFrequency();
 
+  // Get category label based on status
+  const getCategoryLabel = () => {
+    switch (ekgStatus) {
+      case 'normal': return 'Normal';
+      case 'at_risk': return 'At Risk';
+      case 'delayed': return 'Delayed';
+      case 'critical': return 'Critical';
+      default: return 'Normal';
+    }
+  };
+
   const content = (
     <Card className={cn(
-      "border-2 transition-all duration-200",
-      project.projectFailed && "border-red-500 dark:border-red-400",
-      onClick && "cursor-pointer hover:shadow-md",
+      "border border-gray-200 dark:border-gray-700 transition-all duration-200 bg-white dark:bg-gray-900",
+      project.projectFailed && "border-red-300 dark:border-red-600",
+      onClick && "cursor-pointer hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600",
       className
     )}>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {/* Header with project info */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                {project.workOrderTitle}
-              </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {project.companyName} • {project.healthScore}% Health
-              </p>
-            </div>
-            
-            {/* Status Badge */}
-            <Badge
-              variant="outline"
-              className={cn("flex items-center gap-1 ml-2", getStatusColor(project.projectStatus))}
-            >
-              {getStatusIcon(project.projectStatus)}
-              <span className="hidden sm:inline">
-                {project.projectStatus.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-              </span>
-            </Badge>
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          {/* Minimal Header */}
+          <div className="text-center">
+            <h4 className="font-semibold text-base text-gray-900 dark:text-gray-100 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              {project.workOrderTitle}
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              {project.companyName}
+            </p>
           </div>
 
-          {/* EKG Waveform */}
-          <div className="bg-black rounded-md overflow-hidden">
+          {/* BPM Display - Prominent */}
+          <div className="text-center space-y-2">
+            <div className="flex items-baseline justify-center gap-2">
+              <span className={cn(
+                "text-4xl font-bold",
+                ekgStatus === 'normal' ? "text-green-600 dark:text-green-400" :
+                ekgStatus === 'at_risk' ? "text-yellow-600 dark:text-yellow-400" :
+                ekgStatus === 'delayed' ? "text-orange-600 dark:text-orange-400" :
+                "text-red-600 dark:text-red-400"
+              )} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {project.currentBpm}
+              </span>
+              <span className="text-lg font-medium text-gray-600 dark:text-gray-400" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                BPM
+              </span>
+            </div>
+            
+            {/* Category Label */}
+            <div className={cn(
+              "inline-block px-3 py-1 rounded-full text-sm font-medium",
+              ekgStatus === 'normal' ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" :
+              ekgStatus === 'at_risk' ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300" :
+              ekgStatus === 'delayed' ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" :
+              "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+            )} style={{ fontFamily: 'Poppins, sans-serif' }}>
+              {getCategoryLabel()}
+            </div>
+          </div>
+
+          {/* Enhanced EKG Waveform */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
             <EKGWaveform
               bpm={project.currentBpm}
               status={ekgStatus}
               severity={severity}
               frequency={frequency}
-              width={320}
-              height={80}
+              width={340}
+              height={100}
               className="w-full"
             />
           </div>
-
-          {showDetails && (
-            <>
-              {/* Health Score Progress */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-gray-600 dark:text-gray-400">Health Score</span>
-                  <span className={cn("text-xs font-medium", getBpmColor(project.currentBpm))}>
-                    {project.currentBpm} BPM • {project.healthScore}%
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-300",
-                      project.healthScore >= 80 ? "bg-green-500" :
-                      project.healthScore >= 60 ? "bg-yellow-500" :
-                      project.healthScore >= 40 ? "bg-orange-500" : "bg-red-500"
-                    )}
-                    style={{ width: `${Math.max(5, project.healthScore)}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Additional Details */}
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>
-                    {new Date(project.lastActivity).toLocaleDateString()}
-                  </span>
-                </div>
-                {project.assignedTo && (
-                  <div className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
-                    <span className="truncate max-w-20">{project.assignedTo}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Escalation Warning */}
-              {project.escalationCount > 0 && (
-                <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-md px-2 py-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  <span>{project.escalationCount} escalation{project.escalationCount > 1 ? "s" : ""}</span>
-                </div>
-              )}
-            </>
-          )}
         </div>
       </CardContent>
     </Card>

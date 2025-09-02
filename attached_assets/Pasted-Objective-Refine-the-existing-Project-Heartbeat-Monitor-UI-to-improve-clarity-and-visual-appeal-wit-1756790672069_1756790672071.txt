@@ -1,0 +1,51 @@
+Objective:
+Refine the existing Project Heartbeat Monitor UI to improve clarity and visual appeal without altering its data source, refresh logic, backend integration, or role-based visibility rules. The updated design should display only the heartbeat (BPM) data and category, styled in a clean, minimal format, and use an EKG-style waveform for visual representation.
+
+Critical Safeguard:
+- Do NOT modify how or where the heartbeat data is pulled.
+- Do NOT change refresh intervals, data processing, or backend endpoints.
+- Do NOT alter any existing logic that determines which data is shown to which roles.
+- All changes must be purely presentational.
+
+Requirements:
+
+1. Data Display:
+   - Show only:
+       • Heartbeat value (BPM)
+       • Category/status label (e.g., Normal, At Risk, Delayed)
+   - Remove BrPM, SO, or any other unrelated metrics from the UI.
+
+2. Waveform Design:
+   - Replace the current waveform with a clean, continuous EKG-style trace similar to the provided reference.
+   - Use smooth P wave → QRS spike → T wave shapes for each beat.
+   - Sync waveform spikes to the actual BPM timing from the existing data feed.
+   - Ensure the waveform scrolls horizontally in real time.
+
+3. Styling:
+   - Match the minimal UI style shown in the provided reference:
+       • Poppins font
+       • Consistent spacing and alignment
+       • Subdued background with high-contrast text
+   - Use status-based waveform colors:
+       • Green = Normal
+       • Yellow = At Risk
+       • Red = Delayed
+   - Keep the background clean and uncluttered.
+
+4. Layout:
+   - Position BPM value prominently, with category label directly below or beside it.
+   - Place the waveform directly adjacent or beneath the BPM display for immediate correlation.
+   - Ensure responsive scaling for desktop and mobile.
+
+5. Performance:
+   - Optimize waveform rendering (Canvas or SVG) for smooth animation without frame drops.
+   - Ensure multiple heartbeat monitors can run simultaneously without performance degradation.
+
+6. Testing:
+   - Verify BPM value matches the incoming data feed exactly.
+   - Confirm waveform spikes align with BPM timing.
+   - Test all status colors and category labels.
+   - Check responsiveness and readability on various screen sizes.
+
+Deliverable:
+An updated Heartbeat Monitor UI that retains all existing functionality and data handling, but presents only BPM and category in a clean, minimal style with a smooth, real-time EKG waveform, improving readability and visual clarity.

@@ -135,24 +135,24 @@ export function EKGWaveform({
 
   // Drawing function
   const draw = useCallback((ctx: CanvasRenderingContext2D, time: number) => {
-    // Clear canvas
-    ctx.fillStyle = '#000000';
+    // Clear canvas with clean background
+    ctx.fillStyle = '#0F172A'; // Clean dark background
     ctx.fillRect(0, 0, width, height);
     
-    // Draw subtle grid lines
-    ctx.strokeStyle = getGridColor();
-    ctx.lineWidth = 0.5;
+    // Draw minimal grid lines (less prominent)
+    ctx.strokeStyle = '#1E293B40'; // Very subtle grid
+    ctx.lineWidth = 0.3;
     
-    // Horizontal grid lines
-    for (let y = 0; y <= height; y += 20) {
+    // Fewer horizontal grid lines
+    for (let y = height/4; y <= height; y += height/4) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
       ctx.stroke();
     }
     
-    // Vertical grid lines
-    for (let x = 0; x <= width; x += 20) {
+    // Fewer vertical grid lines  
+    for (let x = width/8; x <= width; x += width/8) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
@@ -174,11 +174,15 @@ export function EKGWaveform({
       lastBeatTimeRef.current = time;
     }
     
-    // Draw baseline (flatline when no beats)
+    // Draw baseline (flatline when no beats) with enhanced styling
     ctx.strokeStyle = getWaveformColor();
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    // Add subtle glow effect for better visibility
+    ctx.shadowColor = getWaveformColor();
+    ctx.shadowBlur = 3;
     
     if (waveformDataRef.current.length === 0) {
       // Draw baseline
@@ -199,12 +203,21 @@ export function EKGWaveform({
         }
       }
       
-      // Draw the waveform points
+      // Draw the waveform points with smooth curves
       waveformDataRef.current.forEach((point, index) => {
         if (index === 0) {
           ctx.moveTo(point.x, point.y);
         } else {
-          ctx.lineTo(point.x, point.y);
+          const prevPoint = waveformDataRef.current[index - 1];
+          const controlX = (prevPoint.x + point.x) / 2;
+          const controlY = (prevPoint.y + point.y) / 2;
+          
+          // Use quadratic curves for smoother transitions
+          if (Math.abs(point.y - prevPoint.y) < 5) {
+            ctx.lineTo(point.x, point.y);
+          } else {
+            ctx.quadraticCurveTo(controlX, prevPoint.y, point.x, point.y);
+          }
         }
       });
       
@@ -217,13 +230,15 @@ export function EKGWaveform({
       ctx.stroke();
     }
     
-    // Draw glow effect for critical status
+    // Enhanced glow effect for critical status
     if (status === 'critical') {
-      ctx.shadowColor = getWaveformColor();
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 8;
       ctx.stroke();
-      ctx.shadowBlur = 0;
     }
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
   }, [width, height, getWaveformColor, generateBeatPattern, shouldGenerateBeat, status]);
 
   // Optimized animation loop with throttling
@@ -307,16 +322,16 @@ export function EKGWaveform({
     <div className={`relative ${className}`}>
       <canvas
         ref={canvasRef}
-        className="block"
+        className="block rounded-md"
         style={{ 
           width: `${width}px`, 
           height: `${height}px`,
-          backgroundColor: '#000000'
+          backgroundColor: '#0F172A'
         }}
       />
-      {/* BPM indicator */}
-      <div className="absolute top-1 right-1 text-xs font-mono text-gray-300 bg-black/50 px-1 rounded">
-        {bpm} BPM
+      {/* Subtle BPM indicator - smaller and less prominent */}
+      <div className="absolute top-2 right-2 text-xs text-gray-400 bg-gray-900/70 px-2 py-1 rounded" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        {bpm}
       </div>
     </div>
   );
