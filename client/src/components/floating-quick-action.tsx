@@ -22,7 +22,7 @@ export default function FloatingQuickAction() {
   const handleOpenMenu = (event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
     setMenuPosition({
-      x: rect.left - 280, // Position menu to the left of the button
+      x: rect.right + 10, // Position menu to the right of the button
       y: rect.top - 300,  // Position menu above the button
     });
     setIsMenuOpen(true);
@@ -31,7 +31,7 @@ export default function FloatingQuickAction() {
   return (
     <>
       {/* Floating Action Button */}
-      <div className="fixed bottom-24 lg:bottom-6 right-6 z-50">
+      <div className="fixed bottom-24 lg:bottom-6 left-6 z-50">
         <Button
           onClick={handleOpenMenu}
           className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary/90 p-0"

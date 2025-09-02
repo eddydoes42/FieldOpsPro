@@ -371,67 +371,68 @@ export default function OperationsDirectorDashboard() {
 
 
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {/* Quick Stats - Compact Grid Layout */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
           {/* Things to Approve */}
           <StashCard
             title={totalPendingApprovals.toString()}
             subtitle="Things to Approve"
             icon={
               <div className="relative">
-                <FileText className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                 {totalPendingApprovals > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                    {totalPendingApprovals}
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                    {totalPendingApprovals > 9 ? '9+' : totalPendingApprovals}
                   </div>
                 )}
               </div>
             }
             onClick={() => setShowApprovalsDialog(true)}
-            variant={totalPendingApprovals > 0 ? "featured" : "default"}
+            variant={totalPendingApprovals > 0 ? "featured" : "compact"}
             testId="button-things-to-approve"
           />
           <StashCard
             title={(companies.length || 0).toString()}
             subtitle="Total Companies"
-            icon={<Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />}
+            icon={<Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />}
             onClick={() => setLocation('/operations/companies')}
             testId="card-total-companies"
+            variant="compact"
           />
 
           <StashCard
             title={(stats.totalAdmins || 0).toString()}
             subtitle="Active Admins"
-            icon={<Users className="h-8 w-8 text-green-600 dark:text-green-400" />}
+            icon={<Users className="h-6 w-6 text-green-600 dark:text-green-400" />}
             onClick={() => setLocation('/operations/active-admins')}
             testId="card-active-admins"
+            variant="compact"
           />
-        </div>
-
-        {/* Second Row of Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <StashCard
             title={(stats.activeCompanies || 0).toString()}
             subtitle="Active Companies"
-            icon={<Settings className="h-8 w-8 text-purple-600 dark:text-purple-400" />}
+            icon={<Settings className="h-6 w-6 text-purple-600 dark:text-purple-400" />}
             onClick={() => setLocation('/operations/companies?status=active')}
             testId="card-active-companies"
+            variant="compact"
           />
 
           <StashCard
             title={(stats.recentSetups || 0).toString()}
             subtitle="Recent Setups"
-            icon={<UserPlus className="h-8 w-8 text-orange-600 dark:text-orange-400" />}
+            icon={<UserPlus className="h-6 w-6 text-orange-600 dark:text-orange-400" />}
             onClick={() => setShowRecentSetupsDialog(true)}
             testId="card-recent-setups"
+            variant="compact"
           />
 
           <StashCard
             title="Audit"
             subtitle="System Trail"
-            icon={<Shield className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />}
+            icon={<Shield className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />}
             onClick={() => setLocation('/audit-logs')}
             testId="button-audit-logs"
+            variant="compact"
           />
         </div>
 
