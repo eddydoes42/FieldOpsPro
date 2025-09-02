@@ -50,88 +50,61 @@ export function EKGWaveform({
   // Get background grid color (subtle)
   const getGridColor = () => '#E5E7EB20'; // gray-200 with low opacity
 
-  // Generate EKG beat pattern (P wave, QRS complex, T wave)
+  // Generate simple baseline with occasional cardiac events
   const generateBeatPattern = useCallback((centerX: number, baselineY: number, amplitude: number = 1) => {
     const points: WaveformPoint[] = [];
     const time = Date.now();
     
-    // Apply severity variations to amplitude and timing
-    let ampVariation = 1;
-    let timingVariation = 0;
-    
-    if (severity === 'mild') {
-      ampVariation = 0.9 + Math.random() * 0.2; // ±10% amplitude variation
-      timingVariation = (Math.random() - 0.5) * 0.1; // ±5% timing variation
-    } else if (severity === 'moderate') {
-      ampVariation = 0.8 + Math.random() * 0.4; // ±20% amplitude variation
-      timingVariation = (Math.random() - 0.5) * 0.2; // ±10% timing variation
-    } else if (severity === 'severe') {
-      ampVariation = 0.6 + Math.random() * 0.8; // ±40% amplitude variation
-      timingVariation = (Math.random() - 0.5) * 0.3; // ±15% timing variation
+    // For normal status, just return baseline points
+    if (status === 'normal' && severity === 'none') {
+      points.push({ x: centerX - 30, y: baselineY, time });
+      points.push({ x: centerX + 30, y: baselineY, time });
+      return points;
     }
     
-    const finalAmplitude = amplitude * ampVariation;
-    const beatWidth = 50 + (timingVariation * 20);
+    // For cardiac events, create a simple spike based on severity
+    let spikeHeight = 0;
+    if (severity === 'mild') {
+      spikeHeight = amplitude * 15;
+    } else if (severity === 'moderate') {
+      spikeHeight = amplitude * 25;
+    } else if (severity === 'severe') {
+      spikeHeight = amplitude * 35;
+    }
     
-    // P wave (small upward deflection)
-    points.push({ x: centerX - beatWidth * 0.8, y: baselineY, time });
-    points.push({ x: centerX - beatWidth * 0.6, y: baselineY - finalAmplitude * 8, time });
-    points.push({ x: centerX - beatWidth * 0.4, y: baselineY, time });
-    
-    // QRS complex (sharp spike)
-    points.push({ x: centerX - beatWidth * 0.2, y: baselineY, time });
-    points.push({ x: centerX - beatWidth * 0.1, y: baselineY + finalAmplitude * 5, time }); // Q wave (small downward)
-    points.push({ x: centerX, y: baselineY - finalAmplitude * 40, time }); // R wave (large upward spike)
-    points.push({ x: centerX + beatWidth * 0.1, y: baselineY + finalAmplitude * 8, time }); // S wave (downward)
-    points.push({ x: centerX + beatWidth * 0.2, y: baselineY, time });
-    
-    // T wave (smaller upward deflection)
-    points.push({ x: centerX + beatWidth * 0.4, y: baselineY, time });
-    points.push({ x: centerX + beatWidth * 0.6, y: baselineY - finalAmplitude * 12, time });
-    points.push({ x: centerX + beatWidth * 0.8, y: baselineY, time });
+    // Simple cardiac event spike
+    points.push({ x: centerX - 20, y: baselineY, time });
+    points.push({ x: centerX - 10, y: baselineY - spikeHeight * 0.3, time });
+    points.push({ x: centerX, y: baselineY - spikeHeight, time }); // Main spike
+    points.push({ x: centerX + 10, y: baselineY - spikeHeight * 0.3, time });
+    points.push({ x: centerX + 20, y: baselineY, time });
     
     return points;
-  }, [severity]);
+  }, [severity, status]);
 
-  // Check if it's time for a beat based on severity and frequency
+  // Check if it's time for a cardiac event based on severity and frequency
   const shouldGenerateBeat = useCallback((currentTime: number) => {
     const timeSinceLastBeat = currentTime - lastBeatTimeRef.current;
-    let effectiveBeatInterval = beatInterval;
     
-    // Apply severity-based timing variations
-    if (severity === 'mild' && frequency === 'occasional') {
-      // 5% chance of premature beat (20% earlier)
-      if (Math.random() < 0.05 && timeSinceLastBeat > beatInterval * 0.8) {
-        return true;
-      }
-    } else if (severity === 'moderate') {
-      // Irregular spacing, occasional double beats
-      if (frequency === 'frequent') {
-        // 10% chance of double beat
-        if (Math.random() < 0.1 && timeSinceLastBeat > beatInterval * 0.6) {
-          return true;
-        }
-      }
-      // Variable interval ±25%
-      effectiveBeatInterval = beatInterval * (0.75 + Math.random() * 0.5);
-    } else if (severity === 'severe') {
-      // Frequent irregularities
-      if (frequency === 'frequent') {
-        // 15% chance of dropped beat (longer interval)
-        if (Math.random() < 0.15) {
-          effectiveBeatInterval = beatInterval * (1.5 + Math.random());
-        }
-        // 20% chance of premature beat
-        else if (Math.random() < 0.2 && timeSinceLastBeat > beatInterval * 0.5) {
-          return true;
-        }
-      }
-      // Highly variable interval ±50%
-      effectiveBeatInterval = beatInterval * (0.5 + Math.random());
+    // For normal status with no severity, only generate occasional baseline events
+    if (status === 'normal' && severity === 'none') {
+      // Very rare events for normal status (every 10-15 seconds)
+      return timeSinceLastBeat >= 10000 + (Math.random() * 5000);
     }
     
-    return timeSinceLastBeat >= effectiveBeatInterval;
-  }, [beatInterval, severity, frequency]);
+    // For cardiac events, generate based on severity and frequency
+    let eventInterval = beatInterval;
+    
+    if (severity === 'mild') {
+      eventInterval = frequency === 'occasional' ? 8000 : 5000; // 8s or 5s intervals
+    } else if (severity === 'moderate') {
+      eventInterval = frequency === 'occasional' ? 5000 : 3000; // 5s or 3s intervals
+    } else if (severity === 'severe') {
+      eventInterval = frequency === 'occasional' ? 3000 : 1500; // 3s or 1.5s intervals
+    }
+    
+    return timeSinceLastBeat >= eventInterval;
+  }, [beatInterval, severity, frequency, status]);
 
   // Drawing function
   const draw = useCallback((ctx: CanvasRenderingContext2D, time: number) => {
@@ -186,13 +159,14 @@ export function EKGWaveform({
     ctx.shadowColor = getWaveformColor();
     ctx.shadowBlur = 2;
     
-    if (waveformDataRef.current.length === 0) {
-      // Draw baseline
-      ctx.beginPath();
-      ctx.moveTo(0, baselineY);
-      ctx.lineTo(width, baselineY);
-      ctx.stroke();
-    } else {
+    // Always draw baseline first
+    ctx.beginPath();
+    ctx.moveTo(0, baselineY);
+    ctx.lineTo(width, baselineY);
+    ctx.stroke();
+    
+    // Then draw any cardiac events on top
+    if (waveformDataRef.current.length > 0) {
       // Draw waveform
       ctx.beginPath();
       
@@ -214,12 +188,6 @@ export function EKGWaveform({
           ctx.lineTo(point.x, point.y);
         }
       });
-      
-      // Continue baseline to right edge
-      const lastPoint = waveformDataRef.current[waveformDataRef.current.length - 1];
-      if (lastPoint && lastPoint.x < width) {
-        ctx.lineTo(width, baselineY);
-      }
       
       ctx.stroke();
     }

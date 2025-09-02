@@ -94,17 +94,38 @@ export function HeartbeatBar({
           />
         </div>
 
-        {/* Clean EKG Display */}
-        <div className="bg-black rounded-lg overflow-hidden mb-2 p-2 border border-green-500/30">
-          <EKGWaveform
-            bpm={75 + (percentage < 60 ? Math.random() * 40 : Math.random() * 20)}
-            status={percentage >= 80 ? 'normal' : percentage >= 60 ? 'at_risk' : 'delayed'}
-            severity={percentage >= 80 ? 'none' : percentage >= 60 ? 'mild' : percentage >= 40 ? 'moderate' : 'severe'}
-            frequency={percentage >= 60 ? 'occasional' : 'frequent'}
-            width={240}
-            height={50}
-            className="w-full max-w-xs mx-auto"
-          />
+        {/* Green BPM Monitor Display */}
+        <div className="bg-black rounded-lg border-2 border-green-500/50 p-3 mb-2">
+          <div className="bg-gradient-to-b from-green-400/10 to-green-600/10 rounded-lg p-3 border border-green-500/30">
+            <div className="flex items-center justify-between">
+              {/* BPM Value */}
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-mono font-bold text-green-400 tracking-wider" 
+                      style={{ 
+                        fontFamily: 'monospace', 
+                        textShadow: '0 0 10px #22c55e, 0 0 20px #22c55e'
+                      }}>
+                  {Math.round(50 + (percentage < 80 ? (80 - percentage) * 2 : 0)).toString().padStart(3, '0')}
+                </span>
+                <span className="text-sm font-semibold text-green-300" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  BPM
+                </span>
+              </div>
+              
+              {/* Simple Baseline Waveform */}
+              <div className="flex-1 ml-4">
+                <EKGWaveform
+                  bpm={50 + (percentage < 80 ? (80 - percentage) * 2 : 0)}
+                  status={percentage >= 80 ? 'normal' : percentage >= 60 ? 'at_risk' : 'delayed'}
+                  severity={percentage >= 80 ? 'none' : percentage >= 60 ? 'mild' : percentage >= 40 ? 'moderate' : 'severe'}
+                  frequency={percentage >= 60 ? 'occasional' : 'frequent'}
+                  width={160}
+                  height={40}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Additional context text */}
