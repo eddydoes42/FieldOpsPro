@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp, FileText, AlertTriangle, Shield } from "lucide-react";
+import { Building2, Users, UserPlus, Settings, DollarSign, User, ChevronDown, Clock, CheckCircle, XCircle, TrendingUp, FileText, AlertTriangle, Shield, Activity } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Navigation from "@/components/navigation";
 import RoleTester from "@/components/role-tester";
@@ -378,86 +378,87 @@ export default function OperationsDirectorDashboard() {
             title={totalPendingApprovals.toString()}
             subtitle={<><span className="hidden sm:inline">Things to Approve</span><span className="sm:hidden">To Approve</span></>}
             icon={
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 w-16 h-12 space-y-1">
-                {/* Access Requests Mini-Card */}
-                {accessRequests.length > 0 && (
-                  <div className="bg-orange-100 dark:bg-orange-900/40 border border-orange-300 dark:border-orange-700 rounded px-2 py-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-orange-700 dark:text-orange-300">Access</span>
-                      <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{accessRequests.length}</span>
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 w-20 h-16 overflow-hidden">
+                <div className="space-y-2">
+                  {/* Access Requests Mini-Card */}
+                  {accessRequests.length > 0 && accessRequests.slice(0, 1).map((request) => (
+                    <div key={request.id} className="bg-orange-100 dark:bg-orange-900/50 border border-orange-300 dark:border-orange-600 rounded px-2 py-1.5">
+                      <div className="text-xs font-semibold text-orange-800 dark:text-orange-200 mb-1">
+                        Access Request
+                      </div>
+                      <div className="text-xs text-orange-700 dark:text-orange-300 font-medium truncate">
+                        {request.firstName} {request.lastName}
+                      </div>
+                      <div className="text-xs text-orange-600 dark:text-orange-400 truncate">
+                        → {request.requestedRole}
+                      </div>
                     </div>
-                    <div className="text-xs text-orange-600 dark:text-orange-400 truncate">
-                      {accessRequests[0]?.requestedRole || 'New Users'}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Approval Requests Mini-Cards */}
-                {approvalRequests.filter(req => req.status === 'pending').slice(0, accessRequests.length > 0 ? 1 : 2).map((request, index) => {
-                  const getTypeStyle = (type: string) => {
-                    switch (type) {
-                      case 'user_deletion':
-                        return { 
-                          label: 'Deletion', 
-                          className: 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700',
-                          icon: '🗑️' 
-                        };
-                      case 'high_budget_work_order':
-                        return { 
-                          label: 'Budget WO', 
-                          className: 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700',
-                          icon: '💰' 
-                        };
-                      case 'high_budget_project':
-                        return { 
-                          label: 'Budget Proj', 
-                          className: 'bg-purple-100 dark:bg-purple-900/40 border-purple-300 dark:border-purple-700',
-                          icon: '📊' 
-                        };
-                      case 'issue_escalation':
-                        return { 
-                          label: 'Escalation', 
-                          className: 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700',
-                          icon: '⚠️' 
-                        };
-                      default:
-                        return { 
-                          label: 'General', 
-                          className: 'bg-gray-100 dark:bg-gray-900/40 border-gray-300 dark:border-gray-700',
-                          icon: '📝' 
-                        };
-                    }
-                  };
+                  ))}
                   
-                  const typeStyle = getTypeStyle(request.type);
-                  const priorityDotClass = request.priority === 'urgent' ? 'bg-red-500' : 
-                                          request.priority === 'high' ? 'bg-orange-500' : 'bg-gray-500';
-                  
-                  return (
-                    <div key={request.id} className={`${typeStyle.className} border rounded px-2 py-1`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{typeStyle.label}</span>
-                        <div className="flex items-center gap-1">
-                          {request.priority !== 'normal' && (
-                            <div className={`w-2 h-2 rounded-full ${priorityDotClass}`} title={request.priority}></div>
-                          )}
-                          <span className="text-xs">{typeStyle.icon}</span>
+                  {/* Approval Requests Mini-Card */}
+                  {approvalRequests.filter(req => req.status === 'pending').slice(0, 1).map((request) => {
+                    const getTypeStyle = (type: string) => {
+                      switch (type) {
+                        case 'user_deletion':
+                          return { 
+                            label: 'User Deletion', 
+                            icon: '🗑️', 
+                            className: 'bg-red-100 dark:bg-red-900/50 border-red-300 dark:border-red-600',
+                            textClassName: 'text-red-800 dark:text-red-200'
+                          };
+                        case 'high_budget_work_order':
+                          return { 
+                            label: 'Budget Approval', 
+                            icon: '💰', 
+                            className: 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-600',
+                            textClassName: 'text-blue-800 dark:text-blue-200'
+                          };
+                        case 'high_budget_project':
+                          return { 
+                            label: 'Project Budget', 
+                            icon: '📊', 
+                            className: 'bg-purple-100 dark:bg-purple-900/50 border-purple-300 dark:border-purple-600',
+                            textClassName: 'text-purple-800 dark:text-purple-200'
+                          };
+                        case 'issue_escalation':
+                          return { 
+                            label: 'Issue Escalation', 
+                            icon: '⚠️', 
+                            className: 'bg-red-100 dark:bg-red-900/50 border-red-300 dark:border-red-600',
+                            textClassName: 'text-red-800 dark:text-red-200'
+                          };
+                        default:
+                          return { 
+                            label: 'General Approval', 
+                            icon: '📝', 
+                            className: 'bg-gray-100 dark:bg-gray-900/50 border-gray-300 dark:border-gray-600',
+                            textClassName: 'text-gray-800 dark:text-gray-200'
+                          };
+                      }
+                    };
+                    
+                    const typeStyle = getTypeStyle(request.type);
+                    
+                    return (
+                      <div key={request.id} className={`${typeStyle.className} border rounded px-2 py-1.5`}>
+                        <div className={`text-xs font-semibold ${typeStyle.textClassName} mb-1`}>
+                          {typeStyle.label} {typeStyle.icon}
+                        </div>
+                        <div className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                          {request.budgetAmount ? `$${request.budgetAmount}` : 
+                           request.priority !== 'normal' ? `${request.priority} priority` : 'Pending review'}
                         </div>
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                        {request.budgetAmount ? `$${request.budgetAmount}` : 
-                         request.priority !== 'normal' ? request.priority : 'Pending'}
-                      </div>
+                    );
+                  })}
+                  
+                  {/* Count indicator if more items */}
+                  {(accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length) > 1 && (
+                    <div className="text-xs text-amber-700 dark:text-amber-300 text-center font-medium">
+                      +{(accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length) - 1} more
                     </div>
-                  );
-                })}
-                
-                {/* Summary if more items */}
-                {(accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length) > 2 && (
-                  <div className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                    +{(accessRequests.length + approvalRequests.filter(req => req.status === 'pending').length) - 2} more
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             }
             onClick={() => setShowApprovalsDialog(true)}
@@ -468,12 +469,8 @@ export default function OperationsDirectorDashboard() {
             title={(companies.length || 0).toString()}
             subtitle={<><span className="hidden sm:inline">Total Companies</span><span className="sm:hidden">Companies</span></>}
             icon={
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 w-16 h-12">
-                <div className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">Types</div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-blue-600 dark:text-blue-400">{companies.filter(c => c.companyType === 'service_company').length} <span className="hidden sm:inline">Service</span><span className="sm:hidden">Svc</span></span>
-                  <span className="text-blue-600 dark:text-blue-400">{companies.filter(c => c.companyType === 'client_company').length} <span className="hidden sm:inline">Client</span><span className="sm:hidden">Cli</span></span>
-                </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
+                <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
             }
             onClick={() => setLocation('/operations/companies')}
@@ -485,12 +482,8 @@ export default function OperationsDirectorDashboard() {
             title={(stats.totalAdmins || 0).toString()}
             subtitle={<><span className="hidden sm:inline">Active Admins</span><span className="sm:hidden">Admins</span></>}
             icon={
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2 w-16 h-12">
-                <div className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">Roles</div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-green-600 dark:text-green-400">{recentUsers.filter(u => u.role === 'administrator').length} <span className="hidden sm:inline">Admin</span><span className="sm:hidden">Adm</span></span>
-                  <span className="text-green-600 dark:text-green-400">{recentUsers.filter(u => u.role === 'manager').length} <span className="hidden sm:inline">Mgr</span><span className="sm:hidden">Mgr</span></span>
-                </div>
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
+                <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
             }
             onClick={() => setLocation('/operations/active-admins')}
@@ -501,12 +494,8 @@ export default function OperationsDirectorDashboard() {
             title={(stats.activeCompanies || 0).toString()}
             subtitle={<><span className="hidden sm:inline">Active Companies</span><span className="sm:hidden">Active Co.</span></>}
             icon={
-              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-2 w-16 h-12">
-                <div className="text-xs text-purple-700 dark:text-purple-300 font-medium mb-1">Status</div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-purple-600 dark:text-purple-400">{companies.filter(c => c.isActive).length} <span className="hidden sm:inline">Active</span><span className="sm:hidden">Act</span></span>
-                  <span className="text-purple-600 dark:text-purple-400">{companies.filter(c => !c.isActive).length} <span className="hidden sm:inline">Inactive</span><span className="sm:hidden">Inact</span></span>
-                </div>
+              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
+                <Activity className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               </div>
             }
             onClick={() => setLocation('/operations/companies?status=active')}
@@ -518,20 +507,8 @@ export default function OperationsDirectorDashboard() {
             title={(stats.recentSetups || 0).toString()}
             subtitle={<><span className="hidden sm:inline">Recent Setups</span><span className="sm:hidden">Setups</span></>}
             icon={
-              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-2 w-16 h-12">
-                <div className="text-xs text-orange-700 dark:text-orange-300 font-medium mb-1">Period</div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-orange-600 dark:text-orange-400">{recentUsers.filter(u => {
-                    const weekAgo = new Date();
-                    weekAgo.setDate(weekAgo.getDate() - 7);
-                    return new Date(u.createdAt) >= weekAgo;
-                  }).length} Week</span>
-                  <span className="text-orange-600 dark:text-orange-400">{recentUsers.filter(u => {
-                    const monthAgo = new Date();
-                    monthAgo.setDate(monthAgo.getDate() - 30);
-                    return new Date(u.createdAt) >= monthAgo;
-                  }).length} Month</span>
-                </div>
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
+                <UserPlus className="h-8 w-8 text-orange-600 dark:text-orange-400" />
               </div>
             }
             onClick={() => setShowRecentSetupsDialog(true)}
@@ -543,12 +520,8 @@ export default function OperationsDirectorDashboard() {
             title="Audit"
             subtitle={<><span className="hidden sm:inline">System Trail</span><span className="sm:hidden">Trail</span></>}
             icon={
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-2 w-16 h-12">
-                <div className="text-xs text-indigo-700 dark:text-indigo-300 font-medium mb-1">Events</div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-indigo-600 dark:text-indigo-400">Security</span>
-                  <span className="text-indigo-600 dark:text-indigo-400">Access</span>
-                </div>
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
+                <Shield className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
               </div>
             }
             onClick={() => setLocation('/audit-logs')}

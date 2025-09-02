@@ -1,0 +1,78 @@
+Objective:
+Implement the following new features into the existing application while preserving all current functionality, data flows, and integrations. Conduct a full audit to identify and fix any potential issues that could impact stability, performance, or user experience. All changes must be backward-compatible and must not disrupt existing workflows.
+
+Critical Safeguards:
+- Do NOT remove or alter existing working features unless explicitly required for compatibility.
+- Maintain all current data sources, refresh logic, and backend integrations unless a bug fix is necessary.
+- Ensure all new features follow the existing role-based permissions and security model.
+
+---
+
+Feature 1 — Biometric Login (for applicable devices/users):
+- Implement biometric authentication (fingerprint, face recognition, or platform equivalent) for supported devices.
+- Integrate with existing login/session management so biometrics supplement, not replace, username/password.
+- Allow users to enable/disable biometric login in their account settings.
+- Ensure fallback to standard login if biometric authentication fails or is unavailable.
+- Follow platform-specific best practices (e.g., BiometricPrompt API for Android, Face ID/Touch ID for iOS, Windows Hello for desktop).
+
+Feature 2 — Payment Service & Information Handling:
+- Administrators can set up payment information for their company.
+- Individual users can set up their own preferred payment method.
+- Payment flow:
+    1. Client Company pays for a completed and approved work order/project.
+    2. Payment appears in the Service Company Administrator’s “Approved Payments” section (accessible via bottom navigation).
+    3. Administrator selects recipient user and amount to send.
+    4. Funds sent to user’s “Approved Payments” section; remaining funds stay with Administrator for withdrawal or reallocation.
+    5. Users can withdraw funds to their preferred payment method.
+- Ensure secure storage and handling of payment data (PCI compliance where applicable).
+- Maintain full transaction history and audit logs.
+
+Feature 3 — Expense Orders & Reporting:
+- Expense Orders can be created within a work order or project by either the Client or Service Company associated with it.
+- Fields: Expense type (materials, tools, travel, scope change), date, amount, who covers cost (Client or Service).
+- Budget adjustments:
+    • If Client covers: add amount to budget; “Withdraw Early” subtracts that amount and sends it to assigned user’s Approved Payments.
+    • If Service covers: budget unchanged unless “Withdraw Early” is used, in which case subtract from budget and send to assigned user’s Approved Payments.
+- File uploads: allow attaching receipts, photos, or documents.
+- Approval workflow:
+    • If created by non-admin: requires approval by Manager+ in same company before appearing on work order/project card.
+    • If created by admin: auto-approved.
+- Display:
+    • Mini-card on work order/project card showing EO label, amount, and payer.
+    • Clicking mini-card opens full details + “Withdraw Early” option.
+- Expense Reporting:
+    • Admin+ dashboard section “Expense Reports” with card linking to /expenses.
+    • /expenses shows all expenses with positive/negative annotation (positive = covered by other company, negative = covered by own company).
+    • Include overall expense summary (total spent vs. received).
+
+Feature 4 — “Remember Me” / “Remember This Device”:
+- Add optional checkbox on login screen to remember device for faster login.
+- Store secure token locally (encrypted) to allow bypassing full credential entry on subsequent logins.
+- Respect session expiration and allow users to revoke remembered devices from account settings.
+- Ensure compatibility with biometric login (if both enabled, biometric prompt can appear without full credential entry).
+
+---
+
+Full App Functionality Audit & Fixes:
+- Review all major workflows (login, navigation, role-based access, data fetching, form submissions, payments, approvals, notifications).
+- Identify and fix:
+    • Broken or inconsistent UI components.
+    • API calls returning errors or inconsistent data.
+    • Role-based permission mismatches.
+    • Performance bottlenecks in high-traffic areas.
+    • Missing/null data handling that could cause crashes.
+- Ensure all new features integrate seamlessly with existing navigation, permissions, and data models.
+- Run regression tests to confirm no existing features are broken.
+
+---
+
+Testing & Verification:
+- Test all new features for all applicable roles (Admin, Manager, Field User, Client, Service).
+- Verify payment flows end-to-end with test data.
+- Verify expense order creation, approval, budget adjustment, and reporting.
+- Test biometric login and “remember me” on supported devices.
+- Confirm all security and compliance requirements are met.
+- Validate responsiveness and performance on desktop and mobile.
+
+Deliverable:
+A fully functional application with biometric login, enhanced payment handling, expense orders/reporting, and “remember me” login, plus a completed functionality audit with all identified issues resolved, ensuring stability, security, and a consistent user experience.
