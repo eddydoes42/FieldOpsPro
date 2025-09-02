@@ -1916,6 +1916,157 @@ export function getPrimaryRole(user: User | null): string {
   return 'field_agent';
 }
 
+// ============================================================
+// Company-Type-Aware Role Map & Utilities
+// ============================================================
+// Purpose:
+//  - Enforce valid role assignments per company type
+//  - Preserve all existing role utility behavior & OD bypass
+//  - Integrate seamlessly with Role Testing
+//  - Prevent invalid role/company type combinations in both
+//    live usage and simulated Role Testing
+// ============================================================
+
+/**
+ * Allowed roles per company type
+ * Based on system analysis - client companies don't have field roles
+ */
+export const allowedRolesByCompanyType: Record<'service' | 'client', string[]> = {
+  service: [
+    'administrator',
+    'project_manager',
+    'manager',
+    'dispatcher',
+    'field_engineer',
+    'field_agent'
+  ],
+  client: [
+    'client_company_admin',
+    'project_manager',
+    'manager',
+    'dispatcher'
+  ]
+};
+
+/**
+ * Check if a role is valid for a given company type
+ */
+export function isRoleAllowedForCompanyType(
+  companyType: 'service' | 'client',
+  role: string
+): boolean {
+  return allowedRolesByCompanyType[companyType]?.includes(role) ?? false;
+}
+
+/**
+ * Company-type-aware version of hasRole
+ * Preserves OD bypass and existing logic
+ * Note: Requires company information to be provided or populated on user
+ */
+export function hasRoleForCompany(user: User | null, role: string, companyType?: 'service' | 'client'): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  // Get company type from parameter, user company relation, or infer from role
+  let resolvedCompanyType = companyType;
+  if (!resolvedCompanyType && (user as any).company?.type) {
+    resolvedCompanyType = (user as any).company.type as 'service' | 'client';
+  }
+  if (!resolvedCompanyType) {
+    // Fallback: infer from role type if no company info available
+    if (role === 'client_company_admin') {
+      resolvedCompanyType = 'client';
+    } else if (['field_agent', 'field_engineer'].includes(role)) {
+      resolvedCompanyType = 'service';
+    }
+  }
+  
+  if (!resolvedCompanyType) return false;
+
+  return user.roles.includes(role) && isRoleAllowedForCompanyType(resolvedCompanyType, role);
+}
+
+/**
+ * Company-type-aware version of hasAnyRole
+ * Preserves OD bypass and existing logic
+ * Note: Requires company information to be provided or populated on user
+ */
+export function hasAnyRoleForCompany(user: User | null, roles: string[], companyType?: 'service' | 'client'): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  // Get company type from parameter, user company relation, or infer from roles
+  let resolvedCompanyType = companyType;
+  if (!resolvedCompanyType && (user as any).company?.type) {
+    resolvedCompanyType = (user as any).company.type as 'service' | 'client';
+  }
+  if (!resolvedCompanyType) {
+    // Fallback: infer from role types if no company info available
+    if (roles.includes('client_company_admin')) {
+      resolvedCompanyType = 'client';
+    } else if (roles.some(r => ['field_agent', 'field_engineer'].includes(r))) {
+      resolvedCompanyType = 'service';
+    }
+  }
+  
+  if (!resolvedCompanyType) return false;
+
+  return roles.some(r => user.roles.includes(r) && isRoleAllowedForCompanyType(resolvedCompanyType, r));
+}
+
+/**
+ * Company-type-aware Role Testing validator
+ * Prevents simulating invalid role/company type combos
+ */
+export function isValidTestRoleForCompanyType(
+  testingRole: string,
+  testingCompanyType: 'service' | 'client'
+): boolean {
+  return isRoleAllowedForCompanyType(testingCompanyType, testingRole);
+}
+
+/**
+ * Company-type-aware versions of existing role utility functions
+ * These preserve Operations Director bypass while enforcing company type restrictions
+ */
+export function isAdminForCompany(user: User | null, companyType?: 'service' | 'client'): boolean {
+  if (hasOperationsDirectorBypass(user)) return true;
+  return hasRoleForCompany(user, 'administrator', companyType);
+}
+
+export function isManagerForCompany(user: User | null, companyType?: 'service' | 'client'): boolean {
+  if (hasOperationsDirectorBypass(user)) return true;
+  return hasRoleForCompany(user, 'manager', companyType);
+}
+
+export function isDispatcherForCompany(user: User | null, companyType?: 'service' | 'client'): boolean {
+  if (hasOperationsDirectorBypass(user)) return true;
+  return hasRoleForCompany(user, 'dispatcher', companyType);
+}
+
+export function isFieldAgentForCompany(user: User | null, companyType?: 'service' | 'client'): boolean {
+  if (hasOperationsDirectorBypass(user)) return true;
+  // Field agents can only exist in service companies
+  return hasRoleForCompany(user, 'field_agent', companyType || 'service');
+}
+
+export function isFieldEngineerForCompany(user: User | null, companyType?: 'service' | 'client'): boolean {
+  if (hasOperationsDirectorBypass(user)) return true;
+  // Field engineers can only exist in service companies
+  return hasRoleForCompany(user, 'field_engineer', companyType || 'service');
+}
+
+export function isFieldLevelForCompany(user: User | null, companyType?: 'service' | 'client'): boolean {
+  if (hasOperationsDirectorBypass(user)) return true;
+  // Field roles can only exist in service companies
+  return hasAnyRoleForCompany(user, ['field_agent', 'field_engineer'], companyType || 'service');
+}
+
+export function isClientCompanyAdmin(user: User | null): boolean {
+  if (hasOperationsDirectorBypass(user)) return true;
+  return hasRoleForCompany(user, 'client_company_admin', 'client');
+}
+
 // Admin Team and Chief Team utility functions
 export function isAdminTeam(user: User | null): boolean {
   // Operations Director bypass - can perform any action when not in role testing mode

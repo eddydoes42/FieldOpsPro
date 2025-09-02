@@ -53,7 +53,8 @@ export default function ProjectManagerDashboard() {
             className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
           >
             <option value="">Select a Role</option>
-            <option value="administrator">Administrator</option>
+            <option value="client_company_admin">Client Admin</option>
+            <option value="project_manager">Project Manager</option>
             <option value="manager">Manager</option>
             <option value="dispatcher">Dispatcher</option>
           </select>
