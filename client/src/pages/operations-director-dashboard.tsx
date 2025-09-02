@@ -18,6 +18,9 @@ import { formatCurrency, formatBudget } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StashLayout } from "@/components/layout/stash-layout";
+import { StashCard } from "@/components/ui/stash-card";
+import { useHeartbeatData } from "@/hooks/useHeartbeatData";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -267,19 +270,42 @@ export default function OperationsDirectorDashboard() {
     window.location.href = '/operations-dashboard';
   };
 
+  // Get heartbeat data for the monitor
+  const heartbeatData = useHeartbeatData();
+
+  // Search functionality
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    // TODO: Implement search filtering logic for companies, users, work orders
+  };
+
+  const handleSearchClear = () => {
+    setSearchQuery("");
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      
+    <>
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-center items-center mb-4">
-            <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
-              Dashboard
-            </h1>
-          </div>
+      <StashLayout
+        showSearch={true}
+        showHeartbeat={!!heartbeatData}
+        searchValue={searchQuery}
+        onSearchChange={handleSearchChange}
+        onSearchClear={handleSearchClear}
+        searchPlaceholder="Search companies, users, work orders..."
+        heartbeatData={heartbeatData || undefined}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex justify-center items-center mb-6">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                Operations Dashboard
+              </h1>
+            </div>
           
           {/* Budget & Service Fee Indicators */}
           <div className="flex justify-end space-x-4">
@@ -350,120 +376,67 @@ export default function OperationsDirectorDashboard() {
 
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Things to Approve Button */}
-          <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors relative"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* Things to Approve */}
+          <StashCard
+            title={totalPendingApprovals.toString()}
+            subtitle="Things to Approve"
+            icon={
+              <div className="relative">
+                <FileText className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                {totalPendingApprovals > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                    {totalPendingApprovals}
+                  </div>
+                )}
+              </div>
+            }
             onClick={() => setShowApprovalsDialog(true)}
-            data-testid="button-things-to-approve"
-          >
-            <CardContent className="p-4 h-32 flex flex-col justify-between overflow-hidden">
-              <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                <div className="relative mb-2">
-                  <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                  {totalPendingApprovals > 0 && (
-                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                      {totalPendingApprovals}
-                    </div>
-                  )}
-                </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {totalPendingApprovals}
-                </p>
-              </div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center leading-tight px-1 break-words">
-                Things to Approve
-              </p>
-            </CardContent>
-          </Card>
-          <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            variant={totalPendingApprovals > 0 ? "featured" : "default"}
+            testId="button-things-to-approve"
+          />
+          <StashCard
+            title={(companies.length || 0).toString()}
+            subtitle="Total Companies"
+            icon={<Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />}
             onClick={() => setLocation('/operations/companies')}
-          >
-            <CardContent className="p-4 h-32 flex flex-col justify-between overflow-hidden">
-              <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400 mb-2" />
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {companies.length || 0}
-                </p>
-              </div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center leading-tight px-1 break-words">
-                Total Companies
-              </p>
-            </CardContent>
-          </Card>
+            testId="card-total-companies"
+          />
 
-          <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          <StashCard
+            title={(stats.totalAdmins || 0).toString()}
+            subtitle="Active Admins"
+            icon={<Users className="h-8 w-8 text-green-600 dark:text-green-400" />}
             onClick={() => setLocation('/operations/active-admins')}
-          >
-            <CardContent className="p-4 h-32 flex flex-col justify-between overflow-hidden">
-              <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                <Users className="h-6 w-6 text-green-600 dark:text-green-400 mb-2" />
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {stats.totalAdmins || 0}
-                </p>
-              </div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center leading-tight px-1 break-words">
-                Active Admins
-              </p>
-            </CardContent>
-          </Card>
+            testId="card-active-admins"
+          />
         </div>
 
         {/* Second Row of Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <StashCard
+            title={(stats.activeCompanies || 0).toString()}
+            subtitle="Active Companies"
+            icon={<Settings className="h-8 w-8 text-purple-600 dark:text-purple-400" />}
             onClick={() => setLocation('/operations/companies?status=active')}
-          >
-            <CardContent className="p-4 h-32 flex flex-col justify-between overflow-hidden">
-              <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                <Settings className="h-6 w-6 text-purple-600 dark:text-purple-400 mb-2" />
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {stats.activeCompanies || 0}
-                </p>
-              </div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center leading-tight px-1 break-words">
-                Active Companies
-              </p>
-            </CardContent>
-          </Card>
+            testId="card-active-companies"
+          />
 
-          <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          <StashCard
+            title={(stats.recentSetups || 0).toString()}
+            subtitle="Recent Setups"
+            icon={<UserPlus className="h-8 w-8 text-orange-600 dark:text-orange-400" />}
             onClick={() => setShowRecentSetupsDialog(true)}
-          >
-            <CardContent className="p-4 h-32 flex flex-col justify-between overflow-hidden">
-              <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                <UserPlus className="h-6 w-6 text-orange-600 dark:text-orange-400 mb-2" />
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {stats.recentSetups || 0}
-                </p>
-              </div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center leading-tight px-1 break-words">
-                Recent Setups
-              </p>
-            </CardContent>
-          </Card>
+            testId="card-recent-setups"
+          />
 
-          <Card 
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          <StashCard
+            title="Audit"
+            subtitle="System Trail"
+            icon={<Shield className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />}
             onClick={() => setLocation('/audit-logs')}
-            data-testid="button-audit-logs"
-          >
-            <CardContent className="p-4 h-32 flex flex-col justify-between overflow-hidden">
-              <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                <Shield className="h-6 w-6 text-indigo-600 dark:text-indigo-400 mb-2" />
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  Audit
-                </p>
-              </div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center leading-tight px-1 break-words">
-                System Trail
-              </p>
-            </CardContent>
-          </Card>
+            testId="button-audit-logs"
+          />
         </div>
 
         {/* Things to Approve Dialog */}
@@ -798,7 +771,8 @@ export default function OperationsDirectorDashboard() {
             }}
           />
         )}
-      </div>
-    </div>
+        </div>
+      </StashLayout>
+    </>
   );
 }

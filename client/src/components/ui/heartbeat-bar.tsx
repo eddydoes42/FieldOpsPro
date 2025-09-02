@@ -1,0 +1,111 @@
+import { Activity, TrendingUp, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface HeartbeatBarProps {
+  label: string;
+  percentage: number;
+  projectCount?: number;
+  className?: string;
+  variant?: "company" | "global";
+  trend?: "up" | "down" | "stable";
+  showTrend?: boolean;
+}
+
+export function HeartbeatBar({
+  label,
+  percentage,
+  projectCount,
+  className,
+  variant = "company",
+  trend = "stable",
+  showTrend = true,
+}: HeartbeatBarProps) {
+  const getPercentageColor = (percent: number) => {
+    if (percent >= 90) return "text-green-600 dark:text-green-400";
+    if (percent >= 75) return "text-yellow-600 dark:text-yellow-400";
+    if (percent >= 60) return "text-orange-600 dark:text-orange-400";
+    return "text-red-600 dark:text-red-400";
+  };
+
+  const getBarColor = (percent: number) => {
+    if (percent >= 90) return "bg-green-500";
+    if (percent >= 75) return "bg-yellow-500";
+    if (percent >= 60) return "bg-orange-500";
+    return "bg-red-500";
+  };
+
+  const getTrendIcon = () => {
+    switch (trend) {
+      case "up":
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case "down":
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "w-full bg-white dark:bg-gray-800",
+        "border-b border-gray-200 dark:border-gray-700",
+        "px-4 py-3",
+        className
+      )}
+      data-testid="heartbeat-bar"
+    >
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-2">
+          {/* Left side: Label and activity icon */}
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary dark:text-primary-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {label}
+            </span>
+            {variant === "global" && (
+              <span className="text-xs bg-primary/20 text-primary dark:text-primary-400 px-2 py-1 rounded-full">
+                Global
+              </span>
+            )}
+          </div>
+
+          {/* Right side: Percentage and project count */}
+          <div className="flex items-center gap-3">
+            {projectCount !== undefined && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {projectCount} {projectCount === 1 ? 'project' : 'projects'}
+              </span>
+            )}
+            
+            <div className="flex items-center gap-1">
+              <span className={cn("text-lg font-bold", getPercentageColor(percentage))}>
+                {Math.round(percentage)}%
+              </span>
+              {showTrend && getTrendIcon()}
+            </div>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-300 ease-out",
+              getBarColor(percentage)
+            )}
+            style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+          />
+        </div>
+
+        {/* Additional context text */}
+        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {variant === "global" 
+            ? "Average health across all companies and projects"
+            : "Average health across company projects"
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
