@@ -66,6 +66,7 @@ export default function Settings() {
 
   // Settings state
   const [heartbeatEnabled, setHeartbeatEnabled] = useState(true);
+  const [originalHeartbeatEnabled, setOriginalHeartbeatEnabled] = useState(true);
 
   // Update contact information mutation
   const updateContactMutation = useMutation({
@@ -115,6 +116,28 @@ export default function Settings() {
     },
   });
 
+  // Update preferences mutation
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const userId = (user as any)?.id;
+      return apiRequest(`/api/users/${userId}/preferences`, 'PATCH', data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Preferences Updated",
+        description: "Your preferences have been successfully saved.",
+      });
+      setOriginalHeartbeatEnabled(heartbeatEnabled);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to update preferences. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateContactMutation.mutate(contactForm);
@@ -147,9 +170,18 @@ export default function Settings() {
     });
   };
 
+  const handlePreferencesSubmit = () => {
+    updatePreferencesMutation.mutate({
+      heartbeatEnabled
+    });
+  };
+
   const handleLogout = () => {
     window.location.href = "/api/logout";
   };
+
+  // Check if preferences have changed
+  const preferencesChanged = heartbeatEnabled !== originalHeartbeatEnabled;
 
   return (
     <StashLayout 
@@ -344,6 +376,18 @@ export default function Settings() {
                       onCheckedChange={setHeartbeatEnabled}
                     />
                   </div>
+                  {preferencesChanged && (
+                    <div className="pt-4 border-t">
+                      <Button 
+                        onClick={handlePreferencesSubmit}
+                        disabled={updatePreferencesMutation.isPending}
+                        className="flex items-center gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Preferences'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
