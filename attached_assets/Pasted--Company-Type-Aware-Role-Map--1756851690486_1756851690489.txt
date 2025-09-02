@@ -1,0 +1,82 @@
+/**
+ * ============================================================
+ * Company-Type-Aware Role Map & Utilities
+ * ============================================================
+ * Purpose:
+ *  - Enforce valid role assignments per company type
+ *  - Preserve all existing role utility behavior & OD bypass
+ *  - Integrate seamlessly with Role Testing
+ *  - Prevent invalid role/company type combinations in both
+ *    live usage and simulated Role Testing
+ * ============================================================
+ */
+
+/**
+ * Allowed roles per company type
+ * Adjust role names here if your seeded data differs
+ */
+export const allowedRolesByCompanyType: Record<'service' | 'client', string[]> = {
+  service: [
+    'administrator',
+    'project_manager',
+    'manager',
+    'dispatcher',
+    'field_engineer',
+    'field_agent'
+  ],
+  client: [
+    'client_company_admin', // or 'administrator' if that's your actual client admin role
+    'project_manager',
+    'manager',
+    'dispatcher'
+  ]
+};
+
+/**
+ * Check if a role is valid for a given company type
+ */
+export function isRoleAllowedForCompanyType(
+  companyType: 'service' | 'client',
+  role: string
+): boolean {
+  return allowedRolesByCompanyType[companyType]?.includes(role) ?? false;
+}
+
+/**
+ * Company-type-aware version of hasRole
+ * Preserves OD bypass and existing logic
+ */
+export function hasRoleForCompany(user: User | null, role: string): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  const companyType = user.company?.type as 'service' | 'client' | undefined;
+  if (!companyType) return false;
+
+  return user.roles.includes(role) && isRoleAllowedForCompanyType(companyType, role);
+}
+
+/**
+ * Company-type-aware version of hasAnyRole
+ * Preserves OD bypass and existing logic
+ */
+export function hasAnyRoleForCompany(user: User | null, roles: string[]): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  const companyType = user.company?.type as 'service' | 'client' | undefined;
+  if (!companyType) return false;
+
+  return roles.some(r => user.roles.includes(r) && isRoleAllowedForCompanyType(companyType, r));
+}
+
+/**
+ * Optional: Company-type-aware Role Testing validator
+ * Prevents simulating invalid role/company type combos
+ */
+export function isValidTestRoleForCompanyType(
+  testingRole: string,
+  testingCompanyType: 'service' | 'client'
+): boolean {
+  return isRoleAllowedForCompanyType(testingCompanyType, testingRole);
+}
