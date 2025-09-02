@@ -1,0 +1,69 @@
+Note on terminology:
+The existing Role Testing feature is currently referred to in code and/or UI as "Role Impersonation."  
+For clarity and consistency, we are now renaming this feature to "Role Simulator."  
+All references in UI text, comments, and documentation should be updated to "Role Simulator," but the underlying functionality should remain intact and be modified/refactored as described below.
+
+Objective:
+Modify and refactor the existing Role Simulator (formerly Role Impersonation) feature for the Operations Director (OD) to ensure it works reliably, applies the correct simulated role permissions, and allows switching or stopping simulation at any time — without replacing or re‑implementing the feature from scratch.
+
+Critical Safeguards:
+- Keep all existing Role Simulator functionality, UI, and data handling intact unless fixing a bug.
+- Do not remove or overwrite working code unless it’s necessary to resolve the issues described.
+- Maintain all current role-based access logic and navigation flows.
+- Role Simulation must remain a simulation layer — no permanent changes to user records or database state.
+
+---
+
+Feature Requirements:
+
+1. Role Tester Bar:
+   - Omnipresent for OD when logged in.
+   - Contains two dropdowns:
+       • Service Company roles
+       • Client Company roles
+   - Dropdowns list only available seed users for each role type.
+   - Include a "Stop Testing" button at all times when in Role Simulation mode.
+   - Keep dropdowns visible during Role Simulation to allow switching roles without stopping first.
+
+2. Initiating Role Simulation:
+   - When OD selects a role from a dropdown:
+       • Store the selected seed user’s ID and role in a dedicated `roleTesting` state (frontend) and session variable (backend).
+       • Switch the app context to simulate that user’s role permissions.
+       • Navigate OD to the simulated role’s dashboard.
+   - Ensure the simulated role’s access control is applied consistently across all routes and components.
+
+3. Switching Roles:
+   - If OD selects a different role while Role Simulation is active:
+       • End current simulation session.
+       • Start new simulation session with the newly selected role.
+       • Navigate to the new role’s dashboard.
+
+4. Stopping Role Simulation:
+   - Clicking "Stop Testing" clears the `roleTesting` state/session.
+   - Navigate OD back to their own dashboard with full OD permissions restored.
+
+---
+
+Bug Fixes / Stability Improvements:
+
+A. Intermittent Navigation to OD Dashboard:
+   - Ensure that after setting `roleTesting` state/session, navigation uses the simulated role’s dashboard route, not OD’s.
+   - Add a short delay or confirmation that the state is set before redirecting.
+
+B. Incorrect Access Denials:
+   - Verify that permission checks read from the simulated role context when Role Simulation is active.
+   - Ensure middleware/guards use `roleTesting.role` instead of `currentUser.role` when simulation is active.
+
+C. Dropdowns Disappearing:
+   - Keep Role Tester Bar fully visible during Role Simulation.
+   - Optionally disable only the dropdown for the company type currently being simulated, but never remove both.
+
+---
+
+Technical Implementation Notes:
+- Use a dedicated `roleTesting` object in session:
+  ```json
+  {
+    "active": true,
+    "userId": "seedUser123",
+    "role": "
