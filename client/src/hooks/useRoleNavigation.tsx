@@ -50,7 +50,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
             window.dispatchEvent(event);
           }},
           { icon: Search, label: "Search", route: "/search" },
-          { icon: Settings, label: "Settings", route: "/operations/settings" }
+          { icon: Settings, label: "Settings", route: "/settings" }
         ];
 
       case "administrator":
