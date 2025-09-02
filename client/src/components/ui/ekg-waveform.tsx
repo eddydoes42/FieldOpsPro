@@ -149,6 +149,14 @@ export function EKGWaveform({
       lastBeatTimeRef.current = time;
     }
     
+    // For normal status, ensure we always have baseline points visible
+    if (status === 'normal' && severity === 'none' && waveformDataRef.current.length === 0) {
+      // Add some baseline points to ensure visibility
+      for (let x = 0; x < width; x += 20) {
+        waveformDataRef.current.push({ x, y: baselineY, time });
+      }
+    }
+    
     // Draw clean waveform line
     ctx.strokeStyle = getWaveformColor();
     ctx.lineWidth = 2;
@@ -167,17 +175,8 @@ export function EKGWaveform({
     
     // Then draw any cardiac events on top
     if (waveformDataRef.current.length > 0) {
-      // Draw waveform
+      // Draw waveform events
       ctx.beginPath();
-      
-      // Start with baseline from left edge to first point
-      if (waveformDataRef.current.length > 0) {
-        const firstPoint = waveformDataRef.current[0];
-        if (firstPoint.x > 0) {
-          ctx.moveTo(0, baselineY);
-          ctx.lineTo(firstPoint.x, baselineY);
-        }
-      }
       
       // Draw the waveform points with clean lines
       waveformDataRef.current.forEach((point, index) => {
@@ -291,10 +290,6 @@ export function EKGWaveform({
           backgroundColor: '#000000'
         }}
       />
-      {/* Subtle BPM indicator - smaller and less prominent */}
-      <div className="absolute top-2 right-2 text-xs text-gray-400 bg-gray-900/70 px-2 py-1 rounded" style={{ fontFamily: 'Poppins, sans-serif' }}>
-        {bpm}
-      </div>
     </div>
   );
 }
