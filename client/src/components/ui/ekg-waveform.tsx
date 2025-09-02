@@ -135,24 +135,26 @@ export function EKGWaveform({
 
   // Drawing function
   const draw = useCallback((ctx: CanvasRenderingContext2D, time: number) => {
-    // Clear canvas with clean background
-    ctx.fillStyle = '#0F172A'; // Clean dark background
+    // Clear canvas with clean dark background
+    ctx.fillStyle = '#000000'; // Pure black background
     ctx.fillRect(0, 0, width, height);
     
-    // Draw minimal grid lines (less prominent)
-    ctx.strokeStyle = '#1E293B40'; // Very subtle grid
-    ctx.lineWidth = 0.3;
+    // Draw subtle grid lines (very minimal)
+    ctx.strokeStyle = '#1A5A3A30'; // Dark green grid with low opacity
+    ctx.lineWidth = 0.5;
     
-    // Fewer horizontal grid lines
-    for (let y = height/4; y <= height; y += height/4) {
+    // Draw horizontal grid lines
+    const gridSpacing = height / 6;
+    for (let y = gridSpacing; y < height; y += gridSpacing) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
       ctx.stroke();
     }
     
-    // Fewer vertical grid lines  
-    for (let x = width/8; x <= width; x += width/8) {
+    // Draw vertical grid lines
+    const verticalSpacing = width / 10;
+    for (let x = verticalSpacing; x < width; x += verticalSpacing) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
@@ -174,15 +176,15 @@ export function EKGWaveform({
       lastBeatTimeRef.current = time;
     }
     
-    // Draw baseline (flatline when no beats) with enhanced styling
+    // Draw clean waveform line
     ctx.strokeStyle = getWaveformColor();
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    // Add subtle glow effect for better visibility
+    // Add subtle glow for better visibility
     ctx.shadowColor = getWaveformColor();
-    ctx.shadowBlur = 3;
+    ctx.shadowBlur = 2;
     
     if (waveformDataRef.current.length === 0) {
       // Draw baseline
@@ -203,21 +205,13 @@ export function EKGWaveform({
         }
       }
       
-      // Draw the waveform points with smooth curves
+      // Draw the waveform points with clean lines
       waveformDataRef.current.forEach((point, index) => {
         if (index === 0) {
           ctx.moveTo(point.x, point.y);
         } else {
-          const prevPoint = waveformDataRef.current[index - 1];
-          const controlX = (prevPoint.x + point.x) / 2;
-          const controlY = (prevPoint.y + point.y) / 2;
-          
-          // Use quadratic curves for smoother transitions
-          if (Math.abs(point.y - prevPoint.y) < 5) {
-            ctx.lineTo(point.x, point.y);
-          } else {
-            ctx.quadraticCurveTo(controlX, prevPoint.y, point.x, point.y);
-          }
+          // Use straight lines for cleaner, more clinical appearance
+          ctx.lineTo(point.x, point.y);
         }
       });
       
@@ -326,7 +320,7 @@ export function EKGWaveform({
         style={{ 
           width: `${width}px`, 
           height: `${height}px`,
-          backgroundColor: '#0F172A'
+          backgroundColor: '#000000'
         }}
       />
       {/* Subtle BPM indicator - smaller and less prominent */}

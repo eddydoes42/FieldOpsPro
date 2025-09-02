@@ -152,44 +152,52 @@ export function ProjectEKGMonitor({
             </p>
           </div>
 
-          {/* BPM Display - Prominent */}
-          <div className="text-center space-y-2">
-            <div className="flex items-baseline justify-center gap-2">
-              <span className={cn(
-                "text-4xl font-bold",
-                ekgStatus === 'normal' ? "text-green-600 dark:text-green-400" :
-                ekgStatus === 'at_risk' ? "text-yellow-600 dark:text-yellow-400" :
-                ekgStatus === 'delayed' ? "text-orange-600 dark:text-orange-400" :
-                "text-red-600 dark:text-red-400"
-              )} style={{ fontFamily: 'Poppins, sans-serif' }}>
-                {project.currentBpm}
-              </span>
-              <span className="text-lg font-medium text-gray-600 dark:text-gray-400" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                BPM
-              </span>
-            </div>
-            
-            {/* Category Label */}
-            <div className={cn(
-              "inline-block px-3 py-1 rounded-full text-sm font-medium",
-              ekgStatus === 'normal' ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" :
-              ekgStatus === 'at_risk' ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300" :
-              ekgStatus === 'delayed' ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" :
-              "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-            )} style={{ fontFamily: 'Poppins, sans-serif' }}>
-              {getCategoryLabel()}
+          {/* Green BPM Monitor Display */}
+          <div className="bg-black rounded-lg p-4 border-2 border-green-500/30">
+            <div className="bg-gradient-to-b from-green-400/20 to-green-600/20 rounded-lg p-4 border border-green-500/50">
+              <div className="text-center space-y-2">
+                {/* BPM Value - Digital Style */}
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-5xl font-mono font-bold text-green-400 tracking-wider filter drop-shadow-lg" 
+                        style={{ 
+                          fontFamily: 'monospace', 
+                          textShadow: '0 0 10px #22c55e, 0 0 20px #22c55e, 0 0 30px #22c55e'
+                        }}>
+                    {project.currentBpm.toString().padStart(3, '0')}
+                  </span>
+                </div>
+                
+                {/* BPM Label */}
+                <div className="text-green-300 text-sm font-semibold tracking-widest" 
+                     style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  BPM
+                </div>
+                
+                {/* Status Indicator */}
+                <div className="flex justify-center">
+                  <div className={cn(
+                    "px-3 py-1 rounded text-xs font-bold border",
+                    ekgStatus === 'normal' ? "bg-green-500/20 text-green-300 border-green-500/50" :
+                    ekgStatus === 'at_risk' ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/50" :
+                    ekgStatus === 'delayed' ? "bg-orange-500/20 text-orange-300 border-orange-500/50" :
+                    "bg-red-500/20 text-red-300 border-red-500/50"
+                  )} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    {getCategoryLabel().toUpperCase()}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Enhanced EKG Waveform */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+          {/* Clean EKG Waveform */}
+          <div className="bg-black rounded-lg p-3 border border-green-500/30">
             <EKGWaveform
               bpm={project.currentBpm}
               status={ekgStatus}
               severity={severity}
               frequency={frequency}
               width={340}
-              height={100}
+              height={80}
               className="w-full"
             />
           </div>
