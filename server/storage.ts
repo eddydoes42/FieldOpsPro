@@ -585,6 +585,9 @@ export interface IStorage {
   resetBiometricFailedAttempts(id: string): Promise<BiometricAuth>;
   lockBiometricAuth(id: string, lockedUntil: Date): Promise<BiometricAuth>;
   deactivateBiometricAuth(id: string): Promise<void>;
+
+  // User preferences operations
+  updateUserPreferences(userId: string, preferences: any): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage, IService {
@@ -6043,6 +6046,19 @@ export class DatabaseStorage implements IStorage, IService {
       .update(biometricAuth)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(biometricAuth.id, id));
+  }
+
+  // User preferences operations
+  async updateUserPreferences(userId: string, preferences: any): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        preferences: preferences,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 
   // IService implementation

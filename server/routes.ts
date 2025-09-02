@@ -661,6 +661,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user preferences route
+  app.patch('/api/users/:userId/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.claims.sub);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { userId } = req.params;
+      const preferences = req.body;
+
+      // Users can only update their own preferences, unless they're operations director
+      if (currentUser.id !== userId && !isOperationsDirector(currentUser)) {
+        return res.status(403).json({ message: "Can only update your own preferences" });
+      }
+
+      // Update user preferences
+      const updatedUser = await storage.updateUserPreferences(userId, preferences);
+      res.json({ message: "Preferences updated successfully", user: updatedUser });
+    } catch (error) {
+      console.error("Error updating user preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
   // Confirm scheduled work order
   app.patch("/api/work-orders/:id/confirm", isAuthenticated, async (req: any, res) => {
     try {
