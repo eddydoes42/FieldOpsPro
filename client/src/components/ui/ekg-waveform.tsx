@@ -55,15 +55,15 @@ export function EKGWaveform({
     const points: WaveformPoint[] = [];
     const time = Date.now();
     
-    // For normal status, generate regular heartbeat spikes with dramatic peaks like reference
+    // For normal status, generate regular heartbeat spikes with sharp dramatic peaks
     if (status === 'normal' && severity === 'none') {
-      // Create a much more dramatic heartbeat spike matching reference image
+      // Create sharp mountain-like peaks with minimal intermediate points
       points.push({ x: centerX - 25, y: baselineY, time });
-      points.push({ x: centerX - 12, y: baselineY + 15, time }); // Valley first
-      points.push({ x: centerX - 8, y: baselineY - 35, time }); // Sharp rise
-      points.push({ x: centerX, y: baselineY - 45, time }); // Peak - very dramatic
-      points.push({ x: centerX + 8, y: baselineY - 35, time }); // Sharp fall
-      points.push({ x: centerX + 12, y: baselineY + 10, time }); // Valley after
+      points.push({ x: centerX - 15, y: baselineY + 12, time }); // Sharp valley
+      points.push({ x: centerX - 3, y: baselineY - 42, time }); // Sharp rise to peak
+      points.push({ x: centerX, y: baselineY - 45, time }); // Sharp peak point
+      points.push({ x: centerX + 3, y: baselineY - 42, time }); // Sharp fall from peak
+      points.push({ x: centerX + 15, y: baselineY + 8, time }); // Sharp valley
       points.push({ x: centerX + 25, y: baselineY, time });
       return points;
     }
