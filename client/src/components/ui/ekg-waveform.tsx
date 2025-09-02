@@ -55,19 +55,24 @@ export function EKGWaveform({
     const points: WaveformPoint[] = [];
     const time = Date.now();
     
-    // For normal status, generate regular heartbeat spikes with sharp dramatic peaks
+    // For normal status, generate heartbeat matching exact reference shape
     if (status === 'normal' && severity === 'none') {
-      // Create wider spaced pattern with dramatic valleys and sharp peaks
+      // Match exact reference EKG shape with contained peaks and proper valleys
       points.push({ x: centerX - 120, y: baselineY, time });
       points.push({ x: centerX - 80, y: baselineY, time }); // Baseline approach
-      points.push({ x: centerX - 40, y: baselineY + 25, time }); // Deep valley below baseline
-      points.push({ x: centerX - 25, y: baselineY + 30, time }); // Deeper valley
-      points.push({ x: centerX - 2, y: baselineY - 48, time }); // Sharp rise to peak - steeper
-      points.push({ x: centerX, y: baselineY - 50, time }); // Sharp peak point
-      points.push({ x: centerX + 2, y: baselineY - 48, time }); // Sharp fall from peak - steeper
-      points.push({ x: centerX + 25, y: baselineY + 20, time }); // Valley below baseline
-      points.push({ x: centerX + 40, y: baselineY + 15, time }); // Shallow valley
-      points.push({ x: centerX + 80, y: baselineY, time }); // Return to baseline
+      points.push({ x: centerX - 30, y: baselineY, time }); // Baseline before valley
+      points.push({ x: centerX - 25, y: baselineY + 20, time }); // Sharp valley down
+      points.push({ x: centerX - 20, y: baselineY + 25, time }); // Bottom of valley
+      points.push({ x: centerX - 15, y: baselineY, time }); // Sharp rise back to baseline
+      points.push({ x: centerX - 10, y: baselineY, time }); // Brief baseline
+      points.push({ x: centerX - 2, y: baselineY - 30, time }); // Sharp rise to peak (contained)
+      points.push({ x: centerX, y: baselineY - 35, time }); // Peak (fits within bounds)
+      points.push({ x: centerX + 2, y: baselineY - 30, time }); // Sharp fall from peak
+      points.push({ x: centerX + 10, y: baselineY, time }); // Return to baseline
+      points.push({ x: centerX + 15, y: baselineY, time }); // Brief baseline
+      points.push({ x: centerX + 20, y: baselineY + 15, time }); // Small valley
+      points.push({ x: centerX + 25, y: baselineY, time }); // Back to baseline
+      points.push({ x: centerX + 80, y: baselineY, time }); // Extended baseline
       points.push({ x: centerX + 120, y: baselineY, time });
       return points;
     }
@@ -158,13 +163,10 @@ export function EKGWaveform({
       lastBeatTimeRef.current = time;
     }
     
-    // Always maintain baseline connection when no beats are present
-    const hasRecentPoints = waveformDataRef.current.some(point => point.x > width * 0.8);
-    if (!hasRecentPoints) {
-      // Add baseline points to connect across the screen
-      for (let x = width * 0.8; x < width + 50; x += 10) {
-        waveformDataRef.current.push({ x, y: baselineY, time });
-      }
+    // Only add baseline when there are no points, not constantly
+    if (waveformDataRef.current.length === 0) {
+      // Add minimal baseline points only when needed
+      waveformDataRef.current.push({ x: width, y: baselineY, time });
     }
     
     // Draw clean waveform line
