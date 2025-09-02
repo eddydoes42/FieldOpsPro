@@ -57,14 +57,14 @@ export function EKGWaveform({
     
     // For normal status, generate regular heartbeat spikes with sharp dramatic peaks
     if (status === 'normal' && severity === 'none') {
-      // Create wider spaced pattern with dramatic valleys below baseline
+      // Create wider spaced pattern with dramatic valleys and sharp peaks
       points.push({ x: centerX - 120, y: baselineY, time });
       points.push({ x: centerX - 80, y: baselineY, time }); // Baseline approach
       points.push({ x: centerX - 40, y: baselineY + 25, time }); // Deep valley below baseline
       points.push({ x: centerX - 25, y: baselineY + 30, time }); // Deeper valley
-      points.push({ x: centerX - 8, y: baselineY - 42, time }); // Sharp rise to peak
+      points.push({ x: centerX - 2, y: baselineY - 48, time }); // Sharp rise to peak - steeper
       points.push({ x: centerX, y: baselineY - 50, time }); // Sharp peak point
-      points.push({ x: centerX + 8, y: baselineY - 42, time }); // Sharp fall from peak
+      points.push({ x: centerX + 2, y: baselineY - 48, time }); // Sharp fall from peak - steeper
       points.push({ x: centerX + 25, y: baselineY + 20, time }); // Valley below baseline
       points.push({ x: centerX + 40, y: baselineY + 15, time }); // Shallow valley
       points.push({ x: centerX + 80, y: baselineY, time }); // Return to baseline
@@ -158,10 +158,11 @@ export function EKGWaveform({
       lastBeatTimeRef.current = time;
     }
     
-    // For normal status, ensure we always have baseline points visible
-    if (status === 'normal' && severity === 'none' && waveformDataRef.current.length === 0) {
-      // Add some baseline points to ensure visibility
-      for (let x = 0; x < width; x += 20) {
+    // Always maintain baseline connection when no beats are present
+    const hasRecentPoints = waveformDataRef.current.some(point => point.x > width * 0.8);
+    if (!hasRecentPoints) {
+      // Add baseline points to connect across the screen
+      for (let x = width * 0.8; x < width + 50; x += 10) {
         waveformDataRef.current.push({ x, y: baselineY, time });
       }
     }
