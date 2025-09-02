@@ -536,6 +536,24 @@ function Router() {
               })()}
             </Route>
 
+            <Route path="/settings">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                
+                if (isAuthenticated) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || effectiveRole} />
+                      )}
+                      <Settings />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+
             <Route path="/messages">
               <div>
                 <RoleSwitcher currentRole={getEffectiveRole()} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
