@@ -70,14 +70,14 @@ export default function ProjectNetwork() {
     };
 
     return (
-      <div className="bg-purple-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Service Company Role Tester:</span>
+      <div className="bg-purple-600 text-white px-2 sm:px-4 py-2 mb-2 sm:mb-4 rounded-lg shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Service Company Role:</span>
             <select
               value={testingRole}
               onChange={(e) => handleRoleChange(e.target.value)}
-              className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+              className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
             >
               <option value="">Select a Role</option>
               <option value="administrator">Administrator</option>

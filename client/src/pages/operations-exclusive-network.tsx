@@ -93,9 +93,9 @@ export default function OperationsExclusiveNetwork() {
     const [testingRole, setTestingRole] = useState<string>('');
 
     return (
-      <div className="bg-purple-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">Service Company Role Tester:</span>
+      <div className="bg-purple-600 text-white px-2 sm:px-4 py-2 mb-2 sm:mb-4 rounded-lg shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Service Company Role:</span>
           <select
             value={testingRole}
             onChange={(e) => {
@@ -106,7 +106,7 @@ export default function OperationsExclusiveNetwork() {
                 window.location.reload();
               }
             }}
-            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
           >
             <option value="">Select a Role</option>
             <option value="administrator">Administrator</option>
@@ -125,9 +125,9 @@ export default function OperationsExclusiveNetwork() {
     const [testingRole, setTestingRole] = useState<string>('');
 
     return (
-      <div className="bg-teal-600 text-white px-4 py-2 mb-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">Client Company Role Tester:</span>
+      <div className="bg-teal-600 text-white px-2 sm:px-4 py-2 mb-2 sm:mb-4 rounded-lg shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Client Company Role:</span>
           <select
             value={testingRole}
             onChange={(e) => {
@@ -138,7 +138,7 @@ export default function OperationsExclusiveNetwork() {
                 window.location.reload();
               }
             }}
-            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
           >
             <option value="">Select a Role</option>
             <option value="administrator">Administrator</option>

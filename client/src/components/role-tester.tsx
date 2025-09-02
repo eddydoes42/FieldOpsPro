@@ -127,49 +127,47 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
   const currentlySelectedRoles = selectedCompanyType === 'service' ? serviceCompanyRoles : clientCompanyRoles;
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5" />
+    <Card className="mb-6 mx-auto max-w-4xl">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+          <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
           Role Tester
           {isCurrentlyTesting && (
-            <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+            <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs">
               Active
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {isCurrentlyTesting ? (
-          <Alert className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Currently testing as <strong>{impersonationStatus.context.role}</strong> in{' '}
+          <Alert className="mb-3">
+            <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+            <AlertDescription className="text-xs sm:text-sm">
+              Testing as <strong>{impersonationStatus.context.role}</strong> in{' '}
               <strong>{impersonationStatus.context.companyType}</strong> company.
-              All actions will be performed as the impersonated user.
             </AlertDescription>
           </Alert>
         ) : (
-          <Alert className="mb-4">
-            <Eye className="h-4 w-4" />
-            <AlertDescription>
+          <Alert className="mb-3">
+            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+            <AlertDescription className="text-xs sm:text-sm">
               Test different user roles to verify permissions and functionality.
-              This will impersonate actual test user accounts.
             </AlertDescription>
           </Alert>
         )}
 
         {!isCurrentlyTesting ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Tabs value={selectedCompanyType} onValueChange={(value) => setSelectedCompanyType(value as 'service' | 'client')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="service" className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Service Company
+              <TabsList className="grid w-full grid-cols-2 h-auto">
+                <TabsTrigger value="service" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
+                  <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="truncate">Service Co.</span>
                 </TabsTrigger>
-                <TabsTrigger value="client" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Client Company
+                <TabsTrigger value="client" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="truncate">Client Co.</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -219,28 +217,29 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
             <Button 
               onClick={handleStartTesting}
               disabled={!selectedRole || startImpersonationMutation.isPending}
-              className="w-full"
+              className="w-full text-sm py-2 h-auto"
+              size="sm"
             >
-              {startImpersonationMutation.isPending ? "Starting..." : "Start Role Testing"}
+              {startImpersonationMutation.isPending ? "Starting..." : "Start Testing"}
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-purple-900">
+          <div className="space-y-3">
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-purple-900 dark:text-purple-100 text-sm truncate">
                     Testing: {impersonationStatus.context.role}
                   </p>
-                  <p className="text-sm text-purple-700">
-                    Company: {impersonationStatus.context.companyType}
+                  <p className="text-xs text-purple-700 dark:text-purple-300 truncate">
+                    {impersonationStatus.context.companyType} company
                   </p>
-                  <p className="text-xs text-purple-600">
-                    Started: {new Date(impersonationStatus.context.startTime).toLocaleString()}
+                  <p className="text-xs text-purple-600 dark:text-purple-400 truncate">
+                    {new Date(impersonationStatus.context.startTime).toLocaleTimeString()}
                   </p>
                 </div>
-                <Badge className="bg-purple-100 text-purple-800">
-                  {impersonationStatus.context.role}
+                <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100 text-xs shrink-0">
+                  Active
                 </Badge>
               </div>
             </div>
@@ -249,9 +248,10 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
               onClick={handleStopTesting}
               disabled={stopImpersonationMutation.isPending}
               variant="destructive"
-              className="w-full"
+              className="w-full text-sm py-2 h-auto"
+              size="sm"
             >
-              {stopImpersonationMutation.isPending ? "Stopping..." : "Stop Role Testing"}
+              {stopImpersonationMutation.isPending ? "Stopping..." : "Stop Testing"}
             </Button>
           </div>
         )}
