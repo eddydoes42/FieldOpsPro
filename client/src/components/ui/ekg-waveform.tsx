@@ -170,13 +170,7 @@ export function EKGWaveform({
     ctx.shadowColor = getWaveformColor();
     ctx.shadowBlur = 2;
     
-    // Always draw baseline first
-    ctx.beginPath();
-    ctx.moveTo(0, baselineY);
-    ctx.lineTo(width, baselineY);
-    ctx.stroke();
-    
-    // Then draw any cardiac events on top
+    // Draw only the waveform line (no baseline)
     if (waveformDataRef.current.length > 0) {
       // Draw waveform events
       ctx.beginPath();
