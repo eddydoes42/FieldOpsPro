@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/ui/search-bar";
 import { BottomNav } from "@/components/ui/bottom-nav";
 import { HeartbeatBar } from "@/components/ui/heartbeat-bar";
 import { ProjectHeartbeatDialog } from "@/components/project-heartbeat-dialog";
+import { SearchPopup } from "@/components/search-popup";
 import { cn } from "@/lib/utils";
 
 interface StashLayoutProps {
@@ -37,6 +38,7 @@ export function StashLayout({
 }: StashLayoutProps) {
   const { user } = useAuth();
   const [showHeartbeatDialog, setShowHeartbeatDialog] = useState(false);
+  const [showSearchPopup, setShowSearchPopup] = useState(false);
   
   // Get unread messages count for bottom navigation badge
   const { data: messages = [] } = useQuery<any[]>({
@@ -54,6 +56,23 @@ export function StashLayout({
   const { navigationItems } = useRoleNavigation({ 
     userRole: userRoles, 
     unreadMessages: unreadCount 
+  });
+
+  // Handle search click from navigation
+  const handleSearchClick = () => {
+    setShowSearchPopup(true);
+  };
+
+  // Transform navigation items to handle search popup
+  const transformedNavigationItems = navigationItems.map(item => {
+    if (item.route === '/search') {
+      return {
+        ...item,
+        route: '#', // Prevent routing
+        onClick: handleSearchClick
+      };
+    }
+    return item;
   });
 
   return (
@@ -91,7 +110,11 @@ export function StashLayout({
       </main>
 
       {/* Bottom Navigation - Mobile/Tablet Only */}
-      <BottomNav items={navigationItems} />
+      <BottomNav items={transformedNavigationItems} onItemClick={(item) => {
+        if (item.onClick) {
+          item.onClick();
+        }
+      }} />
 
       {/* Project Heartbeat Dialog */}
       {showHeartbeat && heartbeatData && (
@@ -101,6 +124,12 @@ export function StashLayout({
           variant={heartbeatData.variant}
         />
       )}
+
+      {/* Search Popup */}
+      <SearchPopup
+        open={showSearchPopup}
+        onOpenChange={setShowSearchPopup}
+      />
     </div>
   );
 }

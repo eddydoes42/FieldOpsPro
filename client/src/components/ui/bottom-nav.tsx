@@ -8,14 +8,16 @@ interface BottomNavItem {
   route: string;
   badge?: number;
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 interface BottomNavProps {
   items: BottomNavItem[];
   className?: string;
+  onItemClick?: (item: BottomNavItem) => void;
 }
 
-export function BottomNav({ items, className }: BottomNavProps) {
+export function BottomNav({ items, className, onItemClick }: BottomNavProps) {
   const [location] = useLocation();
 
   // Only show on mobile and tablet
@@ -40,6 +42,13 @@ export function BottomNav({ items, className }: BottomNavProps) {
             <Link
               key={index}
               href={item.disabled ? '#' : item.route}
+              onClick={(e) => {
+                if (item.onClick) {
+                  e.preventDefault();
+                  item.onClick();
+                  onItemClick?.(item);
+                }
+              }}
               className={cn(
                 "relative flex flex-col items-center justify-center",
                 "min-w-0 flex-1 px-2 py-2 rounded-lg",
