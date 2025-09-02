@@ -48,6 +48,7 @@ import JobRequestsPage from '@/pages/job-requests';
 import Apply from '@/pages/apply';
 import OnboardingRequests from '@/pages/onboarding-requests';
 import AuditLogsPage from '@/pages/audit-logs';
+import Settings from '@/pages/settings';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -679,6 +680,9 @@ function Router() {
                 }
                 return <Landing />;
               })()}
+            </Route>
+            <Route path="/settings">
+              {isAuthenticated ? <Settings /> : <Landing />}
             </Route>
         </>
       )}
