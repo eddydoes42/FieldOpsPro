@@ -222,36 +222,78 @@ export default function OperationsDirectorDashboard() {
   ];
 
   const availableClientRoles = [
-    { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
+    { value: 'client_company_admin', label: 'Client Admin', shortLabel: 'Client Admin' },
     { value: 'project_manager', label: 'Project Manager', shortLabel: 'Project Manager' },
     { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
     { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' }
   ];
 
-  const handleStartTesting = (role: string) => {
-    // Clear any permanent role selection to ensure testing role takes precedence
-    localStorage.removeItem('selectedRole');
-    localStorage.setItem('testingRole', role);
-    localStorage.setItem('testingCompanyType', 'service');
-    setSelectedTestRole(role);
-    setSelectedClientTestRole(''); // Clear client role when selecting service role
-    console.log('Starting role test:', role, 'service');
-    
-    // Force reload to clear any cached user data and apply new role context
-    window.location.href = '/dashboard';
+  const handleStartTesting = async (role: string) => {
+    try {
+      const response = await apiRequest('/api/role-simulation/start', 'POST', { 
+        role, 
+        companyType: 'service' 
+      });
+      const data = await response.json();
+      
+      // Set local storage for header compatibility
+      localStorage.setItem('testingRole', role);
+      localStorage.setItem('testingCompanyType', 'service');
+      setSelectedTestRole(role);
+      setSelectedClientTestRole(''); // Clear client role when selecting service role
+      
+      // Use the backend's redirect URL
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        window.location.href = '/dashboard';
+      }
+      
+      toast({
+        title: "Role Simulation Started",
+        description: `Now simulating ${role} in service company`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start role simulation",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleStartClientTesting = (role: string) => {
-    // Clear any permanent role selection to ensure testing role takes precedence
-    localStorage.removeItem('selectedRole');
-    localStorage.setItem('testingRole', role);
-    localStorage.setItem('testingCompanyType', 'client');
-    setSelectedClientTestRole(role);
-    setSelectedTestRole(''); // Clear service role when selecting client role
-    console.log('Starting client role test:', role, 'client');
-    
-    // Force reload to clear any cached user data and apply new role context
-    window.location.href = '/client-dashboard';
+  const handleStartClientTesting = async (role: string) => {
+    try {
+      const response = await apiRequest('/api/role-simulation/start', 'POST', { 
+        role, 
+        companyType: 'client' 
+      });
+      const data = await response.json();
+      
+      // Set local storage for header compatibility  
+      localStorage.setItem('testingRole', role);
+      localStorage.setItem('testingCompanyType', 'client');
+      setSelectedClientTestRole(role);
+      setSelectedTestRole(''); // Clear service role when selecting client role
+      
+      // Use the backend's redirect URL
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        window.location.href = '/client-dashboard';
+      }
+      
+      toast({
+        title: "Role Simulation Started",
+        description: `Now simulating ${role} in client company`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error", 
+        description: error.message || "Failed to start role simulation",
+        variant: "destructive",
+      });
+    }
   };
 
   const stopTesting = () => {
@@ -294,6 +336,48 @@ export default function OperationsDirectorDashboard() {
                 Operations Dashboard
               </h1>
             </div>
+          </div>
+          
+          {/* Role Testing Dropdowns */}
+          <div className="mb-6 space-y-2">
+            {/* Service Company Role Tester */}
+            <div className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <span className="text-sm font-medium whitespace-nowrap">Service Company:</span>
+                <select
+                  value={selectedTestRole}
+                  onChange={(e) => e.target.value && handleStartTesting(e.target.value)}
+                  className="bg-purple-700 text-white border border-purple-500 rounded px-3 py-1 text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
+                >
+                  <option value="">Select Role</option>
+                  {availableRoles.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Client Company Role Tester */}
+            <div className="bg-teal-600 text-white px-4 py-2 rounded-lg shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <span className="text-sm font-medium whitespace-nowrap">Client Company:</span>
+                <select
+                  value={selectedClientTestRole}
+                  onChange={(e) => e.target.value && handleStartClientTesting(e.target.value)}
+                  className="bg-teal-700 text-white border border-teal-500 rounded px-3 py-1 text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
+                >
+                  <option value="">Select Role</option>
+                  {availableClientRoles.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
           
           {/* Budget & Service Fee Indicators */}
           <div className="flex justify-end space-x-4">
@@ -827,6 +911,8 @@ export default function OperationsDirectorDashboard() {
             </div>
           </DialogContent>
         </Dialog>
+        
+        </div>
 
         {/* User Creation Dialog - Using centralized UserOnboardingForm */}
         {showUserCreationDialog && selectedAccessRequest && (
@@ -854,7 +940,6 @@ export default function OperationsDirectorDashboard() {
             }}
           />
         )}
-        </div>
       </StashLayout>
     </>
   );
