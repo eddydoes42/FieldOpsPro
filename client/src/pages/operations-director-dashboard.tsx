@@ -452,7 +452,7 @@ export default function OperationsDirectorDashboard() {
           {/* Things to Approve */}
           <StashCard
             title={totalPendingApprovals.toString()}
-            subtitle={<><span className="hidden sm:inline">Things to Approve</span><span className="sm:hidden">To Approve</span></>}
+            subtitle="Things to Approve"
             icon={
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 w-20 h-16 overflow-hidden">
                 <div className="space-y-2">
@@ -543,7 +543,7 @@ export default function OperationsDirectorDashboard() {
           />
           <StashCard
             title={(companies.length || 0).toString()}
-            subtitle={<><span className="hidden sm:inline">Total Companies</span><span className="sm:hidden">Companies</span></>}
+            subtitle="Total Companies"
             icon={
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
                 <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -556,7 +556,7 @@ export default function OperationsDirectorDashboard() {
 
           <StashCard
             title={(stats.totalAdmins || 0).toString()}
-            subtitle={<><span className="hidden sm:inline">Active Admins</span><span className="sm:hidden">Admins</span></>}
+            subtitle="Active Admins"
             icon={
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
                 <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
@@ -568,7 +568,7 @@ export default function OperationsDirectorDashboard() {
           />
           <StashCard
             title={(stats.activeCompanies || 0).toString()}
-            subtitle={<><span className="hidden sm:inline">Active Companies</span><span className="sm:hidden">Active Co.</span></>}
+            subtitle="Active Companies"
             icon={
               <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
                 <Activity className="h-8 w-8 text-purple-600 dark:text-purple-400" />
@@ -581,7 +581,7 @@ export default function OperationsDirectorDashboard() {
 
           <StashCard
             title={(stats.recentSetups || 0).toString()}
-            subtitle={<><span className="hidden sm:inline">Recent Setups</span><span className="sm:hidden">Setups</span></>}
+            subtitle="Recent Setups"
             icon={
               <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 w-16 h-12 flex items-center justify-center">
                 <UserPlus className="h-8 w-8 text-orange-600 dark:text-orange-400" />
@@ -911,8 +911,6 @@ export default function OperationsDirectorDashboard() {
             </div>
           </DialogContent>
         </Dialog>
-        
-        </div>
 
         {/* User Creation Dialog - Using centralized UserOnboardingForm */}
         {showUserCreationDialog && selectedAccessRequest && (

@@ -4180,7 +4180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           agentId: currentUser.id,
           skillName: skill.skillName,
           proficiencyLevel: skill.proficiencyLevel || 'intermediate',
-          verified: false
+          verifiedBy: null
         });
         newSkills.push(newSkill);
       }
@@ -6769,7 +6769,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "Access denied" });
         }
       } else if (validatedData.entityType === 'project') {
-        const project = await storage.getProject(validatedData.entityId);
+        const projects = await storage.getProjects();
+        const project = projects.find(p => p.id === validatedData.entityId);
         if (!project) {
           return res.status(404).json({ message: "Project not found" });
         }
@@ -6845,7 +6846,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "Access denied" });
         }
       } else if (entityType === 'project') {
-        const project = await storage.getProject(entityId);
+        const projects = await storage.getProjects();
+        const project = projects.find(p => p.id === entityId);
         if (!project) {
           return res.status(404).json({ message: "Project not found" });
         }
@@ -6935,7 +6937,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "Access denied" });
         }
       } else if (document.entityType === 'project') {
-        const project = await storage.getProject(document.entityId);
+        const projects = await storage.getProjects();
+        const project = projects.find(p => p.id === document.entityId);
         if (project && !isOperationsDirector(currentUser) && 
             project.companyId !== currentUser.companyId) {
           return res.status(403).json({ message: "Access denied" });
