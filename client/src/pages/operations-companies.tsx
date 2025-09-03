@@ -676,7 +676,7 @@ export default function OperationsCompanies() {
 
         {/* Company Details Modal */}
         <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
-          <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden">
+          <DialogContent className="max-w-full md:max-w-4xl mx-2 md:mx-auto max-h-[95vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-3">
                 <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -768,7 +768,7 @@ export default function OperationsCompanies() {
                       <CardTitle className="text-base">Performance Overview</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                         {(() => {
                           const details = getCompanyDetails(selectedCompany.id);
                           return (
@@ -822,7 +822,7 @@ export default function OperationsCompanies() {
                     <CardTitle className="text-base">Recent Activity</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                       {(() => {
                         const details = getCompanyDetails(selectedCompany.id);
                         return (
@@ -889,7 +889,7 @@ export default function OperationsCompanies() {
 
         {/* Edit Company Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-full md:max-w-3xl mx-2 md:mx-auto max-h-[85vh] overflow-y-auto">
             <DialogHeader className="pb-3">
               <DialogTitle>Edit Service Company Information</DialogTitle>
             </DialogHeader>
@@ -1027,7 +1027,7 @@ export default function OperationsCompanies() {
 
         {/* Create Company Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-full md:max-w-3xl mx-2 md:mx-auto max-h-[85vh] overflow-y-auto">
             <DialogHeader className="pb-3">
               <DialogTitle>Add New Company</DialogTitle>
             </DialogHeader>
