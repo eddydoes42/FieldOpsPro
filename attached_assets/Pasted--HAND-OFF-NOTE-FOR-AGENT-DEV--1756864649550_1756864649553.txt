@@ -1,0 +1,152 @@
+/**
+ * ============================================================
+ * HAND‑OFF NOTE FOR AGENT/DEV
+ * ============================================================
+ * This update contains TWO tightly scoped refactors:
+ * 
+ * 1. Role–Company Type Mapping
+ *    - Creates a single source of truth for which roles are valid
+ *      for each company type ("service" or "client").
+ *    - Adds helpers to check roles with company‑type awareness.
+ * 
+ * 2. Role Simulator Refactor
+ *    - Uses the mapping to validate simulated role/company type combos.
+ *    - Keeps Operations Director's simulator UI persistent at all times.
+ *    - Ensures seamless role switching without stale permissions or
+ *      navigation/access denial bugs.
+ * 
+ * HOW TO INTEGRATE:
+ * - Drop this file into the same location as your existing role utilities.
+ * - Keep all existing role utilities; these are additive.
+ * - In the Role Simulator logic:
+ *    • When applying a simulated role, call `applySimulatedRole(...)`.
+ *    • When ending simulation, call `clearSimulatedRole()`.
+ *    • Use `shouldShowRoleSimulatorUI(user)` to decide if the simulator bar is visible.
+ * - In any feature/component visibility checks that must respect company type,
+ *   use `hasRoleForCompany` or `hasAnyRoleForCompany` instead of the old helpers.
+ * - No dashboard matrix logic is included — this is purely for in‑app behavior.
+ * 
+ * SAFETY:
+ * - Preserves Operations Director bypass logic exactly as before.
+ * - Does not alter unrelated features or data structures.
+ * - Centralizes role/company rules in one place for easy maintenance.
+ * ============================================================
+ */
+
+/**
+ * Allowed roles per company type
+ * Adjust role names here if seeded data differs
+ */
+export const allowedRolesByCompanyType: Record<'service' | 'client', string[]> = {
+  service: [
+    'administrator',
+    'project_manager',
+    'manager',
+    'dispatcher',
+    'field_engineer',
+    'field_agent'
+  ],
+  client: [
+    'client_company_admin', // or 'administrator' if that's your actual client admin role
+    'project_manager',
+    'manager',
+    'dispatcher'
+  ]
+};
+
+/**
+ * Check if a role is valid for a given company type
+ */
+export function isRoleAllowedForCompanyType(
+  companyType: 'service' | 'client',
+  role: string
+): boolean {
+  return allowedRolesByCompanyType[companyType]?.includes(role) ?? false;
+}
+
+/**
+ * Company-type-aware role check
+ * Preserves OD bypass and existing logic
+ */
+export function hasRoleForCompany(user: User | null, role: string): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  const companyType = user.company?.type as 'service' | 'client' | undefined;
+  if (!companyType) return false;
+
+  return user.roles.includes(role) && isRoleAllowedForCompanyType(companyType, role);
+}
+
+export function hasAnyRoleForCompany(user: User | null, roles: string[]): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  const companyType = user.company?.type as 'service' | 'client' | undefined;
+  if (!companyType) return false;
+
+  return roles.some(r => user.roles.includes(r) && isRoleAllowedForCompanyType(companyType, r));
+}
+
+/**
+ * Role Simulator Refactor
+ * - Validates simulated role/company type
+ * - Keeps OD simulator UI persistent
+ * - Ensures seamless switching without stale permissions
+ */
+export function applySimulatedRole(
+  user: User,
+  testingRole: string,
+  testingCompanyType: 'service' | 'client'
+): User {
+  // Validate role/company type combo
+  if (!isRoleAllowedForCompanyType(testingCompanyType, testingRole)) {
+    throw new Error(`Invalid role "${testingRole}" for company type "${testingCompanyType}"`);
+  }
+
+  // Clone user to avoid mutating original
+  const simulatedUser = { ...user };
+
+  // Apply simulated role/company type
+  simulatedUser.roles = [testingRole];
+  simulatedUser.company = { ...simulatedUser.company, type: testingCompanyType };
+
+  // Persist simulation state (client-side)
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('testingRole', testingRole);
+    localStorage.setItem('testingCompanyType', testingCompanyType);
+  }
+
+  return simulatedUser;
+}
+
+/**
+ * Restore real user role (end simulation)
+ */
+export function clearSimulatedRole(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('testingRole');
+    localStorage.removeItem('testingCompanyType');
+  }
+}
+
+/**
+ * Keep OD simulator UI persistent
+ * - Always show simulator bar for OD, even in simulation
+ */
+export function shouldShowRoleSimulatorUI(user: User | null): boolean {
+  if (!user) return false;
+  return user.roles.includes('operations_director') || !!localStorage.getItem('testingRole');
+}
+
+/**
+ * Example integration in route guard or component:
+ *
+ * const effectiveUser = localStorage.getItem('testingRole')
+ *   ? applySimulatedRole(realUser, localStorage.getItem('testingRole'), localStorage.getItem('testingCompanyType') as 'service' | 'client')
+ *   : realUser;
+ *
+ * if (!hasRoleForCompany(effectiveUser, 'administrator')) {
+ *   return <AccessDenied />;
+ * }
+ */
