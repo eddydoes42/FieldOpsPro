@@ -25,7 +25,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
 
-  // Only show for operations directors when they are testing a role on OTHER pages (not operations dashboard)
+  // Only show for operations directors when they are simulating a role on OTHER pages (not operations dashboard)
   const isTestingRole = localStorage.getItem('testingRole');
   const isOnOperationsDashboard = window.location.pathname === '/operations-dashboard';
   
@@ -39,7 +39,7 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
     return null;
   }
   
-  // On other pages, only show if testing a role
+  // On other pages, only show if simulating a role
   if (!isTestingRole) {
     return null;
   }
@@ -50,8 +50,8 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
 
   const currentRoleInfo = availableRoles.find(role => role.value === currentRole);
 
-  const stopImpersonationMutation = useMutation({
-    mutationFn: () => apiRequest('/api/impersonation/stop', 'POST').then(res => res.json()),
+  const stopRoleSimulationMutation = useMutation({
+    mutationFn: () => apiRequest('/api/role-simulation/stop', 'POST').then(res => res.json()),
     onSuccess: () => {
       // Clear testing role and navigate back to operations director dashboard
       localStorage.removeItem('testingRole');
@@ -62,26 +62,26 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
   });
 
   const handleStopTesting = () => {
-    stopImpersonationMutation.mutate();
+    stopRoleSimulationMutation.mutate();
   };
 
   const handleStartTesting = () => {
     onRoleSwitch(selectedRole);
   };
 
-  // This component only shows when testing roles on other dashboards (never on operations dashboard)
+  // This component only shows when simulating roles on other dashboards (never on operations dashboard)
 
   return (
     <div className="mb-4 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3">
       <div className="flex items-center">
-        <span className="text-sm text-purple-700 font-medium mr-3">Role Tester</span>
+        <span className="text-sm text-purple-700 font-medium mr-3">Role Simulator</span>
         <Button 
           onClick={handleStopTesting}
           variant="outline" 
           size="sm" 
           className="border-red-300 text-red-700 hover:bg-red-50"
         >
-          Stop Testing
+          Stop Simulation
         </Button>
       </div>
       <div className="flex items-center space-x-2">

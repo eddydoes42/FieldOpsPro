@@ -47,54 +47,31 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
   const [selectedCompanyType, setSelectedCompanyType] = useState<'service' | 'client'>('service');
   const [selectedRole, setSelectedRole] = useState<string>('');
 
-  // Check impersonation status
-  const { data: impersonationStatus } = useQuery({
-    queryKey: ['/api/impersonation/status'],
+  // Check role simulation status
+  const { data: roleSimulationStatus } = useQuery({
+    queryKey: ['/api/role-simulation/status'],
     refetchInterval: 5000 // Check every 5 seconds
   });
 
-  // Type-safe access to impersonation status
-  const isCurrentlyTesting = impersonationStatus && typeof impersonationStatus === 'object' && 'isImpersonating' in impersonationStatus ? 
-    (impersonationStatus as any).isImpersonating : false;
-  const testingContext = impersonationStatus && typeof impersonationStatus === 'object' && 'context' in impersonationStatus ? 
-    (impersonationStatus as any).context : null;
+  // Type-safe access to role simulation status
+  const isCurrentlyTesting = roleSimulationStatus && typeof roleSimulationStatus === 'object' && 'isSimulatingRole' in roleSimulationStatus ? 
+    (roleSimulationStatus as any).isSimulatingRole : false;
+  const testingContext = roleSimulationStatus && typeof roleSimulationStatus === 'object' && 'context' in roleSimulationStatus ? 
+    (roleSimulationStatus as any).context : null;
 
-  const startImpersonationMutation = useMutation({
+  const startRoleSimulationMutation = useMutation({
     mutationFn: ({ role, companyType }: { role: string; companyType: 'service' | 'client' }) => {
       // Enhanced validation using the new role-company mapping
       if (!isRoleAllowedForCompanyType(companyType, role)) {
         throw new Error(`Invalid role "${role}" for company type "${companyType}". Please select a valid combination.`);
       }
       
-      return apiRequest('/api/impersonation/start', 'POST', { role, companyType }).then(res => res.json());
-    },
-    onSuccess: (data) => {
-      // Store testing info in localStorage for header compatibility
-      localStorage.setItem('testingRole', data.context.role);
-      localStorage.setItem('testingCompanyType', data.context.companyType);
-      
-      // Invalidate auth query to get new user context
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      
-      toast({
-        title: "Role Testing Started",
-        description: `Now testing as ${data.context.role} in ${data.context.companyType} company`,
-      });
-
-      // Call the role switch handler
-      onRoleSwitch(data.context.role);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to start role testing",
-        variant: "destructive",
-      });
+      return apiRequest('/api/role-simulation/start', 'POST', { role, companyType }).then(res => res.json());
     }
   });
 
-  const stopImpersonationMutation = useMutation({
-    mutationFn: () => apiRequest('/api/impersonation/stop', 'POST').then(res => res.json()),
+  const stopRoleSimulationMutation = useMutation({
+    mutationFn: () => apiRequest('/api/role-simulation/stop', 'POST').then(res => res.json()),
     onSuccess: () => {
       // Clear testing info
       localStorage.removeItem('testingRole');
@@ -104,7 +81,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
       toast({
-        title: "Role Testing Stopped",
+        title: "Role Simulation Stopped",
         description: "Returned to Operations Director mode",
       });
 
@@ -114,7 +91,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to stop role testing",
+        description: error.message || "Failed to stop role simulation",
         variant: "destructive",
       });
     }
@@ -135,7 +112,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
       return;
     }
     
-    startImpersonationMutation.mutate(
+    startRoleSimulationMutation.mutate(
       {
         role: selectedRole,
         companyType: selectedCompanyType,
@@ -167,7 +144,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
   };
 
   const handleStopTesting = () => {
-    stopImpersonationMutation.mutate();
+    stopRoleSimulationMutation.mutate();
   };
 
   // Remove duplicate definition - already defined above
@@ -178,7 +155,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-          Role Tester
+          Role Simulator
           {isCurrentlyTesting && (
             <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs">
               Active
@@ -191,7 +168,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
           <Alert className="mb-3">
             <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
             <AlertDescription className="text-xs sm:text-sm">
-              Testing as <strong>{testingContext?.role}</strong> in{' '}
+              Simulating <strong>{testingContext?.role}</strong> in{' '}
               <strong>{testingContext?.companyType}</strong> company.
             </AlertDescription>
           </Alert>
@@ -199,7 +176,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
           <Alert className="mb-3">
             <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
             <AlertDescription className="text-xs sm:text-sm">
-              Test different user roles to verify permissions and functionality.
+              Simulate different user roles to verify permissions and functionality.
             </AlertDescription>
           </Alert>
         )}
@@ -263,11 +240,11 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
 
             <Button 
               onClick={handleStartTesting}
-              disabled={!selectedRole || startImpersonationMutation.isPending}
+              disabled={!selectedRole || startRoleSimulationMutation.isPending}
               className="w-full text-sm py-2 h-auto"
               size="sm"
             >
-              {startImpersonationMutation.isPending ? "Starting..." : "Start Testing"}
+              {startRoleSimulationMutation.isPending ? "Starting..." : "Start Simulation"}
             </Button>
           </div>
         ) : (
@@ -276,7 +253,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-purple-900 dark:text-purple-100 text-sm truncate">
-                    Testing: {testingContext?.role}
+                    Simulating: {testingContext?.role}
                   </p>
                   <p className="text-xs text-purple-700 dark:text-purple-300 truncate">
                     {testingContext?.companyType} company
@@ -293,12 +270,12 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
 
             <Button 
               onClick={handleStopTesting}
-              disabled={stopImpersonationMutation.isPending}
+              disabled={stopRoleSimulationMutation.isPending}
               variant="destructive"
               className="w-full text-sm py-2 h-auto"
               size="sm"
             >
-              {stopImpersonationMutation.isPending ? "Stopping..." : "Stop Testing"}
+              {stopRoleSimulationMutation.isPending ? "Stopping..." : "Stop Simulation"}
             </Button>
           </div>
         )}

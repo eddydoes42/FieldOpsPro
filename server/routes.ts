@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAuthenticatedWithODBypass } from "./replitAuth";
-import { roleImpersonationService } from "./roleImpersonation";
+import { roleSimulationService } from "./roleSimulation";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertUserSchema, insertCompanySchema, insertWorkOrderSchema, insertTimeEntrySchema, insertMessageSchema, insertJobMessageSchema, insertWorkOrderTaskSchema, insertStructuredIssueSchema, insertAuditLogSchema, insertClientFieldAgentRatingSchema, insertClientDispatcherRatingSchema, insertServiceClientRatingSchema, insertIssueSchema, insertWorkOrderRequestSchema, insertExclusiveNetworkMemberSchema, insertProjectSchema, insertProjectRequirementSchema, insertProjectAssignmentSchema, insertApprovalRequestSchema, insertAccessRequestSchema, insertJobRequestSchema, insertOnboardingRequestSchema, insertFeedbackSchema, insertDocumentSchema, isAdmin, hasAnyRole, hasRole, canManageUsers, canManageWorkOrders, canViewBudgets, canViewAllOrders, isOperationsDirector, isClient, isChiefTeam, canCreateProjects, canViewProjectNetwork, isFieldAgent, isFieldLevel, isDispatcher, isService, canViewJobNetwork } from "@shared/schema";
@@ -139,8 +139,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Role Impersonation routes
-  app.post('/api/impersonation/start', isAuthenticated, async (req: any, res) => {
+  // Role Simulation routes
+  app.post('/api/role-simulation/start', isAuthenticated, async (req: any, res) => {
     try {
       const originalUserId = req.user.claims.sub;
       const { role, companyType } = req.body;
@@ -154,8 +154,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid companyType. Must be 'service' or 'client'" });
       }
 
-      // Start impersonation
-      const impersonationContext = await roleImpersonationService.startImpersonation(
+      // Start role simulation
+      const roleSimulationContext = await roleSimulationService.startRoleSimulation(
         originalUserId, 
         role, 
         companyType
@@ -164,47 +164,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         context: {
-          impersonatedUser: impersonationContext.impersonatedUser,
-          role: impersonationContext.role,
-          companyType: impersonationContext.companyType
+          simulatedUser: roleSimulationContext.simulatedUser,
+          role: roleSimulationContext.role,
+          companyType: roleSimulationContext.companyType
         },
-        redirectUrl: impersonationContext.redirectUrl
+        redirectUrl: roleSimulationContext.redirectUrl
       });
     } catch (error) {
-      console.error("Error starting impersonation:", error);
-      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to start impersonation" });
+      console.error("Error starting role simulation:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to start role simulation" });
     }
   });
 
-  app.post('/api/impersonation/stop', isAuthenticated, async (req: any, res) => {
+  app.post('/api/role-simulation/stop', isAuthenticated, async (req: any, res) => {
     try {
       const originalUserId = req.user.claims.sub;
-      await roleImpersonationService.stopImpersonation(originalUserId);
+      await roleSimulationService.stopRoleSimulation(originalUserId);
 
-      res.json({ success: true, message: "Impersonation stopped" });
+      res.json({ success: true, message: "Role simulation stopped" });
     } catch (error) {
-      console.error("Error stopping impersonation:", error);
-      res.status(500).json({ message: "Failed to stop impersonation" });
+      console.error("Error stopping role simulation:", error);
+      res.status(500).json({ message: "Failed to stop role simulation" });
     }
   });
 
-  app.get('/api/impersonation/status', isAuthenticated, async (req: any, res) => {
+  app.get('/api/role-simulation/status', isAuthenticated, async (req: any, res) => {
     try {
       const originalUserId = req.user.claims.sub;
-      const impersonationContext = roleImpersonationService.getImpersonationContext(originalUserId);
+      const roleSimulationContext = roleSimulationService.getRoleSimulationContext(originalUserId);
 
       res.json({
-        isImpersonating: !!impersonationContext,
-        context: impersonationContext ? {
-          impersonatedUser: impersonationContext.impersonatedUser,
-          role: impersonationContext.role,
-          companyType: impersonationContext.companyType,
-          startTime: impersonationContext.startTime
+        isSimulatingRole: !!roleSimulationContext,
+        context: roleSimulationContext ? {
+          simulatedUser: roleSimulationContext.simulatedUser,
+          role: roleSimulationContext.role,
+          companyType: roleSimulationContext.companyType,
+          startTime: roleSimulationContext.startTime
         } : null
       });
     } catch (error) {
-      console.error("Error getting impersonation status:", error);
-      res.status(500).json({ message: "Failed to get impersonation status" });
+      console.error("Error getting role simulation status:", error);
+      res.status(500).json({ message: "Failed to get role simulation status" });
     }
   });
 

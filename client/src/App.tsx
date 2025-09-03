@@ -152,6 +152,9 @@ function Router() {
     // Store testing role for API headers
     localStorage.setItem('testingRole', role);
     
+    // Note: When role simulation is used (via role-tester component),
+    // navigation is handled by the role simulation redirect URL.
+    // This function only handles manual role switching via role-switcher.
     // Navigate to the appropriate dashboard based on the new role
     if (role === 'operations_director') {
       setLocation('/operations-dashboard');
