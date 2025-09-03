@@ -69,6 +69,7 @@ export class RBACService implements IRBACService, IService {
       name: 'administrator',
       level: 900,
       permissions: [
+        // Service Company Administrator permissions (full access)
         { resource: 'users', action: '*' },
         { resource: 'workOrders', action: '*' },
         { resource: 'companies', action: 'read' },
@@ -77,7 +78,12 @@ export class RBACService implements IRBACService, IService {
         { resource: 'issues', action: '*' },
         { resource: 'messaging', action: '*' },
         { resource: 'reports', action: '*' },
-        { resource: 'analytics', action: '*' }
+        { resource: 'analytics', action: '*' },
+        // Client Company Administrator permissions (limited - handled by company context)
+        { resource: 'workOrders', action: 'create', conditions: ['client_company'] },
+        { resource: 'workOrders', action: 'read', conditions: ['own_company'] },
+        { resource: 'fieldAgents', action: 'read' },
+        { resource: 'serviceCompanies', action: 'read' }
       ]
     });
 
@@ -151,18 +157,8 @@ export class RBACService implements IRBACService, IService {
       ]
     });
 
-    // Client Company Roles
-    this.roleDefinitions.set('Administrator', {
-      name: 'Client Company Administrator',
-      level: 400,
-      permissions: [
-        { resource: 'workOrders', action: 'create' },
-        { resource: 'workOrders', action: 'read', conditions: ['own_company'] },
-        { resource: 'jobNetwork', action: 'read' },
-        { resource: 'fieldAgents', action: 'read' },
-        { resource: 'serviceCompanies', action: 'read' }
-      ]
-    });
+    // Note: administrator role now serves both service and client companies
+    // Client company administrators have same base role but different permissions based on company context
   }
 
   async hasPermission(userId: string, resource: string, action: string, context?: any): Promise<boolean> {

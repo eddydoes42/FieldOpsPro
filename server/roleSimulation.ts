@@ -13,7 +13,7 @@ const ROLE_SIMULATION_MAP = {
     field_agent: { firstName: "TestAge", lastName: "Service" }
   },
   client: {
-    client_company_admin: { firstName: "TestAdmin", lastName: "Client" },
+    administrator: { firstName: "TestAdmin", lastName: "Client" },
     project_manager: { firstName: "TestProj", lastName: "Client" },
     manager: { firstName: "TestMan", lastName: "Client" },
     dispatcher: { firstName: "TestDisp", lastName: "Client" }

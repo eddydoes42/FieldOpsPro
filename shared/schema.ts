@@ -2017,7 +2017,7 @@ export const allowedRolesByCompanyType: Record<'service' | 'client', string[]> =
     'field_agent'
   ],
   client: [
-    'client_company_admin',
+    'administrator',
     'project_manager', 
     'manager',
     'dispatcher'

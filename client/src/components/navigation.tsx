@@ -122,7 +122,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                         roles.includes('project_manager') ? 'project_manager' :
                         roles.includes('manager') ? 'manager' :
                         roles.includes('dispatcher') ? 'dispatcher' :
-                        roles.includes('client_company_admin') ? 'client_company_admin' : 'field_agent';
+                        roles.includes('field_engineer') ? 'field_engineer' : 'field_agent';
 
     // Create combined role badge for multiple roles
     const roleDisplay = roles.length > 1 ? 
@@ -145,7 +145,27 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
-      case 'administrator':
+      case 'administrator': {
+        // Determine company type context from current user
+        const currentUser = user as any;
+        const userCompany = currentUser?.company || {};
+        const isClientCompanyAdmin = userCompany.type === 'client';
+        
+        // Different navigation for Service vs Client company administrators
+        if (isClientCompanyAdmin) {
+          return {
+            badge: { text: 'Client Admin', icon: 'fas fa-user-tie', color: 'bg-teal-900/30 text-teal-300 border-teal-800/50' },
+            links: [
+              { path: '/client-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
+              { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
+              { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
+              { path: '/client/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
+              { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
+            ]
+          };
+        }
+        
+        // Service Company Administrator (full access)
         return {
           badge: { text: roleDisplay, icon: 'fas fa-crown', color: 'bg-purple-900/30 text-purple-300 border-purple-800/50' },
           links: [
@@ -161,6 +181,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
+      }
       case 'project_manager':
         return {
           badge: { text: roleDisplay === 'project_manager' ? 'Project Manager' : roleDisplay, icon: 'fas fa-project-diagram', color: 'bg-cyan-900/30 text-cyan-300 border-cyan-800/50' },
@@ -211,14 +232,14 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/field-agent/settings', label: 'Settings', icon: 'fas fa-cog' },
           ]
         };
-      case 'client_company_admin':
+      case 'field_engineer':
         return {
-          badge: { text: 'Client Admin', icon: 'fas fa-user-tie', color: 'bg-teal-900/30 text-teal-300 border-teal-800/50' },
+          badge: { text: roleDisplay === 'field_engineer' ? 'Field Engineer' : roleDisplay, icon: 'fas fa-user-hard-hat', color: 'bg-blue-900/30 text-blue-300 border-blue-800/50' },
           links: [
-            { path: '/client-dashboard', label: 'My Dashboard', icon: 'fas fa-tachometer-alt' },
-            { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
-            { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
-            { path: '/client/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
+            { path: '/field-engineer-dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { path: '/mywork', label: 'My Work', icon: 'fas fa-clipboard-list' },
+            { path: '/team', label: 'My Team', icon: 'fas fa-users' },
+            { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
@@ -286,7 +307,10 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                   className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
                 >
                   <option value="">Select Role</option>
-                  <option value="client_company_admin">Client Admin</option>
+                  <option value="administrator">Administrator</option>
+                  <option value="project_manager">Project Manager</option>
+                  <option value="manager">Manager</option>
+                  <option value="dispatcher">Dispatcher</option>
                 </select>
               </div>
             </div>

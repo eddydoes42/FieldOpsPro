@@ -86,12 +86,17 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
       return <ManagerDashboard />;
     } else if (effectiveRole === 'field_agent') {
       return <AgentDashboard />;
-    } else if (effectiveRole === 'client_company_admin') {
-      return (
-        <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
-          <ClientDashboard user={user} />
-        </Suspense>
-      );
+    } else if (effectiveRole === 'administrator') {
+      // Check if testing client company role to show client dashboard
+      const testingCompanyType = localStorage.getItem('testingCompanyType');
+      if (testingCompanyType === 'client') {
+        return (
+          <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
+            <ClientDashboard user={user} />
+          </Suspense>
+        );
+      }
+      return <AdminDashboard />;
     } else {
       return <Landing />;
     }
@@ -139,7 +144,7 @@ function Router() {
         return 'project_manager';
       }
       if (testingCompanyType === 'client') {
-        return 'client_company_admin';
+        return 'administrator';
       }
       return testingRole;
     }
@@ -166,8 +171,13 @@ function Router() {
       setLocation('/dashboard');
     } else if (role === 'manager') {
       setLocation('/manager-dashboard');
-    } else if (role === 'client_company_admin') {
-      setLocation('/client-dashboard');
+    } else if (role === 'administrator') {
+      const testingCompanyType = localStorage.getItem('testingCompanyType');
+      if (testingCompanyType === 'client') {
+        setLocation('/client-dashboard');
+      } else {
+        setLocation('/admin-dashboard');
+      }
     } else {
       setLocation('/dashboard');
     }
@@ -398,7 +408,8 @@ function Router() {
             <Route path="/job-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
+                const testingCompanyType = localStorage.getItem('testingCompanyType');
+                const hasJobNetworkAccess = ['administrator', 'manager', 'dispatcher'].includes(effectiveRole) || (effectiveRole === 'administrator' && testingCompanyType === 'client');
                 // Operations Director bypass - can access Job Network when not in role testing mode
                 // Only consider it role testing if there's an active testingRole, not just permanentRole
                 const isRoleTesting = !!testingRole;
@@ -425,7 +436,8 @@ function Router() {
             <Route path="/talent-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher', 'client_company_admin'].includes(effectiveRole);
+                const testingCompanyType = localStorage.getItem('testingCompanyType');
+                const hasTalentNetworkAccess = ['operations_director', 'administrator', 'manager', 'dispatcher'].includes(effectiveRole) || (effectiveRole === 'administrator' && testingCompanyType === 'client');
                 // Only allow Operations Directors superuser access when NOT role testing
                 const isRoleTesting = !!testingRole;
                 const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
@@ -445,7 +457,8 @@ function Router() {
             <Route path="/project-network">
               {(() => {
                 const effectiveRole = getEffectiveRole();
-                const hasProjectNetworkAccess = ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer', 'client_company_admin'].includes(effectiveRole);
+                const testingCompanyType = localStorage.getItem('testingCompanyType');
+                const hasProjectNetworkAccess = ['operations_director', 'administrator', 'project_manager', 'manager', 'field_engineer'].includes(effectiveRole) || (effectiveRole === 'administrator' && testingCompanyType === 'client');
                 // Only allow Operations Directors superuser access when NOT role testing
                 const isRoleTesting = !!testingRole;
                 const isSuperUserAccess = isOperationsDirector(user as any) && !isRoleTesting;
@@ -581,7 +594,8 @@ function Router() {
               {(() => {
                 const effectiveRole = getEffectiveRole();
                 // Allow access if user has client role OR is testing as client OR is operations director
-                const hasClientAccess = effectiveRole === 'client_company_admin' || isOperationsDirector(user as any);
+                const testingCompanyType = localStorage.getItem('testingCompanyType');
+                const hasClientAccess = (effectiveRole === 'administrator' && testingCompanyType === 'client') || isOperationsDirector(user as any);
                 
                 if (isAuthenticated && hasClientAccess) {
                   return (
