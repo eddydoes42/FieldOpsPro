@@ -15,7 +15,8 @@ const ROLE_IMPERSONATION_MAP = {
   client: {
     client_company_admin: { firstName: "TestAdmin", lastName: "Client" },
     project_manager: { firstName: "TestProj", lastName: "Client" },
-    manager: { firstName: "TestMan", lastName: "Client" }
+    manager: { firstName: "TestMan", lastName: "Client" },
+    dispatcher: { firstName: "TestDisp", lastName: "Client" }
   }
 };
 
@@ -26,6 +27,7 @@ export interface ImpersonationContext {
   companyType: 'service' | 'client';
   role: string;
   startTime: Date;
+  redirectUrl?: string;
 }
 
 // In-memory store for active impersonations (in production, use Redis or database)
@@ -52,7 +54,7 @@ export class RoleImpersonationService {
     const [testCompany] = await db.select()
       .from(companies)
       .where(and(
-        eq(companies.companyType, companyType),
+        eq(companies.type, companyType),
         eq(companies.name, companyType === 'service' ? 'Test Service Company' : 'Test Client Company')
       ));
 
@@ -61,7 +63,11 @@ export class RoleImpersonationService {
     }
 
     // Find the impersonation target based on role and company type
-    const impersonationTarget = ROLE_IMPERSONATION_MAP[companyType][role as keyof typeof ROLE_IMPERSONATION_MAP['service']];
+    const roleMapping = ROLE_IMPERSONATION_MAP[companyType];
+    const impersonationTarget = roleMapping && typeof roleMapping === 'object' && role in roleMapping 
+      ? (roleMapping as any)[role] 
+      : null;
+    
     if (!impersonationTarget) {
       throw new Error(`No impersonation target found for role: ${role} in ${companyType} company`);
     }
@@ -79,6 +85,20 @@ export class RoleImpersonationService {
       throw new Error(`Test user not found: ${impersonationTarget.firstName} ${impersonationTarget.lastName}. Please run database seeding first.`);
     }
 
+    // Calculate appropriate redirect URL based on role
+    const getRedirectUrl = (role: string): string => {
+      const roleMapping: Record<string, string> = {
+        'administrator': '/admin-dashboard',
+        'project_manager': '/project-manager-dashboard', 
+        'manager': '/manager-dashboard',
+        'dispatcher': '/dispatcher-dashboard',
+        'field_engineer': '/mywork',
+        'field_agent': '/mywork',
+        'client_company_admin': '/dashboard'
+      };
+      return roleMapping[role] || '/dashboard';
+    };
+
     // Create impersonation context
     const impersonationContext: ImpersonationContext = {
       originalUserId,
@@ -86,7 +106,8 @@ export class RoleImpersonationService {
       impersonatedUser: testUser,
       companyType,
       role,
-      startTime: new Date()
+      startTime: new Date(),
+      redirectUrl: getRedirectUrl(role)
     };
 
     // Store active impersonation

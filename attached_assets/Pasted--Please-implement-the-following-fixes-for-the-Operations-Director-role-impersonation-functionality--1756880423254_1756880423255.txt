@@ -1,0 +1,47 @@
+"Please implement the following fixes for the Operations Director role impersonation functionality:
+
+Review Role Testing Initialization:
+
+Ensure the handleStartTesting function in the role-tester component properly initializes and passes the selected role and company type for role impersonation.
+Update startImpersonation Method:
+
+In RoleImpersonationService, modify the startImpersonation method to ensure it verifies the original user's role as operations_director. If valid, proceed to fetch the test user based on the selected role and company type.
+Ensure proper error handling if the test company or user is not found to return an informative message.
+Correct Redirect Logic:
+
+After impersonation is started successfully, use the returned redirectUrl from startImpersonation to navigate to the appropriate dashboard for the impersonated role.
+Here is a sample code snippet for handleStartTesting to guide you:
+
+const handleStartTesting = () => {
+  if (!selectedRole || !selectedCompanyType) {
+    toast({
+      title: "Selection Required",
+      description: "Please select both a company type and role to test",
+      variant: "destructive",
+    });
+    return;
+  }
+  startImpersonationMutation.mutate(
+    {
+      role: selectedRole,
+      companyType: selectedCompanyType,
+    },
+    {
+      onSuccess: (data) => {
+        // Set the role testing info in local storage
+        localStorage.setItem('testingRole', selectedRole);
+        localStorage.setItem('testingCompanyType', selectedCompanyType);
+        // Redirect to the appropriate dashboard for the selected role
+        window.location.href = `/${data.context.role}-dashboard`; // Adjust based on your routing structure
+      },
+      onError: (error) => {
+        toast({
+          title: "Error Starting Role Testing",
+          description: error.message || "Failed to start role testing.",
+          variant: "destructive",
+        });
+      },
+    }
+  );
+};
+After these changes, please test the flow to verify that the Operations Director can successfully access the dashboards of the impersonated user."

@@ -1,38 +1,42 @@
 # FieldOps Pro - IT Field Agent Management System
 
 ## Overview
-FieldOps Pro is a comprehensive field operations management platform for IT field services. It provides advanced operational tools, dynamic time tracking, and enhanced work order capabilities for mobile workforce teams. The system includes a hierarchical, role-based access control system for Operations Directors, company-level administrators, managers, dispatchers, and field agents. Key features encompass work order management with integrated issue reporting, user management, real-time messaging, and comprehensive role testing. The platform aims to improve communication and operational efficiency for IT field service companies and their clients, offering modules for resource optimization, smart routing, profitability analysis, bidding, credential management, predictive risk, and service quality monitoring. Recent enhancements include advanced job visibility, document uploading, a structured issue creation system, and a client feedback loop.
+FieldOps Pro is a comprehensive field operations management platform designed to streamline IT field services. It provides advanced operational tools, dynamic time tracking, and enhanced work order capabilities for mobile workforce teams. The system aims to improve communication, enhance operational efficiency, and support IT field service companies and their clients. Key capabilities include work order management with integrated issue reporting, user management, real-time messaging, resource optimization, smart routing, agent capabilities, profitability analysis, bidding, credential management, predictive risk, and service quality monitoring.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies"). Organizations providing work orders and projects to Service Companies should be referred to as "Client Companies" (not just "Companies")
+Terminology preference: Organizations providing IT services should be referred to as "Service Companies" (not just "Companies"). Organizations providing work orders and projects to Service Companies should be referred to as "Client Companies" (not just "Companies").
 
 ## System Architecture
 
-### Frontend Architecture
-The client-side is built with React and TypeScript, using a component-based architecture with shadcn/ui for UI consistency and Tailwind CSS for styling. wouter handles routing, and TanStack Query manages server state. The frontend features distinct role-based dashboard views, shared components, a responsive interface, and a consistent dark theme with a blue-grey color scheme. A comprehensive calendar system with weekly view and advanced filtering is integrated, and icon-based navigation is used throughout.
-
-### Backend Architecture
-The server uses Express.js with TypeScript, following a RESTful API design. It includes modules for authentication, data operations, and route handling, implementing role-based access control and comprehensive error handling. The architecture emphasizes an enterprise-grade design with dependency injection, a service-oriented approach, and a core infrastructure including EventBus, Logger, RBACService, SecurityService, and Bootstrap system. Centralized security middleware provides rate limiting, request validation, and audit logging.
-
-### Database Design
-PostgreSQL serves as the primary database, with Drizzle ORM providing type-safe operations. The schema includes tables for users, work orders, tasks, time entries, messages, sessions, project heartbeats, risk scores, service quality snapshots, and performance data, supporting hierarchical user roles and task management with referential integrity.
-
-### Authentication & Authorization
-Authentication uses Replit's OAuth with session management via connect-pg-simple. A strict hierarchical role-based authorization system is implemented, covering:
-- **Operations Director**: Complete system oversight, creation/deletion of service companies, client companies, and administrators, and role testing.
-- **Service Company Hierarchy (Administrator, Project Manager, Manager, Dispatcher, Field Agent)**: Defined CRUD permissions for user accounts, work orders, projects, issues, and expenses, with specific approval flows for assignments, promotions, and financial disbursements. All actions are logged for audit and compliance.
-- **Job Network**: A shared platform for Service Companies and Client Companies to view, post, and manage work orders. Client Company posts are public, while Service Company posts are internal. Users can request assignments at posted budgets or submit counter-proposals with alternative terms. Role-based capabilities dictate who can view, request, approve, or deny requests, with filters for status, role eligibility, company type, budget, location, and deadline.
-
-### State Management
-Frontend server state is managed by TanStack Query. Form state is handled by React Hook Form, with Zod used for validation, ensuring shared schemas between frontend and backend.
-
 ### UI/UX Design
-The application features a modern design built on Tailwind CSS and shadcn/ui, providing a responsive interface. It emphasizes role-specific workflows with distinct dashboard layouts and a consistent dark theme using a blue-grey color scheme.
+The application features a modern design built on Tailwind CSS and shadcn/ui, providing a responsive interface with a consistent dark theme using a blue-grey color scheme. It emphasizes role-specific workflows with distinct dashboard layouts, a comprehensive calendar system with weekly view, advanced filtering, and icon-based navigation.
+
+### Technical Implementation
+The frontend is built with React and TypeScript, utilizing a component-based architecture with shadcn/ui for UI consistency and Tailwind CSS for styling. wouter is used for routing and TanStack Query for server state management. Form state is managed with React Hook Form and Zod for validation.
+The backend uses Express.js with TypeScript, following a RESTful API design. It includes modules for authentication, data operations, and route handling, implementing role-based access control and comprehensive error handling. PostgreSQL is the primary database, with Drizzle ORM for type-safe operations.
+
+### Feature Specifications
+The system incorporates a hierarchical, role-based access control system including Operations Director, company-level administrators, managers, dispatchers, and field agents. Authentication uses Replit's OAuth with session management. The system supports distinct entity types for "Service Companies" (IT service providers) and "Client Companies" (IT service requirers).
+
+**Core Features:**
+- **Hierarchical Role System**: Strict access controls with Operations Director (god mode), Administrator, Manager, Dispatcher, Field Engineer, and Field Agent roles.
+- **Work Order Management**: Creation, assignment, status tracking, task dependencies, integrated issue reporting, and budget management. Includes a dedicated `/mywork` page for agents.
+- **User Management Hierarchy**: Defined CRUD permissions based on role hierarchy for both Service and Client companies.
+- **Client Management System**: Dedicated client dashboard for work order creation, job network access, and field agent/engineer request and assignment.
+- **Performance Analytics & Feedback**: Agent performance tracking, bidirectional star rating, structured client feedback loops (multi-tier rating, analytics, automated collection), and trend analysis.
+- **Job Network**: A shared platform where eligible Service Company and Client Company roles can view, request, and manage work orders (Public for Client Company posts, Internal for Service Company posts). Supports "Request Assignment" and "Counter Proposal" options.
+- **Talent Network**: Accessible to Client Companies for viewing and assigning Service Company personnel.
+- **Enhanced Job Visibility**: Advanced filtering with location radius, skills matching, experience level, and exclusive network support with skill match scoring.
+- **Document Management**: Comprehensive uploading, categorization (pre/during/post-visit), role-based access, and object storage integration.
+- **Structured Issue Reporting**: Advanced creation system with categorization, severity levels, auto-escalation, analytics, and comprehensive tracking.
+- **Advanced Operational Modules**: Job Category Profitability Analysis, Bid & Proposal System, Credential & Compliance Vault, Resource Optimization Engine, Smart Routing & Dispatch.
+- **Predictive Risk & Service Quality**: Modules for predictive risk analysis and a service quality dashboard.
+- **Restricted Authentication**: Login limited to pre-approved team members; no self-registration.
 
 ## External Dependencies
 - **React**: Frontend UI library.
-- **TypeScript**: Programming language for both frontend and backend.
+- **TypeScript**: Programming language.
 - **Express.js**: Backend web application framework.
 - **PostgreSQL**: Primary database.
 - **Drizzle ORM**: ORM for PostgreSQL.

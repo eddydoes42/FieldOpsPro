@@ -134,11 +134,36 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
       });
       return;
     }
-
-    startImpersonationMutation.mutate({
-      role: selectedRole,
-      companyType: selectedCompanyType
-    });
+    
+    startImpersonationMutation.mutate(
+      {
+        role: selectedRole,
+        companyType: selectedCompanyType,
+      },
+      {
+        onSuccess: (data) => {
+          // Set the role testing info in local storage
+          localStorage.setItem('testingRole', selectedRole);
+          localStorage.setItem('testingCompanyType', selectedCompanyType);
+          
+          // Redirect to the appropriate dashboard for the selected role using redirectUrl
+          if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+          } else {
+            // Fallback to role-based routing if no redirectUrl provided
+            const dashboardRoute = selectedRole === 'client_company_admin' ? '/dashboard' : `/${selectedRole}-dashboard`;
+            window.location.href = dashboardRoute;
+          }
+        },
+        onError: (error) => {
+          toast({
+            title: "Error Starting Role Testing",
+            description: error.message || "Failed to start role testing.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
   };
 
   const handleStopTesting = () => {

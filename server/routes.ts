@@ -167,7 +167,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           impersonatedUser: impersonationContext.impersonatedUser,
           role: impersonationContext.role,
           companyType: impersonationContext.companyType
-        }
+        },
+        redirectUrl: impersonationContext.redirectUrl
       });
     } catch (error) {
       console.error("Error starting impersonation:", error);
