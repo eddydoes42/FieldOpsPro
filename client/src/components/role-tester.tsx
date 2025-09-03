@@ -181,85 +181,19 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
           </Alert>
         )}
 
-        {!isCurrentlyTesting ? (
-          <div className="space-y-3">
-            <Tabs value={selectedCompanyType} onValueChange={(value) => setSelectedCompanyType(value as 'service' | 'client')}>
-              <TabsList className="grid w-full grid-cols-2 h-auto">
-                <TabsTrigger value="service" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
-                  <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="truncate">Service Co.</span>
-                </TabsTrigger>
-                <TabsTrigger value="client" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
-                  <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="truncate">Client Co.</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="service" className="mt-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Role to Test</label>
-                  <Select value={selectedRole} onValueChange={setSelectedRole}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a service company role..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {serviceCompanyRoles.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          <div>
-                            <div className="font-medium">{role.label}</div>
-                            <div className="text-xs text-muted-foreground">{role.description}</div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="client" className="mt-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Role to Test</label>
-                  <Select value={selectedRole} onValueChange={setSelectedRole}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a client company role..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clientCompanyRoles.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          <div>
-                            <div className="font-medium">{role.label}</div>
-                            <div className="text-xs text-muted-foreground">{role.description}</div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <Button 
-              onClick={handleStartTesting}
-              disabled={!selectedRole || startRoleSimulationMutation.isPending}
-              className="w-full text-sm py-2 h-auto"
-              size="sm"
-            >
-              {startRoleSimulationMutation.isPending ? "Starting..." : "Start Simulation"}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
+        <div className="space-y-3">
+          {isCurrentlyTesting && (
             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-purple-900 dark:text-purple-100 text-sm truncate">
-                    Simulating: {testingContext?.role}
+                    Currently Simulating: {testingContext?.role}
                   </p>
                   <p className="text-xs text-purple-700 dark:text-purple-300 truncate">
                     {testingContext?.companyType} company
                   </p>
                   <p className="text-xs text-purple-600 dark:text-purple-400 truncate">
-                    {testingContext?.startTime ? new Date(testingContext.startTime).toLocaleTimeString() : ''}
+                    Started: {testingContext?.startTime ? new Date(testingContext.startTime).toLocaleTimeString() : ''}
                   </p>
                 </div>
                 <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100 text-xs shrink-0">
@@ -267,18 +201,90 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
                 </Badge>
               </div>
             </div>
+          )}
 
+          <Tabs value={selectedCompanyType} onValueChange={(value) => setSelectedCompanyType(value as 'service' | 'client')}>
+            <TabsList className="grid w-full grid-cols-2 h-auto">
+              <TabsTrigger value="service" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
+                <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="truncate">Service Co.</span>
+              </TabsTrigger>
+              <TabsTrigger value="client" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="truncate">Client Co.</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="service" className="mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {isCurrentlyTesting ? "Switch to Role" : "Select Role to Test"}
+                </label>
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a service company role..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {serviceCompanyRoles.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        <div>
+                          <div className="font-medium">{role.label}</div>
+                          <div className="text-xs text-muted-foreground">{role.description}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="client" className="mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {isCurrentlyTesting ? "Switch to Role" : "Select Role to Test"}
+                </label>
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a client company role..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientCompanyRoles.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        <div>
+                          <div className="font-medium">{role.label}</div>
+                          <div className="text-xs text-muted-foreground">{role.description}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex gap-2">
             <Button 
-              onClick={handleStopTesting}
-              disabled={stopRoleSimulationMutation.isPending}
-              variant="destructive"
-              className="w-full text-sm py-2 h-auto"
+              onClick={handleStartTesting}
+              disabled={!selectedRole || startRoleSimulationMutation.isPending}
+              className="flex-1 text-sm py-2 h-auto"
               size="sm"
             >
-              {stopRoleSimulationMutation.isPending ? "Stopping..." : "Stop Simulation"}
+              {startRoleSimulationMutation.isPending ? "Switching..." : isCurrentlyTesting ? "Switch Role" : "Start Simulation"}
             </Button>
+            
+            {isCurrentlyTesting && (
+              <Button 
+                onClick={handleStopTesting}
+                disabled={stopRoleSimulationMutation.isPending}
+                variant="destructive"
+                className="flex-1 text-sm py-2 h-auto"
+                size="sm"
+              >
+                {stopRoleSimulationMutation.isPending ? "Stopping..." : "Stop Simulation"}
+              </Button>
+            )}
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -1211,6 +1211,14 @@ export default function WorkOrders() {
             variant="outline"
             size="sm"
             onClick={() => {
+              // Check if role simulation is active first
+              const testingRole = localStorage.getItem('testingRole');
+              if (testingRole) {
+                // During role simulation, navigate back to /dashboard to respect the simulated role
+                setLocation('/dashboard');
+                return;
+              }
+              
               const selectedRole = localStorage.getItem('selectedRole');
               if (selectedRole === 'operations_director' || (user as any).roles?.includes('operations_director')) {
                 setLocation('/operations-dashboard');

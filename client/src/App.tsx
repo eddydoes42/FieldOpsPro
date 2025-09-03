@@ -58,6 +58,8 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
   
   // Handle redirect to role selection
   useEffect(() => {
+    // Don't auto-redirect if role simulation is active (testing role is set)
+    // This allows the backend role simulation redirect to work properly
     if (hasOpsDirector && hasAdmin && !selectedRole && !testingRole && !permanentRole) {
       setLocation('/choose-role');
     }

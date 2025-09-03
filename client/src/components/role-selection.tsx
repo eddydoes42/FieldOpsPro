@@ -16,6 +16,12 @@ export default function RoleSelection({ user }: RoleSelectionProps) {
 
   // Handle automatic redirects in useEffect to avoid state updates during render
   useEffect(() => {
+    // Skip auto-redirects if role simulation is active
+    const testingRole = localStorage.getItem('testingRole');
+    if (testingRole) {
+      return; // Let role simulation handle the routing
+    }
+
     // If user only has one relevant role, redirect automatically
     if (hasOperationsDirectorRole && !hasAdministratorRole) {
       setLocation('/operations-dashboard');
