@@ -152,8 +152,8 @@ export class RBACService implements IRBACService, IService {
     });
 
     // Client Company Roles
-    this.roleDefinitions.set('client_company_admin', {
-      name: 'client_company_admin',
+    this.roleDefinitions.set('Administrator', {
+      name: 'Client Company Administrator',
       level: 400,
       permissions: [
         { resource: 'workOrders', action: 'create' },

@@ -1993,6 +1993,129 @@ export function canAssignWorkOrders(user: User | null): boolean {
   return isOperationsDirector(user) || isAdminTeam(user);
 }
 
+/**
+ * ============================================================
+ * ROLE-COMPANY TYPE MAPPING SYSTEM
+ * ============================================================
+ * This system provides company-type-aware role validation and
+ * enhanced role simulation capabilities as outlined in the
+ * hand-off note requirements.
+ * ============================================================
+ */
+
+/**
+ * Allowed roles per company type
+ * Single source of truth for which roles are valid for each company type
+ */
+export const allowedRolesByCompanyType: Record<'service' | 'client', string[]> = {
+  service: [
+    'administrator',
+    'project_manager',
+    'manager',
+    'dispatcher',
+    'field_engineer',
+    'field_agent'
+  ],
+  client: [
+    'client_company_admin',
+    'project_manager', 
+    'manager',
+    'dispatcher'
+  ]
+};
+
+/**
+ * Check if a role is valid for a given company type
+ */
+export function isRoleAllowedForCompanyType(
+  companyType: 'service' | 'client',
+  role: string
+): boolean {
+  return allowedRolesByCompanyType[companyType]?.includes(role) ?? false;
+}
+
+/**
+ * Company-type-aware role check
+ * Preserves OD bypass and existing logic
+ * Note: companyType parameter should be passed when company context is available
+ */
+export function hasRoleForCompany(user: User | null, role: string, companyType?: 'service' | 'client'): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  // If no company type provided, fall back to standard role check
+  // This maintains compatibility with existing usage
+  if (!companyType) {
+    return user.roles.includes(role);
+  }
+
+  return user.roles.includes(role) && isRoleAllowedForCompanyType(companyType, role);
+}
+
+export function hasAnyRoleForCompany(user: User | null, roles: string[], companyType?: 'service' | 'client'): boolean {
+  if (!user || !user.roles) return false;
+  if (hasOperationsDirectorBypass(user)) return true;
+
+  // If no company type provided, fall back to standard role check
+  // This maintains compatibility with existing usage
+  if (!companyType) {
+    return roles.some(role => user.roles.includes(role));
+  }
+
+  return roles.some(r => user.roles.includes(r) && isRoleAllowedForCompanyType(companyType, r));
+}
+
+/**
+ * Role Simulator Functions
+ * Enhanced validation and seamless switching without stale permissions
+ */
+export function applySimulatedRole(
+  user: User,
+  testingRole: string,
+  testingCompanyType: 'service' | 'client'
+): User {
+  // Validate role/company type combo
+  if (!isRoleAllowedForCompanyType(testingCompanyType, testingRole)) {
+    throw new Error(`Invalid role "${testingRole}" for company type "${testingCompanyType}"`);
+  }
+
+  // Clone user to avoid mutating original
+  const simulatedUser = { ...user };
+
+  // Apply simulated role
+  simulatedUser.roles = [testingRole];
+  
+  // Note: Company type is managed separately via localStorage
+  // The actual company association would be handled by the impersonation service
+
+  // Persist simulation state (client-side)
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('testingRole', testingRole);
+    localStorage.setItem('testingCompanyType', testingCompanyType);
+  }
+
+  return simulatedUser;
+}
+
+/**
+ * Restore real user role (end simulation)
+ */
+export function clearSimulatedRole(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('testingRole');
+    localStorage.removeItem('testingCompanyType');
+  }
+}
+
+/**
+ * Keep OD simulator UI persistent
+ * Always show simulator bar for OD, even in simulation
+ */
+export function shouldShowRoleSimulatorUI(user: User | null): boolean {
+  if (!user) return false;
+  return user.roles?.includes('operations_director') || !!(typeof window !== 'undefined' && localStorage.getItem('testingRole'));
+}
+
 // Access Request types
 export type AccessRequest = typeof accessRequests.$inferSelect;
 export type InsertAccessRequest = typeof accessRequests.$inferInsert;
