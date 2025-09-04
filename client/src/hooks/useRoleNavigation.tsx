@@ -55,7 +55,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
 
       case "administrator":
         return [
-          { icon: Home, label: "Dashboard", route: "/admin-dashboard" },
+          { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: Users, label: "Team", route: "/team" },
           { icon: FolderOpen, label: "Work Orders", route: "/work-orders" },
           { icon: Briefcase, label: "Job Network", route: "/job-network" },
@@ -69,7 +69,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
 
       case "project_manager":
         return [
-          { icon: Home, label: "Dashboard", route: "/project-dashboard" },
+          { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: FolderOpen, label: "Projects", route: "/projects" },
           { icon: Briefcase, label: "Job Network", route: "/job-network" },
           { icon: Users, label: "Talent", route: "/talent-network" },
@@ -82,7 +82,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
 
       case "manager":
         return [
-          { icon: Home, label: "Dashboard", route: "/manager-dashboard" },
+          { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: Users, label: "Team", route: "/team" },
           { icon: FolderOpen, label: "Work Orders", route: "/work-orders" },
           { icon: Calendar, label: "Calendar", route: "/calendar" },
@@ -95,7 +95,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
 
       case "dispatcher":
         return [
-          { icon: Home, label: "Dashboard", route: "/dispatcher-dashboard" },
+          { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: ClipboardList, label: "Work Orders", route: "/work-orders" },
           { icon: Calendar, label: "Calendar", route: "/calendar" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
@@ -107,7 +107,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
 
       case "field_engineer":
         return [
-          { icon: Home, label: "Dashboard", route: "/engineer-dashboard" },
+          { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: Briefcase, label: "My Work", route: "/mywork" },
           { icon: Users, label: "My Team", route: "/my-team" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
@@ -127,11 +127,11 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
       case "client_company_admin":
       case "client":
         return [
-          { icon: Home, label: "Dashboard", route: "/client-dashboard" },
-          { icon: ClipboardList, label: "Work Orders", route: "/client/work-orders" },
-          { icon: PlusCircle, label: "Create", route: "/client/work-orders/create" },
+          { icon: Home, label: "Dashboard", route: "/dashboard" },
+          { icon: ClipboardList, label: "Work Orders", route: "/work-orders" },
+          { icon: PlusCircle, label: "Create", route: "/work-orders/create" },
           { icon: Users, label: "Talent", route: "/talent-network" },
-          { icon: Settings, label: "Settings", route: "/client/settings" }
+          { icon: Settings, label: "Settings", route: "/settings" }
         ];
 
       default:

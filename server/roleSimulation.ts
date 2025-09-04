@@ -9,6 +9,7 @@ const ROLE_SIMULATION_MAP = {
     administrator: { firstName: "TestAdmin", lastName: "Service" },
     project_manager: { firstName: "TestProj", lastName: "Service" },
     manager: { firstName: "TestMan", lastName: "Service" },
+    dispatcher: { firstName: "TestDisp", lastName: "Service" },
     field_engineer: { firstName: "TestEng", lastName: "Service" },
     field_agent: { firstName: "TestAge", lastName: "Service" }
   },
@@ -88,13 +89,12 @@ export class RoleSimulationService {
     // Calculate appropriate redirect URL based on role
     const getRedirectUrl = (role: string): string => {
       const roleMapping: Record<string, string> = {
-        'administrator': '/admin-dashboard',
-        'project_manager': '/project-manager-dashboard', 
-        'manager': '/manager-dashboard',
-        'dispatcher': '/dispatcher-dashboard',
+        'administrator': '/dashboard',
+        'project_manager': '/dashboard', 
+        'manager': '/dashboard',
+        'dispatcher': '/dashboard',
         'field_engineer': '/mywork',
-        'field_agent': '/mywork',
-        'client_company_admin': '/dashboard'
+        'field_agent': '/mywork'
       };
       return roleMapping[role] || '/dashboard';
     };

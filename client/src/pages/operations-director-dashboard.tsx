@@ -218,11 +218,12 @@ export default function OperationsDirectorDashboard() {
     { value: 'project_manager', label: 'Project Manager', shortLabel: 'Project Manager' },
     { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
     { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' },
+    { value: 'field_engineer', label: 'Field Engineer', shortLabel: 'Field Engineer' },
     { value: 'field_agent', label: 'Field Agent', shortLabel: 'Field Agent' }
   ];
 
   const availableClientRoles = [
-    { value: 'client_company_admin', label: 'Client Admin', shortLabel: 'Client Admin' },
+    { value: 'administrator', label: 'Administrator', shortLabel: 'Admin' },
     { value: 'project_manager', label: 'Project Manager', shortLabel: 'Project Manager' },
     { value: 'manager', label: 'Manager', shortLabel: 'Manager' },
     { value: 'dispatcher', label: 'Dispatcher', shortLabel: 'Dispatcher' }
