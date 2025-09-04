@@ -168,7 +168,7 @@ export function StashLayout({
                         {typeof item.icon === 'string' ? (
                           <i className={`${item.icon} w-5 h-5 text-current`}></i>
                         ) : (
-                          <div className="w-5 h-5">{item.icon}</div>
+                          <span className="w-5 h-5 flex items-center justify-center">{item.icon}</span>
                         )}
                       </div>
                     )}

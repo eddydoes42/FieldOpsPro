@@ -11,6 +11,7 @@ interface DeviceMemoryPromptProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   username?: string;
+  password?: string; // Add password for secure storage
   onDeviceRemembered?: () => void;
 }
 
@@ -18,6 +19,7 @@ export function DeviceMemoryPrompt({
   open, 
   onOpenChange, 
   username,
+  password,
   onDeviceRemembered 
 }: DeviceMemoryPromptProps) {
   const [rememberDevice, setRememberDevice] = useState(false);
@@ -41,16 +43,18 @@ export function DeviceMemoryPrompt({
     
     try {
       if (rememberDevice) {
-        deviceAuthService.rememberDevice(username);
+        // Save device with credentials for autofill
+        deviceAuthService.rememberDevice(username, password);
         
-        if (enableBiometric && biometricSupported) {
+        if (enableBiometric && biometricSupported && username) {
           try {
-            await deviceAuthService.registerBiometric(username || 'user');
+            await deviceAuthService.registerBiometric(username);
             toast({
               title: "Device Settings Saved",
-              description: "Device remembered and biometric authentication enabled.",
+              description: "Device remembered with biometric login enabled.",
             });
           } catch (biometricError) {
+            console.error('Biometric setup failed:', biometricError);
             toast({
               title: "Device Remembered",
               description: "Device saved, but biometric setup failed. You can try again later.",
@@ -60,7 +64,7 @@ export function DeviceMemoryPrompt({
         } else {
           toast({
             title: "Device Remembered",
-            description: "This device will be remembered for 30 days.",
+            description: "This device will remember your login for 30 days.",
           });
         }
         

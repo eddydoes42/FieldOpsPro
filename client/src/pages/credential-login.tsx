@@ -12,6 +12,8 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
+import { deviceAuthService } from "@/lib/deviceAuth";
+import { BiometricLoginButton } from "@/components/biometric-login-button";
 
 const credentialLoginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -24,6 +26,8 @@ export default function CredentialLogin() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [showDifferentAccount, setShowDifferentAccount] = useState(false);
+  const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
 
   const form = useForm<CredentialLoginData>({
     resolver: zodResolver(credentialLoginSchema),
@@ -34,12 +38,24 @@ export default function CredentialLogin() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (data: CredentialLoginData) => {
-      const response = await apiRequest("/api/auth/login-credentials", "POST", data);
-      return await response.json();
+    mutationFn: async (data: CredentialLoginData & { saveCredentials?: boolean }) => {
+      const response = await apiRequest("/api/auth/login-credentials", "POST", {
+        username: data.username,
+        password: data.password
+      });
+      return { ...await response.json(), saveCredentials: data.saveCredentials, credentials: data };
     },
     onSuccess: (data) => {
       if (data.success) {
+        // Save credentials if login successful and device should be remembered
+        if (data.saveCredentials && data.credentials) {
+          try {
+            deviceAuthService.rememberDevice(data.credentials.username, data.credentials.password);
+          } catch (error) {
+            console.warn('Failed to save credentials:', error);
+          }
+        }
+        
         if (data.redirectToOAuth) {
           // Redirect to OAuth to establish session
           window.location.href = data.redirectUrl;
@@ -58,7 +74,36 @@ export default function CredentialLogin() {
 
   const onSubmit = (data: CredentialLoginData) => {
     setErrorMessage("");
-    loginMutation.mutate(data);
+    
+    // Check if device should be remembered and save credentials on successful login
+    const shouldSave = hasStoredCredentials || deviceAuthService.isDeviceRemembered();
+    loginMutation.mutate({
+      ...data,
+      saveCredentials: shouldSave
+    });
+  };
+
+  const handleBiometricSuccess = (username: string) => {
+    // On successful biometric login, get stored credentials and auto-login
+    const storedCreds = deviceAuthService.getStoredCredentials();
+    if (storedCreds) {
+      loginMutation.mutate({
+        ...storedCreds,
+        saveCredentials: false // Already saved
+      });
+    } else {
+      toast({
+        title: "Biometric Login Successful",
+        description: "Please complete login with your credentials.",
+      });
+      form.setValue('username', username);
+    }
+  };
+
+  const handleUseDifferentAccount = () => {
+    setShowDifferentAccount(true);
+    setHasStoredCredentials(false);
+    form.reset({ username: "", password: "" });
   };
 
   useEffect(() => {
@@ -70,7 +115,24 @@ export default function CredentialLogin() {
       // Clear the error from URL without page reload
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+
+    // Check for stored credentials and auto-fill
+    if (!showDifferentAccount) {
+      const storedCreds = deviceAuthService.getStoredCredentials();
+      if (storedCreds) {
+        setHasStoredCredentials(true);
+        form.setValue('username', storedCreds.username);
+        form.setValue('password', storedCreds.password);
+        
+        toast({
+          title: "Welcome back!",
+          description: `Signed in as ${storedCreds.username}. Use "Different Account" if needed.`,
+        });
+      } else {
+        setHasStoredCredentials(false);
+      }
+    }
+  }, [showDifferentAccount, form, toast]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary px-4">
@@ -103,6 +165,49 @@ export default function CredentialLogin() {
                   Enter the username and password sent to your email
                 </p>
               </div>
+
+              {/* Biometric Login Option */}
+              {deviceAuthService.isBiometricSupported() && deviceAuthService.getBiometricCredentials().length > 0 && !showDifferentAccount && (
+                <div className="space-y-4">
+                  <BiometricLoginButton 
+                    onSuccess={handleBiometricSuccess}
+                    onError={(error) => setErrorMessage(error)}
+                    disabled={loginMutation.isPending}
+                  />
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-muted-foreground/30" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Show autofill notice if credentials are loaded */}
+              {hasStoredCredentials && !showDifferentAccount && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <i className="fas fa-info-circle text-blue-600 mt-0.5"></i>
+                    <div className="flex-1">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        Credentials filled from remembered device
+                      </p>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        onClick={handleUseDifferentAccount}
+                        className="p-0 h-auto text-blue-600 dark:text-blue-300"
+                        data-testid="button-use-different-account"
+                      >
+                        Use Different Account
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

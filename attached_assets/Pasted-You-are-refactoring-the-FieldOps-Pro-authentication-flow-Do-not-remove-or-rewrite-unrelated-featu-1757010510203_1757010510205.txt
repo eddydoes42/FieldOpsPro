@@ -1,0 +1,34 @@
+You are refactoring the FieldOps Pro authentication flow.  
+Do not remove or rewrite unrelated features, constants, or styles.  
+Preserve all existing login logic, error handling, and UI patterns unless explicitly changed below.
+
+## Goals:
+1. **Biometric Authentication (Refactor & Fix)**
+   - Analyze existing biometric authentication code (Touch ID, Face ID, or platform equivalent) for flaws, logic errors, or incorrect API usage.
+   - Identify and fix issues preventing biometric login from functioning as intended.
+   - Ensure biometric login is only offered if the device supports it and the user has enabled it.
+   - Confirm that on successful biometric authentication, the login flow proceeds using stored credentials (from "Remember This Device" cache if available).
+   - Maintain fallback to manual username/password login if biometric authentication fails or is canceled.
+
+2. **"Remember This Device" Autofill (Refactor & Fix)**
+   - Analyze existing "Remember This Device" implementation to determine why cached credentials are not autofilling.
+   - Fix so that when "Remember This Device" is selected:
+     - Credentials (username/email and securely stored password token) are cached securely (Keychain on iOS, Keystore on Android, secure local storage on web/desktop).
+     - On subsequent app launches, if cache exists and is valid, autofill the login form fields with the stored credentials.
+     - If biometric authentication is available and enabled, allow direct login without showing the login form.
+   - Ensure secure storage best practices — never store plain text passwords.
+
+3. **General Requirements**
+   - Keep all changes modular and isolated to authentication-related files/components.
+   - Maintain cross-platform compatibility (iOS, Android, desktop/web).
+   - Use existing UI components and styling for any biometric login prompts or autofill indicators.
+   - Add or update inline comments explaining fixes and platform-specific handling.
+   - Ensure all new and refactored code paths are covered by existing or new unit tests.
+
+## Deliverables:
+- Refactored biometric authentication logic that works as intended on all supported platforms.
+- Fixed "Remember This Device" logic so credentials autofill correctly and integrate with biometric login.
+- Clear, commented code changes that explain what was fixed and why.
+- No regressions in existing authentication or navigation flows.
+
+Do not alter unrelated business logic, navigation, or styling outside the authentication context.

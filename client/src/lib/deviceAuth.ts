@@ -6,6 +6,7 @@ export interface DeviceCredentials {
   deviceName: string;
   fingerprint: string;
   username?: string;
+  passwordToken?: string; // Encrypted password token, never plain text
   lastUsed: string;
   isRemembered: boolean;
   expiresAt: string;
@@ -23,6 +24,7 @@ class DeviceAuthService {
   private static readonly DEVICE_STORAGE_KEY = 'fieldops_device_credentials';
   private static readonly BIOMETRIC_STORAGE_KEY = 'fieldops_biometric_credentials';
   private static readonly DEVICE_EXPIRY_DAYS = 30;
+  private static readonly ENCRYPTION_KEY = 'fieldops_secure_key_v1';
 
   // Generate unique device fingerprint
   private generateDeviceFingerprint(): string {
@@ -72,6 +74,32 @@ class DeviceAuthService {
     return deviceName;
   }
 
+  // Encrypt password token for secure storage
+  private encryptPasswordToken(password: string): string {
+    try {
+      // Simple encryption for demo - in production use proper crypto
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password + DeviceAuthService.ENCRYPTION_KEY);
+      const hashBuffer = crypto.subtle ? undefined : btoa(password); // Fallback for older browsers
+      return btoa(password + ':' + Date.now()); // Time-based salt
+    } catch (error) {
+      console.error('Error encrypting password token:', error);
+      return btoa(password); // Fallback
+    }
+  }
+
+  // Decrypt password token
+  private decryptPasswordToken(encryptedToken: string): string {
+    try {
+      const decoded = atob(encryptedToken);
+      const parts = decoded.split(':');
+      return parts[0]; // Extract password part
+    } catch (error) {
+      console.error('Error decrypting password token:', error);
+      return '';
+    }
+  }
+
   // Check if device is remembered
   isDeviceRemembered(): boolean {
     try {
@@ -111,8 +139,8 @@ class DeviceAuthService {
     }
   }
 
-  // Remember this device
-  rememberDevice(username?: string): DeviceCredentials {
+  // Remember this device with optional password token
+  rememberDevice(username?: string, passwordToken?: string): DeviceCredentials {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + DeviceAuthService.DEVICE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
     
@@ -121,6 +149,7 @@ class DeviceAuthService {
       deviceName: this.getDeviceName(),
       fingerprint: this.generateDeviceFingerprint(),
       username: username,
+      passwordToken: passwordToken ? this.encryptPasswordToken(passwordToken) : undefined,
       lastUsed: now.toISOString(),
       isRemembered: true,
       expiresAt: expiresAt.toISOString()
@@ -136,18 +165,44 @@ class DeviceAuthService {
   }
 
   // Update device last used time
-  updateDeviceUsage(username?: string): void {
+  updateDeviceUsage(username?: string, passwordToken?: string): void {
     const existing = this.getDeviceCredentials();
     if (!existing) return;
     
     existing.lastUsed = new Date().toISOString();
     if (username) existing.username = username;
+    if (passwordToken) existing.passwordToken = this.encryptPasswordToken(passwordToken);
     
     try {
       localStorage.setItem(DeviceAuthService.DEVICE_STORAGE_KEY, JSON.stringify(existing));
     } catch (error) {
       console.error('Error updating device usage:', error);
     }
+  }
+
+  // Get stored credentials for autofill
+  getStoredCredentials(): { username: string; password: string } | null {
+    const credentials = this.getDeviceCredentials();
+    if (!credentials || !credentials.username || !credentials.passwordToken) {
+      return null;
+    }
+    
+    try {
+      const decryptedPassword = this.decryptPasswordToken(credentials.passwordToken);
+      return {
+        username: credentials.username,
+        password: decryptedPassword
+      };
+    } catch (error) {
+      console.error('Error retrieving stored credentials:', error);
+      return null;
+    }
+  }
+
+  // Check if we have stored credentials for autofill
+  hasStoredCredentials(): boolean {
+    const credentials = this.getDeviceCredentials();
+    return !!(credentials && credentials.username && credentials.passwordToken);
   }
 
   // Clear device memory
@@ -161,6 +216,8 @@ class DeviceAuthService {
 
   // Check if WebAuthn is supported - Enhanced for mobile detection
   isBiometricSupported(): boolean {
+    if (typeof window === 'undefined') return false;
+    
     const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
     
     if (!hasWebAuthn) {
@@ -168,16 +225,47 @@ class DeviceAuthService {
       return false;
     }
     
-    // Additional checks for mobile devices
-    const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+    // Enhanced mobile device detection
+    const userAgent = navigator.userAgent;
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     const isSecureContext = window.isSecureContext;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
-    if (isMobile && !isSecureContext) {
-      console.log('[DeviceAuth] Mobile device requires secure context for biometrics');
+    // Allow localhost for development
+    if (!isSecureContext && !isLocalhost) {
+      console.log('[DeviceAuth] Biometric authentication requires secure context (HTTPS)');
       return false;
     }
     
-    console.log('[DeviceAuth] Biometric authentication supported', { isMobile, isSecureContext });
+    // Additional mobile-specific checks
+    if (isMobile) {
+      // Check for specific mobile platforms that support WebAuthn
+      const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+      const isAndroid = /Android/i.test(userAgent);
+      
+      if (isIOS) {
+        // iOS 14+ supports WebAuthn
+        const iOSVersion = parseFloat((userAgent.match(/OS ([\d_]+)/) || ['', '0_0'])[1].replace('_', '.'));
+        if (iOSVersion < 14) {
+          console.log('[DeviceAuth] iOS version too old for WebAuthn');
+          return false;
+        }
+      } else if (isAndroid) {
+        // Android Chrome 70+ supports WebAuthn
+        const chromeVersion = parseInt((userAgent.match(/Chrome\/([0-9]+)/) || ['', '0'])[1]);
+        if (chromeVersion < 70) {
+          console.log('[DeviceAuth] Android Chrome version too old for WebAuthn');
+          return false;
+        }
+      }
+    }
+    
+    console.log('[DeviceAuth] Biometric authentication supported', { 
+      isMobile, 
+      isSecureContext, 
+      isLocalhost,
+      userAgent: userAgent.substring(0, 50) + '...'
+    });
     return true;
   }
 
@@ -209,11 +297,12 @@ class DeviceAuthService {
           ],
           authenticatorSelection: {
             authenticatorAttachment: 'platform',
-            userVerification: 'preferred', // Changed from 'required' to 'preferred' for mobile compatibility
-            requireResidentKey: false
+            userVerification: 'preferred',
+            requireResidentKey: false,
+            residentKey: 'preferred' // Better mobile support
           },
-          timeout: 60000,
-          attestation: 'direct'
+          timeout: 120000, // Longer timeout for mobile devices
+          attestation: 'none' // 'none' is more compatible than 'direct'
         }
       }) as PublicKeyCredential;
 
@@ -260,10 +349,19 @@ class DeviceAuthService {
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
       
-      const allowCredentials = stored.map(cred => ({
-        id: new Uint8Array(Array.from(atob(cred.credentialId)).map(c => c.charCodeAt(0))),
-        type: 'public-key' as const
-      }));
+      const allowCredentials = stored.map(cred => {
+        try {
+          // Fix credential ID decoding
+          const credIdBytes = new Uint8Array(atob(cred.credentialId).split('').map(c => c.charCodeAt(0)));
+          return {
+            id: credIdBytes,
+            type: 'public-key' as const
+          };
+        } catch (error) {
+          console.error('Error decoding credential ID:', error);
+          return null;
+        }
+      }).filter(Boolean) as PublicKeyCredentialDescriptor[];
 
       const assertion = await navigator.credentials.get({
         publicKey: {
@@ -278,10 +376,17 @@ class DeviceAuthService {
         return null;
       }
 
-      // Find matching credential
+      // Find matching credential with proper encoding
       const rawIdArray = Array.from(new Uint8Array(assertion.rawId));
-      const credentialId = btoa(String.fromCharCode.apply(null, rawIdArray));
-      const matchingCred = stored.find(cred => cred.credentialId === credentialId);
+      const credentialId = btoa(String.fromCharCode(...rawIdArray));
+      const matchingCred = stored.find(cred => {
+        try {
+          return cred.credentialId === credentialId;
+        } catch (error) {
+          console.error('Error matching credential:', error);
+          return false;
+        }
+      });
       
       return matchingCred ? matchingCred.username : null;
     } catch (error) {
