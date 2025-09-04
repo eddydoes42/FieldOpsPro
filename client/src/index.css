@@ -445,8 +445,19 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Mobile responsiveness */
+/* Mobile responsiveness improvements */
 @media (max-width: 768px) {
+  html {
+    overflow-x: hidden;
+    font-size: 14px;
+  }
+  
+  body {
+    overflow-x: hidden;
+    width: 100%;
+    min-width: 320px;
+  }
+  
   .mobile-hidden {
     @apply hidden;
   }
@@ -458,6 +469,25 @@
   .mobile-stack {
     @apply flex-col space-y-3 space-x-0;
   }
+  
+  /* Ensure tables don't overflow on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  /* Fix viewport spilling issues */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* Mobile-friendly container constraints */
+.mobile-container {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Focus states for accessibility */
