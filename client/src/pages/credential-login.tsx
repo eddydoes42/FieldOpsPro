@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { deviceAuthService } from "@/lib/deviceAuth";
 import { BiometricLoginButton } from "@/components/biometric-login-button";
+import { DeviceMemoryPrompt } from "@/components/device-memory-prompt";
 
 const credentialLoginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -28,6 +29,8 @@ export default function CredentialLogin() {
   const { toast } = useToast();
   const [showDifferentAccount, setShowDifferentAccount] = useState(false);
   const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
+  const [showDevicePrompt, setShowDevicePrompt] = useState(false);
+  const [loginCredentials, setLoginCredentials] = useState<{username: string, password: string} | null>(null);
 
   const form = useForm<CredentialLoginData>({
     resolver: zodResolver(credentialLoginSchema),
@@ -47,6 +50,17 @@ export default function CredentialLogin() {
     },
     onSuccess: (data) => {
       if (data.success) {
+        // Check if we should show device memory prompt instead of immediate redirect
+        if (!data.saveCredentials && deviceAuthService.shouldShowRememberDevicePrompt()) {
+          // Store credentials for the prompt and show it
+          setLoginCredentials({
+            username: data.credentials.username,
+            password: data.credentials.password
+          });
+          setShowDevicePrompt(true);
+          return; // Don't redirect yet
+        }
+        
         // Save credentials if login successful and device should be remembered
         if (data.saveCredentials && data.credentials) {
           try {
@@ -284,6 +298,26 @@ export default function CredentialLogin() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Device Memory Prompt - Shows after successful login */}
+      <DeviceMemoryPrompt
+        open={showDevicePrompt}
+        onOpenChange={(open) => {
+          setShowDevicePrompt(open);
+          if (!open && loginCredentials) {
+            // If closing without saving, just redirect normally
+            window.location.href = "/dashboard";
+          }
+        }}
+        username={loginCredentials?.username}
+        password={loginCredentials?.password}
+        onDeviceRemembered={() => {
+          // Clear stored credentials and navigate after device is remembered
+          setLoginCredentials(null);
+          setShowDevicePrompt(false);
+          window.location.href = "/dashboard";
+        }}
+      />
     </div>
   );
 }

@@ -417,30 +417,36 @@ class DeviceAuthService {
 
   // Show device memory prompt - Enhanced logic for mobile and repeated logins
   shouldShowRememberDevicePrompt(): boolean {
-    const credentials = this.getDeviceCredentials();
-    
-    // If no credentials exist, always show prompt
-    if (!credentials) {
-      console.log('[DeviceAuth] No credentials found, showing prompt');
+    try {
+      const credentials = this.getDeviceCredentials();
+      
+      // If no credentials exist, always show prompt
+      if (!credentials) {
+        console.log('[DeviceAuth] No credentials found, showing prompt');
+        return true;
+      }
+      
+      // If device isn't remembered, show prompt
+      if (!credentials.isRemembered) {
+        console.log('[DeviceAuth] Device not remembered, showing prompt');
+        return true;
+      }
+      
+      // If credentials are expired, show prompt
+      const now = new Date();
+      const expiresAt = new Date(credentials.expiresAt);
+      if (now >= expiresAt) {
+        console.log('[DeviceAuth] Credentials expired, showing prompt');
+        return true;
+      }
+      
+      console.log('[DeviceAuth] Device already remembered and valid, hiding prompt');
+      return false;
+    } catch (error) {
+      console.error('[DeviceAuth] Error checking device prompt status:', error);
+      // Default to showing prompt if there's an error
       return true;
     }
-    
-    // If device isn't remembered, show prompt
-    if (!credentials.isRemembered) {
-      console.log('[DeviceAuth] Device not remembered, showing prompt');
-      return true;
-    }
-    
-    // If credentials are expired, show prompt
-    const now = new Date();
-    const expiresAt = new Date(credentials.expiresAt);
-    if (now >= expiresAt) {
-      console.log('[DeviceAuth] Credentials expired, showing prompt');
-      return true;
-    }
-    
-    console.log('[DeviceAuth] Device already remembered and valid, hiding prompt');
-    return false;
   }
 
   // Get device trust status
