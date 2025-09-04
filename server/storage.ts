@@ -574,11 +574,14 @@ export interface IStorage {
   getUserDeviceTokens(userId: string): Promise<DeviceToken[]>;
   updateDeviceTokenLastUsed(id: string): Promise<DeviceToken>;
   deactivateDeviceToken(id: string): Promise<void>;
+  verifyDeviceToken(tokenHash: string, deviceFingerprint: string): Promise<DeviceToken | undefined>;
+  revokeDeviceToken(userId: string, deviceId: string): Promise<void>;
   cleanupExpiredTokens(): Promise<void>;
 
   // Biometric Authentication operations
   createBiometricAuth(biometricAuth: InsertBiometricAuth): Promise<BiometricAuth>;
   getBiometricAuth(userId: string, deviceId: string): Promise<BiometricAuth | undefined>;
+  getBiometricAuthByCredentialId(credentialId: string): Promise<BiometricAuth | undefined>;
   getUserBiometricMethods(userId: string): Promise<BiometricAuth[]>;
   updateBiometricAuthLastUsed(id: string): Promise<BiometricAuth>;
   incrementBiometricFailedAttempts(id: string): Promise<BiometricAuth>;
@@ -5954,6 +5957,26 @@ export class DatabaseStorage implements IStorage, IService {
       .where(eq(deviceTokens.id, id));
   }
 
+  async verifyDeviceToken(tokenHash: string, deviceFingerprint: string): Promise<DeviceToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(deviceTokens)
+      .where(and(
+        eq(deviceTokens.tokenHash, tokenHash),
+        eq(deviceTokens.deviceFingerprint, deviceFingerprint),
+        eq(deviceTokens.isActive, true),
+        gte(deviceTokens.expiresAt, new Date())
+      ));
+    return token;
+  }
+
+  async revokeDeviceToken(userId: string, deviceId: string): Promise<void> {
+    await db
+      .update(deviceTokens)
+      .set({ isActive: false })
+      .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.id, deviceId)));
+  }
+
   async cleanupExpiredTokens(): Promise<void> {
     await db
       .update(deviceTokens)
@@ -5974,6 +5997,21 @@ export class DatabaseStorage implements IStorage, IService {
       .where(and(
         eq(biometricAuth.userId, userId),
         eq(biometricAuth.deviceId, deviceId),
+        eq(biometricAuth.isActive, true),
+        or(
+          isNull(biometricAuth.lockedUntil),
+          lt(biometricAuth.lockedUntil, new Date())
+        )
+      ));
+    return auth;
+  }
+
+  async getBiometricAuthByCredentialId(credentialId: string): Promise<BiometricAuth | undefined> {
+    const [auth] = await db
+      .select()
+      .from(biometricAuth)
+      .where(and(
+        eq(biometricAuth.credentialId, credentialId),
         eq(biometricAuth.isActive, true),
         or(
           isNull(biometricAuth.lockedUntil),

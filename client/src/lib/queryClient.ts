@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction, MutationOptions } from "@tanstack/react-query";
 import { isUnauthorizedError } from "./authUtils";
+import { generateDeviceFingerprint } from "./device-fingerprint";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -120,11 +121,11 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const baseHeaders: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
-  const testingHeaders = getTestingRoleHeaders();
+  const requestHeaders = getRequestHeaders();
   
   const res = await fetch(url, {
     method,
-    headers: { ...baseHeaders, ...testingHeaders },
+    headers: { ...baseHeaders, ...requestHeaders },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -134,8 +135,8 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-// Get testing role from localStorage for API headers
-function getTestingRoleHeaders(): Record<string, string> {
+// Get testing role and device fingerprint headers for API requests
+function getRequestHeaders(): Record<string, string> {
   if (typeof window !== 'undefined') {
     const testingRole = localStorage.getItem('testingRole');
     const testingCompanyType = localStorage.getItem('testingCompanyType');
@@ -152,6 +153,14 @@ function getTestingRoleHeaders(): Record<string, string> {
       console.log('Adding testing company type header:', testingCompanyType);
     }
     
+    // Add device fingerprint for device recognition
+    try {
+      const deviceFingerprint = generateDeviceFingerprint();
+      headers['x-device-fingerprint'] = deviceFingerprint;
+    } catch (error) {
+      console.warn('Failed to generate device fingerprint:', error);
+    }
+    
     return headers;
   }
   return {};
@@ -164,7 +173,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const startTime = performance.now();
     const queryKeyStr = Array.isArray(queryKey) ? queryKey.join("/") : String(queryKey);
-    const headers = getTestingRoleHeaders();
+    const headers = getRequestHeaders();
     
     try {
       const res = await fetch(queryKeyStr, {

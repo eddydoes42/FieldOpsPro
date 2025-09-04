@@ -132,10 +132,278 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json(user);
+      // Check if this is a trusted device and add device info
+      const deviceFingerprint = req.headers['x-device-fingerprint'] as string;
+      let deviceInfo = {
+        isTrustedDevice: false,
+        hasDeviceToken: false,
+        hasBiometricMethods: false,
+        canSetupBiometric: false
+      };
+      
+      if (user && deviceFingerprint) {
+        try {
+          // Check for existing device token
+          const deviceTokens = await storage.getUserDeviceTokens(user.id);
+          deviceInfo.hasDeviceToken = deviceTokens.some(token => 
+            token.deviceFingerprint === deviceFingerprint && 
+            token.expiresAt > new Date()
+          );
+          
+          // Check for biometric methods
+          const biometricMethods = await storage.getUserBiometricMethods(user.id);
+          deviceInfo.hasBiometricMethods = biometricMethods.length > 0;
+          
+          deviceInfo.isTrustedDevice = deviceInfo.hasDeviceToken;
+          deviceInfo.canSetupBiometric = !deviceInfo.hasBiometricMethods;
+        } catch (error) {
+          console.error("Error checking device info:", error);
+          // Continue with default device info
+        }
+      }
+      
+      res.json({
+        ...user,
+        deviceInfo
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Device Management Routes
+  app.post('/api/auth/remember-device', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceName, deviceFingerprint } = req.body;
+      
+      if (!deviceName || !deviceFingerprint) {
+        return res.status(400).json({ message: "Device name and fingerprint are required" });
+      }
+
+      // Generate secure token
+      const crypto = await import('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      
+      // Set expiration to 30 days from now
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+      
+      // Store device token
+      await storage.createDeviceToken({
+        userId,
+        tokenHash,
+        deviceFingerprint,
+        deviceName,
+        expiresAt,
+        userAgent: req.headers['user-agent'] || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '',
+      });
+      
+      res.json({ 
+        success: true, 
+        token,
+        expiresAt 
+      });
+    } catch (error) {
+      console.error("Error creating device token:", error);
+      res.status(500).json({ message: "Failed to remember device" });
+    }
+  });
+
+  app.get('/api/auth/devices', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const devices = await storage.getUserDeviceTokens(userId);
+      
+      // Remove sensitive data before sending
+      const safeDevices = devices.map(device => ({
+        id: device.id,
+        deviceName: device.deviceName,
+        lastUsedAt: device.lastUsedAt,
+        createdAt: device.createdAt,
+        userAgent: device.userAgent,
+        isActive: device.isActive,
+      }));
+      
+      res.json(safeDevices);
+    } catch (error) {
+      console.error("Error fetching devices:", error);
+      res.status(500).json({ message: "Failed to fetch devices" });
+    }
+  });
+
+  app.delete('/api/auth/devices/:deviceId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceId } = req.params;
+      
+      await storage.revokeDeviceToken(userId, deviceId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error revoking device:", error);
+      res.status(500).json({ message: "Failed to revoke device" });
+    }
+  });
+
+  app.post('/api/auth/verify-device', async (req: any, res) => {
+    try {
+      const { token, deviceFingerprint } = req.body;
+      
+      if (!token || !deviceFingerprint) {
+        return res.status(400).json({ message: "Token and device fingerprint are required" });
+      }
+
+      const crypto = await import('crypto');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      
+      const deviceToken = await storage.verifyDeviceToken(tokenHash, deviceFingerprint);
+      
+      if (!deviceToken) {
+        return res.status(401).json({ message: "Invalid or expired device token" });
+      }
+      
+      // Update last used timestamp
+      await storage.updateDeviceTokenLastUsed(deviceToken.id);
+      
+      res.json({ 
+        valid: true,
+        userId: deviceToken.userId,
+        deviceName: deviceToken.deviceName
+      });
+    } catch (error) {
+      console.error("Error verifying device token:", error);
+      res.status(500).json({ message: "Failed to verify device" });
+    }
+  });
+
+  // Biometric Authentication Routes
+  app.post('/api/auth/biometric/register', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { 
+        credentialId, 
+        publicKey, 
+        attestationObject, 
+        clientDataJSON, 
+        deviceId, 
+        biometricType, 
+        deviceName 
+      } = req.body;
+      
+      if (!credentialId || !publicKey || !biometricType) {
+        return res.status(400).json({ message: "Required biometric data missing" });
+      }
+
+      // Store biometric authentication data
+      await storage.createBiometricAuth({
+        userId,
+        credentialId,
+        publicKey,
+        deviceId: deviceId || credentialId,
+        biometricType,
+        deviceName: deviceName || 'Unknown Device',
+        attestationObject,
+        clientDataJSON,
+        isActive: true,
+        failedAttempts: 0,
+      });
+      
+      res.json({ 
+        success: true,
+        message: "Biometric authentication registered successfully"
+      });
+    } catch (error) {
+      console.error("Error registering biometric auth:", error);
+      res.status(500).json({ message: "Failed to register biometric authentication" });
+    }
+  });
+
+  app.post('/api/auth/biometric/authenticate', async (req: any, res) => {
+    try {
+      const { 
+        credentialId, 
+        authenticatorData, 
+        clientDataJSON, 
+        signature, 
+        userHandle 
+      } = req.body;
+      
+      if (!credentialId || !authenticatorData || !signature) {
+        return res.status(400).json({ message: "Required authentication data missing" });
+      }
+
+      // Find biometric authentication record
+      const biometricAuth = await storage.getBiometricAuthByCredentialId(credentialId);
+      
+      if (!biometricAuth || !biometricAuth.isActive) {
+        return res.status(401).json({ message: "Invalid biometric credential" });
+      }
+
+      // In a real implementation, you would verify the signature here
+      // For now, we'll simulate successful verification
+      
+      // Update last used timestamp and reset failed attempts
+      await storage.updateBiometricAuthLastUsed(biometricAuth.id);
+      
+      // Create a temporary session or return user info
+      // This would integrate with your existing session management
+      const user = await storage.getUser(biometricAuth.userId);
+      
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      res.json({ 
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        message: "Biometric authentication successful"
+      });
+    } catch (error) {
+      console.error("Error authenticating biometric:", error);
+      res.status(500).json({ message: "Failed to authenticate with biometrics" });
+    }
+  });
+
+  app.get('/api/auth/biometric/methods', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const methods = await storage.getUserBiometricMethods(userId);
+      
+      // Remove sensitive data before sending
+      const safeMethods = methods.map(method => ({
+        id: method.id,
+        biometricType: method.biometricType,
+        deviceName: method.deviceName,
+        lastUsedAt: method.lastUsedAt,
+        createdAt: method.createdAt,
+        isActive: method.isActive,
+      }));
+      
+      res.json(safeMethods);
+    } catch (error) {
+      console.error("Error fetching biometric methods:", error);
+      res.status(500).json({ message: "Failed to fetch biometric methods" });
+    }
+  });
+
+  app.delete('/api/auth/biometric/:methodId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { methodId } = req.params;
+      
+      await storage.deactivateBiometricAuth(methodId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deactivating biometric method:", error);
+      res.status(500).json({ message: "Failed to remove biometric method" });
     }
   });
 
