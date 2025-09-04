@@ -1,6 +1,9 @@
 // Device Authentication Service
 // Provides "Remember This Device" functionality with credential caching
 
+import { SecureStorage } from './secureStorage';
+import { NativeBiometric } from './nativeBiometric';
+
 export interface DeviceCredentials {
   deviceId: string;
   deviceName: string;
@@ -80,28 +83,60 @@ class DeviceAuthService {
     return deviceName;
   }
 
-  // Encrypt password token for secure storage
-  private encryptPasswordToken(password: string): string {
+  // Encrypt password token for secure storage using SecureStorage
+  private async encryptPasswordToken(password: string): Promise<string> {
     try {
-      // Simple encryption for demo - in production use proper crypto
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password + DeviceAuthService.ENCRYPTION_KEY);
-      const hashBuffer = crypto.subtle ? undefined : btoa(password); // Fallback for older browsers
-      return btoa(password + ':' + Date.now()); // Time-based salt
+      const deviceId = this.generateDeviceId();
+      const storageKey = `pwd_${deviceId}_${Date.now()}`;
+      
+      const result = await SecureStorage.store(storageKey, password, {
+        requireBiometric: false // Password encryption doesn't require biometric
+      });
+      
+      if (result.success) {
+        return storageKey; // Return the key, not the encrypted data
+      } else {
+        console.warn('SecureStorage failed, falling back to basic encryption');
+        return this.fallbackEncrypt(password);
+      }
     } catch (error) {
       console.error('Error encrypting password token:', error);
-      return btoa(password); // Fallback
+      return this.fallbackEncrypt(password);
     }
   }
 
-  // Decrypt password token
-  private decryptPasswordToken(encryptedToken: string): string {
+  // Decrypt password token using SecureStorage
+  private async decryptPasswordToken(encryptedToken: string): Promise<string> {
+    try {
+      // Check if this is a SecureStorage key (starts with 'pwd_')
+      if (encryptedToken.startsWith('pwd_')) {
+        const result = await SecureStorage.retrieve(encryptedToken);
+        if (result.success && result.data) {
+          return result.data;
+        }
+      }
+      
+      // Fallback to legacy decryption
+      return this.fallbackDecrypt(encryptedToken);
+    } catch (error) {
+      console.error('Error decrypting password token:', error);
+      return this.fallbackDecrypt(encryptedToken);
+    }
+  }
+
+  // Fallback encryption for compatibility
+  private fallbackEncrypt(password: string): string {
+    return btoa(password + ':' + Date.now());
+  }
+
+  // Fallback decryption for legacy tokens
+  private fallbackDecrypt(encryptedToken: string): string {
     try {
       const decoded = atob(encryptedToken);
       const parts = decoded.split(':');
-      return parts[0]; // Extract password part
+      return parts[0];
     } catch (error) {
-      console.error('Error decrypting password token:', error);
+      console.error('Error in fallback decryption:', error);
       return '';
     }
   }
@@ -146,7 +181,7 @@ class DeviceAuthService {
   }
 
   // Remember this device with optional password token
-  rememberDevice(username?: string, passwordToken?: string): DeviceCredentials {
+  async rememberDevice(username?: string, passwordToken?: string): Promise<DeviceCredentials> {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + DeviceAuthService.DEVICE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
     
@@ -155,7 +190,7 @@ class DeviceAuthService {
       deviceName: this.getDeviceName(),
       fingerprint: this.generateDeviceFingerprint(),
       username: username,
-      passwordToken: passwordToken ? this.encryptPasswordToken(passwordToken) : undefined,
+      passwordToken: passwordToken ? await this.encryptPasswordToken(passwordToken) : undefined,
       lastUsed: now.toISOString(),
       isRemembered: true,
       expiresAt: expiresAt.toISOString()
@@ -171,13 +206,13 @@ class DeviceAuthService {
   }
 
   // Update device last used time
-  updateDeviceUsage(username?: string, passwordToken?: string): void {
+  async updateDeviceUsage(username?: string, passwordToken?: string): Promise<void> {
     const existing = this.getDeviceCredentials();
     if (!existing) return;
     
     existing.lastUsed = new Date().toISOString();
     if (username) existing.username = username;
-    if (passwordToken) existing.passwordToken = this.encryptPasswordToken(passwordToken);
+    if (passwordToken) existing.passwordToken = await this.encryptPasswordToken(passwordToken);
     
     try {
       localStorage.setItem(DeviceAuthService.DEVICE_STORAGE_KEY, JSON.stringify(existing));
@@ -187,14 +222,14 @@ class DeviceAuthService {
   }
 
   // Get stored credentials for autofill
-  getStoredCredentials(): { username: string; password: string } | null {
+  async getStoredCredentials(): Promise<{ username: string; password: string } | null> {
     const credentials = this.getDeviceCredentials();
     if (!credentials || !credentials.username || !credentials.passwordToken) {
       return null;
     }
     
     try {
-      const decryptedPassword = this.decryptPasswordToken(credentials.passwordToken);
+      const decryptedPassword = await this.decryptPasswordToken(credentials.passwordToken);
       return {
         username: credentials.username,
         password: decryptedPassword
@@ -248,99 +283,28 @@ class DeviceAuthService {
   }
 
   // Check if native biometric authentication is supported
-  isBiometricSupported(): boolean {
+  async isBiometricSupported(): Promise<boolean> {
     if (typeof window === 'undefined') {
       console.log('[DeviceAuth] No window object - server-side rendering');
       return false;
     }
     
-    // Check for native biometric APIs
-    const userAgent = navigator.userAgent;
-    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-    const isAndroid = /Android/i.test(userAgent);
-    
-    // For native mobile apps, we would have access to platform-specific APIs
-    // In web context, we simulate the detection for now
-    let hasNativeBiometric = false;
-    
-    if (isIOS) {
-      // In a real iOS app, this would check for LocalAuthentication framework
-      // For web, we check if the browser supports credential management
-      hasNativeBiometric = !!(navigator.credentials);
-    } else if (isAndroid) {
-      // In a real Android app, this would check for BiometricPrompt API
-      // For web, we check if the browser supports credential management
-      hasNativeBiometric = !!(navigator.credentials);
-    } else {
-      // Desktop - check for WebAuthn platform authenticator
-      hasNativeBiometric = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
-    }
-    
-    if (!hasNativeBiometric) {
-      console.log('[DeviceAuth] Native biometric authentication not supported', {
-        isMobile, isIOS, isAndroid,
-        hasCredentials: !!navigator.credentials,
-        hasPublicKeyCredential: !!window.PublicKeyCredential
-      });
-      return false;
-    }
-    
-    // Enhanced environment detection  
-    const isSecureContext = window.isSecureContext;
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const isReplit = window.location.hostname.includes('.replit.app') || window.location.hostname.includes('.repl.co');
-    
-    // Allow localhost and Replit domains for development
-    if (!isSecureContext && !isLocalhost && !isReplit) {
-      console.log('[DeviceAuth] Biometric authentication requires secure context (HTTPS)', {
-        isSecureContext, isLocalhost, isReplit, hostname: window.location.hostname
-      });
-      return false;
-    }
-    
-    // More permissive mobile checks - don't exclude based on version unless absolutely necessary
-    if (isMobile) {
+    try {
+      const capabilities = await NativeBiometric.detectCapabilities();
       
-      // Platform-specific version checks (more lenient now)
-      if (isIOS) {
-        try {
-          const versionMatch = userAgent.match(/OS ([\d_]+)/);
-          if (versionMatch) {
-            const iOSVersion = parseFloat(versionMatch[1].replace('_', '.'));
-            if (iOSVersion < 14) {
-              console.log('[DeviceAuth] iOS version might be too old:', iOSVersion);
-            }
-          }
-        } catch (error) {
-          console.log('[DeviceAuth] Could not parse iOS version, allowing biometric attempt');
-        }
-      } else if (isAndroid) {
-        try {
-          const chromeMatch = userAgent.match(/Chrome\/([0-9]+)/);
-          if (chromeMatch) {
-            const chromeVersion = parseInt(chromeMatch[1]);
-            if (chromeVersion < 67) {
-              console.log('[DeviceAuth] Chrome version might be too old:', chromeVersion);
-            }
-          }
-        } catch (error) {
-          console.log('[DeviceAuth] Could not parse Chrome version, allowing biometric attempt');
-        }
-      }
+      console.log('[DeviceAuth] Biometric capabilities detected', {
+        isSupported: capabilities.isSupported,
+        platform: capabilities.platform,
+        types: capabilities.types,
+        securityLevel: capabilities.securityLevel,
+        nativeMethod: capabilities.nativeMethod
+      });
+      
+      return capabilities.isSupported;
+    } catch (error) {
+      console.error('[DeviceAuth] Error detecting biometric capabilities:', error);
+      return false;
     }
-    
-    console.log('[DeviceAuth] Native biometric authentication supported', { 
-      isMobile,
-      isIOS,
-      isAndroid,
-      isSecureContext, 
-      isLocalhost,
-      isReplit,
-      hostname: window.location.hostname,
-      userAgent: userAgent.substring(0, 50) + '...'
-    });
-    return true;
   }
 
   // Register native biometric authentication
