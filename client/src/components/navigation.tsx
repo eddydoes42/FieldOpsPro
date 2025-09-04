@@ -357,10 +357,36 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center justify-center p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-secondary/50 transition-colors"
                 data-testid="button-navigation-menu"
               >
-                <Menu className="h-5 w-5 text-muted-foreground" />
+                {/* User Avatar */}
+                {(user as any)?.profileImageUrl ? (
+                  <img 
+                    className="h-8 w-8 rounded-full object-cover" 
+                    src={(user as any).profileImageUrl} 
+                    alt="Profile"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <i className="fas fa-user text-primary text-sm"></i>
+                  </div>
+                )}
+                
+                {/* User Name and Role - Hidden on small screens */}
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-sm font-medium text-foreground truncate max-w-32">
+                    {(user as any)?.firstName && (user as any)?.lastName 
+                      ? `${(user as any).firstName} ${(user as any).lastName}`
+                      : (user as any)?.email?.split('@')[0] || 'User'
+                    }
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate max-w-32">
+                    {config.badge.text}
+                  </span>
+                </div>
+                
+                <Menu className="h-4 w-4 text-muted-foreground" />
               </button>
               
               {/* Dropdown Menu */}
@@ -368,22 +394,36 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                 <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50">
                   <div className="p-4 border-b border-border">
                     <div className="flex items-center space-x-3">
-                      {(user as any)?.profileImageUrl && (
+                      {(user as any)?.profileImageUrl ? (
                         <img 
                           className="h-10 w-10 rounded-full object-cover" 
                           src={(user as any).profileImageUrl} 
                           alt="Profile"
                         />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <i className="fas fa-user text-primary"></i>
+                        </div>
                       )}
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {`${(user as any)?.firstName} ${(user as any)?.lastName}`}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">
+                          {(user as any)?.firstName && (user as any)?.lastName 
+                            ? `${(user as any).firstName} ${(user as any).lastName}`
+                            : (user as any)?.email || 'User'
+                          }
                         </p>
                         {/* Role Badge */}
                         <span className={`${config.badge.color} text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap inline-flex mt-1`}>
                           <i className={`${config.badge.icon} mr-1`}></i>
                           {config.badge.text}
                         </span>
+                        {/* Show testing indicator if in role test mode */}
+                        {(localStorage.getItem('testingRole') || localStorage.getItem('testingCompanyType')) && (
+                          <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center">
+                            <i className="fas fa-vial mr-1"></i>
+                            Role Testing Active
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
