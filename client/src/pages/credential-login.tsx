@@ -15,10 +15,12 @@ import { Link, useLocation } from "wouter";
 import { deviceAuthService } from "@/lib/deviceAuth";
 import { BiometricLoginButton } from "@/components/biometric-login-button";
 import { DeviceMemoryPrompt } from "@/components/device-memory-prompt";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const credentialLoginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
+  rememberDevice: z.boolean().default(false),
 });
 
 type CredentialLoginData = z.infer<typeof credentialLoginSchema>;
@@ -37,6 +39,7 @@ export default function CredentialLogin() {
     defaultValues: {
       username: "",
       password: "",
+      rememberDevice: false,
     },
   });
 
@@ -50,8 +53,8 @@ export default function CredentialLogin() {
     },
     onSuccess: (data) => {
       if (data.success) {
-        // Check if we should show device memory prompt instead of immediate redirect
-        if (!data.saveCredentials && deviceAuthService.shouldShowRememberDevicePrompt()) {
+        // Check if user wants to remember device (checkbox was checked)
+        if (data.rememberDevice) {
           // Store credentials for the prompt and show it
           setLoginCredentials({
             username: data.credentials.username,
@@ -89,11 +92,9 @@ export default function CredentialLogin() {
   const onSubmit = (data: CredentialLoginData) => {
     setErrorMessage("");
     
-    // Check if device should be remembered and save credentials on successful login
-    const shouldSave = hasStoredCredentials || deviceAuthService.isDeviceRemembered();
     loginMutation.mutate({
       ...data,
-      saveCredentials: shouldSave
+      rememberDevice: data.rememberDevice
     });
   };
 
@@ -103,7 +104,7 @@ export default function CredentialLogin() {
     if (storedCreds) {
       loginMutation.mutate({
         ...storedCreds,
-        saveCredentials: false // Already saved
+        rememberDevice: false // Already saved
       });
     } else {
       toast({
@@ -257,6 +258,31 @@ export default function CredentialLogin() {
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Remember This Device Checkbox */}
+                  <FormField
+                    control={form.control}
+                    name="rememberDevice"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-remember-device"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-normal">
+                            Remember this device
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Skip login on this device for 30 days
+                          </p>
+                        </div>
                       </FormItem>
                     )}
                   />

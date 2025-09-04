@@ -241,28 +241,46 @@ class DeviceAuthService {
     }
   }
 
-  // Check if WebAuthn is supported - Enhanced and more permissive detection
+  // Check if native biometric authentication is supported
   isBiometricSupported(): boolean {
     if (typeof window === 'undefined') {
       console.log('[DeviceAuth] No window object - server-side rendering');
       return false;
     }
     
-    // Basic WebAuthn API check
-    const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+    // Check for native biometric APIs
+    const userAgent = navigator.userAgent;
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+    const isAndroid = /Android/i.test(userAgent);
     
-    if (!hasWebAuthn) {
-      console.log('[DeviceAuth] WebAuthn not supported - missing APIs', {
-        hasPublicKeyCredential: !!window.PublicKeyCredential,
-        hasNavigatorCredentials: !!navigator.credentials,
-        hasCredentialsCreate: !!(navigator.credentials && navigator.credentials.create)
+    // For native mobile apps, we would have access to platform-specific APIs
+    // In web context, we simulate the detection for now
+    let hasNativeBiometric = false;
+    
+    if (isIOS) {
+      // In a real iOS app, this would check for LocalAuthentication framework
+      // For web, we check if the browser supports credential management
+      hasNativeBiometric = !!(navigator.credentials);
+    } else if (isAndroid) {
+      // In a real Android app, this would check for BiometricPrompt API
+      // For web, we check if the browser supports credential management
+      hasNativeBiometric = !!(navigator.credentials);
+    } else {
+      // Desktop - check for WebAuthn platform authenticator
+      hasNativeBiometric = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+    }
+    
+    if (!hasNativeBiometric) {
+      console.log('[DeviceAuth] Native biometric authentication not supported', {
+        isMobile, isIOS, isAndroid,
+        hasCredentials: !!navigator.credentials,
+        hasPublicKeyCredential: !!window.PublicKeyCredential
       });
       return false;
     }
     
-    // Enhanced environment detection
-    const userAgent = navigator.userAgent;
-    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    // Enhanced environment detection  
     const isSecureContext = window.isSecureContext;
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const isReplit = window.location.hostname.includes('.replit.app') || window.location.hostname.includes('.repl.co');
@@ -277,42 +295,39 @@ class DeviceAuthService {
     
     // More permissive mobile checks - don't exclude based on version unless absolutely necessary
     if (isMobile) {
-      const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-      const isAndroid = /Android/i.test(userAgent);
       
+      // Platform-specific version checks (more lenient now)
       if (isIOS) {
-        // Try to parse iOS version, but be more lenient
         try {
           const versionMatch = userAgent.match(/OS ([\d_]+)/);
           if (versionMatch) {
             const iOSVersion = parseFloat(versionMatch[1].replace('_', '.'));
             if (iOSVersion < 14) {
-              console.log('[DeviceAuth] iOS version might be too old for WebAuthn:', iOSVersion);
-              // Don't return false immediately - let the user try
+              console.log('[DeviceAuth] iOS version might be too old:', iOSVersion);
             }
           }
         } catch (error) {
-          console.log('[DeviceAuth] Could not parse iOS version, allowing WebAuthn attempt');
+          console.log('[DeviceAuth] Could not parse iOS version, allowing biometric attempt');
         }
       } else if (isAndroid) {
-        // More lenient Chrome version check
         try {
           const chromeMatch = userAgent.match(/Chrome\/([0-9]+)/);
           if (chromeMatch) {
             const chromeVersion = parseInt(chromeMatch[1]);
-            if (chromeVersion < 67) { // Lowered from 70
-              console.log('[DeviceAuth] Chrome version might be too old for WebAuthn:', chromeVersion);
-              // Don't return false immediately - let the user try
+            if (chromeVersion < 67) {
+              console.log('[DeviceAuth] Chrome version might be too old:', chromeVersion);
             }
           }
         } catch (error) {
-          console.log('[DeviceAuth] Could not parse Chrome version, allowing WebAuthn attempt');
+          console.log('[DeviceAuth] Could not parse Chrome version, allowing biometric attempt');
         }
       }
     }
     
-    console.log('[DeviceAuth] Biometric authentication appears supported', { 
-      isMobile, 
+    console.log('[DeviceAuth] Native biometric authentication supported', { 
+      isMobile,
+      isIOS,
+      isAndroid,
       isSecureContext, 
       isLocalhost,
       isReplit,
@@ -322,15 +337,102 @@ class DeviceAuthService {
     return true;
   }
 
-  // Register biometric authentication
+  // Register native biometric authentication
   async registerBiometric(username: string): Promise<BiometricCredentials> {
     if (!this.isBiometricSupported()) {
-      throw new Error('Biometric authentication is not supported on this device');
+      throw new Error('Native biometric authentication is not supported on this device');
     }
 
     try {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
+      const userAgent = navigator.userAgent;
+      const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+      const isAndroid = /Android/i.test(userAgent);
+      
+      if (isIOS) {
+        return await this.registerIosBiometric(username);
+      } else if (isAndroid) {
+        return await this.registerAndroidBiometric(username);
+      } else {
+        return await this.registerWebBiometric(username);
+      }
+    } catch (error) {
+      console.error('Error registering native biometric:', error);
+      throw new Error('Failed to register native biometric authentication');
+    }
+  }
+  
+  // iOS LocalAuthentication simulation
+  private async registerIosBiometric(username: string): Promise<BiometricCredentials> {
+    console.log('[DeviceAuth] Registering iOS biometric authentication');
+    
+    // In a real iOS app, this would use:
+    // import LocalAuthentication
+    // let context = LAContext()
+    // context.evaluatePolicy(.biometryAny, localizedReason: "Authenticate")
+    
+    // For web, we simulate the iOS biometric prompt
+    const userConsent = await this.simulateIosBiometricPrompt();
+    if (!userConsent) {
+      throw new Error('User cancelled biometric setup');
+    }
+    
+    const credentialId = this.generateCredentialId();
+    const biometricCreds: BiometricCredentials = {
+      credentialId,
+      publicKey: 'ios_biometric_' + credentialId,
+      deviceId: this.generateDeviceId(),
+      username,
+      createdAt: new Date().toISOString()
+    };
+    
+    // Store biometric credentials
+    const stored = this.getBiometricCredentials();
+    stored.push(biometricCreds);
+    localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
+    
+    return biometricCreds;
+  }
+  
+  // Android BiometricPrompt simulation
+  private async registerAndroidBiometric(username: string): Promise<BiometricCredentials> {
+    console.log('[DeviceAuth] Registering Android biometric authentication');
+    
+    // In a real Android app, this would use:
+    // import androidx.biometric.BiometricPrompt
+    // BiometricPrompt.Builder(this)
+    //   .setTitle("Biometric Authentication")
+    //   .setNegativeButtonText("Cancel")
+    //   .build()
+    
+    // For web, we simulate the Android biometric prompt
+    const userConsent = await this.simulateAndroidBiometricPrompt();
+    if (!userConsent) {
+      throw new Error('User cancelled biometric setup');
+    }
+    
+    const credentialId = this.generateCredentialId();
+    const biometricCreds: BiometricCredentials = {
+      credentialId,
+      publicKey: 'android_biometric_' + credentialId,
+      deviceId: this.generateDeviceId(),
+      username,
+      createdAt: new Date().toISOString()
+    };
+    
+    // Store biometric credentials
+    const stored = this.getBiometricCredentials();
+    stored.push(biometricCreds);
+    localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
+    
+    return biometricCreds;
+  }
+  
+  // Web-based biometric (WebAuthn)
+  private async registerWebBiometric(username: string): Promise<BiometricCredentials> {
+    console.log('[DeviceAuth] Registering web-based biometric authentication');
+    
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
       
       const credential = await navigator.credentials.create({
         publicKey: {
