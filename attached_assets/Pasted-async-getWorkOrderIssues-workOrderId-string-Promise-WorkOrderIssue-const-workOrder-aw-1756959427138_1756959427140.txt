@@ -1,0 +1,49 @@
+async getWorkOrderIssues(workOrderId: string): Promise<WorkOrderIssue[]> {
+    const workOrder = await this.getWorkOrderById(workOrderId);
+    if (!workOrder || workOrder.status === 'waiting_assignment') {
+        throw new Error("Cannot access issues. Work order is not assigned.");
+    }
+    return await db
+        .select()
+        .from(workOrderIssues)
+        .where(eq(workOrderIssues.workOrderId, workOrderId))
+        .orderBy(desc(workOrderIssues.createdAt));
+}
+async createWorkOrderIssue(issueData: InsertWorkOrderIssue): Promise<WorkOrderIssue> {
+    const workOrder = await this.getWorkOrderById(issueData.workOrderId);
+    if (!workOrder || workOrder.status === 'waiting_assignment') {
+        throw new Error("Cannot create issue. Work order is not assigned.");
+    }
+    
+    const [issue] = await db
+        .insert(workOrderIssues)
+        .values(issueData)
+        .returning();
+    return issue;
+}
+async updateWorkOrderIssue(id: string, updates: Partial<InsertWorkOrderIssue>): Promise<WorkOrderIssue> {
+    const issue = await this.getIssue(id);
+    if (!issue) throw new Error("Issue not found.");
+    const workOrder = await this.getWorkOrderById(issue.workOrderId);
+    if (!workOrder || workOrder.status === 'waiting_assignment') {
+        throw new Error("Cannot update issue. Work order is not assigned.");
+    }
+    const [updatedIssue] = await db
+        .update(workOrderIssues)
+        .set(updates)
+        .where(eq(workOrderIssues.id, id))
+        .returning();
+    return updatedIssue;
+}
+async deleteWorkOrderIssue(id: string): Promise<void> {
+    const issue = await this.getIssue(id);
+    if (!issue) throw new Error("Issue not found.");
+    const workOrder = await this.getWorkOrderById(issue.workOrderId);
+    if (!workOrder || workOrder.status === 'waiting_assignment') {
+        throw new Error("Cannot delete issue. Work order is not assigned.");
+    }
+    await db
+        .delete()
+        .from(workOrderIssues)
+        .where(eq(workOrderIssues.id, id));
+}

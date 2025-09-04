@@ -1,0 +1,63 @@
+Updated Heartbeat Monitor Component
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+interface HeartbeatMonitorProps {
+  userRole: string; // Role of the user
+  companyType: 'service' | 'client'; // Type of company
+}
+export function HeartbeatMonitor({ userRole, companyType }: HeartbeatMonitorProps) {
+  const [showDialog, setShowDialog] = useState(false);
+  // Only show for Manager+ roles
+  const managerRoles = ['operations_director', 'administrator', 'project_manager', 'manager'];
+  if (!managerRoles.includes(userRole)) return null;
+  // Query for BPM data based on the user's role
+  const { data: bpmData = [], isLoading } = useQuery(/* query logic to fetch BPM data */);
+  // Calculate average BPM based on user's role
+  const calculateAverageBPM = (data: any[]) => {
+    // Your logic to compute average BPM based on assigned projects
+  };
+  const overallBPM = calculateAverageBPM(bpmData);
+  return (
+    <>
+      <Card onClick={() => setShowDialog(true)}>
+        <CardHeader>
+          <CardTitle>
+            System Health
+            <Badge>{overallBPM} BPM</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div>Active Projects: {bpmData.length}</div>
+        </CardContent>
+      </Card>
+      {/* Popup Dialog */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Contributing Work Orders/Projects</DialogTitle>
+          </DialogHeader>
+          {/* Mapping over the BPM data for project details */}
+          <div>
+            {bpmData.map((project) => (
+              <div key={project.id} onClick={() => window.location.href = `/work-orders/${project.id}`}>
+                {project.title} - {project.bpm} BPM
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+Points to Note:
+Conditional Rendering: The Heartbeat Monitor will display only for users with roles of Manager and above.
+Popup Logic: Clicking on the monitor card opens a dialog displaying contributing data.
+BPM Contributions: Ensure that only work orders/projects that are assigned contribute to the BPM total.
+Average BPM Calculation: Include logic to calculate average BPM based on the assigned work orders/projects.
+Toggle Functionality: You will need to implement a settings toggle for the Heartbeat Monitor within your settings page.
+Next Steps:
+Ensure to implement the query logic where indicated to fetch the necessary BPM data.
+Integrate this component within your application's relevant UI, and add the settings functionality to toggle visibility based on user preferences.
