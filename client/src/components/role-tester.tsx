@@ -151,7 +151,7 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
   const currentlySelectedRoles = selectedCompanyType === 'service' ? serviceCompanyRoles : clientCompanyRoles;
 
   return (
-    <Card className="mb-6 mx-auto max-w-4xl">
+    <Card className="mb-6 mx-auto max-w-4xl mobile-container">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -205,13 +205,15 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
 
           <Tabs value={selectedCompanyType} onValueChange={(value) => setSelectedCompanyType(value as 'service' | 'client')}>
             <TabsList className="grid w-full grid-cols-2 h-auto">
-              <TabsTrigger value="service" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
-                <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="truncate">Service Co.</span>
+              <TabsTrigger value="service" className="flex items-center gap-1 px-1 py-2 text-xs sm:px-2 sm:gap-2 sm:text-sm">
+                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">Service</span>
+                <span className="hidden sm:inline">Company</span>
               </TabsTrigger>
-              <TabsTrigger value="client" className="flex items-center gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
-                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="truncate">Client Co.</span>
+              <TabsTrigger value="client" className="flex items-center gap-1 px-1 py-2 text-xs sm:px-2 sm:gap-2 sm:text-sm">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate min-w-0">Client</span>
+                <span className="hidden sm:inline">Company</span>
               </TabsTrigger>
             </TabsList>
 
