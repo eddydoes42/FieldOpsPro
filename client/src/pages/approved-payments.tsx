@@ -25,31 +25,7 @@ interface PaymentRecord {
 const getSamplePayments = (role: string): PaymentRecord[] => {
   switch (role) {
     case 'operations_director':
-      return [
-        {
-          id: 'SF-001',
-          amount: 2500.00,
-          description: 'Service Fee - Network Infrastructure Setup',
-          workOrderId: 'WO-123',
-          companyName: 'TechFlow Solutions',
-          status: 'paid',
-          approvedBy: 'System',
-          approvedDate: '2024-01-15',
-          paymentDate: '2024-01-16',
-          category: 'service_fee'
-        },
-        {
-          id: 'SF-002',
-          amount: 1800.00,
-          description: 'Service Fee - Security Audit',
-          workOrderId: 'WO-124',
-          companyName: 'DataSecure Corp',
-          status: 'approved',
-          approvedBy: 'System',
-          approvedDate: '2024-01-18',
-          category: 'service_fee'
-        }
-      ];
+      return [];
     
     case 'administrator':
     case 'project_manager':

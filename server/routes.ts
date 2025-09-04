@@ -1341,7 +1341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Automatically collect service fee when payment is approved
       if (paymentStatus === 'payment_approved') {
-        // Calculate service fee (5% for work orders)
+        // Calculate service fee (10% for work orders)
         let totalBudget = 0;
         const budgetAmount = parseFloat(workOrder.budgetAmount || '0');
         
@@ -1368,7 +1368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             totalBudget = budgetAmount;
         }
 
-        const serviceFeeAmount = totalBudget * 0.05; // 5% service fee
+        const serviceFeeAmount = totalBudget * 0.10; // 10% service fee for work orders
         
         updates.serviceFeeAmount = serviceFeeAmount.toFixed(2);
         updates.serviceFeeCollected = true;
@@ -3022,7 +3022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const now = new Date();
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-      // Calculate service fees from work orders (5%)
+      // Calculate service fees from work orders (10%)
       for (const workOrder of workOrders) {
         if (!workOrder.serviceFeeCollected || !workOrder.serviceFeeAmount) continue;
 
@@ -3036,7 +3036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Calculate service fees from projects (10%)
+      // Calculate service fees from projects (7%)
       for (const project of projects) {
         if (!project.serviceFeeCollected || !project.serviceFeeAmount) continue;
 
