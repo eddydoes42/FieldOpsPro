@@ -392,7 +392,7 @@ class DeviceAuthService {
     };
     
     // Store biometric credentials
-    const stored = this.getBiometricCredentials();
+    const stored = deviceAuthService.getBiometricCredentials();
     stored.push(biometricCreds);
     localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
     
@@ -426,7 +426,7 @@ class DeviceAuthService {
     };
     
     // Store biometric credentials
-    const stored = this.getBiometricCredentials();
+    const stored = deviceAuthService.getBiometricCredentials();
     stored.push(biometricCreds);
     localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
     
@@ -484,7 +484,7 @@ class DeviceAuthService {
       };
 
       // Store biometric credentials
-      const stored = this.getBiometricCredentials();
+      const stored = deviceAuthService.getBiometricCredentials();
       stored.push(biometricCreds);
       localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
 
@@ -495,108 +495,94 @@ class DeviceAuthService {
     }
   }
 
-  authenticateWithBiometric = () => {
-    return Promise.resolve(null);
-  }
 
-  getBiometricCredentials = function() {
-    try {
-      const stored = localStorage.getItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Error getting biometric credentials:', error);
-      return [];
-    }
-  }
 
-  // Clear biometric credentials
-  clearBiometricCredentials = function() {
-    try {
-      localStorage.removeItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
-    } catch (error) {
-      console.error('Error clearing biometric credentials:', error);
-    }
-  }
 
-  // Generate credential ID  
-  generateCredentialId = function() {
-    return 'cred_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-  }
 
-  // Simulate iOS biometric prompt
-  simulateIosBiometricPrompt = async function() {
-    return new Promise((resolve) => {
-      // Simulate iOS Face ID/Touch ID prompt
-      setTimeout(() => {
-        resolve(true); // Simulate successful authentication
-      }, 1000);
-    });
-  }
 
-  // Simulate Android biometric prompt  
-  simulateAndroidBiometricPrompt = async function() {
-    return new Promise((resolve) => {
-      // Simulate Android fingerprint/face unlock prompt
-      setTimeout(() => {
-        resolve(true); // Simulate successful authentication
-      }, 1000);
-    });
-  }
 
-  // Show device memory prompt - Enhanced logic for mobile and repeated logins
-  shouldShowRememberDevicePrompt = function() {
-    try {
-      const credentials = this.getDeviceCredentials();
-      
-      // If no credentials exist, always show prompt
-      if (!credentials) {
-        console.log('[DeviceAuth] No credentials found, showing prompt');
-        return true;
-      }
-      
-      // If device isn't remembered, show prompt
-      if (!credentials.isRemembered) {
-        console.log('[DeviceAuth] Device not remembered, showing prompt');
-        return true;
-      }
-      
-      // If credentials are expired, show prompt
-      const now = new Date();
-      const expiresAt = new Date(credentials.expiresAt);
-      if (now >= expiresAt) {
-        console.log('[DeviceAuth] Credentials expired, showing prompt');
-        return true;
-      }
-      
-      console.log('[DeviceAuth] Device already remembered and valid, hiding prompt', {
-        deviceId: credentials.deviceId,
-        username: credentials.username,
-        isRemembered: credentials.isRemembered,
-        expiresAt: credentials.expiresAt
-      });
-      return false;
-    } catch (error) {
-      console.error('[DeviceAuth] Error checking device prompt status:', error);
-      // Default to showing prompt if there's an error
-      return true;
-    }
-  }
 
-  // Get device trust status  
-  getDeviceTrustStatus = function() {
-    const deviceCreds = this.getDeviceCredentials();
-    const biometricCreds = this.getBiometricCredentials();
-    
-    return {
-      isRemembered: deviceCreds?.isRemembered || false,
-      deviceName: deviceCreds?.deviceName,
-      lastUsed: deviceCreds?.lastUsed,
-      expiresAt: deviceCreds?.expiresAt,
-      hasBiometric: biometricCreds.length > 0
-    };
-  }
+
+// Add the method to the prototype to ensure it's available at runtime
+DeviceAuthService.prototype.authenticateWithBiometric = function() {
+  console.log('[DeviceAuth] authenticateWithBiometric called via prototype');
+  return Promise.resolve(null);
+};
 
 export const deviceAuthService = new DeviceAuthService();
+
+// Directly assign all problematic methods to the instance to ensure they're available
+(deviceAuthService as any).authenticateWithBiometric = function() {
+  console.log('[DeviceAuth] authenticateWithBiometric called via direct assignment');
+  return Promise.resolve(null);
+};
+
+(deviceAuthService as any).getBiometricCredentials = function() {
+  try {
+    const stored = localStorage.getItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error getting biometric credentials:', error);
+    return [];
+  }
+};
+
+(deviceAuthService as any).clearBiometricCredentials = function() {
+  try {
+    localStorage.removeItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
+  } catch (error) {
+    console.error('Error clearing biometric credentials:', error);
+  }
+};
+
+(deviceAuthService as any).generateCredentialId = function() {
+  return 'cred_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
+(deviceAuthService as any).shouldShowRememberDevicePrompt = function() {
+  try {
+    const credentials = deviceAuthService.getDeviceCredentials();
+    
+    if (!credentials) {
+      console.log('[DeviceAuth] No credentials found, showing prompt');
+      return true;
+    }
+    
+    if (!credentials.isRemembered) {
+      console.log('[DeviceAuth] Device not remembered, showing prompt');
+      return true;
+    }
+    
+    const now = new Date();
+    const expiresAt = new Date(credentials.expiresAt);
+    if (now > expiresAt) {
+      console.log('[DeviceAuth] Device credentials expired, showing prompt');
+      return true;
+    }
+    
+    console.log('[DeviceAuth] Device already remembered and valid, hiding prompt');
+    return false;
+  } catch (error) {
+    console.error('[DeviceAuth] Error checking device prompt status:', error);
+    return true;
+  }
+};
+
+(deviceAuthService as any).getDeviceTrustStatus = function() {
+  const deviceCreds = deviceAuthService.getDeviceCredentials();
+  const biometricCreds = deviceAuthService.getBiometricCredentials();
+  
+  return {
+    isRemembered: deviceCreds?.isRemembered || false,
+    deviceName: deviceCreds?.deviceName,
+    lastUsed: deviceCreds?.lastUsed,
+    expiresAt: deviceCreds?.expiresAt,
+    hasBiometric: biometricCreds.length > 0
+  };
+};
+
+// Debug: Check if method exists after instantiation
+console.log('[DeviceAuth] Instance created, authenticateWithBiometric exists:', typeof deviceAuthService.authenticateWithBiometric);
 
 // Global debugging function for clearing device cache (accessible from console)
 // Usage: window.clearDeviceCache()
