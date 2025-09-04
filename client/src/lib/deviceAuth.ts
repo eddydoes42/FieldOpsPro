@@ -495,12 +495,11 @@ class DeviceAuthService {
     }
   }
 
-  authenticateWithBiometric() {
-    return null;
+  authenticateWithBiometric = () => {
+    return Promise.resolve(null);
   }
 
-  // Get stored biometric credentials  
-  getBiometricCredentials(): BiometricCredentials[] {
+  getBiometricCredentials = function() {
     try {
       const stored = localStorage.getItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
@@ -511,7 +510,7 @@ class DeviceAuthService {
   }
 
   // Clear biometric credentials
-  clearBiometricCredentials(): void {
+  clearBiometricCredentials = function() {
     try {
       localStorage.removeItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
     } catch (error) {
@@ -520,12 +519,12 @@ class DeviceAuthService {
   }
 
   // Generate credential ID  
-  generateCredentialId(): string {
+  generateCredentialId = function() {
     return 'cred_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
   // Simulate iOS biometric prompt
-  async simulateIosBiometricPrompt(): Promise<boolean> {
+  simulateIosBiometricPrompt = async function() {
     return new Promise((resolve) => {
       // Simulate iOS Face ID/Touch ID prompt
       setTimeout(() => {
@@ -535,7 +534,7 @@ class DeviceAuthService {
   }
 
   // Simulate Android biometric prompt  
-  async simulateAndroidBiometricPrompt(): Promise<boolean> {
+  simulateAndroidBiometricPrompt = async function() {
     return new Promise((resolve) => {
       // Simulate Android fingerprint/face unlock prompt
       setTimeout(() => {
@@ -545,7 +544,7 @@ class DeviceAuthService {
   }
 
   // Show device memory prompt - Enhanced logic for mobile and repeated logins
-  shouldShowRememberDevicePrompt(): boolean {
+  shouldShowRememberDevicePrompt = function() {
     try {
       const credentials = this.getDeviceCredentials();
       
@@ -584,13 +583,7 @@ class DeviceAuthService {
   }
 
   // Get device trust status  
-  getDeviceTrustStatus(): {
-    isRemembered: boolean;
-    deviceName?: string;
-    lastUsed?: string;
-    expiresAt?: string;
-    hasBiometric: boolean;
-  } => {
+  getDeviceTrustStatus = function() {
     const deviceCreds = this.getDeviceCredentials();
     const biometricCreds = this.getBiometricCredentials();
     
