@@ -180,8 +180,8 @@ export default function CredentialLogin() {
                 </p>
               </div>
 
-              {/* Biometric Login Option */}
-              {deviceAuthService.isBiometricSupported() && deviceAuthService.getBiometricCredentials().length > 0 && !showDifferentAccount && (
+              {/* Biometric Login Option - Show if biometric is supported OR if we have stored biometric credentials */}
+              {(deviceAuthService.isBiometricSupported() || deviceAuthService.getBiometricCredentials().length > 0) && !showDifferentAccount && (
                 <div className="space-y-4">
                   <BiometricLoginButton 
                     onSuccess={handleBiometricSuccess}

@@ -205,65 +205,118 @@ class DeviceAuthService {
     return !!(credentials && credentials.username && credentials.passwordToken);
   }
 
-  // Clear device memory
+  // Clear device memory (but preserve login credentials storage)
   clearDeviceMemory(): void {
     try {
       localStorage.removeItem(DeviceAuthService.DEVICE_STORAGE_KEY);
+      console.log('[DeviceAuth] Device memory cleared');
     } catch (error) {
       console.error('Error clearing device memory:', error);
     }
   }
 
-  // Check if WebAuthn is supported - Enhanced for mobile detection
+  // Clear only device cache (for troubleshooting) - DOES NOT clear login credentials
+  clearDeviceCache(): void {
+    try {
+      const deviceCreds = this.getDeviceCredentials();
+      if (deviceCreds) {
+        // Preserve username and password but reset remembering status
+        const preservedCreds = {
+          ...deviceCreds,
+          isRemembered: false,
+          deviceId: this.generateDeviceId(), // Generate new device ID
+          fingerprint: this.generateDeviceFingerprint(), // New fingerprint
+          lastUsed: new Date().toISOString()
+        };
+        localStorage.setItem(DeviceAuthService.DEVICE_STORAGE_KEY, JSON.stringify(preservedCreds));
+        console.log('[DeviceAuth] Device cache reset (credentials preserved)');
+      }
+      
+      // Clear session storage as well
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('device_prompt_shown');
+      }
+    } catch (error) {
+      console.error('Error clearing device cache:', error);
+    }
+  }
+
+  // Check if WebAuthn is supported - Enhanced and more permissive detection
   isBiometricSupported(): boolean {
-    if (typeof window === 'undefined') return false;
-    
-    const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
-    
-    if (!hasWebAuthn) {
-      console.log('[DeviceAuth] WebAuthn not supported');
+    if (typeof window === 'undefined') {
+      console.log('[DeviceAuth] No window object - server-side rendering');
       return false;
     }
     
-    // Enhanced mobile device detection
+    // Basic WebAuthn API check
+    const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+    
+    if (!hasWebAuthn) {
+      console.log('[DeviceAuth] WebAuthn not supported - missing APIs', {
+        hasPublicKeyCredential: !!window.PublicKeyCredential,
+        hasNavigatorCredentials: !!navigator.credentials,
+        hasCredentialsCreate: !!(navigator.credentials && navigator.credentials.create)
+      });
+      return false;
+    }
+    
+    // Enhanced environment detection
     const userAgent = navigator.userAgent;
     const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     const isSecureContext = window.isSecureContext;
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isReplit = window.location.hostname.includes('.replit.app') || window.location.hostname.includes('.repl.co');
     
-    // Allow localhost for development
-    if (!isSecureContext && !isLocalhost) {
-      console.log('[DeviceAuth] Biometric authentication requires secure context (HTTPS)');
+    // Allow localhost and Replit domains for development
+    if (!isSecureContext && !isLocalhost && !isReplit) {
+      console.log('[DeviceAuth] Biometric authentication requires secure context (HTTPS)', {
+        isSecureContext, isLocalhost, isReplit, hostname: window.location.hostname
+      });
       return false;
     }
     
-    // Additional mobile-specific checks
+    // More permissive mobile checks - don't exclude based on version unless absolutely necessary
     if (isMobile) {
-      // Check for specific mobile platforms that support WebAuthn
       const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
       const isAndroid = /Android/i.test(userAgent);
       
       if (isIOS) {
-        // iOS 14+ supports WebAuthn
-        const iOSVersion = parseFloat((userAgent.match(/OS ([\d_]+)/) || ['', '0_0'])[1].replace('_', '.'));
-        if (iOSVersion < 14) {
-          console.log('[DeviceAuth] iOS version too old for WebAuthn');
-          return false;
+        // Try to parse iOS version, but be more lenient
+        try {
+          const versionMatch = userAgent.match(/OS ([\d_]+)/);
+          if (versionMatch) {
+            const iOSVersion = parseFloat(versionMatch[1].replace('_', '.'));
+            if (iOSVersion < 14) {
+              console.log('[DeviceAuth] iOS version might be too old for WebAuthn:', iOSVersion);
+              // Don't return false immediately - let the user try
+            }
+          }
+        } catch (error) {
+          console.log('[DeviceAuth] Could not parse iOS version, allowing WebAuthn attempt');
         }
       } else if (isAndroid) {
-        // Android Chrome 70+ supports WebAuthn
-        const chromeVersion = parseInt((userAgent.match(/Chrome\/([0-9]+)/) || ['', '0'])[1]);
-        if (chromeVersion < 70) {
-          console.log('[DeviceAuth] Android Chrome version too old for WebAuthn');
-          return false;
+        // More lenient Chrome version check
+        try {
+          const chromeMatch = userAgent.match(/Chrome\/([0-9]+)/);
+          if (chromeMatch) {
+            const chromeVersion = parseInt(chromeMatch[1]);
+            if (chromeVersion < 67) { // Lowered from 70
+              console.log('[DeviceAuth] Chrome version might be too old for WebAuthn:', chromeVersion);
+              // Don't return false immediately - let the user try
+            }
+          }
+        } catch (error) {
+          console.log('[DeviceAuth] Could not parse Chrome version, allowing WebAuthn attempt');
         }
       }
     }
     
-    console.log('[DeviceAuth] Biometric authentication supported', { 
+    console.log('[DeviceAuth] Biometric authentication appears supported', { 
       isMobile, 
       isSecureContext, 
       isLocalhost,
+      isReplit,
+      hostname: window.location.hostname,
       userAgent: userAgent.substring(0, 50) + '...'
     });
     return true;
@@ -440,7 +493,12 @@ class DeviceAuthService {
         return true;
       }
       
-      console.log('[DeviceAuth] Device already remembered and valid, hiding prompt');
+      console.log('[DeviceAuth] Device already remembered and valid, hiding prompt', {
+        deviceId: credentials.deviceId,
+        username: credentials.username,
+        isRemembered: credentials.isRemembered,
+        expiresAt: credentials.expiresAt
+      });
       return false;
     } catch (error) {
       console.error('[DeviceAuth] Error checking device prompt status:', error);
@@ -471,3 +529,51 @@ class DeviceAuthService {
 }
 
 export const deviceAuthService = new DeviceAuthService();
+
+// Global debugging function for clearing device cache (accessible from console)
+// Usage: window.clearDeviceCache()
+(globalThis as any).clearDeviceCache = () => {
+  try {
+    deviceAuthService.clearDeviceCache();
+    console.log('✅ Device cache cleared successfully! Please refresh the page.');
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to clear device cache:', error);
+    return false;
+  }
+};
+
+// Global debugging function for checking device status
+// Usage: window.checkDeviceStatus()
+(globalThis as any).checkDeviceStatus = () => {
+  try {
+    const creds = deviceAuthService.getDeviceCredentials();
+    const biometricSupported = deviceAuthService.isBiometricSupported();
+    const shouldShowPrompt = deviceAuthService.shouldShowRememberDevicePrompt();
+    
+    console.log('🔍 Device Status Debug Info:', {
+      deviceCredentials: creds,
+      biometricSupported,
+      shouldShowPrompt,
+      hasStoredCreds: deviceAuthService.hasStoredCredentials(),
+      isRemembered: deviceAuthService.isDeviceRemembered()
+    });
+    
+    return {
+      deviceCredentials: creds,
+      biometricSupported,
+      shouldShowPrompt,
+      hasStoredCreds: deviceAuthService.hasStoredCredentials(),
+      isRemembered: deviceAuthService.isDeviceRemembered()
+    };
+  } catch (error) {
+    console.error('❌ Failed to get device status:', (error as Error).message);
+    return { error: (error as Error).message };
+  }
+};
+
+// Make debugging functions available in browser console
+if (typeof window !== 'undefined') {
+  (window as any).clearDeviceCache = (globalThis as any).clearDeviceCache;
+  (window as any).checkDeviceStatus = (globalThis as any).checkDeviceStatus;
+}
