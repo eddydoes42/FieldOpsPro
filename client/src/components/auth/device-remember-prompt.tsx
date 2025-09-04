@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Smartphone, Shield, Clock } from "lucide-react";
+import { Smartphone, Shield, Clock, Fingerprint } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -107,7 +108,7 @@ export function DeviceRememberPrompt({ isOpen, onClose, onSkip }: DeviceRemember
                       Remember this device
                     </label>
                     <p className="text-xs text-muted-foreground">
-                      You'll stay signed in and can use biometric login if available
+                      Enables device-native biometric authentication (TouchID, FaceID, etc.)
                     </p>
                   </div>
                 </div>
@@ -115,18 +116,21 @@ export function DeviceRememberPrompt({ isOpen, onClose, onSkip }: DeviceRemember
                 {rememberDevice && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Device Name</label>
-                    <input
+                    <Input
                       type="text"
                       value={deviceName}
                       onChange={(e) => setDeviceName(e.target.value)}
                       placeholder="My Device"
-                      className="w-full px-3 py-2 border rounded-md text-sm"
                       data-testid="input-device-name"
                     />
                   </div>
                 )}
 
                 <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Fingerprint className="h-3 w-3" />
+                    <span>Uses device's built-in biometric security</span>
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Smartphone className="h-3 w-3" />
                     <span>Secure device fingerprinting</span>
