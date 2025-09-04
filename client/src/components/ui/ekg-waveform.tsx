@@ -163,10 +163,18 @@ export function EKGWaveform({
       lastBeatTimeRef.current = time;
     }
     
-    // Only add baseline when there are no points, not constantly
-    if (waveformDataRef.current.length === 0) {
-      // Add minimal baseline points only when needed
-      waveformDataRef.current.push({ x: width, y: baselineY, time });
+    // Ensure continuous baseline connection between beats
+    // Find the rightmost point in current waveform data
+    const rightmostPoint = waveformDataRef.current.reduce((rightmost, point) => 
+      point.x > rightmost.x ? point : rightmost, { x: -Infinity, y: baselineY, time: 0 });
+    
+    // If there's a gap between the rightmost point and the right edge, fill with baseline
+    if (rightmostPoint.x < width - scrollSpeed) {
+      // Add continuous baseline points from the last waveform point to the right edge
+      const gapStart = Math.max(rightmostPoint.x, 0);
+      for (let x = gapStart; x <= width + 50; x += scrollSpeed * 2) {
+        waveformDataRef.current.push({ x, y: baselineY, time });
+      }
     }
     
     // Draw clean waveform line

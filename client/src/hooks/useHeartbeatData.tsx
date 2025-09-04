@@ -36,7 +36,7 @@ export function useHeartbeatData(): HeartbeatData | null {
     ["administrator", "manager", "project_manager", "dispatcher"].includes(role)
   );
 
-  // Check user preferences for heartbeat toggle
+  // Check user preferences for heartbeat toggle - default to true if not set
   const heartbeatEnabled = (user as any)?.preferences?.heartbeatEnabled;
   
   // If preference is explicitly set to false, don't show heartbeat

@@ -48,6 +48,7 @@ import Apply from '@/pages/apply';
 import OnboardingRequests from '@/pages/onboarding-requests';
 import AuditLogsPage from '@/pages/audit-logs';
 import Settings from '@/pages/settings';
+import ApprovedPayments from '@/pages/approved-payments';
 import { DeviceRememberPrompt } from '@/components/auth/device-remember-prompt';
 
 // Dashboard Route Component
@@ -551,6 +552,24 @@ function Router() {
                     <div>
                       <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || 'operations_director'} />
                       <AuditLogsPage />
+                    </div>
+                  );
+                }
+                return <Landing />;
+              })()}
+            </Route>
+
+            <Route path="/approved-payments">
+              {(() => {
+                const effectiveRole = getEffectiveRole();
+                
+                if (isAuthenticated) {
+                  return (
+                    <div>
+                      {isOperationsDirector(user as any) && (
+                        <RoleSwitcher currentRole={effectiveRole} onRoleSwitch={handleRoleSwitch} currentActiveRole={permanentRole || effectiveRole} />
+                      )}
+                      <ApprovedPayments />
                     </div>
                   );
                 }

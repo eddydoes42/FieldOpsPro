@@ -117,13 +117,13 @@ export function StashLayout({
 
       {/* Main Content Area */}
       <main className={cn(
-        "pb-20 lg:pb-8", // Extra padding for mobile bottom nav
+        "pb-20", // Consistent padding for omnipresent bottom nav
         className
       )}>
         {children}
       </main>
 
-      {/* Bottom Navigation - Mobile/Tablet Only */}
+      {/* Bottom Navigation - Omnipresent */}
       <BottomNav items={transformedNavigationItems} onItemClick={(item) => {
         if (item.onClick) {
           item.onClick();

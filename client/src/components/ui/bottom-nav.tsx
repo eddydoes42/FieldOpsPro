@@ -20,12 +20,11 @@ interface BottomNavProps {
 export function BottomNav({ items, className, onItemClick }: BottomNavProps) {
   const [location] = useLocation();
 
-  // Only show on mobile and tablet
+  // Omnipresent navigation for all screen sizes
   return (
     <nav
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
-        "lg:hidden", // Hide on desktop
         "bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800",
         "shadow-lg backdrop-blur-sm bg-white/95 dark:bg-gray-900/95",
         "safe-area-inset-bottom", // Handle iPhone notch

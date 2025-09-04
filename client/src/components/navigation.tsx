@@ -172,6 +172,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
           { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
           { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
+          { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
           { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
         ]
       };
@@ -209,6 +210,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
           { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
           { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
           { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
+          { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
           { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
         ]
       };
@@ -239,6 +241,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
             { path: '/project-network', label: 'Project Network', icon: 'fas fa-project-diagram' },
             { path: '/operations/exclusive-network', label: 'Exclusive Networks', icon: 'fas fa-shield-alt' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
@@ -257,6 +260,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
               { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
               { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
               { path: '/client/work-orders', label: 'My Work Orders', icon: 'fas fa-clipboard-list' },
+              { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
               { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
             ]
           };
@@ -275,6 +279,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
             { path: '/onboarding', label: 'Team Member Information', icon: 'fas fa-user-plus' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
@@ -288,6 +293,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/job-network', label: 'Job Network', icon: 'fas fa-network-wired' },
             { path: '/talent-network', label: 'Talent Network', icon: 'fas fa-users' },
             { path: '/operations/exclusive-network', label: 'Exclusive Network', icon: 'fas fa-shield-alt' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
@@ -304,6 +310,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
             { path: '/reports', label: 'Reports', icon: 'fas fa-chart-bar' },
             { path: '/onboarding', label: 'Team Member Information', icon: 'fas fa-user-plus' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
@@ -316,6 +323,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/work-orders', label: 'Work Orders', icon: 'fas fa-clipboard-list' },
             { path: '/job-requests', label: 'Job Requests', icon: 'fas fa-hand-paper' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
@@ -326,6 +334,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/field-agent/my-work', label: 'My Work', icon: 'fas fa-clipboard-list' },
             { path: '/time-tracking', label: 'Time', icon: 'fas fa-clock' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/field-agent/settings', label: 'Settings', icon: 'fas fa-cog' },
           ]
         };
@@ -337,6 +346,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/mywork', label: 'My Work', icon: 'fas fa-clipboard-list' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
             { path: '/calendar', label: 'Calendar', icon: 'fas fa-calendar-alt' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/messages', label: 'Messages', icon: 'fas fa-comments', showUnreadCount: true },
           ]
         };
@@ -347,6 +357,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             { path: '/field-agent/my-work', label: 'My Work', icon: 'fas fa-clipboard-list' },
             { path: '/time-tracking', label: 'Time', icon: 'fas fa-clock' },
             { path: '/team', label: 'My Team', icon: 'fas fa-users' },
+            { path: '/approved-payments', label: 'Approved Payments', icon: 'fas fa-dollar-sign' },
             { path: '/field-agent/settings', label: 'Settings', icon: 'fas fa-cog' },
           ]
         };

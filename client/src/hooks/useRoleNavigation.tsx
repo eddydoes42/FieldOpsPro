@@ -17,7 +17,8 @@ import {
   Calendar,
   Wrench,
   MapPin,
-  CheckSquare
+  CheckSquare,
+  DollarSign
 } from "lucide-react";
 
 export interface NavItem {
@@ -44,22 +45,20 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
         return [
           { icon: Home, label: "Dashboard", route: "/operations-dashboard" },
           { icon: Building2, label: "Companies", route: "/operations/companies" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
             // Will be handled by the component using this hook
             const event = new CustomEvent('openThingsToApprove');
             window.dispatchEvent(event);
           }},
-          { icon: Search, label: "Search", route: "/search" },
           { icon: Settings, label: "Settings", route: "/settings" }
         ];
 
       case "administrator":
         return [
           { icon: Home, label: "Dashboard", route: "/dashboard" },
-          { icon: Users, label: "Team", route: "/team" },
           { icon: FolderOpen, label: "Work Orders", route: "/work-orders" },
-          { icon: Briefcase, label: "Job Network", route: "/job-network" },
-          { icon: BarChart3, label: "Reports", route: "/reports" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
             const event = new CustomEvent('openThingsToApprove');
             window.dispatchEvent(event);
@@ -71,8 +70,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
         return [
           { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: FolderOpen, label: "Projects", route: "/projects" },
-          { icon: Briefcase, label: "Job Network", route: "/job-network" },
-          { icon: Users, label: "Talent", route: "/talent-network" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
             const event = new CustomEvent('openThingsToApprove');
             window.dispatchEvent(event);
@@ -83,9 +81,8 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
       case "manager":
         return [
           { icon: Home, label: "Dashboard", route: "/dashboard" },
-          { icon: Users, label: "Team", route: "/team" },
           { icon: FolderOpen, label: "Work Orders", route: "/work-orders" },
-          { icon: Calendar, label: "Calendar", route: "/calendar" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
             const event = new CustomEvent('openThingsToApprove');
             window.dispatchEvent(event);
@@ -97,7 +94,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
         return [
           { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: ClipboardList, label: "Work Orders", route: "/work-orders" },
-          { icon: Calendar, label: "Calendar", route: "/calendar" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
             const event = new CustomEvent('openThingsToApprove');
             window.dispatchEvent(event);
@@ -109,7 +106,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
         return [
           { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: Briefcase, label: "My Work", route: "/mywork" },
-          { icon: Users, label: "My Team", route: "/my-team" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
             const event = new CustomEvent('openThingsToApprove');
             window.dispatchEvent(event);
@@ -120,6 +117,7 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
       case "field_agent":
         return [
           { icon: Briefcase, label: "My Work", route: "/mywork" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages },
           { icon: User, label: "Settings", route: "/settings" }
         ];
@@ -129,8 +127,8 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
         return [
           { icon: Home, label: "Dashboard", route: "/dashboard" },
           { icon: ClipboardList, label: "Work Orders", route: "/work-orders" },
+          { icon: DollarSign, label: "Payments", route: "/approved-payments" },
           { icon: PlusCircle, label: "Create", route: "/work-orders/create" },
-          { icon: Users, label: "Talent", route: "/talent-network" },
           { icon: Settings, label: "Settings", route: "/settings" }
         ];
 
