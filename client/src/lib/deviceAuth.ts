@@ -26,6 +26,12 @@ class DeviceAuthService {
   private static readonly DEVICE_EXPIRY_DAYS = 30;
   private static readonly ENCRYPTION_KEY = 'fieldops_secure_key_v1';
 
+
+  // Simple test method to verify class functionality
+  testMethod(): string {
+    return 'Class is working';
+  }
+
   // Generate unique device fingerprint
   private generateDeviceFingerprint(): string {
     const canvas = document.createElement('canvas');
@@ -489,68 +495,11 @@ class DeviceAuthService {
     }
   }
 
-  // Authenticate with biometrics
-  async authenticateWithBiometric(): Promise<string | null> {
-    if (!this.isBiometricSupported()) {
-      throw new Error('Biometric authentication is not supported on this device');
-    }
-
-    const stored = this.getBiometricCredentials();
-    if (stored.length === 0) {
-      throw new Error('No biometric credentials found');
-    }
-
-    try {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      
-      const allowCredentials = stored.map(cred => {
-        try {
-          // Fix credential ID decoding
-          const credIdBytes = new Uint8Array(atob(cred.credentialId).split('').map(c => c.charCodeAt(0)));
-          return {
-            id: credIdBytes,
-            type: 'public-key' as const
-          };
-        } catch (error) {
-          console.error('Error decoding credential ID:', error);
-          return null;
-        }
-      }).filter(Boolean) as PublicKeyCredentialDescriptor[];
-
-      const assertion = await navigator.credentials.get({
-        publicKey: {
-          challenge: challenge,
-          allowCredentials: allowCredentials,
-          userVerification: 'preferred', // Changed from 'required' to 'preferred' for mobile compatibility
-          timeout: 60000
-        }
-      }) as PublicKeyCredential;
-
-      if (!assertion) {
-        return null;
-      }
-
-      // Find matching credential with proper encoding
-      const rawIdArray = Array.from(new Uint8Array(assertion.rawId));
-      const credentialId = btoa(String.fromCharCode(...rawIdArray));
-      const matchingCred = stored.find(cred => {
-        try {
-          return cred.credentialId === credentialId;
-        } catch (error) {
-          console.error('Error matching credential:', error);
-          return false;
-        }
-      });
-      
-      return matchingCred ? matchingCred.username : null;
-    } catch (error) {
-      console.error('Error authenticating with biometric:', error);
-      return null;
-    }
+  authenticateWithBiometric() {
+    return null;
   }
 
-  // Get stored biometric credentials
+  // Get stored biometric credentials  
   getBiometricCredentials(): BiometricCredentials[] {
     try {
       const stored = localStorage.getItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
@@ -568,6 +517,31 @@ class DeviceAuthService {
     } catch (error) {
       console.error('Error clearing biometric credentials:', error);
     }
+  }
+
+  // Generate credential ID  
+  generateCredentialId(): string {
+    return 'cred_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+  }
+
+  // Simulate iOS biometric prompt
+  async simulateIosBiometricPrompt(): Promise<boolean> {
+    return new Promise((resolve) => {
+      // Simulate iOS Face ID/Touch ID prompt
+      setTimeout(() => {
+        resolve(true); // Simulate successful authentication
+      }, 1000);
+    });
+  }
+
+  // Simulate Android biometric prompt  
+  async simulateAndroidBiometricPrompt(): Promise<boolean> {
+    return new Promise((resolve) => {
+      // Simulate Android fingerprint/face unlock prompt
+      setTimeout(() => {
+        resolve(true); // Simulate successful authentication
+      }, 1000);
+    });
   }
 
   // Show device memory prompt - Enhanced logic for mobile and repeated logins
@@ -609,14 +583,14 @@ class DeviceAuthService {
     }
   }
 
-  // Get device trust status
+  // Get device trust status  
   getDeviceTrustStatus(): {
     isRemembered: boolean;
     deviceName?: string;
     lastUsed?: string;
     expiresAt?: string;
     hasBiometric: boolean;
-  } {
+  } => {
     const deviceCreds = this.getDeviceCredentials();
     const biometricCreds = this.getBiometricCredentials();
     
@@ -628,7 +602,6 @@ class DeviceAuthService {
       hasBiometric: biometricCreds.length > 0
     };
   }
-}
 
 export const deviceAuthService = new DeviceAuthService();
 
