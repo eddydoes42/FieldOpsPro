@@ -2,12 +2,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import QuickActionMenu from "@/components/quick-action-menu";
 import { useQuickActionMenu } from "@/hooks/useQuickActionMenu";
 import { Zap, Menu } from "lucide-react";
 import PermanentRoleSwitcher from "@/components/permanent-role-switcher";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { isRoleAllowedForCompanyType } from "@shared/schema";
 
 interface NavigationProps {
   testingRole?: string;
@@ -40,6 +43,100 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
     // Clear role selection when logging out
     localStorage.removeItem('selectedRole');
     window.location.href = "/api/logout";
+  };
+
+  // Role simulation functionality
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Check role simulation status
+  const { data: roleSimulationStatus } = useQuery({
+    queryKey: ['/api/role-simulation/status'],
+    refetchInterval: 5000 // Check every 5 seconds
+  });
+
+  // Type-safe access to role simulation status
+  const isCurrentlyTesting = roleSimulationStatus && typeof roleSimulationStatus === 'object' && 'isSimulatingRole' in roleSimulationStatus ? 
+    (roleSimulationStatus as any).isSimulatingRole : false;
+  const testingContext = roleSimulationStatus && typeof roleSimulationStatus === 'object' && 'context' in roleSimulationStatus ? 
+    (roleSimulationStatus as any).context : null;
+
+  const startRoleSimulationMutation = useMutation({
+    mutationFn: ({ role, companyType }: { role: string; companyType: 'service' | 'client' }) => {
+      // Enhanced validation using the new role-company mapping
+      if (!isRoleAllowedForCompanyType(companyType, role)) {
+        throw new Error(`Invalid role "${role}" for company type "${companyType}". Please select a valid combination.`);
+      }
+      
+      return apiRequest('/api/role-simulation/start', 'POST', { role, companyType }).then(res => res.json());
+    },
+    onSuccess: (data, variables) => {
+      // Set the role testing info in local storage
+      localStorage.setItem('testingRole', variables.role);
+      localStorage.setItem('testingCompanyType', variables.companyType);
+      
+      // Redirect to the appropriate dashboard for the selected role using redirectUrl
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        // Fallback to role-based routing if no redirectUrl provided
+        const dashboardRoute = variables.role === 'client_company_admin' ? '/dashboard' : `/${variables.role}-dashboard`;
+        window.location.href = dashboardRoute;
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error Starting Role Testing",
+        description: error.message || "Failed to start role testing.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const stopRoleSimulationMutation = useMutation({
+    mutationFn: () => apiRequest('/api/role-simulation/stop', 'POST').then(res => res.json()),
+    onSuccess: () => {
+      // Clear testing info
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
+      
+      // Invalidate auth query to return to original user
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      
+      toast({
+        title: "Role Simulation Stopped",
+        description: "Returned to Operations Director mode",
+      });
+
+      // Redirect to operations dashboard
+      window.location.href = '/operations-dashboard';
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to stop role simulation",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handler for Service Company role selection
+  const handleServiceCompanyRoleChange = (role: string) => {
+    if (role) {
+      startRoleSimulationMutation.mutate({ role, companyType: 'service' });
+    }
+  };
+
+  // Handler for Client Company role selection
+  const handleClientCompanyRoleChange = (role: string) => {
+    if (role) {
+      startRoleSimulationMutation.mutate({ role, companyType: 'client' });
+    }
+  };
+
+  // Handler for stopping role simulation
+  const handleStopTesting = () => {
+    stopRoleSimulationMutation.mutate();
   };
 
   // Close dropdown when clicking outside
@@ -272,15 +369,11 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">Service Company:</span>
                 <select
-                  value={localStorage.getItem('testingCompanyType') === 'service' ? localStorage.getItem('testingRole') || '' : ''}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      localStorage.setItem('testingRole', e.target.value);
-                      localStorage.setItem('testingCompanyType', 'service');
-                      window.location.reload();
-                    }
-                  }}
-                  className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm"
+                  value={testingContext?.companyType === 'service' ? testingContext?.role || '' : ''}
+                  onChange={(e) => handleServiceCompanyRoleChange(e.target.value)}
+                  disabled={startRoleSimulationMutation.isPending}
+                  className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-sm disabled:opacity-50"
+                  data-testid="select-service-company-role"
                 >
                   <option value="">Select Role</option>
                   <option value="administrator">Administrator</option>
@@ -296,15 +389,11 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">Client Company:</span>
                 <select
-                  value={localStorage.getItem('testingCompanyType') === 'client' ? localStorage.getItem('testingRole') || '' : ''}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      localStorage.setItem('testingRole', e.target.value);
-                      localStorage.setItem('testingCompanyType', 'client');
-                      window.location.reload();
-                    }
-                  }}
-                  className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm"
+                  value={testingContext?.companyType === 'client' ? testingContext?.role || '' : ''}
+                  onChange={(e) => handleClientCompanyRoleChange(e.target.value)}
+                  disabled={startRoleSimulationMutation.isPending}
+                  className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-sm disabled:opacity-50"
+                  data-testid="select-client-company-role"
                 >
                   <option value="">Select Role</option>
                   <option value="administrator">Administrator</option>
@@ -316,16 +405,14 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
             </div>
             
             {/* Stop Testing Button */}
-            {(localStorage.getItem('testingRole') || localStorage.getItem('testingCompanyType')) && (
+            {isCurrentlyTesting && (
               <button
-                onClick={() => {
-                  localStorage.removeItem('testingRole');
-                  localStorage.removeItem('testingCompanyType');
-                  window.location.reload();
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
+                onClick={handleStopTesting}
+                disabled={stopRoleSimulationMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium disabled:opacity-50"
+                data-testid="button-stop-testing"
               >
-                Stop Testing
+                {stopRoleSimulationMutation.isPending ? 'Stopping...' : 'Stop Testing'}
               </button>
             )}
           </div>

@@ -1,0 +1,46 @@
+You are adding a new "Issue System" definition to the documentation.  
+Do not alter unrelated sections, variables, or formatting outside of this block.  
+Preserve all existing structure, style, and terminology unless explicitly changed below.  
+Only insert the following section in the appropriate place in replit.md.
+
+---
+
+## Issue System — Definition & Rules
+
+The Issue System is designed with inspiration from Field Nation’s “Report a Problem” and “Case Creation” workflows, adapted for FieldOps Pro’s operational model.
+
+### Escalation Levels
+There are four escalation levels, from lowest to highest:
+1. **Low**
+2. **Medium**
+3. **High**
+4. **Urgent**
+
+### Issue Creation Rules
+- **Service Company & Client Company**
+  - Any user with **Dispatcher** rank and above can create an issue **without approval**.
+  - **Field Engineers** and **Field Agents** require approval from a **Dispatcher** or above to create an issue.
+
+### Resolution Responsibility
+- Issues must be resolved by the **appropriate member on the opposite company** associated with the work order or project.
+  - Example: If a Service Company creates a Medium-level issue, it must be resolved by a **Client Company** (that posted the work order or project) **Manager** or above.
+
+### Resolution Authority by Role
+- **Administrator**
+  - Must resolve issues with **High** escalation level and above.
+  - Can resolve High and Urgent issues without additional approval.
+- **Project Manager**
+  - Can resolve High and Urgent issues **only with Administrator approval**.
+  - Can resolve Medium and Low issues without approval.
+- **Manager**
+  - Can resolve **Medium** and **Low** issues.
+  - Requires **Project Manager approval** to resolve Medium issues.
+- **Dispatcher and Below**
+  - Can only resolve **Low** escalation issues.
+- **Field Engineers & Field Agents**
+  - Cannot resolve issues above Low escalation level.
+  - Require approval for any Issue CRUD.
+
+---
+
+Do not modify any other logic, constants, or unrelated documentation.

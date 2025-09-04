@@ -1,0 +1,132 @@
+You are updating the “Things to Approve” role-based approval logic in the documentation.  
+Do not alter unrelated sections, variables, or formatting outside of this block.  
+Preserve all existing structure, style, and terminology unless explicitly changed below.  
+Only replace the current “Things to Approve” content with the following updated version, which incorporates all special rules, maintains parallel formatting for Service Company vs Client Company, and continues the pattern for all roles.
+
+---
+
+## Things to Approve — Role-Based Approval Sources
+
+### Administrator — Things to Approve
+#### Service Company
+- **User CRUD & Deletion**
+  - Project Manager and Manager user deletion requests from Project Managers
+  - Project Manager user CRUD requests from Project Managers
+  - Administrator creation or deletion requests — requires Operations Director approval
+- **Budget & Financial**
+  - Budget increases on projects or work orders over $5,000 from Project Managers
+  - Creation of work orders or projects over $10,000 — requires internal Administrator and then Operations Director approval
+  - Expense Order CRUD over $2,000 and early withdrawal requests over $2,000 from Project Managers
+- **Suspension & Deactivation**
+  - User suspension requests from Project Managers
+- **Document Approvals**
+  - Document approval requests on work orders marked completed (ready for submission to Client Company) by Managers and below
+- **Internal Work**
+  - Internal project and internal work order CRUD
+- **Issue CRUD & Resolution**
+  - Approves issues created and unable to be resolved by Administrators of Service and Client Companies (Operations Director approval required)
+  - Can resolve issues with High escalation level or above without approval
+
+#### Client Company
+- **User CRUD & Deletion**
+  - Project Manager and Manager user deletion, suspension, and deactivation requests from Project Managers
+  - Project Manager user creation requests from Project Managers
+  - Administrator creation or deletion requests — requires Operations Director approval
+- **Budget & Financial**
+  - Budget increases on projects or work orders over $5,000 from Project Managers
+  - Creation of work orders or projects over $10,000 — requires internal Administrator and then Operations Director approval
+  - Expense Order CRUD over $2,000 and early withdrawal requests over $2,000 from Project Managers
+- **Document Approvals**
+  - Document approval requests on work orders marked completed and submitted by Service Company
+- **Issue CRUD & Resolution**
+  - Approves issues created and unable to be resolved by Administrators of Service and Client Companies (Operations Director approval required)
+  - Can resolve issues with High escalation level or above without approval
+
+---
+
+### Project Manager — Things to Approve
+#### Service Company
+- **User CRUD & Deletion**
+  - User suspension requests from Managers
+  - Manager user creation requests from Managers
+  - Dispatcher, Field Engineer, and Field Agent deletion requests from Managers
+  - Project Manager creation or deletion requests — requires Administrator approval
+- **Budget & Financial**
+  - Expense Order CRUD and early withdrawal requests from Managers
+- **Document Approvals**
+  - Document approval requests on work orders and projects marked completed by users Manager and below
+- **Assignment Requests**
+  - Project request for assignment to Field Engineer or Field Agent from Managers
+  - Work Order request for assignment to Field Engineer or Field Agent from Dispatchers
+  - Work Order request for assignment to self from Field Engineer
+- **Internal Work**
+  - Internal project and internal work order CRUD
+- **Issue CRUD & Resolution**
+  - Can resolve issues with High escalation level or above with Administrator approval
+  - Can resolve issues with Medium escalation level and below without approval
+  - Can create issues without approval
+
+#### Client Company
+- **User CRUD & Deletion**
+  - User suspension requests from Managers
+  - Manager user creation requests from Managers
+  - Dispatcher, Field Engineer, and Field Agent deletion requests from Managers
+  - Project Manager creation or deletion requests — requires Administrator approval
+- **Budget & Financial**
+  - Expense Order CRUD from Managers
+- **Document Approvals**
+  - Document approval requests on work orders and projects marked completed by Service Companies
+- **Assignment Requests**
+  - Project request for assignment to Field Engineer or Field Agent from Managers
+  - Work Order request for assignment to Field Engineer or Field Agent from Dispatchers
+  - Work Order request for assignment to self from Field Engineer
+- **Issue CRUD & Resolution**
+  - Can resolve issues with High escalation level or above with Administrator approval
+  - Can resolve issues with Medium escalation level and below without approval
+  - Can create issues without approval
+
+---
+
+### Manager — Things to Approve
+#### Service Company
+- **User CRUD & Deletion**
+  - Dispatcher, Field Engineer, and Field Agent creation or deletion requests from Dispatchers — requires Project Manager or Administrator approval
+- **Budget & Financial**
+  - Expense Order CRUD and early withdrawal requests from Dispatchers
+- **Document Approvals**
+  - Document approval requests on work orders and projects marked completed by Dispatchers and below
+- **Assignment Requests**
+  - Project request for assignment to Field Engineer or Field Agent from Dispatchers
+  - Work Order request for assignment to Field Engineer or Field Agent from Dispatchers
+  - Work Order request for assignment to self from Field Engineer
+- **Issue CRUD & Resolution**
+  - Cannot resolve issues above Medium escalation level
+  - Needs approval to resolve issues Medium escalation level and below
+  - Can create issues without approval
+
+#### Client Company
+- **User CRUD & Deletion**
+  - Dispatcher, Field Engineer, and Field Agent creation or deletion requests from Dispatchers — requires Project Manager or Administrator approval
+- **Budget & Financial**
+  - Expense Order CRUD from Dispatchers
+- **Document Approvals**
+  - Document approval requests on work orders and projects marked completed by Service Companies
+- **Assignment Requests**
+  - Project request for assignment to Field Engineer or Field Agent from Dispatchers
+  - Work Order request for assignment to Field Engineer or Field Agent from Dispatchers
+  - Work Order request for assignment to self from Field Engineer
+- **Issue CRUD & Resolution**
+  - Cannot resolve issues above Medium escalation level
+  - Needs approval to resolve issues Medium escalation level and below
+  - Can create issues without approval
+
+---
+
+### Dispatcher — Things to Approve
+#### Service Company
+- **User CRUD & Deletion**
+  - Always requires Project Manager or Administrator approval to create or delete any user below them
+- **Budget & Financial**
+  - Expense Order CRUD and early withdrawal requests from Field Engineers or Field Agents — requires Manager or above approval
+- **Document Approvals**
+  - Document approval requests on work orders and projects marked completed by Field Engineers or Field Agents — requires Manager
