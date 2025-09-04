@@ -54,33 +54,74 @@ export function useRoleNavigation({ userRole, unreadMessages = 0 }: UseRoleNavig
         ];
 
       case "administrator":
-      case "manager":
-      case "project_manager":
         return [
           { icon: Home, label: "Dashboard", route: "/admin-dashboard" },
-          { icon: FolderOpen, label: "Projects", route: "/work-orders" },
           { icon: Users, label: "Team", route: "/team" },
-          { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages },
-          { icon: Settings, label: "Settings", route: "/settings" }
+          { icon: FolderOpen, label: "Work Orders", route: "/work-orders" },
+          { icon: Briefcase, label: "Job Network", route: "/job-network" },
+          { icon: BarChart3, label: "Reports", route: "/reports" },
+          { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
+            const event = new CustomEvent('openThingsToApprove');
+            window.dispatchEvent(event);
+          }},
+          { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages }
+        ];
+
+      case "project_manager":
+        return [
+          { icon: Home, label: "Dashboard", route: "/project-dashboard" },
+          { icon: FolderOpen, label: "Projects", route: "/projects" },
+          { icon: Briefcase, label: "Job Network", route: "/job-network" },
+          { icon: Users, label: "Talent", route: "/talent-network" },
+          { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
+            const event = new CustomEvent('openThingsToApprove');
+            window.dispatchEvent(event);
+          }},
+          { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages }
+        ];
+
+      case "manager":
+        return [
+          { icon: Home, label: "Dashboard", route: "/manager-dashboard" },
+          { icon: Users, label: "Team", route: "/team" },
+          { icon: FolderOpen, label: "Work Orders", route: "/work-orders" },
+          { icon: Calendar, label: "Calendar", route: "/calendar" },
+          { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
+            const event = new CustomEvent('openThingsToApprove');
+            window.dispatchEvent(event);
+          }},
+          { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages }
         ];
 
       case "dispatcher":
         return [
-          { icon: Home, label: "Dashboard", route: "/manager-dashboard" },
+          { icon: Home, label: "Dashboard", route: "/dispatcher-dashboard" },
           { icon: ClipboardList, label: "Work Orders", route: "/work-orders" },
-          { icon: PlusCircle, label: "Create", route: "/work-orders/create" },
-          { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages },
-          { icon: Search, label: "Search", route: "/search" }
+          { icon: Calendar, label: "Calendar", route: "/calendar" },
+          { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
+            const event = new CustomEvent('openThingsToApprove');
+            window.dispatchEvent(event);
+          }},
+          { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages }
         ];
 
       case "field_engineer":
+        return [
+          { icon: Home, label: "Dashboard", route: "/engineer-dashboard" },
+          { icon: Briefcase, label: "My Work", route: "/mywork" },
+          { icon: Users, label: "My Team", route: "/my-team" },
+          { icon: CheckSquare, label: "Approve", route: "#", onClick: () => {
+            const event = new CustomEvent('openThingsToApprove');
+            window.dispatchEvent(event);
+          }},
+          { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages }
+        ];
+
       case "field_agent":
         return [
-          { icon: Home, label: "Dashboard", route: "/mywork" },
-          { icon: Briefcase, label: "My Jobs", route: "/field-agent-work" },
-          { icon: Clock, label: "Time", route: "/time-tracking" },
+          { icon: Briefcase, label: "My Work", route: "/mywork" },
           { icon: MessageSquare, label: "Messages", route: "/messages", badge: unreadMessages },
-          { icon: User, label: "Profile", route: "/field-agent-settings" }
+          { icon: User, label: "Settings", route: "/settings" }
         ];
 
       case "client_company_admin":

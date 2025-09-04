@@ -77,6 +77,9 @@ export const queryKeys = {
   // Projects
   projects: () => ['/api/projects'] as const,
   project: (id: string) => ['/api/projects', id] as const,
+  
+  // Project health monitoring
+  projectHealthSummary: () => ['/api/project-health-summary'] as const,
 } as const;
 
 // Performance monitoring
