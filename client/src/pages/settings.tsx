@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -64,9 +64,19 @@ export default function Settings() {
   });
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
-  // Settings state
+  // Settings state - initialize from user preferences
   const [heartbeatEnabled, setHeartbeatEnabled] = useState(true);
   const [originalHeartbeatEnabled, setOriginalHeartbeatEnabled] = useState(true);
+
+  // Update state when user data changes
+  useEffect(() => {
+    if (user) {
+      const userHeartbeatPref = (user as any)?.preferences?.heartbeatEnabled;
+      const enabled = userHeartbeatPref !== false; // default to true unless explicitly false
+      setHeartbeatEnabled(enabled);
+      setOriginalHeartbeatEnabled(enabled);
+    }
+  }, [user]);
 
   // Update contact information mutation
   const updateContactMutation = useMutation({
@@ -176,6 +186,39 @@ export default function Settings() {
     updatePreferencesMutation.mutate({
       heartbeatEnabled
     });
+  };
+
+  // Unified save function for all preferences and contact info
+  const handleUnifiedSave = async () => {
+    try {
+      // Validate phone number if provided
+      if (contactForm.phone && contactForm.phone.length > 0 && contactForm.phone.length < 10) {
+        toast({
+          title: "Validation Error",
+          description: "Phone number must be at least 10 characters long.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update contact information
+      await updateContactMutation.mutateAsync(contactForm);
+      
+      // Update preferences if they changed
+      if (preferencesChanged) {
+        await updatePreferencesMutation.mutateAsync({
+          heartbeatEnabled
+        });
+      }
+
+      // Navigate back to dashboard after successful save
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+
+    } catch (error) {
+      // Error handling is done in the mutation onError callbacks
+    }
   };
 
   const handleLogout = () => {
@@ -307,14 +350,6 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={updateContactMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {updateContactMutation.isPending ? 'Saving...' : 'Save Contact Info'}
-                </Button>
               </form>
             </CardContent>
           </Card>
@@ -378,18 +413,6 @@ export default function Settings() {
                       onCheckedChange={setHeartbeatEnabled}
                     />
                   </div>
-                  {preferencesChanged && (
-                    <div className="pt-4 border-t">
-                      <Button 
-                        onClick={handlePreferencesSubmit}
-                        disabled={updatePreferencesMutation.isPending}
-                        className="flex items-center gap-2"
-                      >
-                        <Save className="h-4 w-4" />
-                        {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Preferences'}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -419,6 +442,18 @@ export default function Settings() {
                   >
                     <LogOut className="h-4 w-4" />
                     Sign Out
+                  </Button>
+                </div>
+                
+                {/* Unified Save Button */}
+                <div className="pt-4 border-t">
+                  <Button 
+                    onClick={handleUnifiedSave}
+                    disabled={updateContactMutation.isPending || updatePreferencesMutation.isPending}
+                    className="flex items-center gap-2 w-full"
+                  >
+                    <Save className="h-4 w-4" />
+                    {(updateContactMutation.isPending || updatePreferencesMutation.isPending) ? 'Saving...' : 'Save Preferences'}
                   </Button>
                 </div>
               </div>
