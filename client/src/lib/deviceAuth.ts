@@ -159,9 +159,26 @@ class DeviceAuthService {
     }
   }
 
-  // Check if WebAuthn is supported
+  // Check if WebAuthn is supported - Enhanced for mobile detection
   isBiometricSupported(): boolean {
-    return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+    const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+    
+    if (!hasWebAuthn) {
+      console.log('[DeviceAuth] WebAuthn not supported');
+      return false;
+    }
+    
+    // Additional checks for mobile devices
+    const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+    const isSecureContext = window.isSecureContext;
+    
+    if (isMobile && !isSecureContext) {
+      console.log('[DeviceAuth] Mobile device requires secure context for biometrics');
+      return false;
+    }
+    
+    console.log('[DeviceAuth] Biometric authentication supported', { isMobile, isSecureContext });
+    return true;
   }
 
   // Register biometric authentication
@@ -192,7 +209,8 @@ class DeviceAuthService {
           ],
           authenticatorSelection: {
             authenticatorAttachment: 'platform',
-            userVerification: 'required'
+            userVerification: 'preferred', // Changed from 'required' to 'preferred' for mobile compatibility
+            requireResidentKey: false
           },
           timeout: 60000,
           attestation: 'direct'
@@ -251,7 +269,7 @@ class DeviceAuthService {
         publicKey: {
           challenge: challenge,
           allowCredentials: allowCredentials,
-          userVerification: 'required',
+          userVerification: 'preferred', // Changed from 'required' to 'preferred' for mobile compatibility
           timeout: 60000
         }
       }) as PublicKeyCredential;
@@ -292,10 +310,32 @@ class DeviceAuthService {
     }
   }
 
-  // Show device memory prompt
+  // Show device memory prompt - Enhanced logic for mobile and repeated logins
   shouldShowRememberDevicePrompt(): boolean {
     const credentials = this.getDeviceCredentials();
-    return !credentials || !credentials.isRemembered;
+    
+    // If no credentials exist, always show prompt
+    if (!credentials) {
+      console.log('[DeviceAuth] No credentials found, showing prompt');
+      return true;
+    }
+    
+    // If device isn't remembered, show prompt
+    if (!credentials.isRemembered) {
+      console.log('[DeviceAuth] Device not remembered, showing prompt');
+      return true;
+    }
+    
+    // If credentials are expired, show prompt
+    const now = new Date();
+    const expiresAt = new Date(credentials.expiresAt);
+    if (now >= expiresAt) {
+      console.log('[DeviceAuth] Credentials expired, showing prompt');
+      return true;
+    }
+    
+    console.log('[DeviceAuth] Device already remembered and valid, hiding prompt');
+    return false;
   }
 
   // Get device trust status

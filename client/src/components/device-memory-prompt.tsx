@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,10 +23,18 @@ export function DeviceMemoryPrompt({
   const [rememberDevice, setRememberDevice] = useState(false);
   const [enableBiometric, setEnableBiometric] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
   const { toast } = useToast();
 
   const deviceStatus = deviceAuthService.getDeviceTrustStatus();
   const biometricSupported = deviceAuthService.isBiometricSupported();
+  
+  // Enhanced debugging for mobile devices
+  React.useEffect(() => {
+    const info = `Device: ${deviceStatus.deviceName || 'Unknown'}, Biometric: ${biometricSupported ? 'Supported' : 'Not Supported'}, Secure: ${window.isSecureContext}, Mobile: ${/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)}`;
+    setDebugInfo(info);
+    console.log('[DeviceMemoryPrompt] Debug info:', info);
+  }, [deviceStatus, biometricSupported]);
 
   const handleSavePreferences = async () => {
     setIsProcessing(true);
@@ -131,33 +139,58 @@ export function DeviceMemoryPrompt({
           </div>
 
           {/* Biometric Option */}
-          {biometricSupported && (
-            <div className={`flex items-start space-x-3 p-4 border rounded-lg transition-opacity ${
-              !rememberDevice ? 'opacity-50' : ''
-            }`}>
-              <Checkbox
-                id="enable-biometric"
-                checked={enableBiometric && rememberDevice}
-                onCheckedChange={(checked) => setEnableBiometric(checked as boolean)}
-                disabled={!rememberDevice}
-                data-testid="checkbox-enable-biometric"
-              />
-              <div className="flex-1">
-                <label 
-                  htmlFor="enable-biometric" 
-                  className={`text-sm font-medium ${!rememberDevice ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                >
-                  Enable biometric login
-                </label>
-                <div className="flex items-center gap-1 mt-1">
-                  <Fingerprint className="h-3 w-3 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">
-                    Use fingerprint or face recognition
-                  </p>
+          <div className={`flex items-start space-x-3 p-4 border rounded-lg transition-opacity ${
+            !biometricSupported ? 'opacity-50 bg-gray-50 dark:bg-gray-800' : !rememberDevice ? 'opacity-50' : ''
+          }`}>
+            {biometricSupported ? (
+              <>
+                <Checkbox
+                  id="enable-biometric"
+                  checked={enableBiometric && rememberDevice && biometricSupported}
+                  onCheckedChange={(checked) => setEnableBiometric(checked as boolean)}
+                  disabled={!rememberDevice || !biometricSupported}
+                  data-testid="checkbox-enable-biometric"
+                />
+                <div className="flex-1">
+                  <label 
+                    htmlFor="enable-biometric" 
+                    className={`text-sm font-medium ${!rememberDevice || !biometricSupported ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    Enable biometric login
+                  </label>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Fingerprint className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      Use fingerprint or face recognition
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </>
+            ) : (
+              <>
+                <Checkbox
+                  id="enable-biometric-disabled"
+                  checked={false}
+                  disabled={true}
+                  data-testid="checkbox-enable-biometric-disabled"
+                />
+                <div className="flex-1">
+                  <label 
+                    htmlFor="enable-biometric-disabled" 
+                    className="text-sm font-medium cursor-not-allowed text-muted-foreground"
+                  >
+                    Biometric login not available
+                  </label>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Fingerprint className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      Requires secure connection and compatible device
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Warning for public devices */}
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
