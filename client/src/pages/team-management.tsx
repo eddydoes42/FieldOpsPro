@@ -146,7 +146,6 @@ export default function TeamManagement() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Management</h1>
         </div>
 
-        {/* Team Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">

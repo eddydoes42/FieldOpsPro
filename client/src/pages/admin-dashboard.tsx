@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { ThingsToApproveCard } from "@/components/things-to-approve-card";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -170,76 +171,12 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-3 overflow-hidden">
-              <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
-                  <i className="fas fa-percentage text-purple-600 dark:text-purple-400 text-sm"></i>
-                </div>
-                <div className="ml-3 min-w-0 flex-1">
-                  <p className="text-xs font-medium text-muted-foreground truncate">Completion Rate</p>
-                  <p className="text-lg font-bold text-foreground truncate">
-                    {statsLoading ? '...' : (stats as any)?.totalOrders > 0 ? Math.round(((stats as any)?.completedOrders / (stats as any)?.totalOrders) * 100) + '%' : '0%'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ThingsToApproveCard 
+            userRole={(user as any)?.role || testingRole || 'administrator'}
+            companyType="service"
+          />
         </div>
 
-        {/* Team Overview */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Team Overview</h3>
-              <div className="space-y-4">
-                <div 
-                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
-                  onClick={() => setLocation('/team?role=administrator')}
-                >
-                  <span className="text-sm font-medium text-muted-foreground">Administrators</span>
-                  <span className="bg-purple-900/30 text-purple-300 text-xs font-medium px-2 py-1 rounded border border-purple-800/50">
-                    {(stats as any)?.adminCount || 0}
-                  </span>
-                </div>
-                <div 
-                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
-                  onClick={() => setLocation('/team?role=manager')}
-                >
-                  <span className="text-sm font-medium text-muted-foreground">Managers</span>
-                  <span className="bg-blue-900/30 text-blue-300 text-xs font-medium px-2 py-1 rounded border border-blue-800/50">
-                    {(stats as any)?.managerCount || 0}
-                  </span>
-                </div>
-                <div 
-                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
-                  onClick={() => setLocation('/team?role=dispatcher')}
-                >
-                  <span className="text-sm font-medium text-muted-foreground">Dispatchers</span>
-                  <span className="bg-orange-900/30 text-orange-300 text-xs font-medium px-2 py-1 rounded border border-orange-800/50">
-                    {(stats as any)?.dispatcherCount || 0}
-                  </span>
-                </div>
-                <div 
-                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
-                  onClick={() => setLocation('/team?role=field_agent')}
-                >
-                  <span className="text-sm font-medium text-muted-foreground">Field Agents (FA)</span>
-                  <span className="bg-green-900/30 text-green-300 text-xs font-medium px-2 py-1 rounded border border-green-800/50">
-                    {(stats as any)?.agentCount || 0}
-                  </span>
-                </div>
-                <div 
-                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
-                  onClick={() => setLocation('/team?role=client')}
-                >
-                  <span className="text-sm font-medium text-muted-foreground">Clients</span>
-                  <span className="bg-pink-900/30 text-pink-300 text-xs font-medium px-2 py-1 rounded border border-pink-800/50">
-                    {(stats as any)?.clientCount || 0}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { hasRole, isOperationsDirector } from "../../../shared/schema";
+import { ThingsToApproveCard } from "@/components/things-to-approve-card";
 
 export default function ManagerDashboard() {
   const { toast } = useToast();
@@ -132,6 +133,14 @@ export default function ManagerDashboard() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
+        </div>
+
+        {/* Things to Approve Section */}
+        <div className="mb-8">
+          <ThingsToApproveCard 
+            userRole={(user as any)?.role || testingRole || 'manager'}
+            companyType="service"
+          />
         </div>
 
         {/* Content Grid */}

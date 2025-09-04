@@ -88,76 +88,9 @@ export default function OperationsExclusiveNetwork() {
     : "0.00";
   const totalWorkOrders = exclusiveMembers.reduce((sum, member) => sum + member.completedWorkOrders, 0);
 
-  // Role Testers
-  const ServiceCompanyRoleTester = () => {
-    const [testingRole, setTestingRole] = useState<string>('');
-
-    return (
-      <div className="bg-purple-600 text-white px-2 sm:px-4 py-2 mb-2 sm:mb-4 rounded-lg shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Service Company Role:</span>
-          <select
-            value={testingRole}
-            onChange={(e) => {
-              setTestingRole(e.target.value);
-              if (e.target.value) {
-                localStorage.setItem('testingRole', e.target.value);
-                localStorage.setItem('testingCompanyType', 'service');
-                window.location.reload();
-              }
-            }}
-            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
-          >
-            <option value="">Select a Role</option>
-            <option value="administrator">Administrator</option>
-            <option value="project_manager">Project Manager</option>
-            <option value="manager">Manager</option>
-            <option value="dispatcher">Dispatcher</option>
-            <option value="field_engineer">Field Engineer</option>
-            <option value="field_agent">Field Agent</option>
-          </select>
-        </div>
-      </div>
-    );
-  };
-
-  const ClientCompanyRoleTester = () => {
-    const [testingRole, setTestingRole] = useState<string>('');
-
-    return (
-      <div className="bg-teal-600 text-white px-2 sm:px-4 py-2 mb-2 sm:mb-4 rounded-lg shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Client Company Role:</span>
-          <select
-            value={testingRole}
-            onChange={(e) => {
-              setTestingRole(e.target.value);
-              if (e.target.value) {
-                localStorage.setItem('testingRole', e.target.value);
-                localStorage.setItem('testingCompanyType', 'client');
-                window.location.reload();
-              }
-            }}
-            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
-          >
-            <option value="">Select a Role</option>
-            <option value="administrator">Administrator</option>
-            <option value="manager">Manager</option>
-            <option value="dispatcher">Dispatcher</option>
-          </select>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Role Testers - Always present for Operations Director */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <ServiceCompanyRoleTester />
-        <ClientCompanyRoleTester />
-      </div>
-      
       <Navigation testingRole={testingRole} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

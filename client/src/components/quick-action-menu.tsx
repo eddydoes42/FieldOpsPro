@@ -289,14 +289,6 @@ export default function QuickActionMenu({ isOpen, onClose, position }: QuickActi
                     </Badge>
                   </Button>
                   
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-3 h-9 text-sm"
-                    onClick={() => handleAction('view-team')}
-                  >
-                    <Users className="h-4 w-4 text-purple-500" />
-                    <span>Team Overview</span>
-                  </Button>
                   
                   <Button
                     variant="ghost"

@@ -48,6 +48,7 @@ import Apply from '@/pages/apply';
 import OnboardingRequests from '@/pages/onboarding-requests';
 import AuditLogsPage from '@/pages/audit-logs';
 import Settings from '@/pages/settings';
+import { DeviceRememberPrompt } from '@/components/auth/device-remember-prompt';
 
 // Dashboard Route Component
 function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole, permanentRole, setLocation }: any) {
@@ -84,19 +85,10 @@ function DashboardRoute({ user, getEffectiveRole, handleRoleSwitch, testingRole,
       return <ProjectManagerDashboard />;
     } else if (effectiveRole === 'manager') {
       return <ManagerDashboard />;
+    } else if (effectiveRole === 'dispatcher') {
+      return <AdminDashboard />;
     } else if (effectiveRole === 'field_agent') {
       return <AgentDashboard />;
-    } else if (effectiveRole === 'administrator') {
-      // Check if testing client company role to show client dashboard
-      const testingCompanyType = localStorage.getItem('testingCompanyType');
-      if (testingCompanyType === 'client') {
-        return (
-          <Suspense fallback={<div className="p-4">Loading client dashboard...</div>}>
-            <ClientDashboard user={user} />
-          </Suspense>
-        );
-      }
-      return <AdminDashboard />;
     } else {
       return <Landing />;
     }
@@ -129,6 +121,7 @@ function Router() {
     // Initialize permanent role from localStorage
     return localStorage.getItem('selectedRole');
   });
+  const [showDevicePrompt, setShowDevicePrompt] = useState(false);
   
   // Get the effective role for operations directors who are testing other roles or have permanent role selection
   const getEffectiveRole = () => {
@@ -191,7 +184,18 @@ function Router() {
     localStorage.removeItem('testingRole');
   };
   
-
+  // Show device remember prompt for new logins on untrusted devices
+  useEffect(() => {
+    if (isAuthenticated && user && !isLoading) {
+      const hasShownPrompt = sessionStorage.getItem('devicePromptShown');
+      const deviceInfo = (user as any)?.deviceInfo;
+      const shouldShow = deviceInfo && 
+                        !deviceInfo.isTrustedDevice && 
+                        !deviceInfo.hasDeviceToken && 
+                        !hasShownPrompt;
+      setShowDevicePrompt(shouldShow || false);
+    }
+  }, [isAuthenticated, user, isLoading]);
 
   if (isLoading) {
     return (
@@ -668,6 +672,19 @@ function Router() {
       
       {/* Global Floating Quick Action Button - Exclude from landing page */}
       {isAuthenticated && location !== "/" && <FloatingQuickAction />}
+      
+      {/* Device Remember Prompt */}
+      <DeviceRememberPrompt 
+        isOpen={showDevicePrompt}
+        onClose={() => {
+          setShowDevicePrompt(false);
+          sessionStorage.setItem('devicePromptShown', 'true');
+        }}
+        onSkip={() => {
+          setShowDevicePrompt(false);
+          sessionStorage.setItem('devicePromptShown', 'true');
+        }}
+      />
     </div>
   );
 }

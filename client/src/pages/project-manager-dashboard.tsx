@@ -9,58 +9,12 @@ import { Plus, Calendar, Users, DollarSign, MapPin, Clock, Briefcase, CheckSquar
 import { useLocation } from 'wouter';
 import type { Project } from '@shared/schema';
 import { formatCurrency, formatBudget } from '@/lib/utils';
+import { ThingsToApproveCard } from '@/components/things-to-approve-card';
 
 export default function ProjectManagerDashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   
-  // Role Testing Components
-  const ServiceCompanyRoleTester = () => {
-    const [testingRole, setTestingRole] = useState<string>('');
-
-    return (
-      <div className="bg-purple-600 text-white px-2 sm:px-4 py-2 mb-2 sm:mb-4 rounded-lg shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Service Company Role:</span>
-          <select
-            value={testingRole}
-            onChange={(e) => setTestingRole(e.target.value)}
-            className="bg-purple-700 text-white border border-purple-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
-          >
-            <option value="">Select a Role</option>
-            <option value="administrator">Administrator</option>
-            <option value="project_manager">Project Manager</option>
-            <option value="manager">Manager</option>
-            <option value="dispatcher">Dispatcher</option>
-            <option value="field_engineer">Field Engineer</option>
-            <option value="field_agent">Field Agent</option>
-          </select>
-        </div>
-      </div>
-    );
-  };
-
-  const ClientCompanyRoleTester = () => {
-    const [testingRole, setTestingRole] = useState<string>('');
-
-    return (
-      <div className="bg-teal-600 text-white px-2 sm:px-4 py-2 mb-2 sm:mb-4 rounded-lg shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Client Company Role:</span>
-          <select
-            value={testingRole}
-            onChange={(e) => setTestingRole(e.target.value)}
-            className="bg-teal-700 text-white border border-teal-500 rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 sm:flex-none sm:w-auto"
-          >
-            <option value="">Select a Role</option>
-            <option value="administrator">Administrator</option>
-            <option value="manager">Manager</option>
-            <option value="dispatcher">Dispatcher</option>
-          </select>
-        </div>
-      </div>
-    );
-  };
 
   // Fetch projects
   const { data: projects = [], isLoading } = useQuery({
@@ -123,9 +77,6 @@ export default function ProjectManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3">
-      {/* Role Testers - Always present for Operations Director */}
-      <ServiceCompanyRoleTester />
-      <ClientCompanyRoleTester />
       
       {/* Header */}
       <div className="mb-3">
@@ -191,6 +142,14 @@ export default function ProjectManagerDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
           </div>
         </Card>
+      </div>
+
+      {/* Things to Approve Section */}
+      <div className="mb-3">
+        <ThingsToApproveCard 
+          userRole="project_manager"
+          companyType="service"
+        />
       </div>
 
       {/* Project Tabs */}

@@ -35,9 +35,10 @@ export function DeviceRememberPrompt({ isOpen, onClose, onSkip }: DeviceRemember
 
   const rememberDeviceMutation = useMutation({
     mutationFn: async (data: { deviceName: string; deviceFingerprint: string }) => {
-      return apiRequest('/api/auth/remember-device', 'POST', data);
+      const response = await apiRequest('/api/auth/remember-device', 'POST', data);
+      return response.json();
     },
-    onSuccess: (response) => {
+    onSuccess: (response: any) => {
       // Store the device token locally for future use
       if (response.token) {
         storeDeviceToken(response.token);

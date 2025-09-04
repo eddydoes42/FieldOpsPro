@@ -94,29 +94,6 @@ export function UniversalAdminDashboardExample({ className }: UniversalAdminDash
   const getDashboardSections = () => {
     const baseSections = [
       {
-        id: 'team-overview',
-        title: 'Team Overview',
-        component: (
-          <StashCard
-            title={usersLoading ? "" : users.length.toString()}
-            subtitle="Team Members"
-            icon={
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 w-20 h-16 overflow-hidden">
-                <div className="flex items-center justify-center h-full">
-                  <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            }
-            onClick={() => {/* Navigate to team page */}}
-            className="cursor-pointer hover:shadow-lg transition-shadow"
-            data-testid="card-team-overview"
-          />
-        ),
-        priority: 1,
-        roles: ['administrator', 'project_manager', 'manager'],
-        companyTypes: ['service', 'client']
-      },
-      {
         id: 'work-orders',
         title: 'Work Orders',
         component: (
