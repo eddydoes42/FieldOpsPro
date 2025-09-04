@@ -25,16 +25,16 @@ export function HeartbeatBar({
   onClick,
 }: HeartbeatBarProps) {
   const getPercentageColor = (percent: number) => {
-    if (percent >= 90) return "text-green-600 dark:text-green-400";
-    if (percent >= 75) return "text-yellow-600 dark:text-yellow-400";
-    if (percent >= 60) return "text-orange-600 dark:text-orange-400";
+    if (percent >= 95) return "text-green-600 dark:text-green-400";
+    if (percent >= 85) return "text-yellow-600 dark:text-yellow-400";
+    if (percent >= 75) return "text-orange-600 dark:text-orange-400";
     return "text-red-600 dark:text-red-400";
   };
 
   const getBarColor = (percent: number) => {
-    if (percent >= 90) return "bg-green-500";
-    if (percent >= 75) return "bg-yellow-500";
-    if (percent >= 60) return "bg-orange-500";
+    if (percent >= 95) return "bg-green-500";
+    if (percent >= 85) return "bg-yellow-500";
+    if (percent >= 75) return "bg-orange-500";
     return "bg-red-500";
   };
 
@@ -105,7 +105,7 @@ export function HeartbeatBar({
                         fontFamily: 'monospace', 
                         textShadow: '0 0 10px #22c55e, 0 0 20px #22c55e'
                       }}>
-                  {Math.round(50 + (percentage < 80 ? (80 - percentage) * 2 : 0)).toString().padStart(3, '0')}
+                  {Math.round(75 + (percentage < 85 ? (85 - percentage) * 2 : 0)).toString().padStart(3, '0')}
                 </span>
                 <span className="text-sm font-semibold text-green-300" style={{ fontFamily: 'Poppins, sans-serif' }}>
                   BPM
@@ -115,10 +115,10 @@ export function HeartbeatBar({
               {/* Simple Baseline Waveform */}
               <div className="flex-1 ml-4">
                 <EKGWaveform
-                  bpm={50 + (percentage < 80 ? (80 - percentage) * 2 : 0)}
-                  status={percentage >= 80 ? 'normal' : percentage >= 60 ? 'at_risk' : 'delayed'}
-                  severity={percentage >= 80 ? 'none' : percentage >= 60 ? 'mild' : percentage >= 40 ? 'moderate' : 'severe'}
-                  frequency={percentage >= 60 ? 'occasional' : 'frequent'}
+                  bpm={75 + (percentage < 85 ? (85 - percentage) * 2 : 0)}
+                  status={percentage >= 85 ? 'normal' : percentage >= 75 ? 'at_risk' : 'delayed'}
+                  severity={percentage >= 85 ? 'none' : percentage >= 75 ? 'mild' : percentage >= 65 ? 'moderate' : 'severe'}
+                  frequency={percentage >= 75 ? 'occasional' : 'frequent'}
                   width={350}
                   height={90}
                   className="w-full"
