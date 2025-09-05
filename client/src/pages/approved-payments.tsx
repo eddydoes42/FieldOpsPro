@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { StashLayout } from "@/components/layout/stash-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, Calendar, Building2, Users, FileText, CheckCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { DollarSign, TrendingUp, Calendar, Building2, Users, FileText, CheckCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Sample data structure for different role views
@@ -146,6 +148,8 @@ const getCategoryIcon = (category: string) => {
 
 export default function ApprovedPayments() {
   const { user } = useAuth();
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Get effective role for role testing
   const getEffectiveRole = () => {
@@ -158,6 +162,11 @@ export default function ApprovedPayments() {
 
   const effectiveRole = getEffectiveRole();
   const payments = getSamplePayments(effectiveRole);
+
+  const handleViewDetails = (payment: PaymentRecord) => {
+    setSelectedPayment(payment);
+    setIsDialogOpen(true);
+  };
 
   const getTotalAmount = () => {
     return payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -346,7 +355,12 @@ export default function ApprovedPayments() {
                         </p>
                       </div>
                       {payment.status === 'approved' && (
-                        <Button size="sm" variant="outline" data-testid={`view-details-${payment.id}`}>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleViewDetails(payment)}
+                          data-testid={`view-details-${payment.id}`}
+                        >
                           View Details
                         </Button>
                       )}
@@ -357,6 +371,136 @@ export default function ApprovedPayments() {
             )}
           </CardContent>
         </Card>
+
+        {/* Payment Details Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="w-[95vw] max-w-md max-h-[85vh] overflow-y-auto mx-auto">
+            <DialogHeader>
+              <DialogTitle>Payment Details</DialogTitle>
+              <DialogDescription>
+                Complete information for payment {selectedPayment?.id}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedPayment && (
+              <div className="space-y-4">
+                {/* Payment Amount */}
+                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">
+                    ${selectedPayment.amount.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Payment Amount
+                  </p>
+                </div>
+
+                {/* Payment Info */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Description
+                    </label>
+                    <p className="text-sm text-gray-900 dark:text-white mt-1">
+                      {selectedPayment.description}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Company
+                    </label>
+                    <p className="text-sm text-gray-900 dark:text-white mt-1">
+                      {selectedPayment.companyName}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Payment ID
+                      </label>
+                      <p className="text-sm text-gray-900 dark:text-white mt-1">
+                        {selectedPayment.id}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Status
+                      </label>
+                      <Badge className={cn("text-xs mt-1", getStatusColor(selectedPayment.status))}>
+                        {selectedPayment.status.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {selectedPayment.workOrderId && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Work Order
+                      </label>
+                      <p className="text-sm text-gray-900 dark:text-white mt-1">
+                        {selectedPayment.workOrderId}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedPayment.projectId && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Project
+                      </label>
+                      <p className="text-sm text-gray-900 dark:text-white mt-1">
+                        {selectedPayment.projectId}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Approved By
+                    </label>
+                    <p className="text-sm text-gray-900 dark:text-white mt-1">
+                      {selectedPayment.approvedBy}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Approved Date
+                      </label>
+                      <p className="text-sm text-gray-900 dark:text-white mt-1">
+                        {new Date(selectedPayment.approvedDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {selectedPayment.paymentDate && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Payment Date
+                        </label>
+                        <p className="text-sm text-gray-900 dark:text-white mt-1">
+                          {new Date(selectedPayment.paymentDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Category
+                    </label>
+                    <div className="flex items-center gap-2 mt-1">
+                      {getCategoryIcon(selectedPayment.category)}
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {selectedPayment.category.replace('_', ' ').toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </StashLayout>
   );
