@@ -336,7 +336,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         
         <CardContent className="flex-1 p-4 overflow-y-auto scrollbar-minimal">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-4">
               {/* Personal Information */}
               <div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Personal Information</h3>
@@ -785,27 +785,31 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
               </div>
 
 
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={onClose}
-                  className="flex-1 h-9"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={createUserMutation.isPending}
-                  className="flex-1 h-9"
-                >
-                  {createUserMutation.isPending ? "Creating..." : "Create User"}
-                </Button>
-              </div>
             </form>
           </Form>
         </CardContent>
+        
+        {/* Action Buttons - Fixed at bottom */}
+        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div className="flex space-x-3">
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={onClose}
+              className="flex-1 h-9"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              disabled={createUserMutation.isPending}
+              className="flex-1 h-9"
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {createUserMutation.isPending ? "Creating..." : "Create User"}
+            </Button>
+          </div>
+        </div>
       </Card>
 
       {/* Company Onboarding Dialog */}
