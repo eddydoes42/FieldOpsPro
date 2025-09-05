@@ -171,8 +171,8 @@ export default function OperationsDirectorDashboard() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.operationsStats() });
       
       toast({
-        title: "Request Reviewed",
-        description: `Access request has been ${variables.status}.`,
+        title: variables.status === 'approved' ? "Access Granted" : "Request Reviewed",
+        description: variables.status === 'approved' ? "User account created successfully and access has been granted!" : `Access request has been ${variables.status}.`,
       });
       
       // If approved and we have the access request data, trigger user creation form
@@ -194,11 +194,9 @@ export default function OperationsDirectorDashboard() {
   };
 
   const handleApproveRequest = (request: AccessRequest) => {
-    reviewAccessRequestMutation.mutate({ 
-      requestId: request.id, 
-      status: 'approved',
-      accessRequest: request 
-    });
+    // Open user creation form instead of immediately approving
+    setSelectedAccessRequest(request);
+    setShowUserCreationDialog(true);
   };
 
   const handleRejectRequest = (requestId: string) => {
@@ -788,13 +786,15 @@ export default function OperationsDirectorDashboard() {
               setSelectedAccessRequest(null);
             }}
             onSuccess={() => {
+              // Approve the access request after successful user creation
+              if (selectedAccessRequest) {
+                reviewAccessRequestMutation.mutate({ 
+                  requestId: selectedAccessRequest.id, 
+                  status: 'approved'
+                });
+              }
               setShowUserCreationDialog(false);
               setSelectedAccessRequest(null);
-              queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
-              toast({
-                title: "User Created",
-                description: "User account has been successfully created from the access request.",
-              });
             }}
             currentUser={currentUser}
             preFilledData={{

@@ -222,8 +222,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         queryClient.invalidateQueries({ queryKey: ["/api/operations/stats"] });
         
         toast({
-          title: "User Created",
-          description: "User account created successfully!",
+          title: "Access Granted",
+          description: "User account created successfully and access has been granted!",
         });
         onSuccess(); // This completes the workflow for existing company assignment
       } else {
