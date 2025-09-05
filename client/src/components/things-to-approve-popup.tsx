@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import UserOnboardingForm from "@/components/user-onboarding-form";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ThingsToApprovePopupProps {
   open: boolean;
@@ -38,6 +39,7 @@ interface AccessRequest {
 export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'access-requests' | 'approval-requests'>('access-requests');
   const [showUserForm, setShowUserForm] = useState(false);
   const [selectedAccessRequest, setSelectedAccessRequest] = useState<AccessRequest | null>(null);
@@ -328,7 +330,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
         <UserOnboardingForm
           onClose={handleUserFormClose}
           onSuccess={handleWorkflowComplete}
-          currentUser={null} // Will be set by the form internally
+          currentUser={currentUser}
           preFilledData={{
             firstName: selectedAccessRequest.firstName,
             lastName: selectedAccessRequest.lastName,
