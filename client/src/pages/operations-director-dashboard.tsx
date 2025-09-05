@@ -316,19 +316,25 @@ export default function OperationsDirectorDashboard() {
             title={totalPendingApprovals.toString()}
             subtitle="Things to Approve"
             icon={
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 w-20 h-16 overflow-hidden">
-                <div className="space-y-2">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 w-full h-auto max-h-32 overflow-y-auto">
+                <div className="space-y-1">
                   {/* Access Requests Mini-Card */}
-                  {accessRequests.length > 0 && accessRequests.slice(0, 1).map((request) => (
+                  {accessRequests.length > 0 && accessRequests.slice(0, 2).map((request) => (
                     <div key={request.id} className="bg-orange-100 dark:bg-orange-900/50 border border-orange-300 dark:border-orange-600 rounded px-2 py-1.5">
                       <div className="text-xs font-semibold text-orange-800 dark:text-orange-200 mb-1">
                         Access Request
                       </div>
-                      <div className="text-xs text-orange-700 dark:text-orange-300 font-medium truncate">
+                      <div className="text-xs text-orange-700 dark:text-orange-300 font-medium">
                         {request.firstName} {request.lastName}
                       </div>
-                      <div className="text-xs text-orange-600 dark:text-orange-400 truncate">
+                      <div className="text-xs text-orange-600 dark:text-orange-400">
+                        {request.email}
+                      </div>
+                      <div className="text-xs text-orange-600 dark:text-orange-400">
                         → {request.requestedRole}
+                      </div>
+                      <div className="text-xs text-orange-500 dark:text-orange-500 mt-1">
+                        {new Date(request.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                   ))}
