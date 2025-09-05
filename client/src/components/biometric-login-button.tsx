@@ -119,22 +119,67 @@ export function BiometricLoginButton({
         variant="outline"
         size="lg"
         onClick={async () => {
+          setIsAuthenticating(true);
           try {
-            // For demonstration, we'll show that biometric setup is needed
-            toast({
-              title: "Biometric Setup Required",
-              description: "Set up biometric authentication after successful login to enable quick access.",
+            // Get current user for biometric setup
+            const userResponse = await fetch('/api/auth/user', {
+              credentials: 'include'
             });
+            
+            if (!userResponse.ok) {
+              throw new Error('Please log in first to set up biometric authentication');
+            }
+            
+            const userData = await userResponse.json();
+            const username = userData.email || userData.username;
+            
+            if (!username) {
+              throw new Error('Unable to determine username for biometric setup');
+            }
+            
+            // Register biometric authentication
+            const biometricCreds = await deviceAuthService.registerBiometric(username);
+            
+            // Update local state to reflect biometric setup
+            setHasBiometricSetup(true);
+            
+            toast({
+              title: "Biometric Setup Complete!",
+              description: "You can now use biometric authentication to sign in quickly.",
+            });
+            
+            // Refresh the page to show the biometric login button
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+            
           } catch (error) {
-            console.error('Biometric setup error:', error);
+            const message = error instanceof Error ? error.message : 'Failed to set up biometric authentication';
+            onError?.(message);
+            toast({
+              title: "Setup Failed",
+              description: message,
+              variant: "destructive",
+            });
+          } finally {
+            setIsAuthenticating(false);
           }
         }}
-        disabled={disabled}
+        disabled={disabled || isAuthenticating}
         className={`w-full ${className}`}
         data-testid="biometric-setup-button"
       >
-        <Fingerprint className="mr-2 h-4 w-4" />
-        Enable Biometric Login
+        {isAuthenticating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Setting up...
+          </>
+        ) : (
+          <>
+            <Fingerprint className="mr-2 h-4 w-4" />
+            Enable Biometric Login
+          </>
+        )}
       </Button>
     );
   }

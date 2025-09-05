@@ -35,6 +35,7 @@ export default function CredentialLogin() {
   const [showDevicePrompt, setShowDevicePrompt] = useState(false);
   const [loginCredentials, setLoginCredentials] = useState<{username: string, password: string} | null>(null);
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const form = useForm<CredentialLoginData>({
     resolver: zodResolver(credentialLoginSchema),
@@ -132,6 +133,24 @@ export default function CredentialLogin() {
     setHasStoredCredentials(false);
     setStoredCredentials(null);
     form.reset({ username: "", password: "" });
+  };
+
+  const handleClearAllData = async () => {
+    setIsClearing(true);
+    try {
+      await deviceAuthService.clearAllDeviceDataWithRefresh();
+      toast({
+        title: "All Data Cleared",
+        description: "Device memory, credentials, and browser data cleared successfully. Page will refresh.",
+      });
+    } catch (error) {
+      toast({
+        title: "Clear Failed", 
+        description: "Some data may not have been cleared completely.",
+        variant: "destructive",
+      });
+      setIsClearing(false);
+    }
   };
 
   useEffect(() => {
@@ -249,16 +268,29 @@ export default function CredentialLogin() {
                       <p className="text-sm text-blue-800 dark:text-blue-200">
                         Credentials filled from remembered device
                       </p>
-                      <Button
-                        type="button"
-                        variant="link"
-                        size="sm"
-                        onClick={handleUseDifferentAccount}
-                        className="p-0 h-auto text-blue-600 dark:text-blue-300"
-                        data-testid="button-use-different-account"
-                      >
-                        Use Different Account
-                      </Button>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          onClick={handleUseDifferentAccount}
+                          className="p-0 h-auto text-blue-600 dark:text-blue-300"
+                          data-testid="button-use-different-account"
+                        >
+                          Use Different Account
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          onClick={handleClearAllData}
+                          disabled={isClearing}
+                          className="p-0 h-auto text-red-600 dark:text-red-400"
+                          data-testid="button-clear-all-data"
+                        >
+                          {isClearing ? "Clearing..." : "Clear All Data"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

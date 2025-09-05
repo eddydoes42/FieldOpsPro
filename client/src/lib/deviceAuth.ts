@@ -592,58 +592,140 @@ class DeviceAuthService {
       await this.updateDeviceMemoryStatus(false, false);
 
       console.log('[DeviceAuth] Enhanced device data clearing completed successfully');
+      
+      // 6. Force page refresh to ensure clean state
+      setTimeout(() => {
+        console.log('[DeviceAuth] Refreshing page to ensure clean state');
+        window.location.reload();
+      }, 1000);
+      
     } catch (error) {
       console.error('[DeviceAuth] Error during enhanced device data clearing:', error);
       // Fallback to local clearing even if network fails
       this.clearDeviceMemory();
       this.clearBiometricCredentials();
+      
+      // Still refresh on error to clear any remaining state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   }
 
-  // Clear browser saved passwords and autofill data
+  // Quick clear with immediate refresh (for UI buttons)
+  async clearAllDeviceDataWithRefresh(): Promise<void> {
+    await this.clearAllDeviceData();
+    // clearAllDeviceData already includes refresh, but this method makes it explicit
+  }
+
+  // Enhanced browser saved passwords and autofill data clearing
   private async clearBrowserCredentials(): Promise<void> {
     try {
-      // Reset form values on current page to prevent autofill
+      // 1. Aggressively clear all form data
       const forms = document.querySelectorAll('form');
       forms.forEach(form => {
-        const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
+        const inputs = form.querySelectorAll('input');
         inputs.forEach((input: any) => {
+          // Clear value and disable autofill
           input.value = '';
+          input.defaultValue = '';
           input.autocomplete = 'off';
+          input.setAttribute('autocomplete', 'off');
+          
+          // For password fields, use new-password to prevent autofill
+          if (input.type === 'password') {
+            input.autocomplete = 'new-password';
+            input.setAttribute('autocomplete', 'new-password');
+          }
+          
+          // Clear validation and data attributes
           input.setCustomValidity('');
+          input.removeAttribute('data-lpignore');
+          input.removeAttribute('data-form-type');
         });
+        
+        // Reset the entire form
         form.reset();
+        
+        // Add anti-autofill attributes to form
+        form.setAttribute('autocomplete', 'off');
+        form.setAttribute('data-no-autofill', 'true');
       });
 
-      // Clear any stored form data in localStorage with fieldops prefix
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('fieldops_') || key.includes('credential') || key.includes('login')) {
-          localStorage.removeItem(key);
+      // 2. Clear comprehensive localStorage data
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.startsWith('fieldops_') || 
+          key.includes('credential') || 
+          key.includes('login') ||
+          key.includes('password') ||
+          key.includes('auth') ||
+          key.includes('user') ||
+          key.includes('remember')
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      // 3. Clear sessionStorage completely
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.clear();
+      }
+
+      // 4. Clear cookies related to authentication
+      document.cookie.split(";").forEach(cookie => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        if (name.includes('auth') || name.includes('login') || name.includes('credential') || name.includes('remember')) {
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
         }
       });
 
-      // Signal browser to not save passwords by modifying forms
-      const passwordInputs = document.querySelectorAll('input[type="password"]');
-      passwordInputs.forEach((input: any) => {
-        input.autocomplete = 'new-password';
-        input.value = '';
-      });
-
-      // Clear IndexedDB storage if available
+      // 5. Clear IndexedDB storage more aggressively
       if ('indexedDB' in window) {
         try {
           const dbs = await indexedDB.databases();
-          dbs.forEach(db => {
-            if (db.name && (db.name.includes('fieldops') || db.name.includes('credential'))) {
-              indexedDB.deleteDatabase(db.name);
+          const deletePromises = dbs.map(db => {
+            if (db.name) {
+              return indexedDB.deleteDatabase(db.name);
             }
-          });
+          }).filter(Boolean);
+          
+          await Promise.allSettled(deletePromises);
+          console.log('[DeviceAuth] IndexedDB databases cleared');
         } catch (error) {
           console.log('[DeviceAuth] IndexedDB clearing not supported:', error);
         }
       }
 
-      console.log('[DeviceAuth] Browser credentials and form data cleared');
+      // 6. Clear WebSQL if available (legacy support)
+      if ('openDatabase' in window) {
+        try {
+          const db = (window as any).openDatabase('', '', '', '');
+          db.transaction((tx: any) => {
+            tx.executeSql('DROP TABLE IF EXISTS credentials');
+            tx.executeSql('DROP TABLE IF EXISTS auth');
+          });
+        } catch (error) {
+          console.log('[DeviceAuth] WebSQL clearing not supported:', error);
+        }
+      }
+
+      // 7. Manipulate DOM to prevent password manager detection
+      setTimeout(() => {
+        const inputs = document.querySelectorAll('input[type="password"], input[type="text"], input[type="email"]');
+        Array.from(inputs).forEach((input: any) => {
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }, 100);
+
+      console.log('[DeviceAuth] Enhanced browser credentials and form data cleared');
     } catch (error) {
       console.error('[DeviceAuth] Error clearing browser credentials:', error);
     }
@@ -658,8 +740,9 @@ class DeviceAuthService {
         
         let hasAutofilledData = false;
         
-        [...passwordInputs, ...textInputs].forEach((input: any) => {
-          if (input.value && input.matches(':-webkit-autofill')) {
+        const allInputs = Array.from(passwordInputs).concat(Array.from(textInputs));
+        allInputs.forEach((input: any) => {
+          if (input.value && input.matches && input.matches(':-webkit-autofill')) {
             hasAutofilledData = true;
           }
         });
