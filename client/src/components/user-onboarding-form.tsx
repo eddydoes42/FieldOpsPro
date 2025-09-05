@@ -824,7 +824,12 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
             <Button 
               type="button" 
               variant="outline"
-              onClick={onClose}
+              onClick={() => {
+                // Refresh dashboard data when cancelling
+                queryClient.invalidateQueries({ queryKey: ["/api/access-requests"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/operations/stats"] });
+                onClose();
+              }}
               className="flex-1 h-10"
             >
               Cancel

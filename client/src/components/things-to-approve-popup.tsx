@@ -92,6 +92,9 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
   const handleUserFormClose = () => {
     setShowUserForm(false);
     setSelectedAccessRequest(null);
+    // Refresh access requests to ensure they show in dashboard
+    queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/operations/stats'] });
     // Don't call onClose() here - this would prevent reopening the things to approve
   };
 
