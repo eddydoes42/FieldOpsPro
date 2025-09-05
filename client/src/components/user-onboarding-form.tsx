@@ -316,8 +316,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <Card className="max-w-3xl w-full min-h-fit my-4 flex flex-col bg-white dark:bg-gray-900 max-h-[95vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+      <Card className="max-w-3xl w-full min-h-fit my-4 mb-8 flex flex-col bg-white dark:bg-gray-900 max-h-[90vh] overflow-hidden">
         <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
@@ -336,7 +336,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         
         <CardContent className="flex-1 p-4 overflow-y-auto scrollbar-minimal">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-20">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-32">
               {/* Personal Information */}
               <div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Personal Information</h3>
