@@ -33,7 +33,7 @@ interface AdminFormData {
 }
 
 interface CompanyOnboardingFormProps {
-  onClose: () => void;
+  onClose: (createdCompanyId?: string) => void;
   preFilledUserId?: string;
   companyType?: 'service' | 'client';
 }
@@ -140,7 +140,7 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId, compan
       queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       queryClient.invalidateQueries({ queryKey: ['/api/operations/stats'] });
-      onClose();
+      onClose(createdCompany.id);
     },
     onError: () => {
       toast({
@@ -245,7 +245,7 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId, compan
         <div className="flex items-center mb-6 gap-2">
           <Button
             variant="ghost"
-            onClick={onClose}
+            onClick={() => onClose()}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             <Home className="h-4 w-4" />
@@ -519,7 +519,7 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId, compan
                 <Button 
                   type="button" 
                   variant="outline"
-                  onClick={onClose}
+                  onClick={() => onClose()}
                   className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
                 >
                   Cancel

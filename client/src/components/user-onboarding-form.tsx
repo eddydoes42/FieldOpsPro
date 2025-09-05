@@ -125,6 +125,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
   const [selectedCompanyType, setSelectedCompanyType] = useState<'service' | 'client'>('service');
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+  const [pendingUserData, setPendingUserData] = useState<any>(null);
   const [stateOpen, setStateOpen] = useState(false);
 
   // Fetch existing companies for selection
@@ -192,38 +193,47 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: any) => {
-      // Clean up the data for submission
-      const submitData = {
-        ...userData,
-        roles: selectedRoles, // Use the managed state
-        // Assign company for service company roles
-        companyId: companyAssignmentType === 'existing' && selectedCompanyId ? selectedCompanyId : undefined,
-        // Include login credentials
-        username: userData.username,
-        password: userData.password,
-        temporaryPassword: userData.temporaryPassword || true,
-        // Only skip email if creating new company (send immediately for existing company assignment)
-        skipWelcomeEmail: companyAssignmentType === 'create',
-      };
-      const response = await apiRequest("/api/users/onboard", "POST", submitData);
-      return await response.json();
-    },
-    onSuccess: (createdUser) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/access-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/operations/stats"] });
-      
-      // If creating a new company, store the user ID and show company form
-      if (companyAssignmentType === 'create') {
-        setCreatedUserId(createdUser.id);
-        setShowCompanyForm(true);
+      // Only create user immediately for existing company assignment
+      if (companyAssignmentType === 'existing') {
+        // Clean up the data for submission
+        const submitData = {
+          ...userData,
+          roles: selectedRoles, // Use the managed state
+          // Assign company for service company roles
+          companyId: selectedCompanyId,
+          // Include login credentials
+          username: userData.username,
+          password: userData.password,
+          temporaryPassword: userData.temporaryPassword || true,
+          skipWelcomeEmail: false, // Send email immediately for existing company
+        };
+        const response = await apiRequest("/api/users/onboard", "POST", submitData);
+        return await response.json();
       } else {
-        // For existing company assignment, email was already sent - workflow complete
+        // For new company creation, just store the form data - don't create user yet
+        return { pendingUserData: userData };
+      }
+    },
+    onSuccess: (result) => {
+      if (companyAssignmentType === 'existing') {
+        // User was actually created for existing company assignment
+        queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/access-requests"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/operations/stats"] });
+        
         toast({
           title: "Access Granted",
           description: "User account created successfully and access has been granted!",
         });
         onSuccess(); // This completes the workflow for existing company assignment
+      } else {
+        // For new company creation, store user data and show company form
+        setPendingUserData(result.pendingUserData);
+        setShowCompanyForm(true);
+        toast({
+          title: "User Form Complete",
+          description: "Now create the company to complete the access approval.",
+        });
       }
     },
     onError: (error: any) => {
@@ -267,36 +277,48 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
     },
   });
 
-  const handleCompanyCreationComplete = async () => {
-    // Send the welcome email now that company creation is complete
-    if (createdUserId) {
+  const handleCompanyCreationComplete = async (createdCompanyId: string) => {
+    // Now that company is created, create the user with company assignment
+    if (pendingUserData) {
       try {
-        await apiRequest('/api/users/send-welcome-email', 'POST', { userId: createdUserId });
+        const submitData = {
+          ...pendingUserData,
+          roles: selectedRoles,
+          companyId: createdCompanyId, // Assign to the newly created company
+          username: pendingUserData.username,
+          password: pendingUserData.password,
+          temporaryPassword: pendingUserData.temporaryPassword || true,
+          skipWelcomeEmail: false, // Send welcome email
+        };
+        
+        const response = await apiRequest("/api/users/onboard", "POST", submitData);
+        const createdUser = await response.json();
+        
         toast({
-          title: "Success",
-          description: "User account created and welcome email sent successfully!",
+          title: "Access Granted",
+          description: "User account created successfully and access has been granted!",
         });
+        
+        // Refresh all relevant queries
+        queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/access-requests"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/operations/stats"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+        
+        // Close dialogs and signal completion
+        setShowCompanyForm(false);
+        setPendingUserData(null);
+        onSuccess();
+        
       } catch (error) {
-        console.error('Failed to send welcome email:', error);
+        console.error('Failed to create user after company creation:', error);
         toast({
-          title: "Warning",
-          description: "User account created but welcome email failed to send.",
+          title: "Error",
+          description: "Company created but user creation failed. Please try again.",
           variant: "destructive",
         });
       }
     }
-    
-    // Refresh all relevant queries and complete the workflow
-    queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
-    
-    // Show final success message
-    toast({
-      title: "Access Granted", 
-      description: "Company and user account created successfully. Access has been granted!",
-    });
-    
-    onSuccess(); // This completes the workflow for new company creation
   };
 
   const onSubmit = (data: any) => {
@@ -826,12 +848,14 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
             <DialogTitle>Create New Company</DialogTitle>
           </DialogHeader>
           <CompanyOnboardingForm 
-            onClose={() => {
+            onClose={(createdCompanyId?: string) => {
               setShowCompanyForm(false);
               // Auto-assign user as administrator to the new company
-              handleCompanyCreationComplete();
+              if (createdCompanyId) {
+                handleCompanyCreationComplete(createdCompanyId);
+              }
             }}
-            preFilledUserId={createdUserId || undefined}
+            preFilledUserId={pendingUserData ? 'pending' : undefined}
             companyType={selectedCompanyType}
           />
         </DialogContent>
