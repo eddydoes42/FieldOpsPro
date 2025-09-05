@@ -34,6 +34,7 @@ export default function CredentialLogin() {
   const [storedCredentials, setStoredCredentials] = useState<{username: string, password: string} | null>(null);
   const [showDevicePrompt, setShowDevicePrompt] = useState(false);
   const [loginCredentials, setLoginCredentials] = useState<{username: string, password: string} | null>(null);
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
 
   const form = useForm<CredentialLoginData>({
     resolver: zodResolver(credentialLoginSchema),
@@ -143,6 +144,17 @@ export default function CredentialLogin() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
+    // Check biometric support
+    const checkBiometricSupport = async () => {
+      try {
+        const supported = await deviceAuthService.isBiometricSupported();
+        setIsBiometricSupported(supported);
+      } catch (error) {
+        console.error('Error checking biometric support:', error);
+        setIsBiometricSupported(false);
+      }
+    };
+
     // Check for stored credentials and auto-fill
     if (!showDifferentAccount) {
       const loadStoredCredentials = async () => {
@@ -171,6 +183,8 @@ export default function CredentialLogin() {
       
       loadStoredCredentials();
     }
+
+    checkBiometricSupport();
   }, [showDifferentAccount, form, toast]);
 
   return (
@@ -205,8 +219,8 @@ export default function CredentialLogin() {
                 </p>
               </div>
 
-              {/* Biometric Login Option - Show if we have stored biometric credentials */}
-              {deviceAuthService.getBiometricCredentials().length > 0 && !showDifferentAccount && (
+              {/* Biometric Login Option - Show if biometric authentication is supported */}
+              {isBiometricSupported && !showDifferentAccount && (
                 <div className="space-y-4">
                   <BiometricLoginButton 
                     onSuccess={handleBiometricSuccess}
