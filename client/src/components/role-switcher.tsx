@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +24,15 @@ const availableRoles = [
 export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveRole }: RoleSwitcherProps) {
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
+  const [isTestingRole, setIsTestingRole] = useState<string | null>(null);
+  const [isOnOperationsDashboard, setIsOnOperationsDashboard] = useState(false);
 
-  // Only show for operations directors when they are simulating a role on OTHER pages (not operations dashboard)
-  const isTestingRole = localStorage.getItem('testingRole');
-  const isOnOperationsDashboard = window.location.pathname === '/operations-dashboard';
-  
+  // Use useEffect to safely access browser APIs
+  useEffect(() => {
+    setIsTestingRole(localStorage.getItem('testingRole'));
+    setIsOnOperationsDashboard(window.location.pathname === '/operations-dashboard');
+  }, []);
+
   // Don't show if not operations director
   if (!isOperationsDirector(user as any)) {
     return null;
