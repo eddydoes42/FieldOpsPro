@@ -71,17 +71,31 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId, compan
     select: (users: any[]) => users.find(user => user.id === preFilledUserId)
   });
 
-  // Set assignedAdmin when preFilledUser is loaded
+  // Also try to fetch the specific user directly if not found in the list
+  const { data: directUser } = useQuery<any>({
+    queryKey: ['/api/users', preFilledUserId],
+    queryFn: async () => {
+      if (!preFilledUserId) return null;
+      const response = await apiRequest(`/api/users/${preFilledUserId}`, 'GET');
+      return await response.json();
+    },
+    enabled: !!preFilledUserId && !preFilledUser,
+    retry: 3, // Retry a few times in case the user was just created
+    retryDelay: 500 // Wait 500ms between retries
+  });
+
+  // Set assignedAdmin when preFilledUser or directUser is loaded
   useEffect(() => {
-    if (preFilledUser && preFilledUserId) {
+    const userToAssign = preFilledUser || directUser;
+    if (userToAssign && preFilledUserId) {
       setAssignedAdmin({
-        id: preFilledUser.id,
-        firstName: preFilledUser.firstName,
-        lastName: preFilledUser.lastName,
-        email: preFilledUser.email
+        id: userToAssign.id,
+        firstName: userToAssign.firstName,
+        lastName: userToAssign.lastName,
+        email: userToAssign.email
       });
     }
-  }, [preFilledUser, preFilledUserId]);
+  }, [preFilledUser, directUser, preFilledUserId]);
 
   // Mutation to update user's company assignment
   const updateUserCompanyMutation = useMutation({
