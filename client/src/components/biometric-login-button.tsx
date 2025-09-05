@@ -22,25 +22,29 @@ export function BiometricLoginButton({
   const [biometricChecking, setBiometricChecking] = useState(true);
   const { toast } = useToast();
 
-  const biometricCredentials = deviceAuthService.getBiometricCredentials();
-  const hasBiometricSetup = biometricCredentials.length > 0;
+  const [hasBiometricSetup, setHasBiometricSetup] = useState(false);
 
-  // Check biometric support asynchronously
+  // Check biometric support and setup asynchronously
   useEffect(() => {
-    async function checkBiometricSupport() {
+    async function checkBiometricCapabilities() {
       setBiometricChecking(true);
       try {
         const supported = await deviceAuthService.isBiometricSupported();
         setBiometricSupported(supported);
+        
+        // Check if biometric credentials exist
+        const biometricCredentials = deviceAuthService.getBiometricCredentials();
+        setHasBiometricSetup(biometricCredentials.length > 0);
       } catch (error) {
-        console.error('Error checking biometric support:', error);
+        console.error('Error checking biometric capabilities:', error);
         setBiometricSupported(false);
+        setHasBiometricSetup(false);
       } finally {
         setBiometricChecking(false);
       }
     }
     
-    checkBiometricSupport();
+    checkBiometricCapabilities();
   }, []);
 
   const handleBiometricLogin = async () => {
@@ -103,9 +107,36 @@ export function BiometricLoginButton({
     }
   };
 
-  // Don't render if still checking or biometric is not supported or not set up
-  if (biometricChecking || !biometricSupported || !hasBiometricSetup) {
+  // Don't render if still checking or biometric is not supported
+  if (biometricChecking || !biometricSupported) {
     return null;
+  }
+
+  // If biometric is supported but not set up, show setup button
+  if (!hasBiometricSetup) {
+    return (
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={async () => {
+          try {
+            // For demonstration, we'll show that biometric setup is needed
+            toast({
+              title: "Biometric Setup Required",
+              description: "Set up biometric authentication after successful login to enable quick access.",
+            });
+          } catch (error) {
+            console.error('Biometric setup error:', error);
+          }
+        }}
+        disabled={disabled}
+        className={`w-full ${className}`}
+        data-testid="biometric-setup-button"
+      >
+        <Fingerprint className="mr-2 h-4 w-4" />
+        Enable Biometric Login
+      </Button>
+    );
   }
 
   return (

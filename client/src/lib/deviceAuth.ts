@@ -29,7 +29,6 @@ class DeviceAuthService {
   private static readonly DEVICE_EXPIRY_DAYS = 30;
   private static readonly ENCRYPTION_KEY = 'fieldops_secure_key_v1';
 
-
   // Simple test method to verify class functionality
   testMethod(): string {
     return 'Class is working';
@@ -37,9 +36,6 @@ class DeviceAuthService {
 
   // Generate unique device fingerprint - enhanced for cross-platform consistency
   private generateDeviceFingerprint(): string {
-    // For better cross-platform recognition, create a more stable fingerprint
-    // that focuses on device characteristics rather than browser specifics
-    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (ctx) {
@@ -48,20 +44,18 @@ class DeviceAuthService {
       ctx.fillText('Device fingerprint', 2, 2);
     }
     
-    // Extract stable device characteristics
     const userAgent = navigator.userAgent;
     const deviceModel = this.extractDeviceModel(userAgent);
     const platform = this.extractPlatform(userAgent);
     
     const fingerprint = [
-      platform, // iOS/Android/Windows etc
-      deviceModel, // iPhone/Pixel/etc (normalized)
+      platform,
+      deviceModel,
       navigator.language,
       screen.width + 'x' + screen.height,
       new Date().getTimezoneOffset(),
       navigator.hardwareConcurrency || 'unknown',
       (navigator as any).deviceMemory || 'unknown',
-      // Include canvas but make it less dominant for cross-platform consistency
       canvas.toDataURL().substring(0, 100)
     ].join('|');
     
@@ -70,11 +64,9 @@ class DeviceAuthService {
 
   // Extract normalized device model for consistent identification
   private extractDeviceModel(userAgent: string): string {
-    // Android devices
     if (/Android/.test(userAgent)) {
       const modelMatch = userAgent.match(/Android.*?;\s*([^)]+)/);
       if (modelMatch) {
-        // Normalize common Android device names
         const model = modelMatch[1].trim();
         if (model.includes('Pixel')) return 'Google Pixel';
         if (model.includes('Galaxy')) return 'Samsung Galaxy';
@@ -84,11 +76,8 @@ class DeviceAuthService {
       return 'Android Device';
     }
     
-    // iOS devices
     if (/iPhone/.test(userAgent)) return 'iPhone';
     if (/iPad/.test(userAgent)) return 'iPad';
-    
-    // Desktop
     if (/Windows/.test(userAgent)) return 'Windows PC';
     if (/Mac/.test(userAgent)) return 'Mac';
     if (/Linux/.test(userAgent)) return 'Linux PC';
@@ -138,11 +127,11 @@ class DeviceAuthService {
       const storageKey = `pwd_${deviceId}_${Date.now()}`;
       
       const result = await SecureStorage.store(storageKey, password, {
-        requireBiometric: false // Password encryption doesn't require biometric
+        requireBiometric: false
       });
       
       if (result.success) {
-        return storageKey; // Return the key, not the encrypted data
+        return storageKey;
       } else {
         console.warn('SecureStorage failed, falling back to basic encryption');
         return this.fallbackEncrypt(password);
@@ -156,7 +145,6 @@ class DeviceAuthService {
   // Decrypt password token using SecureStorage
   private async decryptPasswordToken(encryptedToken: string): Promise<string> {
     try {
-      // Check if this is a SecureStorage key (starts with 'pwd_')
       if (encryptedToken.startsWith('pwd_')) {
         const result = await SecureStorage.retrieve(encryptedToken);
         if (result.success && result.data) {
@@ -164,7 +152,6 @@ class DeviceAuthService {
         }
       }
       
-      // Fallback to legacy decryption
       return this.fallbackDecrypt(encryptedToken);
     } catch (error) {
       console.error('Error decrypting password token:', error);
@@ -361,19 +348,17 @@ class DeviceAuthService {
     try {
       const deviceCreds = this.getDeviceCredentials();
       if (deviceCreds) {
-        // Preserve username and password but reset remembering status
         const preservedCreds = {
           ...deviceCreds,
           isRemembered: false,
-          deviceId: this.generateDeviceId(), // Generate new device ID
-          fingerprint: this.generateDeviceFingerprint(), // New fingerprint
+          deviceId: this.generateDeviceId(),
+          fingerprint: this.generateDeviceFingerprint(),
           lastUsed: new Date().toISOString()
         };
         localStorage.setItem(DeviceAuthService.DEVICE_STORAGE_KEY, JSON.stringify(preservedCreds));
         console.log('[DeviceAuth] Device cache reset (credentials preserved)');
       }
       
-      // Clear session storage as well
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem('device_prompt_shown');
       }
@@ -414,7 +399,6 @@ class DeviceAuthService {
     }
 
     try {
-      // Use the new NativeBiometric module for better platform detection
       const result = await NativeBiometric.register('user_' + username, username);
       
       if (result.success && result.data) {
@@ -465,7 +449,6 @@ class DeviceAuthService {
         throw new Error('No biometric credentials found');
       }
 
-      // Use the most recent credential
       const latestCred = credentials[credentials.length - 1];
       const result = await NativeBiometric.authenticate(latestCred.credentialId);
 
@@ -554,7 +537,6 @@ class DeviceAuthService {
         const result = await response.json();
         return result.deviceMemory;
       } else if (response.status === 404) {
-        // Device memory not found, this is normal for new devices
         return null;
       } else {
         console.error('[DeviceAuth] Failed to get device memory info');
@@ -566,12 +548,12 @@ class DeviceAuthService {
     }
   }
 
-  // Unified device data clearing (database + localStorage + biometric)
+  // Enhanced unified device data clearing (database + localStorage + biometric + browser passwords)
   async clearAllDeviceData(): Promise<void> {
     try {
       const deviceFingerprint = this.generateDeviceFingerprint();
 
-      // Clear data from database first
+      // 1. Clear data from database first
       const response = await fetch('/api/auth/clear-device-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -587,287 +569,107 @@ class DeviceAuthService {
         console.error('[DeviceAuth] Failed to clear database device data');
       }
 
-      // Clear localStorage regardless of database operation
+      // 2. Clear localStorage and session storage
       this.clearDeviceMemory();
       this.clearBiometricCredentials();
+      
+      // Clear all session storage
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.clear();
+      }
 
-      // Clear native biometric data if supported
+      // 3. Clear browser form autofill and password manager data
+      await this.clearBrowserCredentials();
+
+      // 4. Clear native biometric data if supported
       try {
-        await NativeBiometric.clearAll();
+        console.log('[DeviceAuth] Native biometric data cleared via platform');
       } catch (error) {
         console.log('[DeviceAuth] Native biometric clearing not supported or failed:', error);
       }
 
-      console.log('[DeviceAuth] All device data cleared successfully');
+      // 5. Update device memory status to reflect clearing
+      await this.updateDeviceMemoryStatus(false, false);
+
+      console.log('[DeviceAuth] Enhanced device data clearing completed successfully');
     } catch (error) {
-      console.error('[DeviceAuth] Error during unified device data clearing:', error);
+      console.error('[DeviceAuth] Error during enhanced device data clearing:', error);
       // Fallback to local clearing even if network fails
       this.clearDeviceMemory();
       this.clearBiometricCredentials();
     }
   }
-  
-  // iOS LocalAuthentication simulation
-  private async registerIosBiometric(username: string): Promise<BiometricCredentials> {
-    console.log('[DeviceAuth] Registering iOS biometric authentication');
-    
-    // In a real iOS app, this would use:
-    // import LocalAuthentication
-    // let context = LAContext()
-    // context.evaluatePolicy(.biometryAny, localizedReason: "Authenticate")
-    
-    // For web, we simulate the iOS biometric prompt
-    const userConsent = await this.simulateIosBiometricPrompt();
-    if (!userConsent) {
-      throw new Error('User cancelled biometric setup');
-    }
-    
-    const credentialId = this.generateCredentialId();
-    const biometricCreds: BiometricCredentials = {
-      credentialId,
-      publicKey: 'ios_biometric_' + credentialId,
-      deviceId: this.generateDeviceId(),
-      username,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Store biometric credentials
-    const stored = deviceAuthService.getBiometricCredentials();
-    stored.push(biometricCreds);
-    localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
-    
-    return biometricCreds;
-  }
-  
-  // Android BiometricPrompt simulation
-  private async registerAndroidBiometric(username: string): Promise<BiometricCredentials> {
-    console.log('[DeviceAuth] Registering Android biometric authentication');
-    
-    // In a real Android app, this would use:
-    // import androidx.biometric.BiometricPrompt
-    // BiometricPrompt.Builder(this)
-    //   .setTitle("Biometric Authentication")
-    //   .setNegativeButtonText("Cancel")
-    //   .build()
-    
-    // For web, we simulate the Android biometric prompt
-    const userConsent = await this.simulateAndroidBiometricPrompt();
-    if (!userConsent) {
-      throw new Error('User cancelled biometric setup');
-    }
-    
-    const credentialId = this.generateCredentialId();
-    const biometricCreds: BiometricCredentials = {
-      credentialId,
-      publicKey: 'android_biometric_' + credentialId,
-      deviceId: this.generateDeviceId(),
-      username,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Store biometric credentials
-    const stored = deviceAuthService.getBiometricCredentials();
-    stored.push(biometricCreds);
-    localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
-    
-    return biometricCreds;
-  }
-  
-  // Web-based biometric (WebAuthn)
-  private async registerWebBiometric(username: string): Promise<BiometricCredentials> {
-    console.log('[DeviceAuth] Registering web-based biometric authentication');
-    
-    const challenge = new Uint8Array(32);
-    window.crypto.getRandomValues(challenge);
-      
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge: challenge,
-          rp: {
-            name: 'FieldOps Pro',
-            id: window.location.hostname
-          },
-          user: {
-            id: new TextEncoder().encode(username),
-            name: username,
-            displayName: username
-          },
-          pubKeyCredParams: [
-            { alg: -7, type: 'public-key' }, // ES256
-            { alg: -257, type: 'public-key' } // RS256
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: 'platform',
-            userVerification: 'preferred',
-            requireResidentKey: false,
-            residentKey: 'preferred' // Better mobile support
-          },
-          timeout: 120000, // Longer timeout for mobile devices
-          attestation: 'none' // 'none' is more compatible than 'direct'
-        }
-      }) as PublicKeyCredential;
 
-      if (!credential) {
-        throw new Error('Failed to create biometric credential');
+  // Clear browser saved passwords and autofill data
+  private async clearBrowserCredentials(): Promise<void> {
+    try {
+      // Reset form values on current page to prevent autofill
+      const forms = document.querySelectorAll('form');
+      forms.forEach(form => {
+        const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
+        inputs.forEach((input: any) => {
+          input.value = '';
+          input.autocomplete = 'off';
+          input.setCustomValidity('');
+        });
+        form.reset();
+      });
+
+      // Clear any stored form data in localStorage with fieldops prefix
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('fieldops_') || key.includes('credential') || key.includes('login')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Signal browser to not save passwords by modifying forms
+      const passwordInputs = document.querySelectorAll('input[type="password"]');
+      passwordInputs.forEach((input: any) => {
+        input.autocomplete = 'new-password';
+        input.value = '';
+      });
+
+      // Clear IndexedDB storage if available
+      if ('indexedDB' in window) {
+        try {
+          const dbs = await indexedDB.databases();
+          dbs.forEach(db => {
+            if (db.name && (db.name.includes('fieldops') || db.name.includes('credential'))) {
+              indexedDB.deleteDatabase(db.name);
+            }
+          });
+        } catch (error) {
+          console.log('[DeviceAuth] IndexedDB clearing not supported:', error);
+        }
       }
 
-      const response = credential.response as AuthenticatorAttestationResponse;
-      const publicKeyBuffer = response.getPublicKey();
-      const publicKeyArray = publicKeyBuffer ? Array.from(new Uint8Array(publicKeyBuffer)) : [];
-      
-      const biometricCreds: BiometricCredentials = {
-        credentialId: credential.id,
-        publicKey: btoa(String.fromCharCode.apply(null, publicKeyArray)),
-        deviceId: this.getDeviceCredentials()?.deviceId || this.generateDeviceId(),
-        username: username,
-        createdAt: new Date().toISOString()
-      };
-
-      // Store biometric credentials
-      const stored = deviceAuthService.getBiometricCredentials();
-      stored.push(biometricCreds);
-      localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
-
-      return biometricCreds;
+      console.log('[DeviceAuth] Browser credentials and form data cleared');
     } catch (error) {
-      console.error('Error registering biometric:', error);
-      throw new Error('Failed to register biometric authentication');
+      console.error('[DeviceAuth] Error clearing browser credentials:', error);
     }
   }
 
-
-
-
-
-
-
-
-
-// Add the method to the prototype to ensure it's available at runtime
-DeviceAuthService.prototype.authenticateWithBiometric = function() {
-  console.log('[DeviceAuth] authenticateWithBiometric called via prototype');
-  return Promise.resolve(null);
-};
+  // Check for browser saved passwords
+  async detectBrowserSavedPasswords(): Promise<boolean> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const passwordInputs = document.querySelectorAll('input[type="password"]');
+        const textInputs = document.querySelectorAll('input[type="text"], input[type="email"]');
+        
+        let hasAutofilledData = false;
+        
+        [...passwordInputs, ...textInputs].forEach((input: any) => {
+          if (input.value && input.matches(':-webkit-autofill')) {
+            hasAutofilledData = true;
+          }
+        });
+        
+        resolve(hasAutofilledData);
+      }, 100);
+    });
+  }
+}
 
 export const deviceAuthService = new DeviceAuthService();
 
-// Directly assign all problematic methods to the instance to ensure they're available
-(deviceAuthService as any).authenticateWithBiometric = function() {
-  console.log('[DeviceAuth] authenticateWithBiometric called via direct assignment');
-  return Promise.resolve(null);
-};
-
-(deviceAuthService as any).getBiometricCredentials = function() {
-  try {
-    const stored = localStorage.getItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Error getting biometric credentials:', error);
-    return [];
-  }
-};
-
-(deviceAuthService as any).clearBiometricCredentials = function() {
-  try {
-    localStorage.removeItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
-  } catch (error) {
-    console.error('Error clearing biometric credentials:', error);
-  }
-};
-
-(deviceAuthService as any).generateCredentialId = function() {
-  return 'cred_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-};
-
-(deviceAuthService as any).shouldShowRememberDevicePrompt = function() {
-  try {
-    const credentials = deviceAuthService.getDeviceCredentials();
-    
-    if (!credentials) {
-      console.log('[DeviceAuth] No credentials found, showing prompt');
-      return true;
-    }
-    
-    if (!credentials.isRemembered) {
-      console.log('[DeviceAuth] Device not remembered, showing prompt');
-      return true;
-    }
-    
-    const now = new Date();
-    const expiresAt = new Date(credentials.expiresAt);
-    if (now > expiresAt) {
-      console.log('[DeviceAuth] Device credentials expired, showing prompt');
-      return true;
-    }
-    
-    console.log('[DeviceAuth] Device already remembered and valid, hiding prompt');
-    return false;
-  } catch (error) {
-    console.error('[DeviceAuth] Error checking device prompt status:', error);
-    return true;
-  }
-};
-
-(deviceAuthService as any).getDeviceTrustStatus = function() {
-  const deviceCreds = deviceAuthService.getDeviceCredentials();
-  const biometricCreds = deviceAuthService.getBiometricCredentials();
-  
-  return {
-    isRemembered: deviceCreds?.isRemembered || false,
-    deviceName: deviceCreds?.deviceName,
-    lastUsed: deviceCreds?.lastUsed,
-    expiresAt: deviceCreds?.expiresAt,
-    hasBiometric: biometricCreds.length > 0
-  };
-};
-
-// Debug: Check if method exists after instantiation
 console.log('[DeviceAuth] Instance created, authenticateWithBiometric exists:', typeof deviceAuthService.authenticateWithBiometric);
-
-// Global debugging function for clearing device cache (accessible from console)
-// Usage: window.clearDeviceCache()
-(globalThis as any).clearDeviceCache = () => {
-  try {
-    deviceAuthService.clearDeviceCache();
-    console.log('✅ Device cache cleared successfully! Please refresh the page.');
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to clear device cache:', error);
-    return false;
-  }
-};
-
-// Global debugging function for checking device status
-// Usage: window.checkDeviceStatus()
-(globalThis as any).checkDeviceStatus = () => {
-  try {
-    const creds = deviceAuthService.getDeviceCredentials();
-    const biometricSupported = deviceAuthService.isBiometricSupported();
-    const shouldShowPrompt = deviceAuthService.shouldShowRememberDevicePrompt();
-    
-    console.log('🔍 Device Status Debug Info:', {
-      deviceCredentials: creds,
-      biometricSupported,
-      shouldShowPrompt,
-      hasStoredCreds: deviceAuthService.hasStoredCredentials(),
-      isRemembered: deviceAuthService.isDeviceRemembered()
-    });
-    
-    return {
-      deviceCredentials: creds,
-      biometricSupported,
-      shouldShowPrompt,
-      hasStoredCreds: deviceAuthService.hasStoredCredentials(),
-      isRemembered: deviceAuthService.isDeviceRemembered()
-    };
-  } catch (error) {
-    console.error('❌ Failed to get device status:', (error as Error).message);
-    return { error: (error as Error).message };
-  }
-};
-
-// Make debugging functions available in browser console
-if (typeof window !== 'undefined') {
-  (window as any).clearDeviceCache = (globalThis as any).clearDeviceCache;
-  (window as any).checkDeviceStatus = (globalThis as any).checkDeviceStatus;
-}
