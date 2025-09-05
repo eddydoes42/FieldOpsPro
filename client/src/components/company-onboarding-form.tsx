@@ -136,13 +136,18 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId, compan
       return await response.json();
     },
     onSuccess: async (createdCompany) => {
-      // If we have a preFilledUserId, assign them to the new company as administrator
-      if (preFilledUserId) {
-        await updateUserCompanyMutation.mutateAsync({ 
-          userId: preFilledUserId, 
-          companyId: createdCompany.id 
-        });
+      // If we have a preFilledUserId and it's not 'pending', assign them to the new company as administrator
+      if (preFilledUserId && preFilledUserId !== 'pending') {
+        try {
+          await updateUserCompanyMutation.mutateAsync({ 
+            userId: preFilledUserId, 
+            companyId: createdCompany.id 
+          });
+        } catch (error) {
+          console.error('Failed to assign user to company:', error);
+        }
       }
+      // For pending users, the assignment will be handled by UserOnboardingForm
       
       toast({
         title: "Success",
