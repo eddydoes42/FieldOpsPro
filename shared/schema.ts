@@ -2317,6 +2317,7 @@ export const deviceTokens = pgTable("device_tokens", {
   isActive: boolean("is_active").default(true),
   userAgent: text("user_agent"),
   ipAddress: varchar("ip_address"),
+  encryptedCredentials: text("encrypted_credentials"), // encrypted username/password storage
   createdAt: timestamp("created_at").defaultNow(),
 });
 

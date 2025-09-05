@@ -279,6 +279,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Device Credentials Storage Routes
+  app.post('/api/auth/device-credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { username, encryptedPassword, deviceFingerprint, deviceName } = req.body;
+      
+      if (!username || !encryptedPassword || !deviceFingerprint) {
+        return res.status(400).json({ message: "Username, encrypted password, and device fingerprint are required" });
+      }
+
+      // Create or update device token with credentials
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiry
+
+      const crypto = await import('crypto');
+      const tokenHash = crypto.createHash('sha256').update(`${userId}_${deviceFingerprint}_${Date.now()}`).digest('hex');
+
+      await storage.createDeviceToken({
+        userId,
+        tokenHash,
+        deviceFingerprint,
+        deviceName: deviceName || 'Unknown Device',
+        expiresAt,
+        userAgent: req.headers['user-agent'] || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '',
+        encryptedCredentials: JSON.stringify({ username, encryptedPassword })
+      });
+      
+      res.json({ success: true, message: "Device credentials stored successfully" });
+    } catch (error) {
+      console.error("Error storing device credentials:", error);
+      res.status(500).json({ message: "Failed to store device credentials" });
+    }
+  });
+
+  app.get('/api/auth/device-credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceFingerprint } = req.query;
+      
+      if (!deviceFingerprint) {
+        return res.status(400).json({ message: "Device fingerprint is required" });
+      }
+
+      const deviceToken = await storage.getDeviceCredentials(userId, deviceFingerprint as string);
+      
+      if (!deviceToken || !deviceToken.encryptedCredentials) {
+        return res.status(404).json({ message: "No credentials found for this device" });
+      }
+
+      const credentials = JSON.parse(deviceToken.encryptedCredentials);
+      res.json({ 
+        success: true, 
+        username: credentials.username, 
+        encryptedPassword: credentials.encryptedPassword 
+      });
+    } catch (error) {
+      console.error("Error retrieving device credentials:", error);
+      res.status(500).json({ message: "Failed to retrieve device credentials" });
+    }
+  });
+
   // Biometric Authentication Routes
   app.post('/api/auth/biometric/register', isAuthenticated, async (req: any, res) => {
     try {

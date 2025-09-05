@@ -35,8 +35,11 @@ class DeviceAuthService {
     return 'Class is working';
   }
 
-  // Generate unique device fingerprint
+  // Generate unique device fingerprint - enhanced for cross-platform consistency
   private generateDeviceFingerprint(): string {
+    // For better cross-platform recognition, create a more stable fingerprint
+    // that focuses on device characteristics rather than browser specifics
+    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (ctx) {
@@ -45,17 +48,62 @@ class DeviceAuthService {
       ctx.fillText('Device fingerprint', 2, 2);
     }
     
+    // Extract stable device characteristics
+    const userAgent = navigator.userAgent;
+    const deviceModel = this.extractDeviceModel(userAgent);
+    const platform = this.extractPlatform(userAgent);
+    
     const fingerprint = [
-      navigator.userAgent,
+      platform, // iOS/Android/Windows etc
+      deviceModel, // iPhone/Pixel/etc (normalized)
       navigator.language,
       screen.width + 'x' + screen.height,
       new Date().getTimezoneOffset(),
-      canvas.toDataURL(),
       navigator.hardwareConcurrency || 'unknown',
-(navigator as any).deviceMemory || 'unknown'
+      (navigator as any).deviceMemory || 'unknown',
+      // Include canvas but make it less dominant for cross-platform consistency
+      canvas.toDataURL().substring(0, 100)
     ].join('|');
     
     return btoa(fingerprint).substring(0, 32);
+  }
+
+  // Extract normalized device model for consistent identification
+  private extractDeviceModel(userAgent: string): string {
+    // Android devices
+    if (/Android/.test(userAgent)) {
+      const modelMatch = userAgent.match(/Android.*?;\s*([^)]+)/);
+      if (modelMatch) {
+        // Normalize common Android device names
+        const model = modelMatch[1].trim();
+        if (model.includes('Pixel')) return 'Google Pixel';
+        if (model.includes('Galaxy')) return 'Samsung Galaxy';
+        if (model.includes('OnePlus')) return 'OnePlus';
+        return 'Android Device';
+      }
+      return 'Android Device';
+    }
+    
+    // iOS devices
+    if (/iPhone/.test(userAgent)) return 'iPhone';
+    if (/iPad/.test(userAgent)) return 'iPad';
+    
+    // Desktop
+    if (/Windows/.test(userAgent)) return 'Windows PC';
+    if (/Mac/.test(userAgent)) return 'Mac';
+    if (/Linux/.test(userAgent)) return 'Linux PC';
+    
+    return 'Unknown Device';
+  }
+
+  // Extract platform for consistent identification
+  private extractPlatform(userAgent: string): string {
+    if (/Android/.test(userAgent)) return 'android';
+    if (/iPhone|iPad/.test(userAgent)) return 'ios';
+    if (/Windows/.test(userAgent)) return 'windows';
+    if (/Mac/.test(userAgent)) return 'macos';
+    if (/Linux/.test(userAgent)) return 'linux';
+    return 'unknown';
   }
 
   // Generate device ID
@@ -180,7 +228,7 @@ class DeviceAuthService {
     }
   }
 
-  // Remember this device with optional password token
+  // Remember this device with optional password token - with database storage
   async rememberDevice(username?: string, passwordToken?: string): Promise<DeviceCredentials> {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + DeviceAuthService.DEVICE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
@@ -196,6 +244,32 @@ class DeviceAuthService {
       expiresAt: expiresAt.toISOString()
     };
     
+    // Try to store in database first
+    if (username && passwordToken) {
+      try {
+        const response = await fetch('/api/auth/device-credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            username,
+            encryptedPassword: credentials.passwordToken,
+            deviceFingerprint: credentials.fingerprint,
+            deviceName: credentials.deviceName
+          })
+        });
+        
+        if (response.ok) {
+          console.log('[DeviceAuth] Credentials stored in database successfully');
+        } else {
+          console.log('[DeviceAuth] Database storage failed, using localStorage fallback');
+        }
+      } catch (error) {
+        console.log('[DeviceAuth] Database storage error, using localStorage fallback:', error);
+      }
+    }
+    
+    // Also store in localStorage for backward compatibility and offline access
     try {
       localStorage.setItem(DeviceAuthService.DEVICE_STORAGE_KEY, JSON.stringify(credentials));
       return credentials;
@@ -221,8 +295,30 @@ class DeviceAuthService {
     }
   }
 
-  // Get stored credentials for autofill
+  // Get stored credentials for autofill - with database fallback
   async getStoredCredentials(): Promise<{ username: string; password: string } | null> {
+    try {
+      // First try to get from database
+      const response = await fetch(`/api/auth/device-credentials?deviceFingerprint=${encodeURIComponent(this.generateDeviceFingerprint())}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.username && result.encryptedPassword) {
+          const decryptedPassword = await this.decryptPasswordToken(result.encryptedPassword);
+          return {
+            username: result.username,
+            password: decryptedPassword
+          };
+        }
+      }
+    } catch (error) {
+      console.log('Database credentials retrieval failed, falling back to localStorage:', error);
+    }
+    
+    // Fallback to localStorage
     const credentials = this.getDeviceCredentials();
     if (!credentials || !credentials.username || !credentials.passwordToken) {
       return null;

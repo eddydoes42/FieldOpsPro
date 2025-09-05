@@ -819,6 +819,7 @@ export interface IStorage {
   ): Promise<DeviceToken | undefined>;
   revokeDeviceToken(userId: string, deviceId: string): Promise<void>;
   cleanupExpiredTokens(): Promise<void>;
+  getDeviceCredentials(userId: string, deviceFingerprint: string): Promise<DeviceToken | undefined>;
 
   // Biometric Authentication operations
   createBiometricAuth(
@@ -7318,6 +7319,22 @@ export class DatabaseStorage implements IStorage, IService {
       .update(biometricAuth)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(biometricAuth.id, id));
+  }
+
+  // Get device credentials for a specific user and device fingerprint
+  async getDeviceCredentials(userId: string, deviceFingerprint: string): Promise<DeviceToken | undefined> {
+    const [deviceToken] = await db
+      .select()
+      .from(deviceTokens)
+      .where(
+        and(
+          eq(deviceTokens.userId, userId),
+          eq(deviceTokens.deviceFingerprint, deviceFingerprint),
+          eq(deviceTokens.isActive, true),
+          gte(deviceTokens.expiresAt, new Date()),
+        ),
+      );
+    return deviceToken;
   }
 
   // User preferences operations

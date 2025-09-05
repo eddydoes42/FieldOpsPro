@@ -31,6 +31,7 @@ export default function CredentialLogin() {
   const { toast } = useToast();
   const [showDifferentAccount, setShowDifferentAccount] = useState(false);
   const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
+  const [storedCredentials, setStoredCredentials] = useState<{username: string, password: string} | null>(null);
   const [showDevicePrompt, setShowDevicePrompt] = useState(false);
   const [loginCredentials, setLoginCredentials] = useState<{username: string, password: string} | null>(null);
 
@@ -98,18 +99,28 @@ export default function CredentialLogin() {
     });
   };
 
-  const handleBiometricSuccess = (username: string) => {
+  const handleBiometricSuccess = async (username: string) => {
     // On successful biometric login, get stored credentials and auto-login
-    const storedCreds = deviceAuthService.getStoredCredentials();
-    if (storedCreds) {
-      loginMutation.mutate({
-        ...storedCreds,
-        rememberDevice: false // Already saved
-      });
-    } else {
+    try {
+      const storedCreds = await deviceAuthService.getStoredCredentials();
+      if (storedCreds) {
+        loginMutation.mutate({
+          ...storedCreds,
+          rememberDevice: false // Already saved
+        });
+      } else {
+        toast({
+          title: "Biometric Login Successful",
+          description: "Please complete login with your credentials.",
+        });
+        form.setValue('username', username);
+      }
+    } catch (error) {
+      console.error('Error getting stored credentials after biometric login:', error);
       toast({
         title: "Biometric Login Successful",
         description: "Please complete login with your credentials.",
+        variant: "default",
       });
       form.setValue('username', username);
     }
@@ -118,6 +129,7 @@ export default function CredentialLogin() {
   const handleUseDifferentAccount = () => {
     setShowDifferentAccount(true);
     setHasStoredCredentials(false);
+    setStoredCredentials(null);
     form.reset({ username: "", password: "" });
   };
 
@@ -133,19 +145,31 @@ export default function CredentialLogin() {
 
     // Check for stored credentials and auto-fill
     if (!showDifferentAccount) {
-      const storedCreds = deviceAuthService.getStoredCredentials();
-      if (storedCreds) {
-        setHasStoredCredentials(true);
-        form.setValue('username', storedCreds.username);
-        form.setValue('password', storedCreds.password);
-        
-        toast({
-          title: "Welcome back!",
-          description: `Signed in as ${storedCreds.username}. Use "Different Account" if needed.`,
-        });
-      } else {
-        setHasStoredCredentials(false);
-      }
+      const loadStoredCredentials = async () => {
+        try {
+          const storedCreds = await deviceAuthService.getStoredCredentials();
+          if (storedCreds) {
+            setHasStoredCredentials(true);
+            setStoredCredentials(storedCreds);
+            form.setValue('username', storedCreds.username);
+            form.setValue('password', storedCreds.password);
+            
+            toast({
+              title: "Welcome back!",
+              description: `Signed in as ${storedCreds.username}. Use "Different Account" if needed.`,
+            });
+          } else {
+            setHasStoredCredentials(false);
+            setStoredCredentials(null);
+          }
+        } catch (error) {
+          console.error('Error loading stored credentials:', error);
+          setHasStoredCredentials(false);
+          setStoredCredentials(null);
+        }
+      };
+      
+      loadStoredCredentials();
     }
   }, [showDifferentAccount, form, toast]);
 
@@ -181,8 +205,8 @@ export default function CredentialLogin() {
                 </p>
               </div>
 
-              {/* Biometric Login Option - Show if biometric is supported OR if we have stored biometric credentials */}
-              {(deviceAuthService.isBiometricSupported() || deviceAuthService.getBiometricCredentials().length > 0) && !showDifferentAccount && (
+              {/* Biometric Login Option - Show if we have stored biometric credentials */}
+              {deviceAuthService.getBiometricCredentials().length > 0 && !showDifferentAccount && (
                 <div className="space-y-4">
                   <BiometricLoginButton 
                     onSuccess={handleBiometricSuccess}
