@@ -17,16 +17,30 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import UserOnboardingForm from "@/components/user-onboarding-form";
 
 interface ThingsToApprovePopupProps {
   open: boolean;
   onClose: () => void;
 }
 
+interface AccessRequest {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  requestedRole: string;
+  status: string;
+  createdAt: string;
+}
+
 export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'access-requests' | 'approval-requests'>('access-requests');
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [selectedAccessRequest, setSelectedAccessRequest] = useState<AccessRequest | null>(null);
 
   // Fetch access requests
   const { data: accessRequests = [], isLoading: isLoadingAccess } = useQuery({
@@ -40,7 +54,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
     enabled: open
   });
 
-  // Approve access request mutation
+  // Approve access request mutation (called after user creation)
   const approveAccessMutation = useMutation({
     mutationFn: async (requestId: string) => {
       return apiRequest(`/api/access-requests/${requestId}/approve`, {
@@ -49,9 +63,11 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
+      setShowUserForm(false);
+      setSelectedAccessRequest(null);
       toast({
-        title: "Request Approved",
-        description: "Access request has been approved successfully.",
+        title: "User Created Successfully",
+        description: "Access request has been approved and user account created.",
       });
     },
     onError: (error: any) => {
@@ -62,6 +78,25 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
       });
     }
   });
+
+  // Handle opening the user creation form
+  const handleApproveRequest = (request: AccessRequest) => {
+    setSelectedAccessRequest(request);
+    setShowUserForm(true);
+  };
+
+  // Handle successful user creation - this approves the access request
+  const handleUserCreationSuccess = () => {
+    if (selectedAccessRequest) {
+      approveAccessMutation.mutate(selectedAccessRequest.id);
+    }
+  };
+
+  // Handle form close without completion - access request stays pending
+  const handleUserFormClose = () => {
+    setShowUserForm(false);
+    setSelectedAccessRequest(null);
+  };
 
   // Reject access request mutation
   const rejectAccessMutation = useMutation({
@@ -211,12 +246,12 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
                             </Button>
                             <Button
                               size="sm"
-                              onClick={() => approveAccessMutation.mutate(request.id)}
+                              onClick={() => handleApproveRequest(request)}
                               disabled={approveAccessMutation.isPending}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
+                              Create User
                             </Button>
                           </div>
                         )}
@@ -289,6 +324,22 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
           </div>
         </div>
       </DialogContent>
+
+      {/* User Creation Form Dialog - Triggered when approving access request */}
+      {showUserForm && selectedAccessRequest && (
+        <UserOnboardingForm
+          onClose={handleUserFormClose}
+          onSuccess={handleUserCreationSuccess}
+          currentUser={null} // Will be set by the form internally
+          preFilledData={{
+            firstName: selectedAccessRequest.firstName,
+            lastName: selectedAccessRequest.lastName,
+            email: selectedAccessRequest.email,
+            phone: selectedAccessRequest.phone,
+            requestedRole: selectedAccessRequest.requestedRole
+          }}
+        />
+      )}
     </Dialog>
   );
 }
