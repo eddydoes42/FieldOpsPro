@@ -218,12 +218,12 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         setCreatedUserId(createdUser.id);
         setShowCompanyForm(true);
       } else {
-        // For existing company assignment, email was already sent - close form
+        // For existing company assignment, email was already sent - workflow complete
         toast({
-          title: "Success",
-          description: "User account created and welcome email sent successfully!",
+          title: "Access Granted",
+          description: "User account created successfully and access has been granted!",
         });
-        onSuccess();
+        onSuccess(); // This completes the workflow for existing company assignment
       }
     },
     onError: (error: any) => {
@@ -286,10 +286,17 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
       }
     }
     
-    // Refresh all relevant queries and close the form
+    // Refresh all relevant queries and complete the workflow
     queryClient.invalidateQueries({ queryKey: ["/api/users"] });
     queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
-    onSuccess();
+    
+    // Show final success message
+    toast({
+      title: "Access Granted", 
+      description: "Company and user account created successfully. Access has been granted!",
+    });
+    
+    onSuccess(); // This completes the workflow for new company creation
   };
 
   const onSubmit = (data: any) => {

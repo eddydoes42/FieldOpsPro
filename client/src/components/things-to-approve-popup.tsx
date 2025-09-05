@@ -63,10 +63,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
       queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
       setShowUserForm(false);
       setSelectedAccessRequest(null);
-      toast({
-        title: "User Created Successfully",
-        description: "Access request has been approved and user account created.",
-      });
+      // Success message is now handled by the UserOnboardingForm at completion
     },
     onError: (error: any) => {
       toast({
@@ -84,8 +81,8 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
     onClose(); // Close the things to approve popup
   };
 
-  // Handle successful user creation - this approves the access request
-  const handleUserCreationSuccess = () => {
+  // Handle successful workflow completion - this approves the access request
+  const handleWorkflowComplete = () => {
     if (selectedAccessRequest) {
       approveAccessMutation.mutate(selectedAccessRequest.id);
     }
@@ -327,7 +324,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
       {showUserForm && selectedAccessRequest && (
         <UserOnboardingForm
           onClose={handleUserFormClose}
-          onSuccess={handleUserCreationSuccess}
+          onSuccess={handleWorkflowComplete}
           currentUser={null} // Will be set by the form internally
           preFilledData={{
             firstName: selectedAccessRequest.firstName,
