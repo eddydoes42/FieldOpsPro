@@ -51,7 +51,7 @@ export default function AdminDashboard() {
 
   const { data: allUsers, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
-    enabled: !!user && (user as any).role === 'administrator',
+    enabled: !!user && hasRole(user as any, 'administrator'),
   });
 
   // Helper functions for heartbeat monitor
@@ -181,6 +181,37 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-bold text-foreground">Administrator Dashboard</h1>
         </div>
 
+        {/* Heartbeat Monitor for Administrator */}
+        <div className="mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Company Heartbeat Monitor</h3>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Average BPM:</span>
+                  <span className="text-lg font-bold text-foreground">
+                    {workOrdersLoading ? '...' : calculateAverageBPM()}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-black rounded-lg p-4 border border-gray-700">
+                <EKGWaveform
+                  bpm={workOrdersLoading ? 75 : calculateAverageBPM()}
+                  status={getCompanyHealthStatus()}
+                  severity="none"
+                  frequency="occasional"
+                  width={600}
+                  height={120}
+                  className="w-full"
+                />
+              </div>
+              <div className="mt-3 text-sm text-muted-foreground text-center">
+                {getHeartbeatDescription()}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/team')}>
@@ -215,7 +246,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/projects?status=active')}>
+          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/project-network?status=active')}>
             <CardContent className="p-3 overflow-hidden">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
@@ -237,36 +268,6 @@ export default function AdminDashboard() {
           />
         </div>
 
-        {/* Heartbeat Monitor for Administrator */}
-        <div className="mt-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-foreground">Company Heartbeat Monitor</h3>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">Average BPM:</span>
-                  <span className="text-lg font-bold text-foreground">
-                    {workOrdersLoading ? '...' : calculateAverageBPM()}
-                  </span>
-                </div>
-              </div>
-              <div className="bg-black rounded-lg p-4 border border-gray-700">
-                <EKGWaveform
-                  bpm={workOrdersLoading ? 75 : calculateAverageBPM()}
-                  status={getCompanyHealthStatus()}
-                  severity="none"
-                  frequency="occasional"
-                  width={600}
-                  height={120}
-                  className="w-full"
-                />
-              </div>
-              <div className="mt-3 text-sm text-muted-foreground text-center">
-                {getHeartbeatDescription()}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 sm:hidden">
