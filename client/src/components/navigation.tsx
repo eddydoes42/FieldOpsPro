@@ -474,9 +474,11 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                 {/* User Name and Role - Hidden on small screens */}
                 <div className="hidden sm:flex flex-col items-start">
                   <span className="text-sm font-medium text-foreground truncate max-w-32">
-                    {(user as any)?.firstName && (user as any)?.lastName 
-                      ? `${(user as any).firstName} ${(user as any).lastName}`
-                      : (user as any)?.email?.split('@')[0] || 'User'
+                    {isCurrentlyTesting && testingContext?.simulatedUser
+                      ? `${testingContext.simulatedUser.firstName} ${testingContext.simulatedUser.lastName}`
+                      : (user as any)?.firstName && (user as any)?.lastName 
+                        ? `${(user as any).firstName} ${(user as any).lastName}`
+                        : (user as any)?.email?.split('@')[0] || 'User'
                     }
                   </span>
                   <span className="text-xs text-muted-foreground truncate max-w-32">
@@ -505,9 +507,11 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground truncate">
-                          {(user as any)?.firstName && (user as any)?.lastName 
-                            ? `${(user as any).firstName} ${(user as any).lastName}`
-                            : (user as any)?.email || 'User'
+                          {isCurrentlyTesting && testingContext?.simulatedUser
+                            ? `${testingContext.simulatedUser.firstName} ${testingContext.simulatedUser.lastName}`
+                            : (user as any)?.firstName && (user as any)?.lastName 
+                              ? `${(user as any).firstName} ${(user as any).lastName}`
+                              : (user as any)?.email || 'User'
                           }
                         </p>
                         {/* Role Badge */}

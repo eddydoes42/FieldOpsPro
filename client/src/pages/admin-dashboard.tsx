@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { ThingsToApproveCard } from "@/components/things-to-approve-card";
+import { EKGWaveform } from "@/components/ui/ekg-waveform";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -52,6 +53,65 @@ export default function AdminDashboard() {
     queryKey: ["/api/users"],
     enabled: !!user && (user as any).role === 'administrator',
   });
+
+  // Helper functions for heartbeat monitor
+  const calculateAverageBPM = () => {
+    if (!workOrders || !Array.isArray(workOrders) || workOrders.length === 0) return 75; // Baseline BPM
+    
+    // Get active work orders and projects for this company
+    const activeOrders = workOrders.filter((order: any) => 
+      order.status === 'in_progress' || order.status === 'scheduled' || order.status === 'confirmed'
+    );
+    
+    if (activeOrders.length === 0) return 75; // Baseline BPM
+    
+    // Calculate average BPM from active work orders
+    const totalBPM = activeOrders.reduce((sum: number, order: any) => {
+      // Calculate BPM based on order urgency, status, and health
+      let orderBPM = 75; // Base BPM
+      
+      if (order.priority === 'urgent') orderBPM += 25;
+      else if (order.priority === 'high') orderBPM += 15;
+      else if (order.priority === 'low') orderBPM -= 10;
+      
+      if (order.status === 'in_progress') orderBPM += 10;
+      if (order.escalationCount > 0) orderBPM += (order.escalationCount * 5);
+      
+      return sum + orderBPM;
+    }, 0);
+    
+    return Math.round(totalBPM / activeOrders.length);
+  };
+  
+  const getCompanyHealthStatus = () => {
+    if (!workOrders || !Array.isArray(workOrders) || workOrders.length === 0) return 'normal';
+    
+    const activeOrders = workOrders.filter((order: any) => 
+      order.status === 'in_progress' || order.status === 'scheduled' || order.status === 'confirmed'
+    );
+    
+    if (activeOrders.length === 0) return 'normal';
+    
+    const urgentOrders = activeOrders.filter((order: any) => order.priority === 'urgent').length;
+    const escalatedOrders = activeOrders.filter((order: any) => order.escalationCount > 0).length;
+    
+    if (urgentOrders > 2 || escalatedOrders > 3) return 'critical';
+    if (urgentOrders > 1 || escalatedOrders > 1) return 'at_risk';
+    return 'normal';
+  };
+  
+  const getHeartbeatDescription = () => {
+    const avgBPM = calculateAverageBPM();
+    const status = getCompanyHealthStatus();
+    
+    if (status === 'critical') {
+      return `High stress detected (${avgBPM} BPM) - Multiple urgent work orders require immediate attention`;
+    } else if (status === 'at_risk') {
+      return `Elevated activity (${avgBPM} BPM) - Some work orders need monitoring`;
+    } else {
+      return `Normal operations (${avgBPM} BPM) - All work orders and projects running smoothly`;
+    }
+  };
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -155,16 +215,16 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/work-orders?status=completed')}>
+          <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setLocation('/projects?status=active')}>
             <CardContent className="p-3 overflow-hidden">
               <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex-shrink-0">
-                  <i className="fas fa-check-circle text-yellow-600 dark:text-yellow-400 text-sm"></i>
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+                  <i className="fas fa-project-diagram text-purple-600 dark:text-purple-400 text-sm"></i>
                 </div>
                 <div className="ml-3 min-w-0 flex-1">
-                  <p className="text-xs font-medium text-muted-foreground truncate">Completed Orders</p>
+                  <p className="text-xs font-medium text-muted-foreground truncate">Active Projects</p>
                   <p className="text-lg font-bold text-foreground truncate">
-                    {statsLoading ? '...' : (stats as any)?.completedOrders || 0}
+                    {statsLoading ? '...' : (stats as any)?.activeProjects || 0}
                   </p>
                 </div>
               </div>
@@ -175,6 +235,65 @@ export default function AdminDashboard() {
             userRole={(user as any)?.role || testingRole || 'administrator'}
             companyType="service"
           />
+        </div>
+
+        {/* Heartbeat Monitor for Administrator */}
+        <div className="mt-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Company Heartbeat Monitor</h3>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Average BPM:</span>
+                  <span className="text-lg font-bold text-foreground">
+                    {workOrdersLoading ? '...' : calculateAverageBPM()}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-black rounded-lg p-4 border border-gray-700">
+                <EKGWaveform
+                  bpm={workOrdersLoading ? 75 : calculateAverageBPM()}
+                  status={getCompanyHealthStatus()}
+                  severity="none"
+                  frequency="occasional"
+                  width={600}
+                  height={120}
+                  className="w-full"
+                />
+              </div>
+              <div className="mt-3 text-sm text-muted-foreground text-center">
+                {getHeartbeatDescription()}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 sm:hidden">
+          <div className="flex justify-around items-center max-w-md mx-auto">
+            <Button variant="ghost" size="sm" onClick={() => setLocation('/admin-dashboard')} className="flex flex-col items-center space-y-1">
+              <i className="fas fa-home text-lg"></i>
+              <span className="text-xs">Home</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="flex flex-col items-center space-y-1 relative">
+              <i className="fas fa-clipboard-check text-lg"></i>
+              <span className="text-xs">Approve</span>
+              {/* Badge for pending approvals */}
+              {(stats as any)?.pendingApprovals > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs px-1 min-w-[16px] h-4 flex items-center justify-center">
+                  {(stats as any)?.pendingApprovals}
+                </span>
+              )}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setLocation('/approved-payments')} className="flex flex-col items-center space-y-1">
+              <i className="fas fa-dollar-sign text-lg"></i>
+              <span className="text-xs">Payments</span>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setLocation('/settings')} className="flex flex-col items-center space-y-1">
+              <i className="fas fa-cog text-lg"></i>
+              <span className="text-xs">Settings</span>
+            </Button>
+          </div>
         </div>
 
       </div>
