@@ -240,7 +240,7 @@ export default function TeamPage() {
   };
 
   const getRoleCount = (role: string) => {
-    if (!allUsers) return 0;
+    if (!allUsers || !Array.isArray(allUsers)) return 0;
     // Filter out users who ONLY have operations_director role (not company team members)
     let filteredUsers = (allUsers as any[]).filter((user: any) => {
       const roles = user.roles || [];
@@ -274,7 +274,7 @@ export default function TeamPage() {
   };
 
   const getUsersForCompany = (companyId: string) => {
-    if (!allUsers) return [];
+    if (!allUsers || !Array.isArray(allUsers)) return [];
     // Filter out users who ONLY have operations_director role (not company team members)
     return (allUsers as any[]).filter((user: any) => {
       const roles = user.roles || [];
@@ -733,7 +733,7 @@ export default function TeamPage() {
                     </div>
                   </div>
                 )) || []}
-                {((allUsers as any[])?.filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter))?.length === 0) && (
+                {(!allUsers || !Array.isArray(allUsers) || (allUsers as any[]).filter((userData: any) => roleFilter === "all" || userData.roles?.includes(roleFilter)).length === 0) && (
                   <div className="text-center py-8">
                     <i className="fas fa-users text-4xl text-muted-foreground mb-4"></i>
                     <p className="text-muted-foreground">

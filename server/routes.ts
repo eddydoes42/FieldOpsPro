@@ -761,7 +761,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tempPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
       // Hash and update the user's password to the temporary one
-      const bcrypt = require('bcrypt');
       const saltRounds = 12;
       const tempPasswordHash = await bcrypt.hash(tempPassword, saltRounds);
       
@@ -2974,6 +2973,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const companyData = insertCompanySchema.parse(req.body);
       const company = await storage.createCompany(companyData);
+      
+      // If an admin was assigned to this company, update their companyId to link them to the company
+      if (companyData.adminId) {
+        try {
+          await storage.updateUser(companyData.adminId, { companyId: company.id });
+          console.log(`Administrator ${companyData.adminId} assigned to company ${company.id}`);
+        } catch (error) {
+          console.error(`Failed to assign admin ${companyData.adminId} to company ${company.id}:`, error);
+        }
+      }
+      
       res.json(company);
     } catch (error) {
       console.error("Error creating company:", error);
