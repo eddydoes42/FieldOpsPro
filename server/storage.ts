@@ -50,6 +50,7 @@ import {
   expenseOrders,
   deviceTokens,
   biometricAuth,
+  deviceMemory,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -91,6 +92,8 @@ import {
   type InsertDeviceToken,
   type BiometricAuth,
   type InsertBiometricAuth,
+  type DeviceMemory,
+  type InsertDeviceMemory,
   type JobNetworkPost,
   type InsertJobNetworkPost,
   type ExclusiveNetworkPost,
@@ -838,6 +841,12 @@ export interface IStorage {
   resetBiometricFailedAttempts(id: string): Promise<BiometricAuth>;
   lockBiometricAuth(id: string, lockedUntil: Date): Promise<BiometricAuth>;
   deactivateBiometricAuth(id: string): Promise<void>;
+
+  // Device Memory operations  
+  createDeviceMemory(deviceMemory: InsertDeviceMemory): Promise<DeviceMemory>;
+  getDeviceMemory(userId: string, deviceFingerprint: string): Promise<DeviceMemory | undefined>;
+  updateDeviceMemoryStatus(userId: string, deviceFingerprint: string, status: Partial<DeviceMemory>): Promise<DeviceMemory>;
+  clearAllDeviceData(userId: string, deviceFingerprint: string): Promise<void>;
 
   // User preferences operations
   updateUserPreferences(userId: string, preferences: any): Promise<User>;
@@ -7335,6 +7344,102 @@ export class DatabaseStorage implements IStorage, IService {
         ),
       );
     return deviceToken;
+  }
+
+  // Device Memory operations
+  async createDeviceMemory(deviceMemoryData: InsertDeviceMemory): Promise<DeviceMemory> {
+    const [memory] = await db
+      .insert(deviceMemory)
+      .values(deviceMemoryData)
+      .returning();
+    return memory;
+  }
+
+  async getDeviceMemory(userId: string, deviceFingerprint: string): Promise<DeviceMemory | undefined> {
+    const [memory] = await db
+      .select()
+      .from(deviceMemory)
+      .where(
+        and(
+          eq(deviceMemory.userId, userId),
+          eq(deviceMemory.deviceFingerprint, deviceFingerprint),
+        ),
+      );
+    return memory;
+  }
+
+  async updateDeviceMemoryStatus(
+    userId: string, 
+    deviceFingerprint: string, 
+    status: Partial<DeviceMemory>
+  ): Promise<DeviceMemory> {
+    // Try to update existing record first
+    const existing = await this.getDeviceMemory(userId, deviceFingerprint);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(deviceMemory)
+        .set({
+          ...status,
+          updatedAt: new Date(),
+        })
+        .where(eq(deviceMemory.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new record if it doesn't exist
+      const deviceMemoryData: InsertDeviceMemory = {
+        userId,
+        deviceFingerprint,
+        hasStoredCredentials: status.hasStoredCredentials ?? false,
+        hasBiometricData: status.hasBiometricData ?? false,
+        deviceName: status.deviceName,
+      };
+      return this.createDeviceMemory(deviceMemoryData);
+    }
+  }
+
+  async clearAllDeviceData(userId: string, deviceFingerprint: string): Promise<void> {
+    // Begin transaction to ensure all-or-nothing clearing
+    await db.transaction(async (tx) => {
+      // 1. Deactivate all device tokens
+      await tx
+        .update(deviceTokens)
+        .set({ 
+          isActive: false,
+          encryptedCredentials: null,
+        })
+        .where(
+          and(
+            eq(deviceTokens.userId, userId),
+            eq(deviceTokens.deviceFingerprint, deviceFingerprint),
+          ),
+        );
+
+      // 2. Deactivate all biometric auth records
+      await tx
+        .update(biometricAuth)
+        .set({ 
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(biometricAuth.userId, userId));
+
+      // 3. Update device memory status to clear all flags
+      await tx
+        .update(deviceMemory)
+        .set({
+          hasStoredCredentials: false,
+          hasBiometricData: false,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(deviceMemory.userId, userId),
+            eq(deviceMemory.deviceFingerprint, deviceFingerprint),
+          ),
+        );
+    });
   }
 
   // User preferences operations

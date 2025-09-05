@@ -272,6 +272,10 @@ class DeviceAuthService {
     // Also store in localStorage for backward compatibility and offline access
     try {
       localStorage.setItem(DeviceAuthService.DEVICE_STORAGE_KEY, JSON.stringify(credentials));
+      
+      // Update device memory status in database
+      await this.updateDeviceMemoryStatus(true, undefined);
+      
       return credentials;
     } catch (error) {
       console.error('Error storing device credentials:', error);
@@ -428,6 +432,9 @@ class DeviceAuthService {
         stored.push(biometricCreds);
         localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
         
+        // Update device memory status to indicate biometric data is stored
+        await this.updateDeviceMemoryStatus(undefined, true);
+        
         console.log('[DeviceAuth] Biometric registration successful', { platform: result.platform, credentialId });
         return biometricCreds;
       } else {
@@ -499,6 +506,104 @@ class DeviceAuthService {
       console.log('[DeviceAuth] Biometric credentials cleared');
     } catch (error) {
       console.error('Error clearing biometric credentials:', error);
+    }
+  }
+
+  // Device Memory Integration Methods
+
+  // Update device memory status in database
+  async updateDeviceMemoryStatus(hasStoredCredentials?: boolean, hasBiometricData?: boolean): Promise<void> {
+    try {
+      const deviceFingerprint = this.generateDeviceFingerprint();
+      const deviceName = this.getDeviceName();
+
+      const response = await fetch('/api/auth/device-memory/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          deviceFingerprint,
+          hasStoredCredentials,
+          hasBiometricData,
+          deviceName
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('[DeviceAuth] Device memory status updated:', result.deviceMemory);
+      } else {
+        console.error('[DeviceAuth] Failed to update device memory status');
+      }
+    } catch (error) {
+      console.error('[DeviceAuth] Error updating device memory status:', error);
+    }
+  }
+
+  // Get device memory information from database
+  async getDeviceMemoryInfo(): Promise<any> {
+    try {
+      const deviceFingerprint = this.generateDeviceFingerprint();
+      
+      const response = await fetch(`/api/auth/device-memory/${encodeURIComponent(deviceFingerprint)}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.deviceMemory;
+      } else if (response.status === 404) {
+        // Device memory not found, this is normal for new devices
+        return null;
+      } else {
+        console.error('[DeviceAuth] Failed to get device memory info');
+        return null;
+      }
+    } catch (error) {
+      console.error('[DeviceAuth] Error getting device memory info:', error);
+      return null;
+    }
+  }
+
+  // Unified device data clearing (database + localStorage + biometric)
+  async clearAllDeviceData(): Promise<void> {
+    try {
+      const deviceFingerprint = this.generateDeviceFingerprint();
+
+      // Clear data from database first
+      const response = await fetch('/api/auth/clear-device-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          deviceFingerprint
+        })
+      });
+
+      if (response.ok) {
+        console.log('[DeviceAuth] Database device data cleared successfully');
+      } else {
+        console.error('[DeviceAuth] Failed to clear database device data');
+      }
+
+      // Clear localStorage regardless of database operation
+      this.clearDeviceMemory();
+      this.clearBiometricCredentials();
+
+      // Clear native biometric data if supported
+      try {
+        await NativeBiometric.clearAll();
+      } catch (error) {
+        console.log('[DeviceAuth] Native biometric clearing not supported or failed:', error);
+      }
+
+      console.log('[DeviceAuth] All device data cleared successfully');
+    } catch (error) {
+      console.error('[DeviceAuth] Error during unified device data clearing:', error);
+      // Fallback to local clearing even if network fails
+      this.clearDeviceMemory();
+      this.clearBiometricCredentials();
     }
   }
   

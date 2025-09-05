@@ -341,6 +341,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Device Memory Management Routes
+  app.post('/api/auth/clear-device-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceFingerprint } = req.body;
+      
+      if (!deviceFingerprint) {
+        return res.status(400).json({ message: "Device fingerprint is required" });
+      }
+
+      await storage.clearAllDeviceData(userId, deviceFingerprint);
+      
+      res.json({ success: true, message: "All device data cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing device data:", error);
+      res.status(500).json({ message: "Failed to clear device data" });
+    }
+  });
+
+  app.put('/api/auth/device-memory/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceFingerprint, hasStoredCredentials, hasBiometricData, deviceName } = req.body;
+      
+      if (!deviceFingerprint) {
+        return res.status(400).json({ message: "Device fingerprint is required" });
+      }
+
+      const updatedStatus = await storage.updateDeviceMemoryStatus(userId, deviceFingerprint, {
+        hasStoredCredentials,
+        hasBiometricData,
+        deviceName
+      });
+      
+      res.json({ success: true, deviceMemory: updatedStatus });
+    } catch (error) {
+      console.error("Error updating device memory status:", error);
+      res.status(500).json({ message: "Failed to update device memory status" });
+    }
+  });
+
+  app.get('/api/auth/device-memory/:deviceFingerprint', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceFingerprint } = req.params;
+      
+      if (!deviceFingerprint) {
+        return res.status(400).json({ message: "Device fingerprint is required" });
+      }
+
+      const deviceMemoryInfo = await storage.getDeviceMemory(userId, deviceFingerprint);
+      
+      if (!deviceMemoryInfo) {
+        return res.status(404).json({ message: "Device memory not found" });
+      }
+      
+      res.json({ success: true, deviceMemory: deviceMemoryInfo });
+    } catch (error) {
+      console.error("Error retrieving device memory:", error);
+      res.status(500).json({ message: "Failed to retrieve device memory" });
+    }
+  });
+
   // Biometric Authentication Routes
   app.post('/api/auth/biometric/register', isAuthenticated, async (req: any, res) => {
     try {

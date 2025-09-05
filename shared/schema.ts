@@ -2336,6 +2336,19 @@ export const biometricAuth = pgTable("biometric_auth", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Device Memory table - for comprehensive device data tracking
+export const deviceMemory = pgTable("device_memory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  deviceFingerprint: varchar("device_fingerprint").notNull().unique(),
+  deviceName: varchar("device_name"),
+  hasStoredCredentials: boolean("has_stored_credentials").default(false),
+  hasBiometricData: boolean("has_biometric_data").default(false),
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations for new payment and auth tables
 export const paymentInformationRelations = relations(paymentInformation, ({ one, many }) => ({
   user: one(users, {
@@ -2432,6 +2445,13 @@ export const biometricAuthRelations = relations(biometricAuth, ({ one }) => ({
   }),
 }));
 
+export const deviceMemoryRelations = relations(deviceMemory, ({ one }) => ({
+  user: one(users, {
+    fields: [deviceMemory.userId],
+    references: [users.id],
+  }),
+}));
+
 // Update users relations to include new tables
 export const usersRelationsUpdated = relations(users, ({ one, many }) => ({
   company: one(companies, {
@@ -2513,3 +2533,14 @@ export const insertBiometricAuthSchema = createInsertSchema(biometricAuth).omit(
 });
 
 export type InsertBiometricAuthType = z.infer<typeof insertBiometricAuthSchema>;
+
+export type DeviceMemory = typeof deviceMemory.$inferSelect;
+export type InsertDeviceMemory = typeof deviceMemory.$inferInsert;
+
+export const insertDeviceMemorySchema = createInsertSchema(deviceMemory).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertDeviceMemoryType = z.infer<typeof insertDeviceMemorySchema>;
