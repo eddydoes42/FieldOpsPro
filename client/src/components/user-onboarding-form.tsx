@@ -336,7 +336,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         
         <CardContent className="flex-1 p-4 overflow-y-auto scrollbar-minimal">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-32">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-40">
               {/* Personal Information */}
               <div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Personal Information</h3>
