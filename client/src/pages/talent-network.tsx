@@ -200,15 +200,15 @@ export default function TalentNetwork() {
       })
     : [];
 
-  // Filter companies based on search term
+  // Filter companies based on search term - now includes companies without agents
   const filteredCompanies = companiesWithAgents.filter((company: any) => {
     return !searchTerm || 
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.agents.some((agent: FieldAgent) => 
+      (company.agents && company.agents.length > 0 && company.agents.some((agent: FieldAgent) => 
         `${agent.firstName} ${agent.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         agent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         agent.specializations?.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      ));
   });
 
   const handleAgentClick = (agent: FieldAgent) => {
