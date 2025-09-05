@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { deviceAuthService } from "@/lib/deviceAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -18,11 +18,30 @@ export function BiometricLoginButton({
   className = ""
 }: BiometricLoginButtonProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricChecking, setBiometricChecking] = useState(true);
   const { toast } = useToast();
 
-  const biometricSupported = deviceAuthService.isBiometricSupported();
   const biometricCredentials = deviceAuthService.getBiometricCredentials();
   const hasBiometricSetup = biometricCredentials.length > 0;
+
+  // Check biometric support asynchronously
+  useEffect(() => {
+    async function checkBiometricSupport() {
+      setBiometricChecking(true);
+      try {
+        const supported = await deviceAuthService.isBiometricSupported();
+        setBiometricSupported(supported);
+      } catch (error) {
+        console.error('Error checking biometric support:', error);
+        setBiometricSupported(false);
+      } finally {
+        setBiometricChecking(false);
+      }
+    }
+    
+    checkBiometricSupport();
+  }, []);
 
   const handleBiometricLogin = async () => {
     if (!biometricSupported) {
@@ -54,7 +73,7 @@ export function BiometricLoginButton({
       
       if (username) {
         // Update device usage
-        deviceAuthService.updateDeviceUsage(username);
+        await deviceAuthService.updateDeviceUsage(username);
         
         toast({
           title: "Authentication Successful",
@@ -84,8 +103,8 @@ export function BiometricLoginButton({
     }
   };
 
-  // Don't render if biometric is not supported or not set up
-  if (!biometricSupported || !hasBiometricSetup) {
+  // Don't render if still checking or biometric is not supported or not set up
+  if (biometricChecking || !biometricSupported || !hasBiometricSetup) {
     return null;
   }
 

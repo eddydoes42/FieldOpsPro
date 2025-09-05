@@ -309,25 +309,100 @@ class DeviceAuthService {
 
   // Register native biometric authentication
   async registerBiometric(username: string): Promise<BiometricCredentials> {
-    if (!this.isBiometricSupported()) {
+    if (!(await this.isBiometricSupported())) {
       throw new Error('Native biometric authentication is not supported on this device');
     }
 
     try {
-      const userAgent = navigator.userAgent;
-      const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-      const isAndroid = /Android/i.test(userAgent);
+      // Use the new NativeBiometric module for better platform detection
+      const result = await NativeBiometric.register('user_' + username, username);
       
-      if (isIOS) {
-        return await this.registerIosBiometric(username);
-      } else if (isAndroid) {
-        return await this.registerAndroidBiometric(username);
+      if (result.success && result.data) {
+        const credentialId = result.data.id || 'biometric_' + Date.now();
+        const biometricCreds: BiometricCredentials = {
+          credentialId,
+          publicKey: `${result.platform}_biometric_${credentialId}`,
+          deviceId: this.generateDeviceId(),
+          username,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Store biometric credentials
+        const stored = this.getBiometricCredentials();
+        stored.push(biometricCreds);
+        localStorage.setItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
+        
+        console.log('[DeviceAuth] Biometric registration successful', { platform: result.platform, credentialId });
+        return biometricCreds;
       } else {
-        return await this.registerWebBiometric(username);
+        throw new Error(result.error || 'Biometric registration failed');
       }
     } catch (error) {
       console.error('Error registering native biometric:', error);
       throw new Error('Failed to register native biometric authentication');
+    }
+  }
+
+  // Get stored biometric credentials
+  getBiometricCredentials(): BiometricCredentials[] {
+    try {
+      const stored = localStorage.getItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error getting biometric credentials:', error);
+      return [];
+    }
+  }
+
+  // Authenticate with biometric
+  async authenticateWithBiometric(): Promise<string | null> {
+    try {
+      const credentials = this.getBiometricCredentials();
+      if (credentials.length === 0) {
+        throw new Error('No biometric credentials found');
+      }
+
+      // Use the most recent credential
+      const latestCred = credentials[credentials.length - 1];
+      const result = await NativeBiometric.authenticate(latestCred.credentialId);
+
+      if (result.success) {
+        console.log('[DeviceAuth] Biometric authentication successful', { platform: result.platform });
+        return latestCred.username;
+      } else {
+        throw new Error(result.error || 'Biometric authentication failed');
+      }
+    } catch (error) {
+      console.error('Error during biometric authentication:', error);
+      return null;
+    }
+  }
+
+  // Get device trust status
+  getDeviceTrustStatus(): {
+    deviceName: string;
+    isRemembered: boolean;
+    expiresAt?: string;
+    biometricEnabled: boolean;
+  } {
+    const credentials = this.getDeviceCredentials();
+    const biometricCreds = this.getBiometricCredentials();
+    
+    return {
+      deviceName: this.getDeviceName(),
+      isRemembered: credentials ? credentials.isRemembered : false,
+      expiresAt: credentials?.expiresAt,
+      biometricEnabled: biometricCreds.length > 0
+    };
+  }
+
+  // Clear biometric credentials
+  clearBiometricCredentials(): void {
+    try {
+      localStorage.removeItem(DeviceAuthService.BIOMETRIC_STORAGE_KEY);
+      console.log('[DeviceAuth] Biometric credentials cleared');
+    } catch (error) {
+      console.error('Error clearing biometric credentials:', error);
     }
   }
   

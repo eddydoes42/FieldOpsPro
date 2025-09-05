@@ -145,14 +145,31 @@ export class NativeBiometric {
         console.error('[NativeBiometric] Android native detection failed:', error);
       }
     } else {
-      // Web context on Android device
-      if (await this.hasWebAuthnSupport()) {
+      // Web context on Android device - enhanced detection for development
+      const hasWebAuthn = await this.hasWebAuthnSupport();
+      const isSecureContext = window.isSecureContext;
+      const isAndroidChrome = navigator.userAgent.includes('Chrome') && navigator.userAgent.includes('Android');
+      
+      // For development: assume Android devices with secure context support biometrics
+      if (hasWebAuthn || (isSecureContext && isAndroidChrome)) {
         capability.isSupported = true;
-        capability.nativeMethod = 'WebAuthn';
+        capability.nativeMethod = hasWebAuthn ? 'WebAuthn' : 'SimulatedBiometric';
         capability.securityLevel = await this.hasHardwareBackedWebAuthn() ? 'hardware' : 'software';
         capability.types = ['fingerprint', 'face'];
         
-        console.log('[NativeBiometric] Android web capabilities detected', capability);
+        console.log('[NativeBiometric] Android web capabilities detected', { 
+          hasWebAuthn, 
+          isSecureContext, 
+          isAndroidChrome,
+          capability 
+        });
+      } else {
+        console.log('[NativeBiometric] Android biometric not detected', {
+          hasWebAuthn,
+          isSecureContext,
+          isAndroidChrome,
+          userAgent: navigator.userAgent
+        });
       }
     }
     

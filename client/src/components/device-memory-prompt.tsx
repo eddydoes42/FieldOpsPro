@@ -25,18 +25,34 @@ export function DeviceMemoryPrompt({
   const [rememberDevice, setRememberDevice] = useState(false);
   const [enableBiometric, setEnableBiometric] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricChecking, setBiometricChecking] = useState(true);
   const [debugInfo, setDebugInfo] = useState('');
   const { toast } = useToast();
 
   const deviceStatus = deviceAuthService.getDeviceTrustStatus();
-  const biometricSupported = deviceAuthService.isBiometricSupported();
   
-  // Enhanced debugging for mobile devices
+  // Check biometric support asynchronously
   React.useEffect(() => {
-    const info = `Device: ${deviceStatus.deviceName || 'Unknown'}, Biometric: ${biometricSupported ? 'Supported' : 'Not Supported'}, Secure: ${window.isSecureContext}, Mobile: ${/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)}`;
-    setDebugInfo(info);
-    console.log('[DeviceMemoryPrompt] Debug info:', info);
-  }, [deviceStatus, biometricSupported]);
+    async function checkBiometricSupport() {
+      setBiometricChecking(true);
+      try {
+        const supported = await deviceAuthService.isBiometricSupported();
+        setBiometricSupported(supported);
+        
+        const info = `Device: ${deviceStatus.deviceName || 'Unknown'}, Biometric: ${supported ? 'Supported' : 'Not Supported'}, Secure: ${window.isSecureContext}, Mobile: ${/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)}`;
+        setDebugInfo(info);
+        console.log('[DeviceMemoryPrompt] Debug info:', info);
+      } catch (error) {
+        console.error('Error checking biometric support:', error);
+        setBiometricSupported(false);
+      } finally {
+        setBiometricChecking(false);
+      }
+    }
+    
+    checkBiometricSupport();
+  }, [deviceStatus.deviceName]);
 
   const handleSavePreferences = async () => {
     setIsProcessing(true);
@@ -44,14 +60,14 @@ export function DeviceMemoryPrompt({
     try {
       if (rememberDevice) {
         // Save device with credentials for autofill
-        deviceAuthService.rememberDevice(username, password);
+        await deviceAuthService.rememberDevice(username, password);
         
         if (enableBiometric && biometricSupported && username) {
           try {
             await deviceAuthService.registerBiometric(username);
             toast({
               title: "Device Settings Saved",
-              description: "Device remembered with biometric login enabled.",
+              description: "Device remembered with biometric login enabled. Your device's biometric authentication has been registered.",
             });
           } catch (biometricError) {
             console.error('Biometric setup failed:', biometricError);
@@ -144,9 +160,29 @@ export function DeviceMemoryPrompt({
 
           {/* Biometric Option */}
           <div className={`flex items-start space-x-3 p-4 border rounded-lg transition-opacity ${
-            !biometricSupported ? 'opacity-50 bg-gray-50 dark:bg-gray-800' : !rememberDevice ? 'opacity-50' : ''
+            biometricChecking ? 'opacity-50' : !biometricSupported ? 'opacity-50 bg-gray-50 dark:bg-gray-800' : !rememberDevice ? 'opacity-50' : ''
           }`}>
-            {biometricSupported ? (
+            {biometricChecking ? (
+              <>
+                <Checkbox
+                  id="enable-biometric-loading"
+                  checked={false}
+                  disabled={true}
+                  data-testid="checkbox-enable-biometric-loading"
+                />
+                <div className="flex-1">
+                  <label className="text-sm font-medium cursor-not-allowed text-muted-foreground">
+                    Checking biometric support...
+                  </label>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Fingerprint className="h-3 w-3 text-muted-foreground animate-pulse" />
+                    <p className="text-xs text-muted-foreground">
+                      Detecting device capabilities
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : biometricSupported ? (
               <>
                 <Checkbox
                   id="enable-biometric"
