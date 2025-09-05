@@ -36,9 +36,10 @@ interface CompanyOnboardingFormProps {
   onClose: (createdCompanyId?: string) => void;
   preFilledUserId?: string;
   companyType?: 'service' | 'client';
+  pendingUserData?: any;
 }
 
-export default function CompanyOnboardingForm({ onClose, preFilledUserId, companyType = 'service' }: CompanyOnboardingFormProps) {
+export default function CompanyOnboardingForm({ onClose, preFilledUserId, companyType = 'service', pendingUserData }: CompanyOnboardingFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -84,18 +85,28 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId, compan
     retryDelay: 500 // Wait 500ms between retries
   });
 
-  // Set assignedAdmin when preFilledUser or directUser is loaded
+  // Set assignedAdmin when preFilledUser or directUser is loaded, or use pendingUserData
   useEffect(() => {
-    const userToAssign = preFilledUser || directUser;
-    if (userToAssign && preFilledUserId) {
+    if (pendingUserData && preFilledUserId === 'pending') {
+      // Use pending user data to show admin assignment
       setAssignedAdmin({
-        id: userToAssign.id,
-        firstName: userToAssign.firstName,
-        lastName: userToAssign.lastName,
-        email: userToAssign.email
+        id: 'pending',
+        firstName: pendingUserData.firstName,
+        lastName: pendingUserData.lastName,
+        email: pendingUserData.email
       });
+    } else {
+      const userToAssign = preFilledUser || directUser;
+      if (userToAssign && preFilledUserId) {
+        setAssignedAdmin({
+          id: userToAssign.id,
+          firstName: userToAssign.firstName,
+          lastName: userToAssign.lastName,
+          email: userToAssign.email
+        });
+      }
     }
-  }, [preFilledUser, directUser, preFilledUserId]);
+  }, [preFilledUser, directUser, preFilledUserId, pendingUserData]);
 
   // Mutation to update user's company assignment
   const updateUserCompanyMutation = useMutation({
@@ -401,8 +412,8 @@ export default function CompanyOnboardingForm({ onClose, preFilledUserId, compan
                               {assignedAdmin.email}
                             </div>
                           </div>
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                            Administrator
+                          <Badge variant="secondary" className={assignedAdmin?.id === 'pending' ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"}>
+                            {assignedAdmin?.id === 'pending' ? 'Pending User' : 'Administrator'}
                           </Badge>
                           <Button
                             type="button"

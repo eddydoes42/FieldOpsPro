@@ -861,6 +861,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
               }
             }}
             preFilledUserId={pendingUserData ? 'pending' : undefined}
+            pendingUserData={pendingUserData}
             companyType={selectedCompanyType}
           />
         </DialogContent>
