@@ -147,10 +147,12 @@ export default function CredentialLogin() {
     // Check biometric support
     const checkBiometricSupport = async () => {
       try {
+        console.log('[CredentialLogin] Checking biometric support...');
         const supported = await deviceAuthService.isBiometricSupported();
+        console.log('[CredentialLogin] Biometric support result:', supported);
         setIsBiometricSupported(supported);
       } catch (error) {
-        console.error('Error checking biometric support:', error);
+        console.error('[CredentialLogin] Error checking biometric support:', error);
         setIsBiometricSupported(false);
       }
     };
@@ -300,30 +302,32 @@ export default function CredentialLogin() {
                     )}
                   />
 
-                  {/* Remember This Device Checkbox */}
-                  <FormField
-                    control={form.control}
-                    name="rememberDevice"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            data-testid="checkbox-remember-device"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm font-normal">
-                            Remember this device
-                          </FormLabel>
-                          <p className="text-xs text-muted-foreground">
-                            Skip login on this device for 30 days
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
+                  {/* Remember This Device Checkbox - Only show if no cached credentials */}
+                  {!hasStoredCredentials && !showDifferentAccount && (
+                    <FormField
+                      control={form.control}
+                      name="rememberDevice"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="checkbox-remember-device"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-normal">
+                              Remember this device
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                              Skip login on this device for 30 days
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   <Button 
                     type="submit"
