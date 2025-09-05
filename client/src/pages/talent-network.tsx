@@ -124,29 +124,34 @@ export default function TalentNetwork() {
   }, []);
 
   // Fetch field agents from all companies
-  const { data: fieldAgents, isLoading } = useQuery<FieldAgent[]>({
+  const { data: fieldAgents, isLoading: agentsLoading } = useQuery<FieldAgent[]>({
     queryKey: ['/api/users/field-agents'],
   });
 
-  // Get unique companies with agent counts
-  const companiesWithAgents = fieldAgents && Array.isArray(fieldAgents) ? 
-    fieldAgents.reduce((acc: any[], agent: FieldAgent) => {
-      if (!agent.company) return acc;
-      
-      const existingCompany = acc.find(c => c.name === agent.company!.name);
-      if (existingCompany) {
-        existingCompany.agents.push(agent);
-        existingCompany.agentCount++;
-      } else {
-        acc.push({
-          id: agent.company.id,
-          name: agent.company.name,
-          agents: [agent],
-          agentCount: 1
-        });
-      }
-      return acc;
-    }, []) : [];
+  // Fetch all companies separately to ensure recently onboarded companies are shown
+  const { data: allCompanies, isLoading: companiesLoading } = useQuery<any[]>({
+    queryKey: ['/api/companies'],
+    enabled: !!user,
+  });
+
+  const isLoading = agentsLoading || companiesLoading;
+
+  // Get unique companies with agent counts - now includes ALL companies, even those without agents
+  const companiesWithAgents = allCompanies && Array.isArray(allCompanies) ? 
+    allCompanies
+      .filter((company: any) => company.type === 'service') // Only show service companies in talent network
+      .map((company: any) => {
+        // Find agents for this company
+        const companyAgents = fieldAgents && Array.isArray(fieldAgents) ? 
+          fieldAgents.filter((agent: FieldAgent) => agent.company?.id === company.id) : [];
+        
+        return {
+          id: company.id,
+          name: company.name,
+          agents: companyAgents,
+          agentCount: companyAgents.length
+        };
+      }) : [];
 
   // Get agents for selected company
   const selectedCompanyAgents = selectedCompany 
