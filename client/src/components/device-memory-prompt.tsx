@@ -62,7 +62,8 @@ export function DeviceMemoryPrompt({
         // Save device with credentials for autofill
         await deviceAuthService.rememberDevice(username, password);
         
-        if (enableBiometric && biometricSupported && username) {
+        // If user selected to remember device, automatically set up biometrics if supported
+        if (biometricSupported && username) {
           try {
             await deviceAuthService.registerBiometric(username);
             toast({
@@ -196,12 +197,12 @@ export function DeviceMemoryPrompt({
                     htmlFor="enable-biometric" 
                     className={`text-sm font-medium ${!rememberDevice || !biometricSupported ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   >
-                    Enable biometric login
+                    Automatic biometric setup
                   </label>
                   <div className="flex items-center gap-1 mt-1">
                     <Fingerprint className="h-3 w-3 text-muted-foreground" />
                     <p className="text-xs text-muted-foreground">
-                      Use fingerprint or face recognition
+                      Will be enabled automatically when you save
                     </p>
                   </div>
                 </div>

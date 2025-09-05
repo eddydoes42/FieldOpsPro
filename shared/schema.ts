@@ -2312,7 +2312,7 @@ export const deviceTokens = pgTable("device_tokens", {
   tokenHash: varchar("token_hash").notNull().unique(), // hashed secure token
   deviceFingerprint: varchar("device_fingerprint").notNull(), // browser/device identifier
   deviceName: varchar("device_name"), // user-friendly device name
-  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  lastUsedAt: timestamp("lastUsedAt").defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
   isActive: boolean("is_active").default(true),
   userAgent: text("user_agent"),
@@ -2329,7 +2329,7 @@ export const biometricAuth = pgTable("biometric_auth", {
   encryptedBiometricData: text("encrypted_biometric_data").notNull(), // encrypted biometric template
   deviceId: varchar("device_id").notNull(), // device-specific identifier
   isActive: boolean("is_active").default(true),
-  lastUsedAt: timestamp("last_used_at"),
+  lastUsedAt: timestamp("lastUsedAt"),
   failedAttempts: integer("failed_attempts").default(0),
   lockedUntil: timestamp("locked_until"), // temporary lockout for failed attempts
   createdAt: timestamp("created_at").defaultNow(),
@@ -2344,7 +2344,7 @@ export const deviceMemory = pgTable("device_memory", {
   deviceName: varchar("device_name"),
   hasStoredCredentials: boolean("has_stored_credentials").default(false),
   hasBiometricData: boolean("has_biometric_data").default(false),
-  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  lastUsedAt: timestamp("lastUsedAt").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

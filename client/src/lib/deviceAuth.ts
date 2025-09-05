@@ -615,7 +615,12 @@ class DeviceAuthService {
   // Quick clear with immediate refresh (for UI buttons)
   async clearAllDeviceDataWithRefresh(): Promise<void> {
     await this.clearAllDeviceData();
-    // clearAllDeviceData already includes refresh, but this method makes it explicit
+    
+    // Clear the session storage flag so the prompt can show again
+    sessionStorage.removeItem('devicePromptShown');
+    
+    console.log('[DeviceAuth] Refreshing page to ensure clean state');
+    window.location.reload();
   }
 
   // Enhanced browser saved passwords and autofill data clearing
@@ -750,6 +755,29 @@ class DeviceAuthService {
         resolve(hasAutofilledData);
       }, 100);
     });
+  }
+
+  // Check if the Remember Device prompt should be shown
+  shouldShowRememberDevicePrompt(): boolean {
+    try {
+      // Don't show if already shown in this session
+      if (sessionStorage.getItem('devicePromptShown')) {
+        return false;
+      }
+
+      // Don't show if device is already remembered
+      const deviceFingerprint = this.generateDeviceFingerprint();
+      const credentials = this.getDeviceCredentials();
+      if (credentials && credentials.isRemembered) {
+        return false;
+      }
+
+      // Show the prompt for new or unremembered devices
+      return true;
+    } catch (error) {
+      console.error('[DeviceAuth] Error checking if prompt should be shown:', error);
+      return false;
+    }
   }
 }
 
