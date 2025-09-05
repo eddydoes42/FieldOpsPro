@@ -178,11 +178,11 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
       };
     }
     
-    // Check for testing role from localStorage or prop  
-    const activeTestingRole = testingRole || storedTestingRole;
+    // Check for testing role from localStorage or prop, but ONLY if role testing is actually active
+    const activeTestingRole = (testingRole || storedTestingRole) && isCurrentlyTesting ? (testingRole || storedTestingRole) : null;
     
-    // Use testing role if active, otherwise use actual user roles
-    if (activeTestingRole) {
+    // Use testing role if active AND confirmed by server, otherwise use actual user roles
+    if (activeTestingRole && isCurrentlyTesting) {
       const roles = [activeTestingRole];
       return getConfigForRoles(roles);
     }
