@@ -43,13 +43,13 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
   const [selectedAccessRequest, setSelectedAccessRequest] = useState<AccessRequest | null>(null);
 
   // Fetch access requests
-  const { data: accessRequests = [], isLoading: isLoadingAccess } = useQuery({
+  const { data: accessRequests = [], isLoading: isLoadingAccess } = useQuery<AccessRequest[]>({
     queryKey: ['/api/access-requests'],
     enabled: open
   });
 
   // Fetch approval requests  
-  const { data: approvalRequests = [], isLoading: isLoadingApprovals } = useQuery({
+  const { data: approvalRequests = [], isLoading: isLoadingApprovals } = useQuery<any[]>({
     queryKey: ['/api/approval-requests'],
     enabled: open
   });
@@ -57,9 +57,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
   // Approve access request mutation (called after user creation)
   const approveAccessMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      return apiRequest(`/api/access-requests/${requestId}/approve`, {
-        method: 'POST'
-      });
+      return apiRequest(`/api/access-requests/${requestId}/approve`, 'POST');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
@@ -83,6 +81,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
   const handleApproveRequest = (request: AccessRequest) => {
     setSelectedAccessRequest(request);
     setShowUserForm(true);
+    onClose(); // Close the things to approve popup
   };
 
   // Handle successful user creation - this approves the access request
@@ -96,14 +95,13 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
   const handleUserFormClose = () => {
     setShowUserForm(false);
     setSelectedAccessRequest(null);
+    // Don't call onClose() here - this would prevent reopening the things to approve
   };
 
   // Reject access request mutation
   const rejectAccessMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      return apiRequest(`/api/access-requests/${requestId}/reject`, {
-        method: 'POST'
-      });
+      return apiRequest(`/api/access-requests/${requestId}/reject`, 'POST');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
@@ -325,7 +323,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
         </div>
       </DialogContent>
 
-      {/* User Creation Form Dialog - Triggered when approving access request */}
+      {/* User Creation Form Dialog - Rendered outside main dialog to prevent conflicts */}
       {showUserForm && selectedAccessRequest && (
         <UserOnboardingForm
           onClose={handleUserFormClose}

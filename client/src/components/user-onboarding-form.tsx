@@ -316,8 +316,8 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-1 overflow-y-auto">
-      <Card className="max-w-3xl w-full min-h-fit my-1 flex flex-col bg-white dark:bg-gray-900 max-h-[98vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <Card className="max-w-3xl w-full min-h-fit my-4 flex flex-col bg-white dark:bg-gray-900 max-h-[95vh] overflow-hidden">
         <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
@@ -336,7 +336,7 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         
         <CardContent className="flex-1 p-4 overflow-y-auto scrollbar-minimal">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-20">
               {/* Personal Information */}
               <div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Personal Information</h3>
@@ -790,20 +790,20 @@ export default function UserOnboardingForm({ onClose, onSuccess, currentUser, pr
         </CardContent>
         
         {/* Action Buttons - Fixed at bottom */}
-        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex space-x-3">
             <Button 
               type="button" 
               variant="outline"
               onClick={onClose}
-              className="flex-1 h-9"
+              className="flex-1 h-10"
             >
               Cancel
             </Button>
             <Button 
               type="submit"
               disabled={createUserMutation.isPending}
-              className="flex-1 h-9"
+              className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white"
               onClick={form.handleSubmit(onSubmit)}
             >
               {createUserMutation.isPending ? "Creating..." : "Create User"}
