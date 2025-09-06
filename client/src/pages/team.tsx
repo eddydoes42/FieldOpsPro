@@ -626,8 +626,8 @@ export default function TeamPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {(allUsers as any[])
-                  ?.filter((userData: any) => {
+                {(allUsers && Array.isArray(allUsers) ? allUsers : [])
+                  .filter((userData: any) => {
                     const roles = userData.roles || [];
                     // Include if user has other roles besides operations_director
                     return roles.some((r: string) => r !== 'operations_director');
