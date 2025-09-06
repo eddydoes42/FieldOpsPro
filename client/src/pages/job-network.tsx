@@ -204,6 +204,10 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   // Request job mutation
   const requestJobMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Check if service company has field agents/engineers before allowing request
+      if (fieldAgents.length === 0) {
+        throw new Error('Your company must have at least one Field Agent or Field Engineer to request work order assignments');
+      }
       return apiRequest('/api/work-order-requests', 'POST', data);
     },
     onSuccess: () => {

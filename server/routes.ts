@@ -1508,12 +1508,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete work order route - only administrators and managers can delete
+  // Delete work order route - only creator company and Operations Director can delete
   app.delete('/api/work-orders/:id', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!canManageUsers(currentUser || null)) {
-        return res.status(403).json({ message: "Insufficient permissions" });
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { id } = req.params;
+      const workOrder = await storage.getWorkOrder(id);
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+
+      // Only Operations Director or creator company can delete
+      const canDelete = isOperationsDirector(currentUser) || 
+                       (workOrder.companyId && workOrder.companyId === currentUser.companyId);
+      
+      if (!canDelete) {
+        return res.status(403).json({ message: "Only the creator company or Operations Director can delete this work order" });
       }
 
       const { id } = req.params;

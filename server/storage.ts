@@ -1950,24 +1950,6 @@ export class DatabaseStorage implements IStorage, IService {
     await db.delete().from(workOrderIssues).where(eq(workOrderIssues.id, id));
   }
 
-  // Work Order Issue operations
-  async getWorkOrderIssues(workOrderId: string): Promise<WorkOrderIssue[]> {
-    return await db
-      .select()
-      .from(workOrderIssues)
-      .where(eq(workOrderIssues.workOrderId, workOrderId))
-      .orderBy(desc(workOrderIssues.createdAt));
-  }
-
-  async createWorkOrderIssue(
-    issueData: InsertWorkOrderIssue,
-  ): Promise<WorkOrderIssue> {
-    const [issue] = await db
-      .insert(workOrderIssues)
-      .values(issueData)
-      .returning();
-    return issue;
-  }
 
   async getAllIssues(): Promise<WorkOrderIssue[]> {
     return await db
