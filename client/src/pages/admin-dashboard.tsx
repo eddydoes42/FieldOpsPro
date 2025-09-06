@@ -56,19 +56,19 @@ export default function AdminDashboard() {
 
   // Helper functions for heartbeat monitor
   const calculateAverageBPM = () => {
-    if (!workOrders || !Array.isArray(workOrders) || workOrders.length === 0) return 75; // Baseline BPM
+    if (!workOrders || !Array.isArray(workOrders) || workOrders.length === 0) return 100; // Baseline BPM
     
     // Get active work orders and projects for this company
     const activeOrders = workOrders.filter((order: any) => 
       order.status === 'in_progress' || order.status === 'scheduled' || order.status === 'confirmed'
     );
     
-    if (activeOrders.length === 0) return 75; // Baseline BPM
+    if (activeOrders.length === 0) return 100; // Baseline BPM
     
     // Calculate average BPM from active work orders
     const totalBPM = activeOrders.reduce((sum: number, order: any) => {
       // Calculate BPM based on order urgency, status, and health
-      let orderBPM = 75; // Base BPM
+      let orderBPM = 100; // Base BPM
       
       if (order.priority === 'urgent') orderBPM += 25;
       else if (order.priority === 'high') orderBPM += 15;
