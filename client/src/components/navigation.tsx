@@ -520,7 +520,7 @@ export default function Navigation({ testingRole, currentActiveRole, onPermanent
                           {config.badge.text}
                         </span>
                         {/* Show testing indicator if in role test mode */}
-                        {(localStorage.getItem('testingRole') || localStorage.getItem('testingCompanyType')) && (
+                        {isCurrentlyTesting && (
                           <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center">
                             <i className="fas fa-vial mr-1"></i>
                             Role Testing Active
