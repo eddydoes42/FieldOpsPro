@@ -3723,7 +3723,29 @@ export class DatabaseStorage implements IStorage, IService {
 
   async getPendingAccessRequests(): Promise<AccessRequest[]> {
     return await db
-      .select()
+      .select({
+        id: accessRequests.id,
+        firstName: accessRequests.firstName,
+        lastName: accessRequests.lastName,
+        email: accessRequests.email,
+        phone: accessRequests.phone,
+        requestedRole: accessRequests.requestedRole,
+        intention: accessRequests.intention,
+        howHeardAbout: accessRequests.howHeardAbout,
+        skillsDescription: accessRequests.skillsDescription,
+        status: accessRequests.status,
+        requestedAt: accessRequests.requestedAt,
+        reviewedAt: accessRequests.reviewedAt,
+        reviewedBy: accessRequests.reviewedBy,
+        notes: accessRequests.notes,
+        // Dev bypass fields - explicitly include these
+        isDevBypass: accessRequests.isDevBypass,
+        testingGoals: accessRequests.testingGoals,
+        companyType: accessRequests.companyType,
+        companyName: accessRequests.companyName,
+        username: accessRequests.username,
+        password: accessRequests.password
+      })
       .from(accessRequests)
       .where(eq(accessRequests.status, "pending"))
       .orderBy(desc(accessRequests.requestedAt));
