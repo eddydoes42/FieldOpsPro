@@ -1392,12 +1392,24 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            // TODO: Implement counter proposal functionality
-                            toast({
-                              title: "Counter Proposal",
-                              description: "Counter proposal functionality coming soon",
-                            });
+                          onClick={async () => {
+                            try {
+                              await apiRequest('PATCH', `/api/work-orders/${job.id}`, {
+                                jobNetworkStatus: 'counter',
+                                counterProposalNotes: 'Service company has submitted a counter proposal'
+                              });
+                              queryClient.invalidateQueries({ queryKey: ['/api/job-network'] });
+                              toast({
+                                title: "Counter Proposal Submitted",
+                                description: "Your counter proposal has been submitted for review",
+                              });
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: "Failed to submit counter proposal",
+                                variant: "destructive"
+                              });
+                            }
                           }}
                           className="border-orange-500 text-orange-600 hover:bg-orange-50 text-xs"
                           data-testid={`button-counter-proposal-${job.id}`}
@@ -1429,12 +1441,25 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            // TODO: Implement not interested functionality
-                            toast({
-                              title: "Not Interested",
-                              description: "This work order will be hidden from your view",
-                            });
+                          onClick={async () => {
+                            try {
+                              await apiRequest('PATCH', `/api/work-orders/${job.id}`, {
+                                jobNetworkStatus: 'declined',
+                                declinedByCompanies: [...(job.declinedByCompanies || []), user.companyId],
+                                declineReason: 'Service company not interested'
+                              });
+                              queryClient.invalidateQueries({ queryKey: ['/api/job-network'] });
+                              toast({
+                                title: "Declined",
+                                description: "This work order has been declined and hidden from your view",
+                              });
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: "Failed to decline work order",
+                                variant: "destructive"
+                              });
+                            }
                           }}
                           className="text-gray-500 hover:text-red-600 hover:bg-red-50 text-xs"
                           data-testid={`button-not-interested-${job.id}`}
