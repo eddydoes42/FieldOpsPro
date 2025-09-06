@@ -33,7 +33,7 @@ interface AccessRequest {
   phone?: string;
   requestedRole: string;
   status: string;
-  createdAt: string;
+  requestedAt: string;
   isDevBypass?: boolean;
   testingGoals?: string;
   companyName?: string;
@@ -110,6 +110,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
     // For dev bypass requests, approve directly without user form
     if (request.isDevBypass) {
       directApproveMutation.mutate(request.id);
+      onClose(); // Close the things to approve popup immediately
     } else {
       // For regular requests, open user creation form
       setSelectedAccessRequest(request);
@@ -286,7 +287,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
                           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              <span>{new Date(request.createdAt).toLocaleDateString()}</span>
+                              <span>{new Date(request.requestedAt).toLocaleDateString()}</span>
                             </div>
                             {request.phone && (
                               <span>Phone: {request.phone}</span>
@@ -359,7 +360,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
                           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              <span>{new Date(request.createdAt).toLocaleDateString()}</span>
+                              <span>{new Date(request.requestedAt).toLocaleDateString()}</span>
                             </div>
                             {request.requestedBy && (
                               <div className="flex items-center gap-1">
