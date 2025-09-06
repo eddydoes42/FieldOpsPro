@@ -34,6 +34,11 @@ interface AccessRequest {
   requestedRole: string;
   status: string;
   createdAt: string;
+  isDevBypass?: boolean;
+  testingGoals?: string;
+  companyName?: string;
+  companyType?: string;
+  username?: string;
 }
 
 export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProps) {
