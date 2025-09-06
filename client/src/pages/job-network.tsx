@@ -97,6 +97,9 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   const [selectedJobForRequest, setSelectedJobForRequest] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [clientCompanyFilter, setClientCompanyFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date'); // date, price_high, price_low
+  const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -184,6 +187,18 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
   const { data: serviceCompaniesForOD = [] } = useQuery<any[]>({
     queryKey: ['/api/companies/service'],
     enabled: isOperationsDirector(user) && !testingRole,
+  });
+
+  // Query for all companies
+  const { data: companies } = useQuery({
+    queryKey: ["/api/companies"],
+    enabled: !!user,
+  });
+
+  // Query for work orders
+  const { data: workOrders, isLoading: workOrdersLoading } = useQuery({
+    queryKey: ["/api/work-orders"],
+    enabled: !!user,
   });
 
   // Request job mutation
@@ -436,14 +451,57 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
     setIsRequestJobOpen(true);
   };
 
-  const filteredJobs = jobPosts.filter((job: any) => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Filter and sort work orders for Job Network display
+  const filteredJobs = workOrders ? (workOrders as any[])
+    .filter((workOrder: any) => {
+      // Basic search filter
+      const matchesSearch = !searchTerm || (
+        workOrder.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        workOrder.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        workOrder.location?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      // Status filter based on jobNetworkStatus
+      const matchesStatus = statusFilter === 'all' || workOrder.jobNetworkStatus === statusFilter;
+      
+      // Client Company filter
+      const matchesClientCompany = clientCompanyFilter === 'all' || workOrder.companyId === clientCompanyFilter;
+      
+      // Field Agents should not see Job Network at all - they'll be redirected to My Work
+      // Service Companies should see Available jobs + their own requests/assignments
+      // Client Companies should see only their own posted jobs
+      
+      return matchesSearch && matchesStatus && matchesClientCompany;
+    })
+    .sort((a: any, b: any) => {
+      // Sorting logic
+      if (sortBy === 'date') {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      } else if (sortBy === 'price') {
+        const priceA = parseFloat(a.budgetAmount) || 0;
+        const priceB = parseFloat(b.budgetAmount) || 0;
+        return sortOrder === 'desc' ? priceB - priceA : priceA - priceB;
+      }
+      return 0;
+    }) : [];
 
+
+  // Field Agents should not access Job Network - redirect to My Work
+  const isFieldAgent = (user as any)?.roles?.includes('field_agent') && 
+                      !(user as any)?.roles?.includes('administrator') && 
+                      !(user as any)?.roles?.includes('manager') &&
+                      !(user as any)?.roles?.includes('dispatcher');
+
+  if (isFieldAgent) {
+    setLocation('/mywork');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -459,9 +517,43 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Status Tabs - Field Nation Style */}
         <div className="mb-6">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+            {[
+              { value: 'all', label: 'All', count: workOrders?.length || 0 },
+              { value: 'available', label: 'Available', count: workOrders?.filter((w: any) => w.jobNetworkStatus === 'available').length || 0 },
+              { value: 'counter', label: 'Counter', count: workOrders?.filter((w: any) => w.jobNetworkStatus === 'counter').length || 0 },
+              { value: 'requested', label: 'Requested', count: workOrders?.filter((w: any) => w.jobNetworkStatus === 'requested').length || 0 },
+              { value: 'assigned', label: 'Assigned', count: workOrders?.filter((w: any) => w.jobNetworkStatus === 'assigned').length || 0 },
+              { value: 'pending', label: 'Pending', count: workOrders?.filter((w: any) => w.jobNetworkStatus === 'pending').length || 0 },
+              { value: 'completed', label: 'Completed', count: workOrders?.filter((w: any) => w.jobNetworkStatus === 'completed').length || 0 },
+              { value: 'declined', label: 'Declined', count: workOrders?.filter((w: any) => w.jobNetworkStatus === 'declined').length || 0 },
+            ].map((status) => (
+              <Button
+                key={status.value}
+                variant={statusFilter === status.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(status.value)}
+                className={`flex items-center space-x-2 ${
+                  statusFilter === status.value 
+                    ? 'bg-blue-600 text-white border-blue-600' 
+                    : 'border-gray-300 hover:border-blue-400'
+                }`}
+                data-testid={`filter-${status.value}`}
+              >
+                <span>{status.label}</span>
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {status.count}
+                </Badge>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Search and Advanced Filters */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-4 flex-wrap gap-2">
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -470,20 +562,42 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
+                  data-testid="input-search"
                 />
               </div>
             </div>
             
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filter by status" />
+            {/* Client Company Filter */}
+            <Select value={clientCompanyFilter} onValueChange={setClientCompanyFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by Client Company" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="assigned">Assigned</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="all">All Client Companies</SelectItem>
+                {companies && (companies as any[])
+                  .filter((c: any) => c.type === 'client')
+                  .map((company: any) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            {/* Sort Options */}
+            <Select value={`${sortBy}_${sortOrder}`} onValueChange={(value) => {
+              const [newSortBy, newSortOrder] = value.split('_');
+              setSortBy(newSortBy);
+              setSortOrder(newSortOrder);
+            }}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date_desc">Date: Latest First</SelectItem>
+                <SelectItem value="date_asc">Date: Oldest First</SelectItem>
+                <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                <SelectItem value="price_low">Price: Low to High</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1290,38 +1404,84 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                   )}
 
                   {/* Action Buttons */}
-                  <div className="mt-4 flex justify-between items-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedJob(job)}
-                    >
-                      View Details
-                    </Button>
-                    
-                    {isAdminTeam(user) && job.status === 'open' && !job.assignedToCompanyId && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between items-center">
                       <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleRequestJob(job)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => setSelectedJob(job)}
+                        data-testid={`button-view-details-${job.id}`}
                       >
-                        Request Job
+                        View Details
                       </Button>
-                    )}
+                      
+                      {/* Request Assignment Button - for Service Companies on Available jobs */}
+                      {isAdminTeam(user) && job.jobNetworkStatus === 'available' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleRequestJob(job)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          data-testid={`button-request-assignment-${job.id}`}
+                        >
+                          Request Assignment
+                        </Button>
+                      )}
+                      
+                      {/* Counter Proposal Button - for Service Companies */}
+                      {isAdminTeam(user) && job.jobNetworkStatus === 'available' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            // TODO: Implement counter proposal functionality
+                            toast({
+                              title: "Counter Proposal",
+                              description: "Counter proposal functionality coming soon",
+                            });
+                          }}
+                          className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                          data-testid={`button-counter-proposal-${job.id}`}
+                        >
+                          Counter Proposal
+                        </Button>
+                      )}
+                      
+                      {/* Assign Button - for Client Companies on their own jobs */}
+                      {isClient(user) && job.createdById === user.id && job.jobNetworkStatus === 'available' && (
+                        <Select onValueChange={(companyId) => assignJobMutation.mutate({ jobId: job.id, companyId })}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Assign to..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {serviceCompanies.map((company: any) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                     
-                    {isClient(user) && job.createdById === user.id && job.status === 'open' && !job.assignedToCompanyId && (
-                      <Select onValueChange={(companyId) => assignJobMutation.mutate({ jobId: job.id, companyId })}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Assign to..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {serviceCompanies.map((company: any) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    {/* Not Interested Button - for Service Companies only */}
+                    {isAdminTeam(user) && job.jobNetworkStatus === 'available' && (
+                      <div className="flex justify-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            // TODO: Implement not interested functionality
+                            toast({
+                              title: "Not Interested",
+                              description: "This work order will be hidden from your view",
+                            });
+                          }}
+                          className="text-gray-500 hover:text-red-600 hover:bg-red-50 text-xs"
+                          data-testid={`button-not-interested-${job.id}`}
+                        >
+                          Not Interested
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </CardContent>

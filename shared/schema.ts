@@ -51,9 +51,13 @@ export const companies = pgTable("companies", {
 export const exclusiveNetworks = pgTable("exclusive_networks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientCompanyId: varchar("client_company_id").notNull().references(() => companies.id),
-  serviceCompanyId: varchar("service_company_id").notNull().references(() => companies.id),
-  addedById: varchar("added_by_id").references(() => users.id), // client admin who added the relationship
-  isActive: boolean("is_active").default(true),
+  networkType: varchar("network_type").notNull(), // "general" or "direct"
+  nickname: varchar("nickname").notNull(), // user-defined name for the network
+  serviceCompanyIds: text("service_company_ids").array().notNull().default(sql`ARRAY[]::TEXT[]`), // array of service company IDs
+  createdById: varchar("created_by_id").notNull().references(() => users.id), // client admin who created the network
+  approvedBy: text("approved_by").array().default(sql`ARRAY[]::TEXT[]`), // array of service company IDs that have approved
+  isActive: boolean("is_active").default(false), // becomes true only after ALL service companies approve
+  description: text("description"), // optional description of the network
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -122,6 +126,11 @@ export const workOrders = pgTable("work_orders", {
   pointOfContact: varchar("point_of_contact"),
   priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
   status: varchar("status").notNull().default("scheduled"), // scheduled, confirmed, in_progress, pending, completed, cancelled
+  // Job Network specific status fields
+  jobNetworkStatus: varchar("job_network_status"), // available, counter, requested, assigned, pending, completed, declined
+  postedTo: text("posted_to").array().default(sql`ARRAY[]::TEXT[]`), // array: "job_network", "project_network", exclusiveNetworkId1, exclusiveNetworkId2
+  counterProposal: jsonb("counter_proposal"), // {proposedBudget: number, proposedHours: number, message: string, proposedById: string}
+  declinedBy: text("declined_by").array().default(sql`ARRAY[]::TEXT[]`), // array of company IDs that declined this work order
   category: varchar("category"), // Module 11: for profitability analysis - network_installation, maintenance, troubleshooting, upgrade, etc.
   assigneeId: varchar("assignee_id").references(() => users.id),
   createdById: varchar("created_by_id").references(() => users.id),
@@ -1012,13 +1021,8 @@ export const exclusiveNetworksRelations = relations(exclusiveNetworks, ({ one })
     references: [companies.id],
     relationName: "ClientCompany",
   }),
-  serviceCompany: one(companies, {
-    fields: [exclusiveNetworks.serviceCompanyId],
-    references: [companies.id],
-    relationName: "ServiceCompany",
-  }),
-  addedBy: one(users, {
-    fields: [exclusiveNetworks.addedById],
+  createdBy: one(users, {
+    fields: [exclusiveNetworks.createdById],
     references: [users.id],
   }),
 }));
@@ -1433,6 +1437,9 @@ export const insertExclusiveNetworkSchema = createInsertSchema(exclusiveNetworks
   createdAt: true,
   updatedAt: true,
 });
+
+export type InsertExclusiveNetworkType = z.infer<typeof insertExclusiveNetworkSchema>;
+export type ExclusiveNetwork = typeof exclusiveNetworks.$inferSelect;
 
 export const insertFeedbackSchema = createInsertSchema(feedback).omit({
   id: true,
