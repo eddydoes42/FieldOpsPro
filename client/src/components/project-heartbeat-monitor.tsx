@@ -44,7 +44,7 @@ export default function ProjectHeartbeatMonitor({
   projectTitle, 
   isVisible = true 
 }: ProjectHeartbeatMonitorProps) {
-  const [currentBpm, setCurrentBpm] = useState(70); // Baseline BPM
+  const [currentBpm, setCurrentBpm] = useState(100); // Baseline BPM
   const [isFlatlining, setIsFlatlining] = useState(false);
   const [recentEvents, setRecentEvents] = useState<HeartbeatEvent[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -79,9 +79,9 @@ export default function ProjectHeartbeatMonitor({
 
   // Calculate BPM based on health score
   const calculateBpmFromHealthScore = (healthScore: number): number => {
-    // Baseline: 70 BPM at 100% health
+    // Baseline: 100 BPM at 100% health
     // Failure: 180 BPM at 0% health
-    const baselineBpm = 70;
+    const baselineBpm = 100;
     const maxBpm = 180;
     const bpm = baselineBpm + ((100 - healthScore) * (maxBpm - baselineBpm) / 100);
     return Math.min(Math.max(Math.round(bpm), baselineBpm), maxBpm);
@@ -117,7 +117,7 @@ export default function ProjectHeartbeatMonitor({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       const centerY = canvas.height / 2;
-      const amplitude = isFlatlining ? 2 : Math.min(40, (currentBpm - 70) * 0.8 + 20);
+      const amplitude = isFlatlining ? 2 : Math.min(40, (currentBpm - 100) * 0.8 + 20);
       const frequency = currentBpm / 60; // Beats per second
       const waveSpeed = 2;
       
@@ -296,7 +296,7 @@ export default function ProjectHeartbeatMonitor({
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {heartbeat?.baselineBpm || 70}
+              {heartbeat?.baselineBpm || 100}
             </div>
             <div className="text-xs text-gray-500">Baseline BPM</div>
           </div>

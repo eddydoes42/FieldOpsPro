@@ -105,7 +105,7 @@ export function HeartbeatBar({
                         fontFamily: 'monospace', 
                         textShadow: '0 0 10px #22c55e, 0 0 20px #22c55e'
                       }}>
-                  {Math.round(75 + (percentage < 85 ? (85 - percentage) * 2 : 0)).toString().padStart(3, '0')}
+                  {Math.round(100 + (percentage < 85 ? (85 - percentage) * 2 : 0)).toString().padStart(3, '0')}
                 </span>
                 <span className="text-sm font-semibold text-green-300" style={{ fontFamily: 'Poppins, sans-serif' }}>
                   BPM
@@ -115,7 +115,7 @@ export function HeartbeatBar({
               {/* Simple Baseline Waveform */}
               <div className="flex-1 ml-4">
                 <EKGWaveform
-                  bpm={75 + (percentage < 85 ? (85 - percentage) * 2 : 0)}
+                  bpm={100 + (percentage < 85 ? (85 - percentage) * 2 : 0)}
                   status={percentage >= 85 ? 'normal' : percentage >= 75 ? 'at_risk' : 'delayed'}
                   severity={percentage >= 85 ? 'none' : percentage >= 75 ? 'mild' : percentage >= 65 ? 'moderate' : 'severe'}
                   frequency={percentage >= 75 ? 'occasional' : 'frequent'}

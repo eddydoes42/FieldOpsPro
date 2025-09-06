@@ -50,7 +50,7 @@ export function EKGWaveform({
   // Get background grid color (subtle)
   const getGridColor = () => '#E5E7EB20'; // gray-200 with low opacity
 
-  // Generate heartbeat pattern - always show beats for 50 BPM
+  // Generate heartbeat pattern - always show beats for 100 BPM baseline
   const generateBeatPattern = useCallback((centerX: number, baselineY: number, amplitude: number = 1) => {
     const points: WaveformPoint[] = [];
     const time = Date.now();
