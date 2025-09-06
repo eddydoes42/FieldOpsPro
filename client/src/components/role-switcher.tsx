@@ -22,6 +22,7 @@ const availableRoles = [
 ];
 
 export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveRole }: RoleSwitcherProps) {
+  // ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC OR EARLY RETURNS
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState(currentRole);
   const [isTestingRole, setIsTestingRole] = useState<string | null>(null);
@@ -33,6 +34,18 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
     setIsOnOperationsDashboard(window.location.pathname === '/operations-dashboard');
   }, []);
 
+  const stopRoleSimulationMutation = useMutation({
+    mutationFn: () => apiRequest('/api/role-simulation/stop', 'POST').then(res => res.json()),
+    onSuccess: () => {
+      // Clear testing role and navigate back to operations director dashboard
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      window.location.href = '/operations-dashboard';
+    }
+  });
+
+  // NOW SAFE TO DO CONDITIONAL LOGIC AFTER ALL HOOKS ARE CALLED
   // Don't show if not operations director
   if (!isOperationsDirector(user as any)) {
     return null;
@@ -53,17 +66,6 @@ export default function RoleSwitcher({ currentRole, onRoleSwitch, currentActiveR
   };
 
   const currentRoleInfo = availableRoles.find(role => role.value === currentRole);
-
-  const stopRoleSimulationMutation = useMutation({
-    mutationFn: () => apiRequest('/api/role-simulation/stop', 'POST').then(res => res.json()),
-    onSuccess: () => {
-      // Clear testing role and navigate back to operations director dashboard
-      localStorage.removeItem('testingRole');
-      localStorage.removeItem('testingCompanyType');
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      window.location.href = '/operations-dashboard';
-    }
-  });
 
   const handleStopTesting = () => {
     stopRoleSimulationMutation.mutate();
