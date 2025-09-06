@@ -70,10 +70,27 @@ export default function ProjectHeartbeatMonitor({
   // Update local state when heartbeat data changes
   useEffect(() => {
     if (heartbeat) {
-      const newBpm = calculateBpmFromHealthScore(heartbeat.healthScore);
-      setCurrentBpm(newBpm);
-      setIsFlatlining(newBpm >= 180);
-      setRecentEvents(events.slice(0, 5)); // Last 5 events
+      // Check if there are any active heart events
+      const hasActiveEvents = events.length > 0 && events.some(event => 
+        new Date(event.createdAt) > new Date(Date.now() - 24 * 60 * 60 * 1000) // Events within last 24 hours
+      );
+      
+      // If no active events, show baseline 100 BPM
+      if (!hasActiveEvents) {
+        setCurrentBpm(100);
+        setIsFlatlining(false);
+        setRecentEvents([]);
+      } else {
+        const newBpm = calculateBpmFromHealthScore(heartbeat.healthScore);
+        setCurrentBpm(newBpm);
+        setIsFlatlining(newBpm >= 180);
+        setRecentEvents(events.slice(0, 5)); // Last 5 events
+      }
+    } else {
+      // No heartbeat data means no active work orders/projects - show baseline
+      setCurrentBpm(100);
+      setIsFlatlining(false);
+      setRecentEvents([]);
     }
   }, [heartbeat, events]);
 
