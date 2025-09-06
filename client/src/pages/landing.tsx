@@ -23,11 +23,24 @@ const accessRequestFormSchema = insertAccessRequestSchema.extend({
   path: ["confirmEmail"],
 });
 
+const devBypassFormSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Please enter a valid email"),
+  testingGoals: z.string().min(10, "Please describe what you plan to test (minimum 10 characters)"),
+  companyType: z.enum(["service", "client"], { required_error: "Please select a company type" }),
+  companyName: z.string().min(1, "Company name is required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
 type AccessRequestFormData = z.infer<typeof accessRequestFormSchema>;
+type DevBypassFormData = z.infer<typeof devBypassFormSchema>;
 
 export default function Landing() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDevBypassOpen, setIsDevBypassOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<AccessRequestFormData>({
@@ -73,6 +86,54 @@ export default function Landing() {
     },
   });
 
+  const devBypassForm = useForm<DevBypassFormData>({
+    resolver: zodResolver(devBypassFormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      testingGoals: "",
+      companyType: "service",
+      companyName: "",
+      username: "",
+      password: "",
+    },
+  });
+
+  const devBypassMutation = useMutation({
+    mutationFn: async (data: DevBypassFormData) => {
+      const requestData = {
+        ...data,
+        requestedRole: "administrator",
+        intention: "manage_jobs_people",
+        isDevBypass: true,
+        companyName: data.companyName.startsWith("TEST") ? data.companyName : `TEST ${data.companyName}`,
+      };
+      return await fetch("/api/access-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      }).then(res => res.json());
+    },
+    onSuccess: () => {
+      toast({
+        title: "Dev Access Request Submitted",
+        description: "Your dev bypass request has been sent to the Operations Director for review.",
+      });
+      devBypassForm.reset();
+      setIsDevBypassOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit dev bypass request",
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     // Check for error message in URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -91,6 +152,10 @@ export default function Landing() {
   const handleReilitLogin = () => {
     setErrorMessage(""); // Clear any previous errors
     window.location.href = "/api/login";
+  };
+
+  const onDevBypassSubmit = (data: DevBypassFormData) => {
+    devBypassMutation.mutate(data);
   };
 
   const onSubmit = (data: AccessRequestFormData) => {
@@ -321,6 +386,167 @@ export default function Landing() {
                             disabled={accessRequestMutation.isPending}
                           >
                             {accessRequestMutation.isPending ? "Submitting..." : "Submit Request"}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Dev Bypass Button */}
+                <Dialog open={isDevBypassOpen} onOpenChange={setIsDevBypassOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" className="w-full" data-testid="button-dev-bypass">
+                      Dev Bypass
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md w-[95vw] max-h-[85vh] overflow-y-auto p-4">
+                    <DialogHeader>
+                      <DialogTitle>Dev Request Access</DialogTitle>
+                    </DialogHeader>
+                    <Form {...devBypassForm}>
+                      <form onSubmit={devBypassForm.handleSubmit(onDevBypassSubmit)} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <FormField
+                            control={devBypassForm.control}
+                            name="firstName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>First Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={devBypassForm.control}
+                            name="lastName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={devBypassForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={devBypassForm.control}
+                          name="testingGoals"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Testing Goals</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Describe what you plan to test..."
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={devBypassForm.control}
+                          name="companyType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company Type</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select company type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="service">Service Company</SelectItem>
+                                  <SelectItem value="client">Client Company</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={devBypassForm.control}
+                          name="companyName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="e.g., My Company (will auto-prefix with TEST)"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <FormField
+                            control={devBypassForm.control}
+                            name="username"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Username</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={devBypassForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <Input type="password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="flex justify-end space-x-2 pt-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsDevBypassOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={devBypassMutation.isPending}
+                          >
+                            {devBypassMutation.isPending ? "Submitting..." : "Submit Request"}
                           </Button>
                         </div>
                       </form>
