@@ -2265,13 +2265,14 @@ export class DatabaseStorage implements IStorage, IService {
     const onboardedUsers = usersResult[0]?.count || 0;
 
     // Get active work orders count for this company
+    // Include work orders directly assigned to company AND work orders posted by Operations Director on behalf of this company
     const activeOrdersResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(workOrders)
       .where(
         and(
           eq(workOrders.companyId, companyId),
-          sql`status IN ('scheduled', 'confirmed', 'in_progress', 'in_route', 'checked_in')`,
+          sql`status IN ('scheduled', 'confirmed', 'in_progress', 'in_route', 'checked_in', 'pending')`,
         ),
       );
     const activeWorkOrders = activeOrdersResult[0]?.count || 0;

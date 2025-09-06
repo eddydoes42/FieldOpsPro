@@ -3213,15 +3213,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get company statistics - restricted to operations directors
+  // Get company statistics - accessible by Operations Directors and Administrators of the company
   app.get('/api/companies/:companyId/stats', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
-      if (!currentUser || !isOperationsDirector(currentUser)) {
-        return res.status(403).json({ message: "Operations Director access required" });
+      const { companyId } = req.params;
+      
+      // Allow Operations Directors to access any company stats
+      // Allow Administrators to access their own company stats
+      const canAccess = isOperationsDirector(currentUser) || 
+                       (isAdmin(currentUser) && currentUser.companyId === companyId);
+      
+      if (!currentUser || !canAccess) {
+        return res.status(403).json({ message: "Access denied. Operations Director or Company Administrator required." });
       }
 
-      const { companyId } = req.params;
       const stats = await storage.getCompanyStats(companyId);
       res.json(stats);
     } catch (error) {
