@@ -2588,14 +2588,28 @@ export default function WorkOrders() {
                       </div>
                       {budgetCalculation && (
                         <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-700">
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold text-green-800 dark:text-green-300">Total Budget:</span>
-                            <span className="text-lg font-bold text-green-900 dark:text-green-100">
-                              ${budgetCalculation.total.toFixed(2)}
-                            </span>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold text-green-800 dark:text-green-300">Gross Budget:</span>
+                              <span className="text-lg font-bold text-green-900 dark:text-green-100">
+                                ${budgetCalculation.total.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-green-700 dark:text-green-400">Service Fee (5%):</span>
+                              <span className="text-green-800 dark:text-green-300">
+                                -${(budgetCalculation.total * 0.05).toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center border-t border-green-200 dark:border-green-700 pt-2">
+                              <span className="font-bold text-green-800 dark:text-green-200">Net Amount:</span>
+                              <span className="text-xl font-bold text-green-900 dark:text-green-100">
+                                ${(budgetCalculation.total * 0.95).toFixed(2)}
+                              </span>
+                            </div>
                           </div>
                           {budgetCalculation.type === 'hourly' && budgetCalculation.loggedHours && (
-                            <div className="text-sm text-green-700 dark:text-green-400 mt-1">
+                            <div className="text-sm text-green-700 dark:text-green-400 mt-2">
                               Based on {budgetCalculation.loggedHours.toFixed(2)} hours logged
                             </div>
                           )}

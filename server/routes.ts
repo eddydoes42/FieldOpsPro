@@ -1530,13 +1530,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only the creator company or Operations Director can delete this work order" });
       }
 
-      const { id } = req.params;
-      const workOrder = await storage.getWorkOrder(id);
-      
-      if (!workOrder) {
-        return res.status(404).json({ message: "Work order not found" });
-      }
-
       await storage.deleteWorkOrder(id);
       res.json({ message: "Work order deleted successfully" });
     } catch (error) {
