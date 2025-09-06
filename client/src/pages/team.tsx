@@ -54,6 +54,9 @@ export default function TeamPage() {
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
+      // Clear role testing data on logout
+      localStorage.removeItem('testingRole');
+      localStorage.removeItem('testingCompanyType');
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
@@ -249,8 +252,18 @@ export default function TeamPage() {
     });
 
     // For service companies: restrict to showing only users from the same company (unless Operations Director)
+    // When Operations Director is role testing, use the testing context to determine company filter
+    const testingCompanyType = localStorage.getItem('testingCompanyType');
+    const testingRole = localStorage.getItem('testingRole');
+    const isRoleTesting = isOperationsDirectorSuperUser && testingRole && testingCompanyType;
+    
     if (!isOperationsDirectorSuperUser && isServiceCompany && userCompanyId) {
       filteredUsers = filteredUsers.filter((user: any) => user.companyId === userCompanyId);
+    } else if (isRoleTesting && testingCompanyType === 'service' && companyFilter === "all") {
+      // When Operations Director is role testing as service company user, show service company users
+      const serviceCompanies = companies ? (companies as any[]).filter((c: any) => c.type === 'service') : [];
+      const serviceCompanyIds = serviceCompanies.map((c: any) => c.id);
+      filteredUsers = filteredUsers.filter((user: any) => serviceCompanyIds.includes(user.companyId));
     }
 
     // Apply company filter if set
@@ -637,6 +650,24 @@ export default function TeamPage() {
                     if (isFieldAgent && userCompanyId) {
                       return userData.companyId === userCompanyId;
                     }
+                    
+                    // For Operations Director role testing as service company user
+                    const testingCompanyType = localStorage.getItem('testingCompanyType');
+                    const testingRole = localStorage.getItem('testingRole');
+                    const isRoleTesting = isOperationsDirectorSuperUser && testingRole && testingCompanyType;
+                    
+                    if (isRoleTesting && testingCompanyType === 'service' && companyFilter === "all") {
+                      // Show users from service companies when role testing as service company user
+                      const serviceCompanies = companies ? (companies as any[]).filter((c: any) => c.type === 'service') : [];
+                      const serviceCompanyIds = serviceCompanies.map((c: any) => c.id);
+                      return serviceCompanyIds.includes(userData.companyId);
+                    }
+                    
+                    // For service companies: restrict to same company unless Operations Director
+                    if (!isOperationsDirectorSuperUser && isServiceCompany && userCompanyId) {
+                      return userData.companyId === userCompanyId;
+                    }
+                    
                     return true;
                   })
                   .filter((userData: any) => {

@@ -138,19 +138,19 @@ type UnauthorizedBehavior = "returnNull" | "throw";
 // Get testing role and device fingerprint headers for API requests
 function getRequestHeaders(): Record<string, string> {
   if (typeof window !== 'undefined') {
+    const headers: Record<string, string> = {};
+    
+    // Only add role testing headers if actively testing
     const testingRole = localStorage.getItem('testingRole');
     const testingCompanyType = localStorage.getItem('testingCompanyType');
     
-    const headers: Record<string, string> = {};
-    
-    if (testingRole) {
+    if (testingRole && testingCompanyType) {
       headers['x-testing-role'] = testingRole;
-      console.log('Adding testing role header:', testingRole);
-    }
-    
-    if (testingCompanyType) {
       headers['x-testing-company-type'] = testingCompanyType;
-      console.log('Adding testing company type header:', testingCompanyType);
+      // Dramatically reduce logging spam - only log once every ~100 requests
+      if (Math.random() < 0.01) {
+        console.log('Role testing active:', testingRole, 'in', testingCompanyType, 'company');
+      }
     }
     
     // Add device fingerprint for device recognition
@@ -164,6 +164,15 @@ function getRequestHeaders(): Record<string, string> {
     return headers;
   }
   return {};
+}
+
+// Clear role testing data on logout
+export function clearRoleTestingData() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('testingRole');
+    localStorage.removeItem('testingCompanyType');
+    console.log('Cleared role testing localStorage data');
+  }
 }
 
 export const getQueryFn: <T>(options: {

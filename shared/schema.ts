@@ -2312,7 +2312,7 @@ export const deviceTokens = pgTable("device_tokens", {
   tokenHash: varchar("token_hash").notNull().unique(), // hashed secure token
   deviceFingerprint: varchar("device_fingerprint").notNull(), // browser/device identifier
   deviceName: varchar("device_name"), // user-friendly device name
-  lastUsedAt: timestamp("lastUsedAt").defaultNow(),
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
   isActive: boolean("is_active").default(true),
   userAgent: text("user_agent"),
@@ -2362,7 +2362,7 @@ export const deviceMemory = pgTable("device_memory", {
   deviceName: varchar("device_name"),
   hasStoredCredentials: boolean("has_stored_credentials").default(false),
   hasBiometricData: boolean("has_biometric_data").default(false),
-  lastUsedAt: timestamp("lastUsedAt").defaultNow(),
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
