@@ -47,10 +47,11 @@ export default function RoleTester({ currentRole, onRoleSwitch }: RoleTesterProp
   const [selectedCompanyType, setSelectedCompanyType] = useState<'service' | 'client'>('service');
   const [selectedRole, setSelectedRole] = useState<string>('');
 
-  // Check role simulation status
+  // Only check role simulation status for Operations Directors
   const { data: roleSimulationStatus } = useQuery({
     queryKey: ['/api/role-simulation/status'],
-    refetchInterval: 5000 // Check every 5 seconds
+    refetchInterval: 5000, // Check every 5 seconds
+    enabled: isOperationsDirector(user as any) // Only run this query for Operations Directors
   });
 
   // Type-safe access to role simulation status
