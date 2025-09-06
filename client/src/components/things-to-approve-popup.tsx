@@ -304,7 +304,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
                             <Button
                               size="sm"
                               onClick={() => handleApproveRequest(request)}
-                              disabled={approveAccessMutation.isPending}
+                              disabled={directApproveMutation.isPending || approveAccessMutation.isPending}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
