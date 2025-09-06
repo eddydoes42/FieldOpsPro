@@ -56,6 +56,30 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
     enabled: open
   });
 
+  // Direct approval mutation for dev bypass requests
+  const directApproveMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return apiRequest(`/api/access-requests/${requestId}/review`, 'PATCH', {
+        status: 'approved'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/access-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/operations/stats'] });
+      toast({
+        title: "Dev Access Approved!",
+        description: "Company and administrator account created. Credentials are now active.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to approve dev access",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Approve access request mutation (called after user creation)
   const approveAccessMutation = useMutation({
     mutationFn: async (requestId: string) => {
@@ -76,11 +100,17 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
     }
   });
 
-  // Handle opening the user creation form
+  // Handle opening the user creation form OR direct approval for dev bypass
   const handleApproveRequest = (request: AccessRequest) => {
-    setSelectedAccessRequest(request);
-    setShowUserForm(true);
-    onClose(); // Close the things to approve popup
+    // For dev bypass requests, approve directly without user form
+    if (request.isDevBypass) {
+      directApproveMutation.mutate(request.id);
+    } else {
+      // For regular requests, open user creation form
+      setSelectedAccessRequest(request);
+      setShowUserForm(true);
+      onClose(); // Close the things to approve popup
+    }
   };
 
   // Handle successful workflow completion - this approves the access request
