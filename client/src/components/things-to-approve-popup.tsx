@@ -202,12 +202,25 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
                   accessRequests.map((request: any) => (
                     <div
                       key={request.id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3"
+                      className={`border rounded-lg p-4 space-y-3 ${
+                        request.isDevBypass 
+                          ? "border-blue-300 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20" 
+                          : "border-gray-200 dark:border-gray-700"
+                      }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <User className="h-4 w-4 text-gray-500" />
+                            {request.isDevBypass ? (
+                              <div className="flex items-center gap-2">
+                                <code className="h-4 w-4 text-blue-600 dark:text-blue-400">🔧</code>
+                                <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                                  DEV BYPASS
+                                </Badge>
+                              </div>
+                            ) : (
+                              <User className="h-4 w-4 text-gray-500" />
+                            )}
                             <h4 className="font-medium text-gray-900 dark:text-gray-100">
                               {request.firstName} {request.lastName}
                             </h4>
@@ -218,9 +231,23 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                             {request.email}
                           </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            Requested Role: <span className="font-medium">{request.requestedRole}</span>
-                          </p>
+                          {request.isDevBypass ? (
+                            <div className="space-y-1 mb-2">
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="font-medium">Testing Goals:</span> {request.testingGoals}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="font-medium">Company:</span> {request.companyName} ({request.companyType})
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="font-medium">Login:</span> {request.username}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              Requested Role: <span className="font-medium">{request.requestedRole}</span>
+                            </p>
+                          )}
                           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
@@ -251,7 +278,7 @@ export function ThingsToApprovePopup({ open, onClose }: ThingsToApprovePopupProp
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              Create User
+                              {request.isDevBypass ? "Create Company & User" : "Create User"}
                             </Button>
                           </div>
                         )}

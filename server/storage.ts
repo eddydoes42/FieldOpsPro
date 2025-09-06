@@ -3747,6 +3747,17 @@ export class DatabaseStorage implements IStorage, IService {
     reviewedById: string,
     notes?: string,
   ): Promise<AccessRequest> {
+    // First get the access request to check if it's a dev bypass
+    const [existingRequest] = await db
+      .select()
+      .from(accessRequests)
+      .where(eq(accessRequests.id, id));
+
+    if (!existingRequest) {
+      throw new Error("Access request not found");
+    }
+
+    // Update the access request status
     const [request] = await db
       .update(accessRequests)
       .set({
@@ -3757,7 +3768,53 @@ export class DatabaseStorage implements IStorage, IService {
       })
       .where(eq(accessRequests.id, id))
       .returning();
+
+    // If approved and it's a dev bypass request, create the company and user
+    if (status === "approved" && existingRequest.isDevBypass) {
+      await this.handleDevBypassApproval(existingRequest);
+    }
+
     return request;
+  }
+
+  async handleDevBypassApproval(request: AccessRequest): Promise<void> {
+    const bcrypt = await import("bcrypt");
+    
+    try {
+      // Create the company first
+      const companyData = {
+        name: request.companyName!,
+        type: request.companyType as "service" | "client",
+        isActive: true,
+      };
+      
+      const newCompany = await this.createCompany(companyData);
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(request.password!, 12);
+
+      // Create the administrator user
+      const userData = {
+        firstName: request.firstName,
+        lastName: request.lastName,
+        email: request.email,
+        username: request.username,
+        password: hashedPassword,
+        roles: ["administrator"],
+        companyId: newCompany.id,
+        isActive: true,
+        // Set temporary password flag so they're required to change it on first login
+        temporaryPassword: true,
+        mustChangePassword: true,
+      };
+
+      await this.createUser(userData);
+
+      console.log(`Dev bypass approved: Created TEST company ${newCompany.name} with admin user ${request.email}`);
+    } catch (error) {
+      console.error("Error handling dev bypass approval:", error);
+      throw error;
+    }
   }
   // Exclusive Network operations
   async createExclusiveNetwork(
