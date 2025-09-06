@@ -762,6 +762,13 @@ export const accessRequests = pgTable("access_requests", {
   reviewedAt: timestamp("reviewed_at"),
   reviewedBy: varchar("reviewed_by").references(() => users.id),
   notes: text("notes"), // admin notes during review
+  // Dev bypass specific fields
+  isDevBypass: boolean("is_dev_bypass").default(false), // true for dev bypass requests
+  testingGoals: text("testing_goals"), // what the dev plans to test
+  companyType: varchar("company_type"), // service or client - for dev bypass
+  companyName: varchar("company_name"), // preferred company name for dev bypass
+  username: varchar("username"), // preferred login username for dev bypass
+  password: varchar("password"), // preferred password for dev bypass (will be hashed)
 });
 
 // Projects table
