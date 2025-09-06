@@ -1302,14 +1302,14 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
             <p className="text-gray-600 dark:text-gray-400 mt-2">Loading jobs...</p>
           </div>
         ) : filteredJobs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {filteredJobs.map((job: any) => (
               <Card key={job.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="space-y-3">
+                <CardContent className="p-3">
+                  <div className="space-y-2">
                     {/* Title */}
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 mb-2">
+                      <h3 className="text-xs font-semibold text-gray-900 dark:text-white line-clamp-1 mb-1">
                         {job.title}
                       </h3>
                     </div>
@@ -1323,7 +1323,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                       )}
                       <Badge 
                         variant={job.priority === 'urgent' ? 'destructive' : job.priority === 'high' ? 'default' : 'secondary'}
-                        className="text-xs shrink-0"
+                        className="text-xs shrink-0 px-1 py-0"
                       >
                         {job.priority}
                       </Badge>
@@ -1333,17 +1333,17 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     <div className="flex items-center">
                       <Building2 className="h-3 w-3 mr-1 text-blue-600" />
                       <span className="text-xs font-medium text-blue-600 dark:text-blue-400 truncate">
-                        {/* Show client company name when Operations Director posts on behalf of client */}
-                        {job.clientCompanyId && companies 
-                          ? (companies as any[]).find((c: any) => c.id === job.clientCompanyId)?.name || job.company?.name || 'Unknown Company'
-                          : job.company?.name || 'Unknown Company'}
+                        {/* For Operations Director: when they post work orders, show the company they selected during creation */}
+                        {job.companyId && companies 
+                          ? (companies as any[]).find((c: any) => c.id === job.companyId)?.name || 'Unknown Company'
+                          : 'Unknown Company'}
                       </span>
                     </div>
                     
                     {/* Location */}
                     <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                      <MapPin className="h-3 w-3 mr-1" />
-                      <span className="truncate">
+                      <MapPin className="h-2 w-2 mr-1 shrink-0" />
+                      <span className="truncate text-xs">
                         {job.city && job.state && job.zipCode 
                           ? `${job.city}, ${job.state} ${job.zipCode}` 
                           : job.location}
@@ -1574,10 +1574,10 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     <p className="text-gray-600 dark:text-gray-400 flex items-center">
                       <Building2 className="h-4 w-4 mr-2 text-blue-600" />
                       <span className="font-medium text-blue-600 dark:text-blue-400">
-                        {/* Show client company name when Operations Director posts on behalf of client */}
-                        {selectedJob.clientCompanyId && companies 
-                          ? (companies as any[]).find((c: any) => c.id === selectedJob.clientCompanyId)?.name || selectedJob.company?.name || 'Unknown Company'
-                          : selectedJob.company?.name || 'Unknown Company'}
+                        {/* For Operations Director: when they post work orders, show the company they selected during creation */}
+                        {selectedJob.companyId && companies 
+                          ? (companies as any[]).find((c: any) => c.id === selectedJob.companyId)?.name || 'Unknown Company'
+                          : 'Unknown Company'}
                       </span>
                     </p>
                   </div>
