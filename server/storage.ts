@@ -51,6 +51,7 @@ import {
   deviceTokens,
   biometricAuth,
   deviceMemory,
+  webauthnCredentials,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -94,6 +95,7 @@ import {
   type InsertBiometricAuth,
   type DeviceMemory,
   type InsertDeviceMemory,
+  type WebAuthnCredential,
   type JobNetworkPost,
   type InsertJobNetworkPost,
   type ExclusiveNetworkPost,
@@ -7453,6 +7455,85 @@ export class DatabaseStorage implements IStorage, IService {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  // WebAuthn Credentials operations
+  async saveWebAuthnCredential(credentialData: {
+    userId: string;
+    credentialId: string;
+    publicKey: string;
+    counter: number;
+    deviceType?: string;
+    backedUp?: boolean;
+    transports?: string[];
+    credentialName?: string;
+    isActive?: boolean;
+  }): Promise<WebAuthnCredential> {
+    const [credential] = await db
+      .insert(webauthnCredentials)
+      .values({
+        userId: credentialData.userId,
+        credentialId: credentialData.credentialId,
+        publicKey: credentialData.publicKey,
+        counter: credentialData.counter,
+        deviceType: credentialData.deviceType,
+        backedUp: credentialData.backedUp ?? false,
+        transports: credentialData.transports ?? [],
+        credentialName: credentialData.credentialName,
+        isActive: credentialData.isActive ?? true,
+      })
+      .returning();
+    return credential;
+  }
+
+  async getWebAuthnCredentials(userId: string): Promise<WebAuthnCredential[]> {
+    return await db
+      .select()
+      .from(webauthnCredentials)
+      .where(
+        and(
+          eq(webauthnCredentials.userId, userId),
+          eq(webauthnCredentials.isActive, true)
+        )
+      );
+  }
+
+  async getWebAuthnCredentialById(credentialId: string): Promise<WebAuthnCredential | null> {
+    const [credential] = await db
+      .select()
+      .from(webauthnCredentials)
+      .where(eq(webauthnCredentials.credentialId, credentialId));
+    return credential || null;
+  }
+
+  async updateWebAuthnCredentialCounter(credentialId: string, newCounter: number): Promise<void> {
+    await db
+      .update(webauthnCredentials)
+      .set({ 
+        counter: newCounter,
+        updatedAt: new Date(),
+      })
+      .where(eq(webauthnCredentials.id, credentialId));
+  }
+
+  async updateWebAuthnCredentialLastUsed(credentialId: string): Promise<void> {
+    await db
+      .update(webauthnCredentials)
+      .set({ 
+        lastUsedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(webauthnCredentials.id, credentialId));
+  }
+
+  async deactivateWebAuthnCredential(credentialId: string): Promise<void> {
+    await db
+      .update(webauthnCredentials)
+      .set({ 
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(webauthnCredentials.id, credentialId));
   }
 
   // IService implementation

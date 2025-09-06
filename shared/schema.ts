@@ -2321,7 +2321,25 @@ export const deviceTokens = pgTable("device_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Biometric Authentication table - for biometric login data
+// WebAuthn Credentials table - for WebAuthn biometric authentication
+export const webauthnCredentials = pgTable("webauthn_credentials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  credentialId: text("credential_id").notNull().unique(), // WebAuthn credential ID (base64url)
+  publicKey: text("public_key").notNull(), // stored public key (base64url)
+  counter: integer("counter").default(0), // signature counter for replay protection
+  deviceType: varchar("device_type"), // "singleDevice", "multiDevice", etc.
+  backedUp: boolean("backed_up").default(false), // if credential is backed up
+  transports: text("transports").array().default(sql`ARRAY[]::TEXT[]`), // transport methods ["internal", "hybrid", etc.]
+  aaguid: varchar("aaguid"), // authenticator attestation GUID
+  credentialName: varchar("credential_name"), // user-friendly name
+  isActive: boolean("is_active").default(true),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Legacy Biometric Authentication table - for non-WebAuthn biometric data
 export const biometricAuth = pgTable("biometric_auth", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -2329,7 +2347,7 @@ export const biometricAuth = pgTable("biometric_auth", {
   encryptedBiometricData: text("encrypted_biometric_data").notNull(), // encrypted biometric template
   deviceId: varchar("device_id").notNull(), // device-specific identifier
   isActive: boolean("is_active").default(true),
-  lastUsedAt: timestamp("lastUsedAt"),
+  lastUsedAt: timestamp("last_used_at"),
   failedAttempts: integer("failed_attempts").default(0),
   lockedUntil: timestamp("locked_until"), // temporary lockout for failed attempts
   createdAt: timestamp("created_at").defaultNow(),
@@ -2438,6 +2456,13 @@ export const deviceTokensRelations = relations(deviceTokens, ({ one }) => ({
   }),
 }));
 
+export const webauthnCredentialsRelations = relations(webauthnCredentials, ({ one }) => ({
+  user: one(users, {
+    fields: [webauthnCredentials.userId],
+    references: [users.id],
+  }),
+}));
+
 export const biometricAuthRelations = relations(biometricAuth, ({ one }) => ({
   user: one(users, {
     fields: [biometricAuth.userId],
@@ -2466,6 +2491,7 @@ export const usersRelationsUpdated = relations(users, ({ one, many }) => ({
   expenseOrders: many(expenseOrders),
   deviceTokens: many(deviceTokens),
   biometricAuth: many(biometricAuth),
+  webauthnCredentials: many(webauthnCredentials),
 }));
 
 // Type definitions for new tables
@@ -2544,3 +2570,14 @@ export const insertDeviceMemorySchema = createInsertSchema(deviceMemory).omit({
 });
 
 export type InsertDeviceMemoryType = z.infer<typeof insertDeviceMemorySchema>;
+
+export type WebAuthnCredential = typeof webauthnCredentials.$inferSelect;
+export type InsertWebAuthnCredential = typeof webauthnCredentials.$inferInsert;
+
+export const insertWebAuthnCredentialSchema = createInsertSchema(webauthnCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertWebAuthnCredentialType = z.infer<typeof insertWebAuthnCredentialSchema>;

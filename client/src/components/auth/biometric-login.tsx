@@ -20,7 +20,7 @@ import {
   getBiometricPreference,
   clearBiometricData,
   type BiometricAuthResult
-} from "@/lib/biometric-auth";
+} from "@/utils/biometricAuth";
 
 interface BiometricLoginProps {
   isOpen: boolean;
@@ -166,9 +166,14 @@ export function BiometricLogin({
   };
 
   const handleBiometricLogin = async () => {
+    if (!userId) {
+      setErrorMessage('User ID not available');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const result: BiometricAuthResult = await authenticateBiometric();
+      const result: BiometricAuthResult = await authenticateBiometric(userId);
       
       if (result.success && result.credential) {
         await authenticateBiometricMutation.mutateAsync(result.credential);
