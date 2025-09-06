@@ -125,7 +125,7 @@ export const workOrders = pgTable("work_orders", {
   requiredTools: text("required_tools"),
   pointOfContact: varchar("point_of_contact"),
   priority: varchar("priority").notNull().default("medium"), // low, medium, high, urgent
-  status: varchar("status").notNull().default("scheduled"), // scheduled, confirmed, in_progress, pending, completed, cancelled
+  status: varchar("status").notNull().default("pending assignment"), // pending assignment, scheduled, confirmed, in_progress, pending, completed, cancelled
   // Job Network specific status fields
   jobNetworkStatus: varchar("job_network_status"), // available, counter, requested, assigned, pending, completed, declined
   postedTo: text("posted_to").array().default(sql`ARRAY[]::TEXT[]`), // array: "job_network", "project_network", exclusiveNetworkId1, exclusiveNetworkId2
@@ -776,7 +776,7 @@ export const projects = pgTable("projects", {
   endDate: timestamp("end_date"), // calculated or set based on duration
   budget: decimal("budget", { precision: 10, scale: 2 }),
   workersNeeded: integer("workers_needed").notNull(),
-  status: varchar("status").notNull().default("available"), // available, assigned, in_progress, completed, cancelled
+  status: varchar("status").notNull().default("pending assignment"), // pending assignment, available, assigned, in_progress, completed, cancelled
   createdById: varchar("created_by_id").notNull().references(() => users.id), // project manager who created it
   createdByCompanyId: varchar("created_by_company_id").notNull().references(() => companies.id),
   assignedToCompanyId: varchar("assigned_to_company_id").references(() => companies.id), // company that accepted the project

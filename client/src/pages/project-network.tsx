@@ -377,6 +377,7 @@ export default function ProjectNetwork() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
+      case 'pending assignment': return 'default';
       case 'available': return 'default';
       case 'assigned': return 'secondary';
       case 'in_progress': return 'secondary';

@@ -14,6 +14,7 @@ export default function WorkOrderCard({ workOrder, onStatusChange, showActions =
   const [isOpen, setIsOpen] = useState(false);
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'pending assignment': return 'bg-amber-100 text-amber-800 dark:bg-amber-800/20 dark:text-amber-300';
       case 'scheduled': return 'bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-300';
       case 'confirmed': return 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300';
       case 'in_progress': return 'bg-orange-100 text-orange-800 dark:bg-orange-800/20 dark:text-orange-300';
