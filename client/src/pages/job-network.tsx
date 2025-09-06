@@ -1305,112 +1305,67 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredJobs.map((job: any) => (
               <Card key={job.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {job.title}
-                    </CardTitle>
-                    <Badge 
-                      variant={job.status === 'open' ? 'default' : job.status === 'assigned' ? 'secondary' : 'outline'}
-                      className={
-                        job.priority === 'urgent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                        job.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                        ''
-                      }
-                    >
-                      <span className="capitalize">{job.status}</span>
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-                    {job.description}
-                  </p>
-                  
-                  {/* Company Name */}
-                  <div className="flex items-center mb-2">
-                    <Building2 className="h-3 w-3 mr-1 text-blue-600" />
-                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                      {job.company?.name || 'Unknown Company'}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {job.location}
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    {/* Title and Priority Badge */}
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                        {job.title}
+                      </h3>
+                      <Badge 
+                        variant={job.priority === 'urgent' ? 'destructive' : job.priority === 'high' ? 'default' : 'secondary'}
+                        className="text-xs ml-2 shrink-0"
+                      >
+                        {job.priority}
+                      </Badge>
                     </div>
-                    
-                    {job.budget && (
-                      <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        ${job.budget} ({job.budgetType})
-                      </div>
-                    )}
-                    
-                    {job.scheduledDate && (
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {new Date(job.scheduledDate).toLocaleDateString()}
-                      </div>
-                    )}
-                    
-                    {job.estimatedDuration && (
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {job.estimatedDuration}
-                      </div>
-                    )}
-                    
+
+                    {/* Company Name */}
                     <div className="flex items-center">
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                        Priority: <span className="capitalize">{job.priority}</span>
+                      <Building2 className="h-3 w-3 mr-1 text-blue-600" />
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400 truncate">
+                        {job.company?.name || 'Unknown Company'}
                       </span>
                     </div>
                     
-                    {(job.tools && job.tools.length > 0) && (
-                      <div className="flex items-start">
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mr-2 mt-0.5">Tools:</span>
-                        <span className="text-xs text-gray-600 dark:text-gray-400">
-                          {job.tools.length} required
-                        </span>
-                      </div>
-                    )}
-                    
-                    {(job.tasks && job.tasks.length > 0) && (
-                      <div className="flex items-start">
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mr-2 mt-0.5">Tasks:</span>
-                        <span className="text-xs text-gray-600 dark:text-gray-400">
-                          {job.tasks.reduce((total: number, task: any) => total + (task.documentsRequired || 0), 0)} documents required
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center">
-                      <Eye className="h-3 w-3 mr-1" />
-                      <span className="capitalize">Public</span>
+                    {/* Location */}
+                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      <span className="truncate">
+                        {job.city && job.state && job.zipCode 
+                          ? `${job.city}, ${job.state} ${job.zipCode}` 
+                          : job.location}
+                      </span>
                     </div>
-                  </div>
+                    
+                    {/* Budget */}
+                    {job.budgetAmount && (
+                      <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                        <DollarSign className="h-3 w-3 mr-1" />
+                        <span className="font-medium">${job.budgetAmount?.toLocaleString()}</span>
+                      </div>
+                    )}
 
                   {job.assignedToCompanyId && (
-                    <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
                       <div className="flex items-center text-green-700 dark:text-green-300">
-                        <Building2 className="h-4 w-4 mr-2" />
-                        <span className="text-sm font-medium">
-                          Assigned to Service Company
+                        <Building2 className="h-3 w-3 mr-1" />
+                        <span className="text-xs font-medium">
+                          Assigned
                         </span>
                       </div>
                     </div>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-3 space-y-2">
                     <div className="flex justify-between items-center">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedJob(job)}
                         data-testid={`button-view-details-${job.id}`}
+                        className="text-xs"
                       >
                         View Details
                       </Button>
@@ -1420,7 +1375,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         <Button
                           size="sm"
                           onClick={() => handleRequestJob(job)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
                           data-testid={`button-request-assignment-${job.id}`}
                         >
                           Request Assignment
@@ -1439,7 +1394,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                               description: "Counter proposal functionality coming soon",
                             });
                           }}
-                          className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                          className="border-orange-500 text-orange-600 hover:bg-orange-50 text-xs"
                           data-testid={`button-counter-proposal-${job.id}`}
                         >
                           Counter Proposal
@@ -1483,6 +1438,7 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                         </Button>
                       </div>
                     )}
+                  </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1583,54 +1539,120 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
               <DialogHeader>
                 <DialogTitle>{selectedJob.title}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <Badge 
-                    variant={selectedJob.status === 'open' ? 'default' : selectedJob.status === 'assigned' ? 'secondary' : 'outline'}
-                    className={
-                      selectedJob.priority === 'urgent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                      selectedJob.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                      ''
-                    }
-                  >
-                    <span className="capitalize">{selectedJob.status}</span>
-                  </Badge>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Priority: <span className="capitalize">{selectedJob.priority}</span>
-                  </span>
+              <div className="space-y-6">
+                {/* Header Section */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Badge 
+                      variant={selectedJob.status === 'open' ? 'default' : selectedJob.status === 'assigned' ? 'secondary' : 'outline'}
+                      className={
+                        selectedJob.priority === 'urgent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                        selectedJob.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                        ''
+                      }
+                    >
+                      <span className="capitalize">{selectedJob.status}</span>
+                    </Badge>
+                    <Badge variant="outline">
+                      Priority: <span className="capitalize ml-1">{selectedJob.priority}</span>
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    ID: {selectedJob.id}
+                  </div>
                 </div>
 
-                {/* Company Name */}
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Posted By</h4>
-                  <p className="text-gray-600 dark:text-gray-400 flex items-center">
-                    <Building2 className="h-4 w-4 mr-2 text-blue-600" />
-                    <span className="font-medium text-blue-600 dark:text-blue-400">
-                      {selectedJob.company?.name || 'Unknown Company'}
-                    </span>
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Description</h4>
-                  <p className="text-gray-600 dark:text-gray-400">{selectedJob.description}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                {/* Company & Creator Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Location</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Posted By</h4>
                     <p className="text-gray-600 dark:text-gray-400 flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {selectedJob.location}
+                      <Building2 className="h-4 w-4 mr-2 text-blue-600" />
+                      <span className="font-medium text-blue-600 dark:text-blue-400">
+                        {selectedJob.company?.name || 'Unknown Company'}
+                      </span>
                     </p>
                   </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Created</h4>
+                    <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {selectedJob.createdAt ? new Date(selectedJob.createdAt).toLocaleString() : 'Not specified'}
+                    </p>
+                  </div>
+                </div>
 
-                  {selectedJob.budget && (
+                {/* Description */}
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Description</h4>
+                  <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{selectedJob.description}</p>
+                </div>
+
+                {/* Location Details */}
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Location Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      {selectedJob.address && (
+                        <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          <span><strong>Address:</strong> {selectedJob.address}</span>
+                        </p>
+                      )}
+                      {selectedJob.city && (
+                        <p className="text-gray-600 dark:text-gray-400">
+                          <strong>City:</strong> {selectedJob.city}
+                        </p>
+                      )}
+                      {selectedJob.state && (
+                        <p className="text-gray-600 dark:text-gray-400">
+                          <strong>State:</strong> {selectedJob.state}
+                        </p>
+                      )}
+                      {selectedJob.zipCode && (
+                        <p className="text-gray-600 dark:text-gray-400">
+                          <strong>Zip Code:</strong> {selectedJob.zipCode}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      {selectedJob.location && (
+                        <p className="text-gray-600 dark:text-gray-400">
+                          <strong>Full Location:</strong> {selectedJob.location}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Project Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {selectedJob.budgetAmount && (
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-2">Budget</h4>
                       <p className="text-gray-600 dark:text-gray-400 flex items-center">
                         <DollarSign className="h-4 w-4 mr-2" />
-                        ${selectedJob.budget} ({selectedJob.budgetType})
+                        ${selectedJob.budgetAmount?.toLocaleString()} ({selectedJob.budgetType || 'fixed'})
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedJob.estimatedHours && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Estimated Hours</h4>
+                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        {selectedJob.estimatedHours} hours
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedJob.dueDate && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Due Date</h4>
+                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {new Date(selectedJob.dueDate).toLocaleDateString()}
                       </p>
                     </div>
                   )}
@@ -1645,16 +1667,6 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                     </div>
                   )}
 
-                  {selectedJob.estimatedDuration && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h4>
-                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {selectedJob.estimatedDuration}
-                      </p>
-                    </div>
-                  )}
-                  
                   {selectedJob.startTime && (
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-2">Start Time</h4>
@@ -1664,7 +1676,27 @@ export default function JobNetwork({ user, testingRole, onRoleSwitch }: JobNetwo
                       </p>
                     </div>
                   )}
+
+                  {selectedJob.estimatedDuration && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h4>
+                      <p className="text-gray-600 dark:text-gray-400 flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        {selectedJob.estimatedDuration}
+                      </p>
+                    </div>
+                  )}
                 </div>
+
+                {/* Job Network Status */}
+                {selectedJob.jobNetworkStatus && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Network Status</h4>
+                    <Badge variant="outline" className="capitalize">
+                      {selectedJob.jobNetworkStatus}
+                    </Badge>
+                  </div>
+                )}
 
                 {/* Tool Requirements */}
                 {selectedJob.tools && selectedJob.tools.length > 0 && (

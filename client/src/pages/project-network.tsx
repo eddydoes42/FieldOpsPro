@@ -640,14 +640,14 @@ export default function ProjectNetwork() {
                     {/* Requirements Section */}
                     <div>
                       <div className="flex items-center justify-between">
-                        <FormLabel>Project Requirements</FormLabel>
+                        <FormLabel>Project Tasks</FormLabel>
                         <Button 
                           type="button" 
                           variant="outline" 
                           size="sm"
                           onClick={() => setShowRequirementsDialog(true)}
                         >
-                          Project Requirements
+                          Project Tasks
                         </Button>
                       </div>
                       {requirements.length > 0 && (
